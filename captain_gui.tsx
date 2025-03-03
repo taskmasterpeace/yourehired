@@ -333,7 +333,7 @@ export default function CAPTAINGui() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>Initial Contact</SelectLabel>
+                          <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
                           <SelectItem value="Bookmarked">Bookmarked</SelectItem>
                           <SelectItem value="Interested">Interested</SelectItem>
                           <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
@@ -341,14 +341,14 @@ export default function CAPTAINGui() {
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Application</SelectLabel>
+                          <SelectLabel className="select-category-label">Application</SelectLabel>
                           <SelectItem value="Preparing Application">Preparing Application</SelectItem>
                           <SelectItem value="Applied">Applied</SelectItem>
                           <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Interview Process</SelectLabel>
+                          <SelectLabel className="select-category-label">Interview Process</SelectLabel>
                           <SelectItem value="Screening">Screening</SelectItem>
                           <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
                           <SelectItem value="First Interview">First Interview</SelectItem>
@@ -358,7 +358,7 @@ export default function CAPTAINGui() {
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Decision</SelectLabel>
+                          <SelectLabel className="select-category-label">Decision</SelectLabel>
                           <SelectItem value="Negotiating">Negotiating</SelectItem>
                           <SelectItem value="Offer Received">Offer Received</SelectItem>
                           <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
@@ -370,7 +370,7 @@ export default function CAPTAINGui() {
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Follow-up</SelectLabel>
+                          <SelectLabel className="select-category-label">Follow-up</SelectLabel>
                           <SelectItem value="Following Up">Following Up</SelectItem>
                           <SelectItem value="Waiting">Waiting</SelectItem>
                         </SelectGroup>
@@ -468,7 +468,7 @@ export default function CAPTAINGui() {
                         <SelectItem value="All">All Statuses</SelectItem>
                         
                         <SelectGroup>
-                          <SelectLabel>Initial Contact</SelectLabel>
+                          <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
                           <SelectItem value="Bookmarked">Bookmarked</SelectItem>
                           <SelectItem value="Interested">Interested</SelectItem>
                           <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
@@ -476,14 +476,14 @@ export default function CAPTAINGui() {
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Application</SelectLabel>
+                          <SelectLabel className="select-category-label">Application</SelectLabel>
                           <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                          <SelectItem value="Applie">Applied</SelectItem>
+                          <SelectItem value="Applied">Applied</SelectItem>
                           <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Interview Process</SelectLabel>
+                          <SelectLabel className="select-category-label">Interview Process</SelectLabel>
                           <SelectItem value="Screening">Screening</SelectItem>
                           <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
                           <SelectItem value="First Interview">First Interview</SelectItem>
@@ -493,7 +493,7 @@ export default function CAPTAINGui() {
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Decision</SelectLabel>
+                          <SelectLabel className="select-category-label">Decision</SelectLabel>
                           <SelectItem value="Negotiating">Negotiating</SelectItem>
                           <SelectItem value="Offer Received">Offer Received</SelectItem>
                           <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
@@ -505,14 +505,14 @@ export default function CAPTAINGui() {
                         </SelectGroup>
                         
                         <SelectGroup>
-                          <SelectLabel>Follow-up</SelectLabel>
+                          <SelectLabel className="select-category-label">Follow-up</SelectLabel>
                           <SelectItem value="Following Up">Following Up</SelectItem>
                           <SelectItem value="Waiting">Waiting</SelectItem>
                         </SelectGroup>
                         
                         {/* Legacy statuses */}
                         <SelectGroup>
-                          <SelectLabel>Legacy Statuses</SelectLabel>
+                          <SelectLabel className="select-category-label">Legacy Statuses</SelectLabel>
                           <SelectItem value="In Progress">In Progress</SelectItem>
                           <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
                         </SelectGroup>
@@ -636,7 +636,7 @@ export default function CAPTAINGui() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectLabel>Initial Contact</SelectLabel>
+                              <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
                               <SelectItem value="Bookmarked">Bookmarked</SelectItem>
                               <SelectItem value="Interested">Interested</SelectItem>
                               <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
@@ -644,14 +644,14 @@ export default function CAPTAINGui() {
                             </SelectGroup>
                             
                             <SelectGroup>
-                              <SelectLabel>Application</SelectLabel>
+                              <SelectLabel className="select-category-label">Application</SelectLabel>
                               <SelectItem value="Preparing Application">Preparing Application</SelectItem>
                               <SelectItem value="Applied">Applied</SelectItem>
                               <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
                             </SelectGroup>
                             
                             <SelectGroup>
-                              <SelectLabel>Interview Process</SelectLabel>
+                              <SelectLabel className="select-category-label">Interview Process</SelectLabel>
                               <SelectItem value="Screening">Screening</SelectItem>
                               <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
                               <SelectItem value="First Interview">First Interview</SelectItem>
@@ -661,7 +661,7 @@ export default function CAPTAINGui() {
                             </SelectGroup>
                             
                             <SelectGroup>
-                              <SelectLabel>Decision</SelectLabel>
+                              <SelectLabel className="select-category-label">Decision</SelectLabel>
                               <SelectItem value="Negotiating">Negotiating</SelectItem>
                               <SelectItem value="Offer Received">Offer Received</SelectItem>
                               <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
@@ -673,14 +673,14 @@ export default function CAPTAINGui() {
                             </SelectGroup>
                             
                             <SelectGroup>
-                              <SelectLabel>Follow-up</SelectLabel>
+                              <SelectLabel className="select-category-label">Follow-up</SelectLabel>
                               <SelectItem value="Following Up">Following Up</SelectItem>
                               <SelectItem value="Waiting">Waiting</SelectItem>
                             </SelectGroup>
                             
                             {/* Legacy statuses */}
                             <SelectGroup>
-                              <SelectLabel>Legacy Statuses</SelectLabel>
+                              <SelectLabel className="select-category-label">Legacy Statuses</SelectLabel>
                               <SelectItem value="In Progress">In Progress</SelectItem>
                               <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
                             </SelectGroup>
