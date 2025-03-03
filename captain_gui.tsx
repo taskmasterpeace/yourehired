@@ -1426,7 +1426,7 @@ export default function CAPTAINGui() {
                             <div className="space-y-3">
                               <Textarea 
                                 className={`${isJobDescriptionExpanded ? 'h-[600px]' : 'h-[350px]'} font-mono whitespace-pre-wrap border-2 border-blue-200 focus:border-blue-400 focus:ring-blue-400 transition-colors`}
-                                value={editedJobDescription}
+                                value={edit  edJobDescription}
                                 onChange={(e) => setEditedJobDescription(e.target.value)}
                               />
                               <div className="flex justify-end space-x-3">
@@ -1689,7 +1689,7 @@ export default function CAPTAINGui() {
                   </div>
                 </ScrollArea>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {quickChat  Options.map((option, index) => (
+                  {quickChatOptions.map((option, index) => (
                     <Button key={index} variant="outline" onClick={() => setCurrentMessage(option)}>
                       {option}
                     </Button>
