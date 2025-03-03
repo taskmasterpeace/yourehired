@@ -17,6 +17,7 @@ import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send,
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-react'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { useAppState } from '@/context/context'
+import { Opportunity } from '@/context/types'
 
 // Configuration for tag colors
 const TAG_COLOR_CLASSES = {
@@ -387,6 +388,16 @@ export default function CAPTAINGui() {
   const handleSendMessage = async () => {
     if (currentMessage.trim() === "" || !selectedOpportunity) return;
 
+    // Add user message to global state
+    dispatch({
+      type: 'ADD_CHAT_MESSAGE',
+      payload: {
+        opportunityId: selectedOpportunity.id,
+        message: currentMessage,
+        sender: 'user'
+      }
+    });
+
     const userMessage = { role: 'user', content: currentMessage };
     setLocalChatMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
@@ -412,9 +423,8 @@ export default function CAPTAINGui() {
       }
 
       const data = await response.json();
-      setLocalChatMessages(prev => [...prev, { role: 'assistant', content: data.content || "I'm sorry, I couldn't generate a response." }]);
       
-      // Add to global state
+      // Add AI response to global state
       dispatch({
         type: 'ADD_CHAT_MESSAGE',
         payload: {
@@ -423,9 +433,10 @@ export default function CAPTAINGui() {
           sender: 'ai'
         }
       });
+      
+      setLocalChatMessages(prev => [...prev, { role: 'assistant', content: data.content || "I'm sorry, I couldn't generate a response." }]);
     } catch (error) {
       console.error('Error in chat:', error);
-      setLocalChatMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, there was an error processing your request." }]);
       
       // Add error message to global state
       dispatch({
@@ -436,6 +447,8 @@ export default function CAPTAINGui() {
           sender: 'ai'
         }
       });
+      
+      setLocalChatMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, there was an error processing your request." }]);
     }
   };
 
@@ -623,7 +636,7 @@ export default function CAPTAINGui() {
                         />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="recruiterPhone" className="text-right">Contact Phone</Label>
+                        <Label htmlFor="recru  iterPhone" className="text-right">Contact Phone</Label>
                         <Input
                           id="recruiterPhone"
                           className="col-span-3"
@@ -1676,7 +1689,7 @@ export default function CAPTAINGui() {
                   </div>
                 </ScrollArea>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {quickChatOptions.map((option, index) => (
+                  {quickChat  Options.map((option, index) => (
                     <Button key={index} variant="outline" onClick={() => setCurrentMessage(option)}>
                       {option}
                     </Button>
