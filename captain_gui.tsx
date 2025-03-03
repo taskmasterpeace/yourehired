@@ -710,7 +710,7 @@ export default function CAPTAINGui() {
                     </div>
                   </div>
                   
-                  {/* Show recruiter fields if status is Recruiter Contact */}
+                  {/* Show recruiter fields if status is Recru  iter Contact */}
                   {(newOpportunity.status === "Recruiter Contact" || newOpportunity.status ===  "Networking") && (
                     <>
                       <div className="grid grid-cols-4 items-center gap-4">
@@ -732,7 +732,7 @@ export default function CAPTAINGui() {
                         />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="recru  iterPhone" className="text-right">Contact Phone</Label>
+                        <Label htmlFor="recruiterPhone" className="text-right">Contact Phone</Label>
                         <Input
                           id="recruiterPhone"
                           className="col-span-3"
@@ -1480,7 +1480,7 @@ export default function CAPTAINGui() {
                                     <div className="ml-5 mt-2">
                                       <Badge className={`
                                         ${selectedOpportunity.status === "Offer Received" || selectedOpportunity.status === "Offer Accepted" ? "bg-green-100 text-green-800 border-green-200" : ""}
-                                        ${selectedOp  portunity.status === "Applied" || selectedOpportunity.status === "Interested" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}
+                                        ${selectedOpportunity.status === "Applied" || selectedOpportunity.status === "Interested" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}
                                         ${selectedOpportunity.status === "First Interview" || selectedOpportunity.status === "Second Interview" ? "bg-purple-100 text-purple-800 border-purple-200" : ""}
                                         ${selectedOpportunity.status === "Rejected" || selectedOpportunity.status === "Withdrawn" ? "bg-red-100 text-red-800 border-red-200" : ""}
                                         px-3 py-1 text-xs rounded-full border
@@ -2105,7 +2105,7 @@ export default function CAPTAINGui() {
                         
                         const hasApplication = opportunities.some(opp => {
                           const appDate = new Date(opp.appliedDate);
-                          return appDate.toDateString() === date.toDateString();
+                          return appDate.toDateString()  === date.toDateString();
                         });
                         
                         return (
