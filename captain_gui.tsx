@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -17,6 +17,46 @@ import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send,
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-react'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { useAppState } from '@/context/context'
+
+// Configuration for tag colors
+const TAG_COLOR_CLASSES = {
+  blue: {
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    border: "border-blue-200",
+    hover: "hover:bg-blue-200"
+  },
+  red: {
+    bg: "bg-red-100",
+    text: "text-red-800",
+    border: "border-red-200",
+    hover: "hover:bg-red-200"
+  },
+  green: {
+    bg: "bg-green-100",
+    text: "text-green-800",
+    border: "border-green-200",
+    hover: "hover:bg-green-200"
+  },
+  purple: {
+    bg: "bg-purple-100",
+    text: "text-purple-800",
+    border: "border-purple-200",
+    hover: "hover:bg-purple-200"
+  },
+  yellow: {
+    bg: "bg-yellow-100",
+    text: "text-yellow-800",
+    border: "border-yellow-200",
+    hover: "hover:bg-yellow-200"
+  },
+  gray: {
+    bg: "bg-gray-100",
+    text: "text-gray-800",
+    border: "border-gray-200",
+    hover: "hover:bg-gray-200"
+  }
+};
 
 export default function CAPTAINGui() {
   const { state, dispatch } = useAppState();
@@ -75,6 +115,86 @@ export default function CAPTAINGui() {
     { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
     { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
+
+  // Helper function for updating last modified timestamp
+  const updateLastModified = (opportunityId: number) => {
+    const newTimestamps = {...lastModifiedTimestamps};
+    newTimestamps[opportunityId] = new Date().toISOString();
+    setLastModifiedTimestamps(newTimestamps);
+  };
+
+  // Helper function for updating an opportunity
+  const updateOpportunity = (opportunityId: number, updates: Partial<Opportunity>) => {
+    dispatch({
+      type: 'UPDATE_OPPORTUNITY',
+      payload: {
+        id: opportunityId,
+        updates
+      }
+    });
+    updateLastModified(opportunityId);
+  };
+
+  // Generate analytics data using useMemo to prevent recalculation on every render
+  const analytics = useMemo(() => {
+    // Status distribution
+    const statusCounts = opportunities.reduce((acc, opp) => {
+      acc[opp.status] = (acc[opp.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Application timeline (applications per week)
+    const applicationsByWeek = opportunities.reduce((acc, opp) => {
+      const date = new Date(opp.appliedDate);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const weekKey = weekStart.toISOString().split('T')[0];
+      
+      acc[weekKey] = (acc[weekKey] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Response rate
+    const responseCount = opportunities.filter(opp => 
+      ['Screening', 'Technical Assessment', 'First Interview', 'Second Interview', 
+       'Final Interview', 'Offer Received', 'Offer Accepted', 'Offer Declined'].includes(opp.status)
+    ).length;
+    
+    const responseRate = opportunities.length > 0 
+      ? (responseCount / opportunities.length * 100).toFixed(1) 
+      : '0';
+    
+    // Interview conversion rate
+    const interviewCount = opportunities.filter(opp => 
+      ['First Interview', 'Second Interview', 'Final Interview', 
+       'Offer Received', 'Offer Accepted', 'Offer Declined'].includes(opp.status)
+    ).length;
+    
+    const interviewRate = responseCount > 0 
+      ? (interviewCount / responseCount * 100).toFixed(1) 
+      : '0';
+    
+    // Offer rate
+    const offerCount = opportunities.filter(opp => 
+      ['Offer Received', 'Offer Accepted', 'Offer Declined'].includes(opp.status)
+    ).length;
+    
+    const offerRate = interviewCount > 0 
+      ? (offerCount / interviewCount * 100).toFixed(1) 
+      : '0';
+    
+    return {
+      statusCounts,
+      applicationsByWeek,
+      responseRate,
+      interviewRate,
+      offerRate,
+      totalApplications: opportunities.length,
+      activeApplications: opportunities.filter(opp => 
+        !['Rejected', 'Withdrawn', 'Offer Declined', 'Position Filled', 'Position Cancelled'].includes(opp.status)
+      ).length
+    };
+  }, [opportunities]);
 
   // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter(opp => {
@@ -159,7 +279,8 @@ export default function CAPTAINGui() {
     location: "",
     salary: "",
     applicationUrl: "",
-    source: ""
+    source: "",
+    tags: []
   });
 
   const handleNewOpportunityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -196,9 +317,7 @@ export default function CAPTAINGui() {
     dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpp });
     
     // Update last modified timestamp
-    const newTimestamps = {...lastModifiedTimestamps};
-    newTimestamps[newOpp.id] = new Date().toISOString();
-    setLastModifiedTimestamps(newTimestamps);
+    updateLastModified(newOpp.id);
     
     // Reset form
     setNewOpportunity({
@@ -214,7 +333,8 @@ export default function CAPTAINGui() {
       location: "",
       salary: "",
       applicationUrl: "",
-      source: ""
+      source: "",
+      tags: []
     });
   };
 
@@ -228,19 +348,8 @@ export default function CAPTAINGui() {
       day: 'numeric' 
     });
     
-    //  Use dispatch instead of setState
-    dispatch({ 
-      type: 'UPDATE_OPPORTUNITY', 
-      payload: { 
-        id: selectedOpportunity.id, 
-        updates: { appliedDate: formattedDate } 
-      } 
-    });
-    
-    // Update last modified timestamp
-    const newTimestamps = {...lastModifiedTimestamps};
-    newTimestamps[selectedOpportunity.id] = new Date().toISOString();
-    setLastModifiedTimestamps(newTimestamps);
+    // Use the helper function to update the opportunity
+    updateOpportunity(selectedOpportunity.id, { appliedDate: formattedDate });
     
     setIsEditingDate(false);
   };
@@ -249,6 +358,12 @@ export default function CAPTAINGui() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const selectedOpportunity = opportunities[selectedOpportunityIndex];
+  
+  // Get chat messages for the selected opportunity
+  const opportunityMessages = useMemo(() => {
+    if (!selectedOpportunity) return [];
+    return chatMessages[selectedOpportunity.id] || [];
+  }, [chatMessages, selectedOpportunity]);
 
   useEffect(() => {
     if (selectedOpportunity) {
@@ -603,13 +718,6 @@ export default function CAPTAINGui() {
                           <SelectItem value="Following Up">Following Up</SelectItem>
                           <SelectItem value="Waiting">Waiting</SelectItem>
                         </SelectGroup>
-                        
-                        {/* Legacy statuses */}
-                        <SelectGroup>
-                          <SelectLabel className="select-category-label">Legacy Statuses</SelectLabel>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
-                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
@@ -714,6 +822,22 @@ export default function CAPTAINGui() {
                                   Last modified: {new Date(lastModifiedTimestamps[opp.id]).toLocaleString()}
                                 </p>
                               )}
+                              {opp.tags && opp.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {opp.tags.map(tag => (
+                                    <Badge 
+                                      key={tag.id} 
+                                      className={`
+                                        ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
+                                        ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
+                                        ${TAG_COLOR_CLASSES[tag.color]?.border || TAG_COLOR_CLASSES.gray.border}
+                                      `}
+                                    >
+                                      {tag.name}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
                               <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
                                 {opp.jobDescription.substring(0, 150)}...
                               </p>
@@ -738,6 +862,23 @@ export default function CAPTAINGui() {
                                 <p className="text-xs text-gray-500">{opp.appliedDate}</p>
                               </div>
                             </div>
+                            {opp.tags && opp.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {opp.tags.map(tag => (
+                                  <Badge 
+                                    key={tag.id} 
+                                    className={`
+                                      ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
+                                      ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
+                                      ${TAG_COLOR_CLASSES[tag.color]?.border || TAG_COLOR_CLASSES.gray.border}
+                                      text-xs py-0 px-1
+                                    `}
+                                  >
+                                    {tag.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       }
@@ -819,18 +960,7 @@ export default function CAPTAINGui() {
                         <Select 
                           value={selectedOpportunity.status} 
                           onValueChange={(value) => {
-                            dispatch({
-                              type: 'UPDATE_OPPORTUNITY',
-                              payload: {
-                                id: selectedOpportunity.id,
-                                updates: { status: value }
-                              }
-                            });
-                            
-                            // Update last modified timestamp
-                            const newTimestamps = {...lastModifiedTimestamps};
-                            newTimestamps[selectedOpportunity.id] = new Date().toISOString();
-                            setLastModifiedTimestamps(newTimestamps);
+                            updateOpportunity(selectedOpportunity.id, { status: value });
                           }}
                         >
                           <SelectTrigger className="w-[180px]">
@@ -878,13 +1008,6 @@ export default function CAPTAINGui() {
                               <SelectLabel className="select-category-label">Follow-up</SelectLabel>
                               <SelectItem value="Following Up">Following Up</SelectItem>
                               <SelectItem value="Waiting">Waiting</SelectItem>
-                            </SelectGroup>
-                            
-                            {/* Legacy statuses */}
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Legacy Statuses</SelectLabel>
-                              <SelectItem value="In Progress">In Progress</SelectItem>
-                              <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -987,19 +1110,7 @@ export default function CAPTAINGui() {
                                     </Button>
                                     <Button 
                                       onClick={() => {
-                                        dispatch({
-                                          type: 'UPDATE_OPPORTUNITY',
-                                          payload: {
-                                            id: selectedOpportunity.id,
-                                            updates: editedJobDetails
-                                          }
-                                        });
-                                        
-                                        // Update last modified timestamp
-                                        const newTimestamps = {...lastModifiedTimestamps};
-                                        newTimestamps[selectedOpportunity.id] = new Date().toISOString();
-                                        setLastModifiedTimestamps(newTimestamps);
-                                        
+                                        updateOpportunity(selectedOpportunity.id, editedJobDetails);
                                         setIsEditingJobDetails(false);
                                       }}
                                       className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -1158,19 +1269,7 @@ export default function CAPTAINGui() {
                                     </Button>
                                     <Button 
                                       onClick={() => {
-                                        dispatch({
-                                          type: 'UPDATE_OPPORTUNITY',
-                                          payload: {
-                                            id: selectedOpportunity.id,
-                                            updates: editedContactInfo
-                                          }
-                                        });
-                                        
-                                        // Update last modified timestamp
-                                        const newTimestamps = {...lastModifiedTimestamps};
-                                        newTimestamps[selectedOpportunity.id] = new Date().toISOString();
-                                        setLastModifiedTimestamps(newTimestamps);
-                                        
+                                        updateOpportunity(selectedOpportunity.id, editedContactInfo);
                                         setIsEditingContactInfo(false);
                                       }}
                                       className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -1264,7 +1363,7 @@ export default function CAPTAINGui() {
                                       <Badge className={`
                                         ${selectedOpportunity.status === "Offer Received" || selectedOpportunity.status === "Offer Accepted" ? "bg-green-100 text-green-800 border-green-200" : ""}
                                         ${selectedOpportunity.status === "Applied" || selectedOpportunity.status === "Interested" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}
-                                        ${selectedOpportunity.status === "Interview Scheduled" || selectedOpportunity.status === "First Interview" || selectedOpportunity.status === "Second Interview" ? "bg-purple-100 text-purple-800 border-purple-200" : ""}
+                                        ${selectedOpportunity.status === "First Interview" || selectedOpportunity.status === "Second Interview" ? "bg-purple-100 text-purple-800 border-purple-200" : ""}
                                         ${selectedOpportunity.status === "Rejected" || selectedOpportunity.status === "Withdrawn" ? "bg-red-100 text-red-800 border-red-200" : ""}
                                         px-3 py-1 text-xs rounded-full border
                                       `}>
@@ -1327,19 +1426,7 @@ export default function CAPTAINGui() {
                                 </Button>
                                 <Button 
                                   onClick={() => {
-                                    dispatch({
-                                      type: 'UPDATE_OPPORTUNITY',
-                                      payload: {
-                                        id: selectedOpportunity.id,
-                                        updates: { jobDescription: editedJobDescription }
-                                      }
-                                    });
-                                    
-                                    // Update last modified timestamp
-                                    const newTimestamps = {...lastModifiedTimestamps};
-                                    newTimestamps[selectedOpportunity.id] = new Date().toISOString();
-                                    setLastModifiedTimestamps(newTimestamps);
-                                    
+                                    updateOpportunity(selectedOpportunity.id, { jobDescription: editedJobDescription });
                                     setIsEditingJobDescription(false);
                                   }}
                                   className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -1398,19 +1485,7 @@ export default function CAPTAINGui() {
                                   </Button>
                                   <Button 
                                     onClick={() => {
-                                      dispatch({
-                                        type: 'UPDATE_OPPORTUNITY',
-                                        payload: {
-                                          id: selectedOpportunity.id,
-                                          updates: { notes: editedNotes }
-                                        }
-                                      });
-                                      
-                                      // Update last modified timestamp
-                                      const newTimestamps = {...lastModifiedTimestamps};
-                                      newTimestamps[selectedOpportunity.id] = new Date().toISOString();
-                                      setLastModifiedTimestamps(newTimestamps);
-                                      
+                                      updateOpportunity(selectedOpportunity.id, { notes: editedNotes });
                                       setIsEditingNotes(false);
                                     }}
                                     className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -1446,15 +1521,18 @@ export default function CAPTAINGui() {
                       </TabsContent>
                       <TabsContent value="chat">
                         <ScrollArea className="h-[400px] border rounded-md p-4 mb-4 bg-white">
-                          {localChatMessages.map((msg, index) => (
-                            <div key={index} className={`flex items-start mb-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                              {msg.role === 'assistant' && <Bot className="mr-2 h-6 w-6 text-blue-500" />}
-                              <Card className={msg.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'}>
+                          {opportunityMessages.map((msg, index) => (
+                            <div key={msg.id || index} className={`flex items-start mb-4 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+                              {msg.sender === 'ai' && <Bot className="mr-2 h-6 w-6 text-blue-500" />}
+                              <Card className={msg.sender === 'user' ? 'bg-blue-100' : 'bg-gray-100'}>
                                 <CardContent className="p-3">
-                                  <p>{msg.content}</p>
+                                  <p>{msg.message}</p>
+                                  {msg.timestamp && (
+                                    <p className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</p>
+                                  )}
                                 </CardContent>
                               </Card>
-                              {msg.role === 'user' && <User className="ml-2 h-6 w-6 text-blue-500" />}
+                              {msg.sender === 'user' && <User className="ml-2 h-6 w-6 text-blue-500" />}
                             </div>
                           ))}
                         </ScrollArea>
@@ -1686,6 +1764,11 @@ export default function CAPTAINGui() {
                     <div className="h-[200px] flex items-center justify-center bg-gray-200 rounded-md">
                       <BarChartIcon className="h-32 w-32 text-blue-500" />
                     </div>
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Total Applications: {analytics.totalApplications}</p>
+                      <p className="text-sm font-medium">Active Applications: {analytics.activeApplications}</p>
+                      <p className="text-sm font-medium">Response Rate: {analytics.responseRate}%</p>
+                    </div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -1695,6 +1778,10 @@ export default function CAPTAINGui() {
                   <CardContent>
                     <div className="h-[200px]  flex items-center justify-center bg-gray-200 rounded-md">
                       <PieChartIcon className="h-32 w-32 text-green-500" />
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-sm font-medium">Interview Conversion: {analytics.interviewRate}%</p>
+                      <p className="text-sm font-medium">Offer Rate: {analytics.offerRate}%</p>
                     </div>
                   </CardContent>
                 </Card>

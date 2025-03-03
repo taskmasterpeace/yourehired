@@ -1,4 +1,17 @@
 // Define the shape of our global state
+export interface Tag {
+  id: number;
+  name: string;
+  color: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  message: string;
+  sender: 'user' | 'ai';
+  timestamp: string;
+}
+
 export interface Opportunity {
   id: number;
   company: string;
@@ -15,6 +28,7 @@ export interface Opportunity {
   salary?: string;
   applicationUrl?: string;
   source?: string;
+  tags?: Tag[];
 }
 
 export interface CalendarEvent {
@@ -38,7 +52,7 @@ export interface AppState {
   masterResume: string;
   events: CalendarEvent[];
   userProfile: UserProfile;
-  chatMessages: { [key: number]: { message: string; sender: 'user' | 'ai' }[] };
+  chatMessages: { [opportunityId: number]: ChatMessage[] };
 }
 
 // Define all possible actions

@@ -71,24 +71,6 @@ const generateEventsFromOpportunity = (opportunity) => {
         opportunityId: opportunity.id
       });
       break;
-      
-    case 'Interview Scheduled':
-      // Keep the original logic for backward compatibility
-      const interviewScheduledDate = new Date(dateObj);
-      interviewScheduledDate.setDate(interviewScheduledDate.getDate() + 7);
-      
-      events.push({
-        id: now + 4,
-        title: `Interview with ${opportunity.company}`,
-        date: interviewScheduledDate.toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }),
-        type: 'interview',
-        opportunityId: opportunity.id
-      });
-      break;
   }
   
   return events;
@@ -185,12 +167,18 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'ADD_CHAT_MESSAGE': {
       const { opportunityId, message, sender } = action.payload;
       const existingMessages = state.chatMessages[opportunityId] || [];
+      const newMessage = {
+        id: Date.now(),
+        message,
+        sender,
+        timestamp: new Date().toISOString()
+      };
       
       return {
         ...state,
         chatMessages: {
           ...state.chatMessages,
-          [opportunityId]: [...existingMessages, { message, sender }]
+          [opportunityId]: [...existingMessages, newMessage]
         }
       };
     }
