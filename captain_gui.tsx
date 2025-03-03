@@ -18,7 +18,6 @@ import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { useAppState } from '@/context/context'
 import { Opportunity } from '@/context/types'
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { format, parseISO, isEqual, isSameDay } from 'date-fns'
 
 // Configuration for tag colors
@@ -123,7 +122,6 @@ export default function CAPTAINGui() {
   const [calendarView, setCalendarView] = useState("month"); // "month" or "week"
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [editingEvent, setEditingEvent] = useState(null);
-  const [draggedEvent, setDraggedEvent] = useState(null);
 
   const quickChatOptions = [
     "Analyze my resume",
@@ -1029,2099 +1027,956 @@ export default function CAPTAINGui() {
                               className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} 
                               onClick={() => {
                                 if (isBatchSelectMode) {
-                                  toggleJobSelection(opp.id);
-                                } else {
-                                  setSelectedOpportunityIndex(originalIndex);
-                                }
-                              }}
-                            >
-                              <CardHeader className="py-3">
-                                <CardTitle className="text-base">{opp.position}</CardTitle>
-                                <CardDescription>{opp.company}</CardDescription>
-                              </CardHeader>
-                              <CardContent className="py-2">
-                                <Badge>{opp.status}</Badge>
-                                <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
-                                {lastModifiedTimestamps[opp.id] && (
-                                  <p className="text-xs mt-2 text-gray-500">
-                                    Last modified: {new Date(lastModifiedTimestamps[opp.id]).toLocaleString()}
-                                  </p>
-                                )}
-                                {opp.tags && opp.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-2">
-                                    {opp.tags.map(tag => (
-                                      <Badge 
-                                        key={tag.id}
-                                        className={`
-                                          ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
-                                          ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
-                                          ${TAG_COLOR_CLASSES[tag.color]?.border || TAG_COLOR_CLASSES.gray.border}
-                                        `}
-                                      >
-                                        {tag.name}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                )}
-                                <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
-                                  {opp.jobDescription.substring(0, 150)}...
-                                </p>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        );
-                      } else {
-                        // List view - more compact and reorganized
-                        return (
-                          <div key={opp.id} className="relative">
-                            {isBatchSelectMode && (
-                              <div className="absolute top-2 left-2 z-10">
-                                <input 
-                                  type="checkbox" 
-                                  checked={selectedJobIds.includes(opp.id)}
-                                  onChange={() => toggleJobSelection(opp.id)}
-                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                              </div>
-                            )}
-                            <div 
-                              className={`p-2 mb-1 border rounded cursor-pointer ${isBatchSelectMode ? 'pl-8' : ''} ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200 border-blue-300' : 'bg-white border-gray-200'}`}
-                              onClick={() => {
-                                if (isBatchSelectMode) {
-                                  toggleJobSelection(opp.id);
-                                } else {
-                                  setSelectedOpportunityIndex(originalIndex);
-                                }
-                              }}
-                            >
-                              <div className="flex justify-between items-center mb-1">
-                                <h4 className="font-medium">{opp.position}</h4>
-                                <Badge className="ml-2">{opp.status}</Badge>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
-                                <div>Company: {opp.company}</div>
-                                <div>Applied: {opp.appliedDate}</div>
-                                <div>Location: {opp.location || 'Not specified'}</div>
-                                <div>
-                                  Last modified: {lastModifiedTimestamps[opp.id] 
-                                    ? new Date(lastModifiedTimestamps[opp.id]).toLocaleDateString() 
-                                    : 'N/A'}
-                                </div>
-                              </div>
-                              
-                              {opp.tags && opp.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {opp.tags.map(tag => (
-                                    <Badge 
-                                      key={tag.id} 
-                                      className={`
-                                        ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
-                                        ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
-                                        ${TAG_COLOR_CLASSES[tag.color]?.border || TAG_COLOR_CLASSES.gray.border}
-                                        text-xs py-0 px-1
-                                      `}
-                                    >
-                                      {tag.name}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      }
-                    })
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No opportunities match your search criteria</p>
-                      <Button 
-                        variant="link" 
-                        onClick={() => {
-                          setSearchTerm("");
-                          setStatusFilter("All");
-                          setDateFilter("All");
-                        }}
-                      >
-                        Clear filters
-                      </Button>
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                                  toggle # Aaronlcj/CNTK
+# Source/CNTKv2LibraryDll/proto/onnx/core/model.cpp
+#include "core/model.h"
+#include "core/graph.h"
 
-            <Card className="col-span-2 flex flex-col">
-              {selectedOpportunity ? (
-                <>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-blue-700">{selectedOpportunity.position} at {selectedOpportunity.company}</CardTitle>
-                      <div>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setSelectedOpportunityIndex(prev => (prev > 0 ? prev - 1 : opportunities.length - 1))}
-                          disabled={selectedOpportunityIndex === 0}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setSelectedOpportunityIndex(prev => (prev < opportunities.length - 1 ? prev + 1 : 0))}
-                          disabled={selectedOpportunityIndex === opportunities.length - 1}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <CardDescription>
-                        {isEditingDate ? (
-                          <div className="flex items-center space-x-2">
-                            <Input 
-                              type="date" 
-                              value={editedDate} 
-                              onChange={(e) => setEditedDate(e.target.value)}
-                              className="w-40"
-                            />
-                            <Button size="sm" variant="outline" onClick={handleSaveDateChange}>Save</Button>
-                            <Button size="sm" variant="ghost" onClick={() => setIsEditingDate(false)}>Cancel</Button>
-                          </div>
-                        ) : (
-                          <span>
-                            {selectedOpportunity.status === "Interested" ? "Added on: " : "Applied on: "}
-                            {selectedOpportunity.appliedDate} 
-                            <Button size="sm" variant="ghost" onClick={() => {
-                              setIsEditingDate(true);
-                              // Convert the date string to YYYY-MM-DD format for the input
-                              const dateObj = new Date(selectedOpportunity.appliedDate);
-                              const year = dateObj.getFullYear();
-                              const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                              const day = String(dateObj.getDate()).padStart(2, '0');
-                              setEditedDate(`${year}-${month}-${day}`);
-                            }}>Edit</Button>
-                          </span>
-                        )}
-                      </CardDescription>
-                      <div>
-                        <Select 
-                          value={selectedOpportunity.status} 
-                          onValueChange={(value) => {
-                            updateOpportunity(selectedOpportunity.id, { status: value });
-                          }}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
-                              <SelectItem value="Bookmarked">Bookmarked</SelectItem>
-                              <SelectItem value="Interested">Interested</SelectItem>
-                              <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
-                              <SelectItem value="Networking">Networking</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Application</SelectLabel>
-                              <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                              <SelectItem value="Applied">Applied</SelectItem>
-                              <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Interview Process</SelectLabel>
-                              <SelectItem value="Screening">Screening</SelectItem>
-                              <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
-                              <SelectItem value="First Interview">First Interview</SelectItem>
-                              <SelectItem value="Second Interview">Second Interview</SelectItem>
-                              <SelectItem value="Final Interview">Final Interview</SelectItem>
-                              <SelectItem value="Reference Check">Reference Check</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Decision</SelectLabel>
-                              <SelectItem value="Negotiating">Negotiating</SelectItem>
-                              <SelectItem value="Offer Received">Offer Received</SelectItem>
-                              <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
-                              <SelectItem value="Offer Declined">Offer Declined</SelectItem>
-                              <SelectItem value="Rejected">Rejected</SelectItem>
-                              <SelectItem value="Withdrawn">Withdrawn</SelectItem>
-                              <SelectItem value="Position Filled">Position Filled</SelectItem>
-                              <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Follow-up</SelectLabel>
-                              <SelectItem value="Following Up">Following Up</SelectItem>
-                              <SelectItem value="Waiting">Waiting</SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    {lastModifiedTimestamps[selectedOpportunity.id] && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Last modified: {new Date(lastModifiedTimestamps[selectedOpportunity.id]).toLocaleString()}
-                      </p>
-                    )}
-                  </CardHeader>
-                  <CardContent className="flex-grow overflow-auto">
-                    <Tabs defaultValue="details" className="h-full flex flex-col">
-                      <TabsList>
-                        <TabsTrigger value="details">Details</TabsTrigger>
-                        <TabsTrigger value="resume">Resume</TabsTrigger>
-                        <TabsTrigger value="chat">Chat</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="details" className="flex-grow overflow-auto">
-                        <div className="grid grid-cols-2 gap-6 mb-6">
-                          {/* Left Card - Job Details with enhanced styling */}
-                          <Card className="bg-white overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
-                              <div className="flex justify-between items-center">
-                                <CardTitle className="text-base text-blue-700 flex items-center">
-                                  <FileText className="h-4 w-4 mr-2 text-blue-500" />
-                                  Job Details
-                                </CardTitle>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                                  onClick={() => {
-                                    setIsEditingJobDetails(true);
-                                    setEditedJobDetails({
-                                      location: selectedOpportunity.location || "",
-                                      salary: selectedOpportunity.salary || "",
-                                      applicationUrl: selectedOpportunity.applicationUrl || "",
-                                      source: selectedOpportunity.source || ""
-                                    });
-                                  }}
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                  </svg>
-                                  Edit
-                                </Button>
-                              </div>
-                            </div>
-                            <CardContent className="space-y-4 p-6">
-                              {isEditingJobDetails ? (
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label htmlFor="location" className="text-sm font-medium text-gray-500">Location</Label>
-                                    <Input
-                                      id="location"
-                                      value={editedJobDetails.location}
-                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, location: e.target.value})}
-                                      placeholder="e.g., Remote, New York, NY"
-                                      className="mt-1"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="salary" className="text-sm font-medium text-gray-500">Salary Range</Label>
-                                    <Input
-                                      id="salary"
-                                      value={editedJobDetails.salary}
-                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, salary: e.target.value})}
-                                      placeholder="e.g., $80,000 - $100,000"
-                                      className="mt-1"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="applicationUrl" className="text-sm font-medium text-gray-500">Application URL</Label>
-                                    <Input
-                                      id="applicationUrl"
-                                      value={editedJobDetails.applicationUrl}
-                                      onChange={(e) =>  setEditedJobDetails({...editedJobDetails, applicationUrl: e.target.value})}
-                                      placeholder="https://..."
-                                      className="mt-1"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="source" className="text-sm font-medium text-gray-500">Source</Label>
-                                    <Input
-                                      id="source"
-                                      value={editedJobDetails.source}
-                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, source: e.target.value})}
-                                      placeholder="e.g., LinkedIn, Indeed, Referral"
-                                      className="mt-1"
-                                    />
-                                  </div>
-                                  <div className="flex justify-end space-x-3 mt-4">
-                                    <Button 
-                                      variant="outline" 
-                                      onClick={() => setIsEditingJobDetails(false)}
-                                      className="bg-white hover:bg-gray-50 text-gray-600 border-gray-200"
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button 
-                                      onClick={() => {
-                                        updateOpportunity(selectedOpportunity.id, editedJobDetails);
-                                        setIsEditingJobDetails(false);
-                                      }}
-                                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                                    >
-                                      Save
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  {selectedOpportunity.location || selectedOpportunity.salary || 
-                                   selectedOpportunity.source || selectedOpportunity.applicationUrl ? (
-                                    <>
-                                      {selectedOpportunity.location && (
-                                        <div>
-                                          <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="current  Color">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                            Location
-                                          </h4>
-                                          <p className="text-gray-700 ml-5 mt-1">{selectedOpportunity.location}</p>
-                                        </div>
-                                      )}
-                                      
-                                      {selectedOpportunity.salary && (
-                                        <div>
-                                          <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Salary Range
-                                          </h4>
-                                          <p className="text-gray-700 ml-5 mt-1 font-medium">{selectedOpportunity.salary}</p>
-                                        </div>
-                                      )}
-                                      
-                                      {selectedOpportunity.source && (
-                                        <div>
-                                          <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Source
-                                          </h4>
-                                          <p className="text-gray-700 ml-5 mt-1">{selectedOpportunity.source}</p>
-                                        </div>
-                                      )}
-                                      
-                                      {selectedOpportunity.applicationUrl && (
-                                        <div>
-                                          <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.102-1.101" />
-                                            </svg>
-                                            Application URL
-                                          </h4>
-                                          <div className="truncate ml-5 mt-1">
-                                            <a 
-                                              href={selectedOpportunity.applicationUrl} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                                            >
-                                              {selectedOpportunity.applicationUrl}
-                                            </a>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <div className="flex items-center justify-center h-16 text-center">
-                                      <p className="text-blue-400 italic flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        No job details added yet
-                                      </p>
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </CardContent>
-                          </Card>
-                          
-                          {/* Right Card - Contact Info with enhanced styling */}
-                          <Card className="bg-white overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
-                              <div className="flex justify-between items-center">
-                                <CardTitle className="text-base text-blue-700 flex items-center">
-                                  <User className="h-4 w-4 mr-2 text-blue-500" />
-                                  Contact Information
-                                </CardTitle>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                                  onClick={() => {
-                                    setIsEditingContactInfo(true);
-                                    setEditedContactInfo({
-                                      recruiterName: selectedOpportunity.recruiterName || "",
-                                      recruiterEmail: selectedOpportunity.recruiterEmail || "",
-                                      recruiterPhone: selectedOpportunity.recruiterPhone || ""
-                                    });
-                                  }}
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                  </svg>
-                                  Edit
-                                </Button>
-                              </div>
-                            </div>
-                            <CardContent className="space-y-4 p-6">
-                              {isEditingContactInfo ? (
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label htmlFor="recruiterName" className="text-sm font-medium text-gray-500">Contact Name</Label>
-                                    <Input
-                                      id="recruiterName"
-                                      value={editedContactInfo.recruiterName}
-                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterName: e.target.value})}
-                                      placeholder="e.g., John Smith"
-                                      className="mt-1"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="recruiterEmail" className="text-sm font-medium text-gray-500">Contact Email</Label>
-                                    <Input
-                                      id="recruiterEmail"
-                                      value={editedContactInfo.recruiterEmail}
-                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterEmail: e.target.value})}
-                                      placeholder="e.g., john.smith@company.com"
-                                      className="mt-1"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="recruiterPhone" className="text-sm font-medium text-gray-500">Contact Phone</Label>
-                                    <Input
-                                      id="recruiterPhone"
-                                      value={editedContactInfo.recruiterPhone}
-                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterPhone: e.target.value})}
-                                      placeholder="e.g., (555) 123-4567"
-                                      className="mt-1"
-                                    />
-                                  </div>
-                                  <div className="flex justify-end space-x-3 mt-4">
-                                    <Button 
-                                      variant="outline" 
-                                      onClick={() => setIsEditingContactInfo(false)}
-                                      className="bg-white hover:bg-gray-50 text-gray-600 border-gray-200"
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button 
-                                      onClick={() => {
-                                        updateOpportunity(selectedOpportunity.id, editedContactInfo);
-                                        setIsEditingContactInfo(false);
-                                      }}
-                                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                                    >
-                                      Save
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  {selectedOpportunity.recruiterName || selectedOpportunity.recruiterEmail ||
-                                   selectedOpportunity.recruiterPhone ? (
-                                    <>
-                                      {selectedOpportunity.recruiterName && (
-                                        <div>
-                                          <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
-                                            Name
-                                          </h4>
-                                          <p className="text-gray-700 ml-5 mt-1 font-medium">{selectedOpportunity.recruiterName}</p>
-                                        </div>
-                                      )}
-                                      
-                                      {selectedOpportunity.recruiterEmail && (
-                                        <div>
-                                          <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                            </svg>
-                                            Email
-                                          </h4>
-                                          <div className="ml-5 mt-1">
-                                            <a 
-                                              href={`mailto:${selectedOpportunity.recruiterEmail}`} 
-                                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center"
-                                            >
-                                              {selectedOpportunity.recruiterEmail}
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                              </svg>
-                                            </a>
-                                          </div>
-                                        </div>
-                                      )}
-                                      
-                                      {selectedOpportunity.recruiterPhone && (
-                                        <div>
-                                          <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                            </svg>
-                                            Phone
-                                          </h4>
-                                          <div className="ml-5 mt-1">
-                                            <a 
-                                              href={`tel:${selectedOpportunity.recruiterPhone}`} 
-                                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center"
-                                            >
-                                              {selectedOpportunity.recruiterPhone}
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                              </svg>
-                                            </a>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <div className="flex items-center justify-center h-16 text-center">
-                                      <p className="text-blue-400 italic flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        No contact information added yet
-                                      </p>
-                                    </div>
-                                  )}
-                                  
-                                  {/* Status is always shown */}
-                                  <div className={`${(!selectedOpportunity.recruiterName && !selectedOpportunity.recruiterEmail && 
-                                                   !selectedOpportunity.recruiterPhone) ? "mt-0" : "mt-2 pt-4 border-t border-gray-100"}`}>
-                                    <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                      </svg>
-                                      Current Status
-                                    </h4>
-                                    <div className="ml-5 mt-2">
-                                      <Badge className={`
-                                        ${selectedOpportunity.status === "Offer Received" || selectedOpportunity.status === "Offer Accepted" ? "bg-green-100 text-green-800 border-green-200" : ""}
-                                        ${selectedOpportunity.status === "Applied" || selectedOpportunity.status === "Interested" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}
-                                        ${selectedOpportunity.status === "First Interview" || selectedOpportunity.status === "Second Interview" ? "bg-purple-100 text-purple-800 border-purple-200" : ""}
-                                        ${selectedOpportunity.status === "Rejected" || selectedOpportunity.status === "Withdrawn" ? "bg-red-100 text-red-800 border-red-200" : ""}
-                                        px-3 py-1 text-xs rounded-full border
-                                      `}>
-                                        {selectedOpportunity.status}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                            </CardContent>
-                          </Card>
-                        </div>
-                        
-                        {/* Job Description - Enhanced styling with expand/collapse */}
-                        <div className="mb-6 flex-grow">
-                          <div className="flex justify-between items-center mb-3">
-                            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                              <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                              Job Description
-                              {!isEditingJobDescription && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => setIsJobDescriptionExpanded(!isJobDescriptionExpanded)}
-                                  className="ml-2"
-                                >
-                                  {isJobDescriptionExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                                </Button>
-                              )}
-                            </h3>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => {
-                                setIsEditingJobDescription(true);
-                                setEditedJobDescription(selectedOpportunity.jobDescription);
-                              }}
-                              className="bg-white hover:bg-blue-50 text-blue-600 border-blue-200 hover:border-blue-300 transition-colors"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Edit
-                            </Button>
-                          </div>
-                          {isEditingJobDescription ? (
-                            <div className="space-y-3">
-                              <Textarea 
-                                className={`${isJobDescriptionExpanded ? 'h-[600px]' : 'h-[350px]'} font-mono whitespace-pre-wrap border-2 border-blue-200 focus:border-blue-400 focus:ring-blue-400 transition-colors`}
-                                value={editedJobDescription}
-                                onChange={(e) => setEditedJobDescription(e.target.value)}
-                              />
-                              <div className="flex justify-end space-x-3">
-                                <Button 
-                                  variant="outline" 
-                                  onClick={() => setIsEditingJobDescription(false)}
-                                  className="bg-white hover:bg-gray-50 text-gray-600 border-gray-200"
-                                >
-                                  Cancel
-                                </Button>
-                                <Button 
-                                  onClick={() => {
-                                    updateOpportunity(selectedOpportunity.id, { jobDescription: editedJobDescription });
-                                    setIsEditingJobDescription(false);
-                                  }}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                  Save Changes
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <ScrollArea className={`${isJobDescriptionExpanded ? 'h-[600px]' : 'h-[350px]'} border rounded-md p-5 bg-white shadow-sm hover:shadow transition-shadow`}>
-                              <pre className="whitespace-pre-wrap text-gray-700 font-sans">{selectedOpportunity.jobDescription}</pre>
-                            </ScrollArea>
-                          )}
-                        </div>
-                        
-                        {/* Upcoming Events Section */}
-                        <div className="mt-6">
-                          <Card className="bg-white border-0 shadow-md overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
-                              <div className="flex justify-between items-center">
-                                <CardTitle className="text-base text-blue-700 flex items-center">
-                                  <CalendarIcon className="h-4 w-4 mr-2 text-blue-500" />
-                                  Upcoming Events
-                                </CardTitle>
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                                    >
-                                      <PlusCircle className="h-4 w-4 mr-1" />
-                                      Add Event
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Add Calendar Event</DialogTitle>
-                                      <DialogDescription>Create a new event for this job opportunity</DialogDescription>
-                                    </DialogHeader>
-                                    
-                                    <div className="grid gap-4 py-4">
-                                      <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="title" className="text-right">Title</Label>
-                                        <Input 
-                                          id="title" 
-                                          className="col-span-3" 
-                                          placeholder="e.g., Interview with Company X"
-                                          value={newEvent.title}
-                                          onChange={handleNewEventChange}
-                                        />
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="date" className="text-right">Date</Label>
-                                        <Input 
-                                          id="date" 
-                                          type="date" 
-                                          className="col-span-3"
-                                          value={newEvent.date}
-                                          onChange={handleNewEventChange}
-                                        />
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="type" className="text-right">Type</Label>
-                                        <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
-                                          <SelectTrigger className="col-span-3">
-                                            <SelectValue placeholder="Select event type" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="interview">Interview</SelectItem>
-                                            <SelectItem value="followup">Follow-up</SelectItem>
-                                            <SelectItem value="deadline">Deadline</SelectItem>
-                                            <SelectItem value="assessment">Assessment</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="notes" className="text-right">Notes</Label>
-                                        <Textarea 
-                                          id="notes" 
-                                          className="col-span-3" 
-                                          placeholder="Add any additional notes about this event"
-                                          rows={3}
-                                          value={newEvent.notes}
-                                          onChange={handleNewEventChange}
-                                        />
-                                      </div>
-                                    </div>
-                                    
-                                    <DialogFooter>
-                                      <Button type="submit" onClick={() => {
-                                        // Set the opportunityId to the current opportunity
-                                        const updatedEvent = {
-                                          ...newEvent,
-                                          opportunityId: selectedOpportunity.id.toString()
-                                        };
-                                        setNewEvent(updatedEvent);
-                                        
-                                        // Create the event
-                                        const dateObj = new Date(updatedEvent.date);
-                                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
-                                          year: 'numeric', 
-                                          month: 'long', 
-                                          day: 'numeric' 
-                                        });
-                                        
-                                        const newEventObj = {
-                                          id: Date.now(),
-                                          title: updatedEvent.title,
-                                          date: formattedDate,
-                                          type: updatedEvent.type,
-                                          opportunityId: parseInt(updatedEvent.opportunityId),
-                                          notes: updatedEvent.notes
-                                        };
-                                        
-                                        dispatch({ type: 'ADD_EVENT', payload: newEventObj });
-                                        
-                                        // Reset form
-                                        setNewEvent({
-                                          title: "",
-                                          date: new Date().toISOString().split('T')[0],
-                                          type: "interview",
-                                          opportunityId: "",
-                                          notes: ""
-                                        });
-                                      }}>Add Event</Button>
-                                    </DialogFooter>
-                                  </DialogContent>
-                                </Dialog>
-                              </div>
-                            </div>
-                            <CardContent className="p-6">
-                              {/* Filter events for this job */}
-                              {events.filter(event => event.opportunityId === selectedOpportunity.id).length > 0 ? (
-                                <ul className="space-y-3">
-                                  {events
-                                    .filter(event => event.opportunityId === selectedOpportunity.id)
-                                    .map(event => (
-                                      <li key={event.id} className="flex items-start p-2 border rounded-md bg-gray-50">
-                                        <div className={`
-                                          w-2 h-full rounded-full mr-3 self-stretch
-                                          ${event.type === 'interview' ? 'bg-blue-500' : 
-                                            event.type === 'followup' ? 'bg-green-500' : 
-                                            event.type === 'deadline' ? 'bg-red-500' : 
-                                            'bg-purple-500'}
-                                        `}></div>
-                                        <div className="flex-grow">
-                                          <p className="font-medium">{event.title}</p>
-                                          <p className="text-sm text-gray-500">{event.date}</p>
-                                          {event.notes && (
-                                            <p className="text-xs text-gray-600 mt-1 italic">{event.notes}</p>
-                                          )}
-                                        </div>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm"
-                                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                          onClick={() => dispatch({ type: 'DELETE_EVENT', payload: event.id })}
-                                        >
-                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                          </svg>
-                                        </Button>
-                                      </li>
-                                    ))}
-                                </ul>
-                              ) : (
-                                <div className="text-center py-6 text-gray-400">
-                                  <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                                  <p>No upcoming events for this opportunity</p>
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <Button variant="outline" size="sm" className="mt-2">
-                                        <PlusCircle className="h-4 w-4 mr-1" />
-                                        Schedule an event
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                      <DialogHeader>
-                                        <DialogTitle>Add Calendar Event</DialogTitle>
-                                        <DialogDescription>Create a new event for this job opportunity</DialogDescription>
-                                      </DialogHeader>
-                                      
-                                      <div className="grid gap-4 py-4">
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="title" className="text-right">Title</Label>
-                                          <Input 
-                                            id="title" 
-                                            className="col-span-3" 
-                                            placeholder="e.g., Interview with Company X"
-                                            value={newEvent.title}
-                                            onChange={handleNewEventChange}
-                                          />
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="date" className="text-right">Date</Label>
-                                          <Input 
-                                            id="date" 
-                                            type="date" 
-                                            className="col-span-3"
-                                            value={newEvent.date}
-                                            onChange={handleNewEventChange}
-                                          />
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="type" className="text-right">Type</Label>
-                                          <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
-                                            <SelectTrigger className="col-span-3">
-                                              <SelectValue placeholder="Select event type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="interview">Interview</SelectItem>
-                                              <SelectItem value="followup">Follow-up</SelectItem>
-                                              <SelectItem value="deadline">Deadline</SelectItem>
-                                              <SelectItem value="assessment">Assessment</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                          <Label htmlFor="notes" className="text-right">Notes</Label>
-                                          <Textarea 
-                                            id="notes" 
-                                            className="col-span-3" 
-                                            placeholder="Add any additional notes about this event"
-                                            rows={3}
-                                            value={newEvent.notes}
-                                            onChange={handleNewEventChange}
-                                          />
-                                        </div>
-                                      </div>
-                                      
-                                      <DialogFooter>
-                                        <Button type="submit" onClick={() => {
-                                          // Set the opportunityId to the current opportunity
-                                          const updatedEvent = {
-                                            ...newEvent,
-                                            opportunityId: selectedOpportunity.id.toString()
-                                          };
-                                          setNewEvent(updatedEvent);
-                                          
-                                          // Create the event
-                                          const dateObj = new Date(updatedEvent.date);
-                                          const formattedDate = dateObj.toLocaleDateString('en-US', { 
-                                            year: 'numeric', 
-                                            month: 'long', 
-                                            day: 'numeric' 
-                                          });
-                                          
-                                          const newEventObj = {
-                                            id: Date.now(),
-                                            title: updatedEvent.title,
-                                            date: formattedDate,
-                                            type: updatedEvent.type,
-                                            opportunityId: parseInt(updatedEvent.opportunityId),
-                                            notes: updatedEvent.notes
-                                          };
-                                          
-                                          dispatch({ type: 'ADD_EVENT', payload: newEventObj });
-                                          
-                                          // Reset form
-                                          setNewEvent({
-                                            title: "",
-                                            date: new Date().toISOString().split('T')[0],
-                                            type: "interview",
-                                            opportunityId: "",
-                                            notes: ""
-                                          });
-                                        }}>Add Event</Button>
-                                      </DialogFooter>
-                                    </DialogContent>
-                                  </Dialog>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        </div>
-                        
-                        {/* Notes at Bottom - Changed from amber to blue styling */}
-                        <Card className="bg-white border-0 shadow-md overflow-hidden mt-6">
-                          <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
-                            <div className="flex justify-between items-center">
-                              <CardTitle className="text-base text-blue-700 flex items-center">
-                                <MessageSquare className="h-4 w-4 mr-2 text-blue-500" />
-                                Notes
-                              </CardTitle>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                                onClick={() => {
-                                  setIsEditingNotes(true);
-                                  setEditedNotes(selectedOpportunity.notes || "");
-                                }}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                Edit
-                              </Button>
-                            </div>
-                          </div>
-                          <CardContent className="p-6">
-                            {isEditingNotes ? (
-                              <div className="space-y-3">
-                                <Textarea 
-                                  className="min-h-[100px] border-2 border-blue-200 focus:border-blue-400 focus:ring-blue-400 transition-colors"
-                                  value={editedNotes}
-                                  onChange={(e) => setEditedNotes(e.target.value)}
-                                  placeholder="Add notes about this opportunity..."
-                                />
-                                <div className="flex justify-end space-x-3">
-                                  <Button 
-                                    variant="outline" 
-                                    onClick={() => setIsEditingNotes(false)}
-                                    className="bg-white hover:bg-gray-50 text-gray-600 border-gray-200"
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button 
-                                    onClick={() => {
-                                      updateOpportunity(selectedOpportunity.id, { notes: editedNotes });
-                                      setIsEditingNotes(false);
-                                    }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                  >
-                                    Save Notes
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="min-h-[100px] bg-blue-50 rounded-md p-4 border border-blue-100">
-                                {selectedOpportunity.notes ? (
-                                  <p className="whitespace-pre-wrap text-gray-700">{selectedOpportunity.notes}</p>
-                                ) : (
-                                  <div className="flex items-center justify-center h-16 text-center">
-                                    <p className="text-blue-400 italic flex items-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                      </svg>
-                                      No notes added yet
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </TabsContent>
-                      <TabsContent value="resume">
-                        <h3 className="text-lg font-semibold mb-2">Submitted Resume</h3>
-                        <ScrollArea className="h-[400px] border rounded-md p-4 bg-white">
-                          <pre>{selectedOpportunity.resume}</pre>
-                        </ScrollArea>
-                      </TabsContent>
-                      <TabsContent value="chat">
-                        <ScrollArea className="h-[400px] border rounded-md p-4 mb-4 bg-white">
-                          {opportunityMessages.map((msg, index) => (
-                            <div key={msg.id || index} className={`flex items-start mb-4 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
-                              {msg.sender === 'ai' && <Bot className="mr-2 h-6 w-6 text-blue-500" />}
-                              <Card className={msg.sender === 'user' ? 'bg-blue-100' : 'bg-gray-100'}>
-                                <CardContent className="p-3">
-                                  <p>{msg.message}</p>
-                                  {msg.timestamp && (
-                                    <p className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</p>
-                                  )}
-                                </CardContent>
-                              </Card>
-                              {msg.sender === 'user' && <User className="ml-2 h-6 w-6 text-blue-500" />}
-                            </div>
-                          ))}
-                        </ScrollArea>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {suggestions.map((suggestion, index) => (
-                            <Button key={index} variant="outline" onClick={() => setCurrentMessage(suggestion)}>
-                              {suggestion}
-                            </Button>
-                          ))}
-                        </div>
-                        <div className="flex items-center">
-                          <Input
-                            placeholder="Type your message here..."
-                            className="flex-grow mr-2"
-                            value={currentMessage}
-                            onChange={(e) => setCurrentMessage(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleSendMessage();
-                              }
-                            }}
-                          />
-                          <Button onClick={handleSendMessage}><Send className="h-4 w-4" /></Button>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </>
-              ) : (
-                <CardContent>
-                  <p className="text-center text-gray-500">No opportunity selected</p>
-                </CardContent>
-              )}
-            </Card>
-          </div>
-        </TabsContent>
+namespace ONNXIR
+{
+    Model::Model(const std::string& p_graphName,
+        bool p_isONNX)
+        : m_modelProto(new ModelProto),
+        m_graphProto(nullptr),
+        m_graph(nullptr),
+        m_isONNX(p_isONNX)
+    {
+        m_modelProto->set_ir_version(ONNX_IRDEFS_VERSION);
+        m_modelProto->set_producer_name("CNTK");
+        m_modelProto->set_producer_version("2.4");
+        m_modelProto->set_domain("ai.cntk");
+        m_modelProto->set_model_version(1);
+        m_modelProto->set_doc_string("A CNTK model converted to ONNX.");
+        m_graphProto = m_modelProto->mutable_graph();
+        m_graphProto->set_name(p_graphName);
+        m_graph.reset(new Graph(m_graphProto, p_isONNX));
+    }
 
-        <TabsContent value="resume" className="p-4 flex-grow overflow-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-blue-700">Master Resume</CardTitle>
-              <CardDescription>Manage and edit your master resume</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center">
-                  <Label htmlFor="freeze-resume" className="mr-2">
-                    {isMasterResumeFrozen ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                    {isMasterResumeFrozen ? 'Locked' : 'Unlocked'}
-                  </Label>
-                  <Switch
-                    id="freeze-resume"
-                    checked={isMasterResumeFrozen}
-                    onCheckedChange={setIsMasterResumeFrozen}
-                  />
-                </div>
-                <Button 
-                  disabled={isMasterResumeFrozen}
-                  onClick={() => dispatch({ type: 'UPDATE_MASTER_RESUME', payload: masterResume })}
-                >
-                  Save Changes
-                </Button>
-              </div>
-              <Textarea
-                className="min-h-[400px] mb-4 font-mono whitespace-pre-wrap"
-                placeholder="Paste your master resume here..."
-                value={masterResume}
-                onChange={(e) => dispatch({ type: 'UPDATE_MASTER_RESUME', payload: e.target.value })}
-                disabled={isMasterResumeFrozen}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Resume Preview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[200px] border rounded-md p-4">
-                      <pre className="whitespace-pre-wrap">{masterResume}</pre>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Change Log</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[200px] border rounded-md p-4">
-                      <ul className="space-y-2">
-                        <li>May 20, 2023: Updated skills section</li>
-                        <li>May 15, 2023: Added new work experience</li>
-                        <li>May 10, 2023: Initial resume creation</li>
-                      </ul>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+    Model::Model(const ModelProto& p_modelProto,
+        bool p_isONNX)
+        : m_modelProto(new ModelProto(p_modelProto)),
+        m_graphProto(nullptr),
+        m_graph(nullptr),
+        m_isONNX(p_isONNX)
+    {
+        m_graphProto = m_modelProto->mutable_graph();
+        m_graph.reset(new Graph(m_graphProto, p_isONNX));
+    }
 
-        <TabsContent value="captain" className="p-4 flex-grow overflow-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-semibold text-blue-700">CAPTAIN AI Assistant</CardTitle>
-                <CardDescription>Your AI career assistant and opportunity analyzer</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[400px] border rounded-md p-4 mb-4 bg-white">
-                  <div className="space-y-4">
-                    <div className="flex items-start">
-                      <Bot className="mr-2 h-6 w-6 text-blue-500" />
-                      <Card className="bg-gray-100">
-                        <CardContent className="p-3">
-                          <p>Hello! I'm your CAPTAIN AI assistant. How can I help you with your job search today?</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    <div className="flex items-start justify-end">
-                      <Card className="bg-blue-100">
-                        <CardContent className="p-3">
-                          <p>Can you analyze my current job applications and suggest improvements?</p>
-                        </CardContent>
-                      </Card>
-                      <User className="ml-2 h-6 w-6 text-blue-500" />
-                    </div>
-                    <div className="flex items-start">
-                      <Bot className="mr-2 h-6 w-6 text-blue-500" />
-                      <Card className="bg-gray-100">
-                        <CardContent className="p-3">
-                          <p>Certainly! I'll analyze your applications and provide suggestions for improvement. Here's what I found:</p>
-                          <ul className="list-disc pl-5 mt-2">
-                            <li>Your resume for the Software Engineer position at TechCorp could benefit from more specific achievements.</li>
-                            <li>For the Data Scientist role at DataInc, consider highlighting your experience with big data technologies.</li>
-                            <li>Your application for the Machine Learning Engineer position at AIStartup looks strong, but you might want to elaborate on your NLP projects.</li>
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </ScrollArea>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {quickChatOptions.map((option, index) => (
-                    <Button key={index} variant="outline" onClick={() => setCurrentMessage(option)}>
-                      {option}
-                    </Button>
-                  ))}
-                </div>
-                <div className="flex items-center">
-                  <Input
-                    placeholder="Ask CAPTAIN anything..."
-                    className="flex-grow mr-2"
-                    value={currentMessage}
-                    onChange={(e) => setCurrentMessage(e.target.value)}
-                  />
-                  <Button><Send className="h-4 w-4" /></Button>
-                </div>
-              </CardContent>
-            </Card>
+    Model::~Model()
+    {
+    }
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-semibold text-blue-700">Job Recommendations</CardTitle>
-                <CardDescription>Rate these job opportunities to improve recommendations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{jobRecommendations[currentJobIndex].position}</CardTitle>
-                      <CardDescription>{jobRecommendations[currentJobIndex].company}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-[200px] border rounded-md p-4 mb-4">
-                        <p>{jobRecommendations[currentJobIndex].description}</p>
-                      </ScrollArea>
-                    </CardContent>
-                    <CardFooter className="flex justify-between">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          // Handle thumbs down logic here
-                          setCurrentJobIndex((prevIndex) => (prevIndex + 1) % jobRecommendations.length);
-                        }}
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          // Handle thumbs up logic here
-                          setCurrentJobIndex((prevIndex) => (prevIndex + 1) % jobRecommendations.length);
-                        }}
-                      >
-                        <ThumbsUp className="h-4 w-4" />
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                  <div className="flex justify-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentJobIndex((prevIndex) => (prevIndex + 1) % jobRecommendations.length)}
-                    >
-                      Skip
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+    Version Model::IrVersion() const
+    {
+        return m_modelProto->ir_version();
+    }
 
-        <TabsContent value="analytics" className="p-4 flex-grow overflow-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-blue-700">Job Search Analytics</CardTitle>
-              <CardDescription>Visualize your job search progress</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Application Status</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[200px] flex items-center justify-center bg-gray-200 rounded-md">
-                      <BarChartIcon className="h-32 w-32 text-blue-500" />
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-sm font-medium">Total Applications: {analytics.totalApplications}</p>
-                      <p className="text-sm font-medium">Active Applications: {analytics.activeApplications}</p>
-                      <p className="text-sm font-medium">Response Rate: {analytics.responseRate}%</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Interview Success Rate</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[200px]  flex items-center justify-center bg-gray-200 rounded-md">
-                      <PieChartIcon className="h-32 w-32 text-green-500" />
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-sm font-medium">Interview Conversion: {analytics.interviewRate}%</p>
-                      <p className="text-sm font-medium">Offer Rate: {analytics.offerRate}%</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Application Streak</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <div className="text-5xl font-bold text-blue-600 mb-2">
-                      {calculateStreak(opportunities)}
-                    </div>
-                    <p className="text-sm text-gray-500">days in a row</p>
-                    <div className="flex justify-center mt-4">
-                      {Array.from({length: 7}).map((_, i) => {
-                        const today = new Date();
-                        const date = new Date(today);
-                        date.setDate(today.getDate() - (6 - i));
-                        
-                        const hasApplication = opportunities.some(opp => {
-                          const appDate = new Date(opp.appliedDate);
-                          return appDate.toDateString()  === date.toDateString();
-                        });
-                        
-                        return (
-                          <div 
-                            key={i} 
-                            className={`
-                              w-8 h-8 mx-1 rounded-full flex items-center justify-center text-xs
-                              ${hasApplication ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}
-                            `}
-                            title={date.toLocaleDateString()}
-                          >
-                            {date.getDate()}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Weekly Goal Progress</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span>Applications this week</span>
-                        <span className="font-bold">{analytics.weeklyApplicationCount}/10</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                          className="bg-blue-600 h-2.5 rounded-full" 
-                          style={{ width: `${Math.min(analytics.weeklyApplicationCount * 10, 100)}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Goal: 10 applications per week
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+    void Model::SetIrVersion(Version p_irVersion)
+    {
+        m_modelProto->set_ir_version(p_irVersion);
+    }
 
-        <TabsContent value="calendar" className="p-4 flex-grow overflow-auto">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-semibold text-blue-700">Application Calendar</CardTitle>
-                <CardDescription>View your application events and deadlines</CardDescription>
-              </div>
-              
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-green-500 hover:bg-green-600">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Event
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Calendar Event</DialogTitle>
-                    <DialogDescription>Create a new event for your job search calendar</DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">Title</Label>
-                      <Input 
-                        id="title" 
-                        className="col-span-3" 
-                        placeholder="e.g., Interview with Company X"
-                        value={newEvent.title}
-                        onChange={handleNewEventChange}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="date" className="text-right">Date</Label>
-                      <Input 
-                        id="date" 
-                        type="date" 
-                        className="col-span-3"
-                        value={newEvent.date}
-                        onChange={handleNewEventChange}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="type" className="text-right">Type</Label>
-                      <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select event type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="interview">Interview</SelectItem>
-                          <SelectItem value="followup">Follow-up</SelectItem>
-                          <SelectItem value="deadline">Deadline</SelectItem>
-                          <SelectItem value="assessment">Assessment</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="opportunityId" className="text-right">Related Job</Label>
-                      <Select value={newEvent.opportunityId} onValueChange={handleNewEventOpportunityChange}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select related job" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {opportunities.map(opp => (
-                            <SelectItem key={opp.id} value={opp.id.toString()}>
-                              {opp.position} at {opp.company}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="none">None (General Event)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="notes" className="text-right">Notes</Label>
-                      <Textarea 
-                        id="notes" 
-                        className="col-span-3" 
-                        placeholder="Add any additional notes about this event"
-                        rows={3}
-                        value={newEvent.notes}
-                        onChange={handleNewEventChange}
-                      />
-                    </div>
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              {/* Event Type Filtering */}
-              <div className="flex flex-wrap space-x-2 mb-4">
-                <Button 
-                  variant={eventTypeFilter === 'all' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setEventTypeFilter('all')}
-                  className="mb-2"
-                >
-                  All Events
-                </Button>
-                <Button 
-                  variant={eventTypeFilter === 'interview' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setEventTypeFilter('interview')}
-                  className="mb-2"
-                >
-                  <div className="w-2 h-2 rounded-full bg-blue-500 mr-1.5"></div>
-                  Interviews
-                </Button>
-                <Button 
-                  variant={eventTypeFilter === 'followup' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setEventTypeFilter('followup')}
-                  className="mb-2"
-                >
-                  <div className="w-2 h-2 rounded-full bg-green-500 mr-1.5"></div>
-                  Follow-ups
-                </Button>
-                <Button 
-                  variant={eventTypeFilter === 'deadline' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setEventTypeFilter('deadline')}
-                  className="mb-2"
-                >
-                  <div className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div>
-                  Deadlines
-                </Button>
-                <Button 
-                  variant={eventTypeFilter === 'assessment' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setEventTypeFilter('assessment')}
-                  className="mb-2"
-                >
-                  <div className="w-2 h-2 rounded-full bg-purple-500 mr-1.5"></div>
-                  Assessments
-                </Button>
-              </div>
+    const std::string& Model::ProducerName() const
+    {
+        return m_modelProto->producer_name();
+    }
 
-              {/* Calendar Controls */}
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h3 className="text-lg font-medium">
-                    {date ? date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Calendar'}
-                  </h3>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex border rounded-md overflow-hidden">
-                    <Button 
-                      variant={calendarView === "month" ? "default" : "ghost"} 
-                      size="sm"
-                      onClick={() => setCalendarView("month")}
-                      className="rounded-none"
-                    >
-                      Month
-                    </Button>
-                    <Button 
-                      variant={calendarView === "week" ? "default" : "ghost"} 
-                      size="sm"
-                      onClick={() => setCalendarView("week")}
-                      className="rounded-none"
-                    >
-                      Week
-                    </Button>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const newDate = new Date(date || new Date());
-                        if (calendarView === "month") {
-                          newDate.setMonth(newDate.getMonth() - 1);
-                        } else {
-                          newDate.setDate(newDate.getDate() - 7);
-                        }
-                        setDate(newDate);
-                      }}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setDate(new Date())}
-                    >
-                      Today
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        const newDate = new Date(date || new Date());
-                        if (calendarView === "month") {
-                          newDate.setMonth(newDate.getMonth() + 1);
-                        } else {
-                          newDate.setDate(newDate.getDate() + 7);
-                        }
-                        setDate(newDate);
-                      }}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+    void Model::SetProducerName(const std::string& p_producerName)
+    {
+        m_modelProto->set_producer_name(p_producerName);
+    }
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  {/* Calendar with Event Indicators */}
-                  <div className="bg-white rounded-md border p-3">
-                    <DragDropContext
-                      onDragEnd={(result) => {
-                        if (!result.destination || !draggedEvent) return;
-                        
-                        // Get the date from the destination droppable ID
-                        const dropDate = new Date(result.destination.droppableId);
-                        
-                        // Format the date for the event
-                        const formattedDate = dropDate.toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        });
-                        
-                        // Update the event with the new date
-                        dispatch({
-                          type: 'UPDATE_EVENT',
-                          payload: {
-                            id: draggedEvent.id,
-                            updates: { date: formattedDate }
-                          }
-                        });
-                        
-                        setDraggedEvent(null);
-                      }}
-                    >
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        className="rounded-md"
-                        onDayClick={(day) => {
-                          setDate(day);
-                        }}
-                        components={{
-                          Day: ({ day, ...props }) => {
-                            // Filter events for this day
-                            const dayEvents = events
-                              .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
-                              .filter(event => {
-                                try {
-                                  const eventDate = new Date(event.date);
-                                  return day.getDate() === eventDate.getDate() && 
-                                        day.getMonth() === eventDate.getMonth() && 
-                                        day.getFullYear() === eventDate.getFullYear();
-                                } catch (e) {
-                                  return false;
-                                }
-                              });
-                            
-                            // Create a droppable area for each day
-                            return (
-                              <Droppable droppableId={day.toISOString()} type="EVENT">
-                                {(provided) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    {...props}
-                                  >
-                                    <div className="relative h-full w-full p-2">
-                                      <div className="text-center">{day.getDate()}</div>
-                                      
-                                      {/* Event indicators */}
-                                      {dayEvents.length > 0 && (
-                                        <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1">
-                                          {dayEvents.slice(0, 3).map((event, i) => (
-                                            <div 
-                                              key={i}
-                                              className={`w-1.5 h-1.5 rounded-full 
-                                                ${event.type === 'interview' ? 'bg-blue-500' : 
-                                                  event.type === 'followup' ? 'bg-green-500' : 
-                                                  event.type === 'deadline' ? 'bg-red-500' : 
-                                                  'bg-purple-500'}`}
-                                            ></div>
-                                          ))}
-                                          {dayEvents.length > 3 && (
-                                            <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
-                                          )}
-                                        </div>
-                                      )}
-                                      {provided.placeholder}
-                                    </div>
-                                  </div>
-                                )}
-                              </Droppable>
-                            );
-                          }
-                        }}
-                      />
-                    </DragDropContext>
-                  </div>
-                  
-                  {/* Event Categories Legend */}
-                  <div className="flex flex-wrap gap-4 mt-4 justify-center">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 rounded-full bg-blue-500 mr-1.5"></div>
-                      <span className="text-xs">Interview</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 rounded-full bg-green-500 mr-1.5"></div>
-                      <span className="text-xs">Follow-up</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 rounded-full bg-red-500 mr-1.5"></div>
-                      <span className="text-xs">Deadline</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 rounded-full bg-purple-500 mr-1.5"></div>
-                      <span className="text-xs">Assessment</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  {/* Selected Date Events */}
-                  <Card>
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-lg">
-                        Events for {date ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Selected Date'}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-[200px]">
-                        {events
-                          .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
-                          .filter(event => {
-                            if (!date) return false;
-                            try {
-                              const eventDate = new Date(event.date);
-                              return date.getDate() === eventDate.getDate() && 
-                                    date.getMonth() === eventDate.getMonth() && 
-                                    date.getFullYear() === eventDate.getFullYear();
-                            } catch (e) {
-                              return false;
-                            }
-                          }).length > 0 ? (
-                          <DragDropContext
-                            onDragStart={(start) => {
-                              const eventId = parseInt(start.draggableId);
-                              const event = events.find(e => e.id === eventId);
-                              if (event) {
-                                setDraggedEvent(event);
-                              }
-                            }}
-                          >
-                            <Droppable droppableId="selected-date-events" type="EVENT">
-                              {(provided) => (
-                                <ul 
-                                  className="space-y-2"
-                                  ref={provided.innerRef}
-                                  {...provided.droppableProps}
-                                >
-                                  {events
-                                    .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
-                                    .filter(event => {
-                                      if (!date) return false;
-                                      try {
-                                        const eventDate = new Date(event.date);
-                                        return date.getDate() === eventDate.getDate() && 
-                                              date.getMonth() === eventDate.getMonth() && 
-                                              date.getFullYear() === eventDate.getFullYear();
-                                      } catch (e) {
-                                        return false;
-                                      }
-                                    })
-                                    .map((event, index) => {
-                                      const relatedOpportunity = event.opportunityId 
-                                        ? opportunities.find(opp => opp.id === event.opportunityId)
-                                        : null;
-                                        
-                                      return (
-                                        <Draggable 
-                                          key={event.id} 
-                                          draggableId={event.id.toString()} 
-                                          index={index}
-                                        >
-                                          {(provided) => (
-                                            <li 
-                                              ref={provided.innerRef}
-                                              {...provided.draggableProps}
-                                              {...provided.dragHandleProps}
-                                              className="flex items-start p-2 border rounded-md hover:bg-gray-50 cursor-move"
-                                            >
-                                              <div className={`
-                                                w-2 h-full rounded-full mr-3 self-stretch
-                                                ${event.type === 'interview' ? 'bg-blue-500' : 
-                                                  event.type === 'followup' ? 'bg-green-500' : 
-                                                  event.type === 'deadline' ? 'bg-red-500' : 
-                                                  'bg-purple-500'}
-                                              `}></div>
-                                              <div className="flex-grow">
-                                                <p className="font-semibold">{event.title}</p>
-                                                <p className="text-sm text-gray-500">{event.date}</p>
-                                                {relatedOpportunity && (
-                                                  <p className="text-xs text-blue-600 mt-1">
-                                                    Related to: {relatedOpportunity.position} at {relatedOpportunity.company}
-                                                  </p>
-                                                )}
-                                                {event.notes && (
-                                                  <p className="text-xs text-gray-600 mt-1 italic">{event.notes}</p>
-                                                )}
-                                              </div>
-                                              <div className="flex space-x-1">
-                                                <Button 
-                                                  variant="ghost" 
-                                                  size="sm"
-                                                  className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                                                  onClick={() => setEditingEvent(event)}
-                                                >
-                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                  </svg>
-                                                </Button>
-                                                <Button 
-                                                  variant="ghost" 
-                                                  size="sm"
-                                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                  onClick={() => dispatch({ type: 'DELETE_EVENT', payload: event.id })}
-                                                >
-                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                  </svg>
-                                                </Button>
-                                              </div>
-                                            </li>
-                                          )}
-                                        </Draggable>
-                                      );
-                                    })}
-                                  {provided.placeholder}
-                                </ul>
-                              )}
-                            </Droppable>
-                          </DragDropContext>
-                        ) : (
-                          <div className="text-center py-6 text-gray-400">
-                            <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                            <p>No events scheduled for this date</p>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" className="mt-2" onClick={() => {
-                                  // Pre-fill the date field with the selected date
-                                  if (date) {
-                                    const formattedDate = date.toISOString().split('T')[0];
-                                    setNewEvent({
-                                      ...newEvent,
-                                      date: formattedDate
-                                    });
-                                  }
-                                }}>
-                                  <PlusCircle className="h-4 w-4 mr-1" />
-                                  Add event for this date
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Add Calendar Event</DialogTitle>
-                                  <DialogDescription>Create a new event for your job search calendar</DialogDescription>
-                                </DialogHeader>
-                                
-                                <div className="grid gap-4 py-4">
-                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="title" className="text-right">Title</Label>
-                                    <Input 
-                                      id="title" 
-                                      className="col-span-3" 
-                                      placeholder="e.g., Interview with Company X"
-                                      value={newEvent.title}
-                                      onChange={handleNewEventChange}
-                                    />
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="date" className="text-right">Date</Label>
-                                    <Input 
-                                      id="date" 
-                                      type="date" 
-                                      className="col-span-3"
-                                      value={newEvent.date}
-                                      onChange={handleNewEventChange}
-                                    />
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="type" className="text-right">Type</Label>
-                                    <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
-                                      <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select event type" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="interview">Interview</SelectItem>
-                                        <SelectItem value="followup">Follow-up</SelectItem>
-                                        <SelectItem value="deadline">Deadline</SelectItem>
-                                        <SelectItem value="assessment">Assessment</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="opportunityId" className="text-right">Related Job</Label>
-                                    <Select value={newEvent.opportunityId} onValueChange={handleNewEventOpportunityChange}>
-                                      <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select related job" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {opportunities.map(opp => (
-                                          <SelectItem key={opp.id} value={opp.id.toString()}>
-                                            {opp.position} at {opp.company}
-                                          </SelectItem>
-                                        ))}
-                                        <SelectItem value="none">None (General Event)</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="notes" className="text-right">Notes</Label>
-                                    <Textarea 
-                                      id="notes" 
-                                      className="col-span-3" 
-                                      placeholder="Add any additional notes about this event"
-                                      rows={3}
-                                      value={newEvent.notes}
-                                      onChange={handleNewEventChange}
-                                    />
-                                  </div>
-                                </div>
-                                
-                                <DialogFooter>
-                                  <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        )}
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Upcoming Events */}
-                  <Card>
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-lg">Upcoming Events</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-[200px]">
-                        <ul className="space-y-2">
-                          {events
-                            .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
-                            .sort((a, b) => {
-                              const dateA = new Date(a.date);
-                              const dateB = new Date(b.date);
-                              return dateA.getTime() - dateB.getTime();
-                            })
-                            .filter(event => {
-                              const eventDate = new Date(event.date);
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
-                              return eventDate >= today;
-                            })
-                            .slice(0, 5)
-                            .map(event => {
-                              const relatedOpportunity = event.opportunityId 
-                                ? opportunities.find(opp => opp.id === event.opportunityId)
-                                : null;
-                                
-                              return (
-                                <li key={event.id} className="flex items-start p-2 border rounded-md hover:bg-gray-50">
-                                  <div className={`
-                                    w-2 h-full rounded-full mr-3 self-stretch
-                                    ${event.type === 'interview' ? 'bg-blue-500' : 
-                                      event.type === 'followup' ? 'bg-green-500' : 
-                                      event.type === 'deadline' ? 'bg-red-500' : 
-                                      'bg-purple-500'}
-                                  `}></div>
-                                  <div className="flex-grow">
-                                    <p className="font-semibold">{event.title}</p>
-                                    <p className="text-sm text-gray-500">{event.date}</p>
-                                    {relatedOpportunity && (
-                                      <p className="text-xs text-blue-600 mt-1">
-                                        Related to: {relatedOpportunity.position} at {relatedOpportunity.company}
-                                      </p>
-                                    )}
-                                  </div>
-                                </li>
-                              );
-                            })}
-                        </ul>
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    const std::string& Model::ProducerVersion() const
+    {
+        return m_modelProto->producer_version();
+    }
 
-          {/* Event Editing Dialog */}
-          <Dialog open={!!editingEvent} onOpenChange={(open) => !open && setEditingEvent(null)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Calendar Event</DialogTitle>
-                <DialogDescription>Update the details of this event</DialogDescription>
-              </DialogHeader>
-              
-              {editingEvent && (
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-title" className="text-right">Title</Label>
-                    <Input 
-                      id="edit-title" 
-                      className="col-span-3" 
-                      value={editingEvent.title}
-                      onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-date" className="text-right">Date</Label>
-                    <Input 
-                      id="edit-date" 
-                      type="date" 
-                      className="col-span-3"
-                      value={(() => {
-                        try {
-                          const date = new Date(editingEvent.date);
-                          return date.toISOString().split('T')[0];
-                        } catch (e) {
-                          return new Date().toISOString().split('T')[0];
-                        }
-                      })()}
-                      onChange={(e) => {
-                        const dateObj = new Date(e.target.value);
-                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        });
-                        setEditingEvent({...editingEvent, date: formattedDate});
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-type" className="text-right">Type</Label>
-                    <Select 
-                      value={editingEvent.type} 
-                      onValueChange={(value) => setEditingEvent({...editingEvent, type: value})}
-                    >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select event type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="interview">Interview</SelectItem>
-                        <SelectItem value="followup">Follow-up</SelectItem>
-                        <SelectItem value="deadline">Deadline</SelectItem>
-                        <SelectItem value="assessment">Assessment</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-opportunity" className="text-right">Related Job</Label>
-                    <Select 
-                      value={editingEvent.opportunityId ? editingEvent.opportunityId.toString() : "none"}
-                      onValueChange={(value) => setEditingEvent({
-                        ...editingEvent, 
-                        opportunityId: value === "none" ? undefined : parseInt(value)
-                      })}
-                    >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select related job" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {opportunities.map(opp => (
-                          <SelectItem key={opp.id} value={opp.id.toString()}>
-                            {opp.position} at {opp.company}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="none">None (General Event)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-notes" className="text-right">Notes</Label>
-                    <Textarea 
-                      id="edit-notes" 
-                      className="col-span-3" 
-                      rows={3}
-                      value={editingEvent.notes || ""}
-                      onChange={(e) => setEditingEvent({...editingEvent, notes: e.target.value})}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={()=> setEditingEvent(null)}>Cancel</Button>
-                <Button onClick={() => {
-                  if (editingEvent) {
-                    dispatch({
-                      type: 'UPDATE_EVENT',
-                      payload: {
-                        id: editingEvent.id,
-                        updates: {
-                          title: editingEvent.title,
-                          date: editingEvent.date,
-                          type: editingEvent.type,
-                          opportunityId: editingEvent.opportunityId,
-                          notes: editingEvent.notes
-                        }
-                      }
-                    });
-                    setEditingEvent(null);
-                  }
-                }}>
-                  Save Changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </TabsContent>
+    void Model::SetProducerVersion(const std::string& p_producerVersion)
+    {
+        m_modelProto->set_producer_version(p_producerVersion);
+    }
 
-      </Tabs>
-      
-      {/* Debug Panel Button */}
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={() => setShowDebugPanel(!showDebugPanel)}
-        className="fixed bottom-4 right-4 z-50"
-      >
-        {showDebugPanel ? "Hide Debug" : "Show Debug"}
-      </Button>
+    const std::string& Model::Domain() const
+    {
+        return m_modelProto->domain();
+    }
 
-      {/* Debug Panel */}
-      {showDebugPanel && (
-        <div className="fixed bottom-16 right-4 w-96 h-96 bg-white border shadow-lg rounded-md p-4 overflow-auto z-50">
-          <h3 className="font-bold mb-2">Global State</h3>
-          <pre className="text-xs">{JSON.stringify(state, null, 2)}</pre>
-        </div>
-      )}
-    </div>
-  )
+    void Model::SetDomain(const std::string& p_domain)
+    {
+        m_modelProto->set_domain(p_domain);
+    }
+
+    Version Model::ModelVersion() const
+    {
+        return m_modelProto->model_version();
+    }
+
+    void Model::SetModelversion(Version p_modelVersion)
+    {
+        m_modelProto->set_model_version(p_modelVersion);
+    }
+
+    const std::string& Model::DocString() const
+    {
+        return m_modelProto->doc_string();
+    }
+
+    void Model::SetDocString(const std::string& p_docString)
+    {
+        m_modelProto->set_doc_string(p_docString);
+    }
+
+    Graph* Model::MainGraph()
+    {
+        return m_graph.get();
+    }
+
+    const ModelProto& Model::ToProto()
+    {
+        *(m_modelProto->mutable_graph()) = m_graph->ToGraphProto();
+        return *m_modelProto;
+    }
+
+    Status Model::Load(const std::string& p_filePath, std::shared_ptr<Model>* p_model)
+    {
+        if (nullptr == p_model)
+        {
+            return Status(ONNX, INVALID_ARGUMENT, "Null model pointer.");
+        }
+
+        int fd;
+#ifdef _WIN32
+        _sopen_s(&fd, p_filePath.c_str(), _O_RDONLY | _O_SEQUENTIAL | _O_BINARY, _SH_DENYWR, _S_IREAD | _S_IWRITE);
+#else
+        fd = open(p_filePath.c_str(), O_RDONLY);
+#endif
+
+        if (0 > fd)
+        {
+            return Status(ONNX, INVALID_ARGUMENT, "File could not be opened.");
+        }
+
+#if ((GOOGLE_PROTOBUF_VERSION >= 3002000) && (GOOGLE_PROTOBUF_VERSION < 3006000))
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
+        ZeroCopyInputStream* raw_input = new FileInputStream(fd);
+        CodedInputStream* coded_input = new CodedInputStream(raw_input);
+#else
+        // for proto3.6 or later
+        FileDescriptorCloser fd_closer(fd);
+        std::unique_ptr<::google::protobuf::io::ZeroCopyInputStream> raw_input(new ::google::protobuf::io::FileInputStream(fd));
+        std::unique_ptr<::google::protobuf::io::CodedInputStream> coded_input(
+            new ::google::protobuf::io::CodedInputStream(raw_input.get()));
+#endif
+        coded_input->SetTotalBytesLimit(INT_MAX, INT_MAX);
+        ModelProto modelProto;
+        bool result = modelProto.ParseFromCodedStream(coded_input);
+
+#if ((GOOGLE_PROTOBUF_VERSION >= 3002000) && (GOOGLE_PROTOBUF_VERSION < 3006000))
+        delete coded_input;
+        delete raw_input;
+        ONNXIR_UNUSED_PARAMETER(close(fd));
+#endif
+        if (!result)
+        {
+            return Status(ONNX, INVALID_PROTOBUF, "Failed to parse model because protobuf parsing failed.");
+        }
+
+        p_model->reset(new Model(modelProto));
+
+        return Status::OK();
+    }
+
+    Status Model::Save(Model& p_model, const std::string& p_filePath)
+    {
+        int fd;
+#ifdef _WIN32
+        _sopen_s(&fd, p_filePath.c_str(), _O_WRONLY | _O_CREAT | _O_SEQUENTIAL | _O_BINARY, _SH_DENYWR, _S_IREAD | _S_IWRITE);
+#else
+        fd = open(p_filePath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+#endif
+        if (0 > fd)
+        {
+            return Status(ONNX, INVALID_ARGUMENT, "File could not be created.");
+        }
+
+        ModelProto modelProto = p_model.ToProto();
+#if ((GOOGLE_PROTOBUF_VERSION >= 3002000) && (GOOGLE_PROTOBUF_VERSION < 3006000))
+        ZeroCopyOutputStream* raw_output = new FileOutputStream(fd);
+        CodedOutputStream* coded_output = new CodedOutputStream(raw_output);
+        modelProto.SerializeToCodedStream(coded_output);
+        delete coded_output;
+        delete raw_output;
+        close(fd);
+#else
+        FileDescriptorCloser fd_closer(fd);
+        std::unique_ptr<::google::protobuf::io::ZeroCopyOutputStream> raw_output(new ::google::protobuf::io::FileOutputStream(fd));
+        std::unique_ptr<::google::protobuf::io::CodedOutputStream> coded_output(
+            new ::google::protobuf::io::CodedOutputStream(raw_output.get()));
+        modelProto.SerializeToCodedStream(coded_output.get());
+#endif
+        return Status::OK();
+    }
 }
+End File# Aaronlcj/CNTK
+# Source/CNTKv2LibraryDll/proto/onnx/core/graph.h
+#pragma once
+
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+
+#include "core/common.h"
+#include "core/common/status.h"
+#include "core/graph/graph.h"
+#include "core/graph/graph_nodes.h"
+
+namespace ONNXIR
+{
+    typedef std::unordered_map<std::string, std::pair<std::unique_ptr<Value>, int>> NameToValInfoMap;
+    typedef std::unordered_map<std::string, std::unique_ptr<Node>> NameToNodeMap;
+
+    // A Graph.
+    class Graph
+    {
+    public:
+
+        // Resolve domain for a node based on the node's domain and the graph's
+        // domain. If the node's domain is empty, it'll be resolved as the graph's
+        // domain. If the graph's domain is empty, it'll be resolved as ONNX_DOMAIN.
+        // If the node's domain is not empty, the node's domain will be kept.
+        std::string ResolveDomain(const std::string& p_nodeDomain) const;
+
+        // Constructor: Given a <GraphProto> loaded from model file
+        // <p_isONNX> is a special flag to indicate whether this graph is
+        // an ONNX graph. It's special because we want to support both ONNX and
+        // non-ONNX graphs.
+        Graph(const GraphProto& p_graphProto, bool p_isONNX = false);
+
+        // Constructor: Given a <GraphProto> loaded from model file
+        // <p_isONNX> is a special flag to indicate whether this graph is
+        // an ONNX graph. It's special because we want to support both ONNX and
+        // non-ONNX graphs.
+        Graph(GraphProto* p_graphProto, bool p_isONNX = false);
+
+        Graph() = delete;
+
+        // Resolve <*this> graph.
+        Status Resolve();
+
+        // Add node.
+        Node* AddNode(const std::string& p_name,
+            const std::string& p_opType,
+            const std::string& p_description,
+            const std::vector<NodeArg*>& p_inputArgs,
+            const std::vector<NodeArg*>& p_outputArgs,
+            const std::string& p_domain = "");
+
+        // Add node.
+        Node* AddNode(const std::string& p_name,
+            const std::string& p_opType,
+            const std::string& p_description,
+            const std::vector<NodeArg*>& p_inputArgs,
+            const std::vector<NodeArg*>& p_outputArgs,
+            const std::vector<NodeAttributes>& p_attributes,
+            const std::string& p_domain = "");
+
+        // Add node.
+        Node* AddNode(const NodeProto& p_nodeProto,
+            const ArgNameToTypeMap& p_nameToType);
+
+        // Copy node and add to graph.
+        Node* AddNode(const Node& p_other);
+
+        // Remove node.
+        bool RemoveNode(Node* p_node);
+
+        // Add control edge.
+        // A control edge only constraints execution order, and it has no data
+        // dependency.
+        // <p_src> source node, <p_dst> destination node.
+        bool AddControlEdge(Node* p_src, Node* p_dst);
+
+        // Mark graph as needing resolve.
+        // <p_needsVerification> whether the resolve needs to include shape
+        // and type validation.
+        void SetGraphResolveNeeded(bool p_needsVerification = true)
+        {
+            m_graphResolveNeeded = true;
+            m_graphProtoSyncNeeded = true;
+            if (p_needsVerification)
+            {
+                m_needsVerification = true;
+            }
+        }
+
+        // Mark graph as needing proto sync.
+        void SetGraphProtoSyncNeeded()
+        {
+            m_graphProtoSyncNeeded = true;
+        }
+
+        // Get graph inputs.
+        const std::vector<const NodeArg*>& GetInputs() const
+        {
+            return m_graphInputs;
+        }
+
+        // Get graph inputs outputs.
+        const std::vector<const NodeArg*>& GetOutputs() const
+        {
+            return m_graphOutputs;
+        }
+
+        // Get graph inputs outputs.
+        std::vector<NodeArg*> GetOutputsInternal() const
+        {
+            std::vector<NodeArg*> outputs;
+            for (auto& nodeArg : m_graphOutputs)
+            {
+                outputs.push_back(const_cast<NodeArg*>(nodeArg));
+            }
+            return outputs;
+        }
+
+        // Get all nodes.
+        const std::vector<Node*>& GetNodes() const
+        {
+            return m_nodes;
+        }
+
+        // Get node with specified node index.
+        Node* GetNode(NodeIndex p_nodeIndex)
+        {
+            return m_nodes[p_nodeIndex];
+        }
+
+        // Get node with specified node index.
+        const Node* GetNode(NodeIndex p_nodeIndex) const
+        {
+            return m_nodes[p_nodeIndex];
+        }
+
+        // Get the mutable GraphProto.
+        GraphProto* GetMutableGraphProto()
+        {
+            return m_graphProto;
+        }
+
+        // Get GraphProto.
+        const GraphProto& GetGraphProto() const;
+
+        // Get node name to node map.
+        const NameToNodeMap& GetAllNamedNodes() const
+        {
+            return m_nameToNodeMap;
+        }
+
+        // Get initial tensors.
+        const InitialTensorSet& GetAllInitialTensors() const
+        {
+            return m_nameToInitialTensor;
+        }
+
+        // Remove initial tensor. Return true if remove successfully.
+        bool RemoveInitialTensor(const std::string& p_tensorName)
+        {
+            auto iter = m_nameToInitialTensor.find(p_tensorName);
+            if (m_nameToInitialTensor.end() != iter)
+            {
+                m_nameToInitialTensor.erase(iter);
+                m_graphProtoSyncNeeded = true;
+                return true;
+            }
+            return false;
+        }
+
+        // Get all ValueInfo.
+        const std::unordered_map<std::string, ValueInfoProto>& GetAllValueInfos() const
+        {
+            return m_nameToValueInfo;
+        }
+
+        // Get whether the specified op type is in the specified domain.
+        bool IsRegisteredInDomain(const std::string& p_domain, const std::string& p_opType) const;
+
+        // Get <*this> graph's domain.
+        const std::string& DomainToVersionMap() const
+        {
+            return m_domainToVersionMap;
+        }
+
+        // Get <*this> graph's name.
+        const std::string& Name() const
+        {
+            return m_graphProto->name();
+        }
+
+        // Set <*this> graph's name.
+        void SetName(const std::string& p_name)
+        {
+            m_graphProto->set_name(p_name);
+        }
+
+        // Add an input or output <nodearg> to <*this> graph.
+        // The input or output is owned by <*this> graph. Returns the added nodearg.
+        NodeArg* AddNodeArg(const std::string& p_name, const TypeProto* p_typeProto = nullptr)
+        {
+            auto result = m_nameToNodeArgs.insert({ p_name, std::unique_ptr<NodeArg>(new NodeArg(p_name, p_typeProto)) });
+            if (!result.second)
+            {
+                // NodeArg already exists.
+                return result.first->second.get();
+            }
+            else
+            {
+                // This is a newly added NodeArg.
+                // Add source/sink nodes if needed.
+                if (IsSourceNode(p_name))
+                {
+                    // The NodeArg is potentially an input to the graph.
+                    m_sourceNodeArgs.insert(result.first->second.get());
+                }
+                if (IsSinkNode(p_name))
+                {
+                    // The NodeArg is potentially an output to the graph.
+                    m_sinkNodeArgs.insert(result.first->second.get());
+                }
+                return result.first->second.get();
+            }
+        }
+
+        // Get NodeArg by name.
+        NodeArg* GetNodeArg(const std::string& p_name)
+        {
+            auto iter = m_nameToNodeArgs.find(p_name);
+            if (m_nameToNodeArgs.end() != iter)
+            {
+                return iter->second.get();
+            }
+            return nullptr;
+        }
+
+        // Get NodeArg by name.
+        const NodeArg* GetNodeArg(const std::string& p_name) const
+        {
+            auto iter = m_nameToNodeArgs.find(p_name);
+            if (m_nameToNodeArgs.end() != iter)
+            {
+                return iter->second.get();
+            }
+            return nullptr;
+        }
+
+        // Get NodeArg by name.
+        NodeArg* GetNodeArg(const std::string& p_name, const TypeProto& p_typeProto)
+        {
+            auto iter = m_nameToNodeArgs.find(p_name);
+            if (m_nameToNodeArgs.end() != iter)
+            {
+                // The NodeArg exists. Validate that the existing type
+                // is the same as the required type.
+                const TypeProto* existingType = iter->second->TypeAsProto();
+                if (nullptr == existingType)
+                {
+                    // The NodeArg was previously created without a type.
+                    // Update it to use the specified type.
+                    iter->second->SetType(p_typeProto);
+                    return iter->second.get();
+                }
+                else if (TypeProtoCompare::Identical(*existingType, p_typeProto))
+                {
+                    // The NodeArg already exists with the same type.
+                    return iter->second.get();
+                }
+                else
+                {
+                    // The NodeArg exists but has a different type.
+                    // Return nullptr because we don't allow a NodeArg to have different types.
+                    return nullptr;
+                }
+            }
+            else
+            {
+                // The NodeArg does not exist yet. Create it with the specified type.
+                auto result = m_nameToNodeArgs.insert({ p_name, std::unique_ptr<NodeArg>(new NodeArg(p_name, &p_typeProto)) });
+                if (!result.second)
+                {
+                    // The NodeArg was added by a concurrent call to AddNodeArg.
+                    // Return nullptr because we don't know if the concurrently-added NodeArg has the same type.
+                    return nullptr;
+                }
+                else
+                {
+                    // This is a newly added NodeArg.
+                    // Add source/sink nodes if needed.
+                    if (IsSourceNode(p_name))
+                    {
+                        // The NodeArg is potentially an input to the graph.
+                        m_sourceNodeArgs.insert(result.first->second.get());
+                    }
+                    if (IsSinkNode(p_name))
+                    {
+                        // The NodeArg is potentially an output to the graph.
+                        m_sinkNodeArgs.insert(result.first->second.get());
+                    }
+                    return result.first->second.get();
+                }
+            }
+        }
+
+        // Get the map of name to NodeArg.
+        const std::unordered_map<std::string, std::unique_ptr<NodeArg>>& GetNodeArgMap() const
+        {
+            return m_nameToNodeArgs;
+        }
+
+        // Get the map of operator domains to their opset versions.
+        const std::unordered_map<std::string, int>& DomainToVersionMap() const
+        {
+            return m_domainToVersion;
+        }
+
+        // Get the map of operator domains to their opset versions.
+        std::unordered_map<std::string, int>& DomainToVersionMap()
+        {
+            return m_domainToVersion;
+        }
+
+        // Add an initializer tensor to <*this> graph.
+        // The tensor is owned by <*this> graph. Returns the added tensor.
+        const ONNX_NAMESPACE::TensorProto* AddInitializedTensor(const ONNX_NAMESPACE::TensorProto& p_tensor)
+        {
+            if (m_nameToInitialTensor.end() != m_nameToInitialTensor.find(p_tensor.name()))
+            {
+                return nullptr;
+            }
+
+            auto tensor = std::make_unique<ONNX_NAMESPACE::TensorProto>(p_tensor);
+            auto* result = tensor.get();
+            m_nameToInitialTensor[tensor->name()] = std::move(tensor);
+            m_graphProtoSyncNeeded = true;
+            return result;
+        }
+
+        // Get an initializer tensor by name.
+        const ONNX_NAMESPACE::TensorProto* GetInitializedTensor(const std::string& p_name) const
+        {
+            auto iter = m_nameToInitialTensor.find(p_name);
+            if (m_nameToInitialTensor.end() != iter)
+            {
+                return iter->second.get();
+            }
+            return nullptr;
+        }
+
+        // Return true if a NodeArg with <p_name> exists.
+        bool IsNodeArgExist(const std::string& p_name) const
+        {
+            return m_nameToNodeArgs.end() != m_nameToNodeArgs.find(p_name);
+        }
+
+        // Return true if a node with <p_name> exists.
+        bool IsNodeExist(const std::string& p_name) const
+        {
+            return m_nameToNodeMap.end() != m_nameToNodeMap.find(p_name);
+        }
+
+        // Get graph inputs/outputs.
+        void GetInputsOutputs(std::vector<const NodeArg*>& p_inputs,
+            std::vector<const NodeArg*>& p_outputs) const;
+
+        // Build and verify node connection (edges).
+        // Verify NodeArg name/type/shape matching correctly.
+        Status BuildConnections();
+
+        // Check whether <*this> graph is acyclic.
+        // Return true means it's acyclic, false means it's cyclic.
+        bool IsAcyclic() const;
+
+        // Topological sort nodes of <*this> graph.
+        Status TopologicalSort(std::vector<Node*>& p_nodesInTopologicalOrder);
+
+        // Perform the topological sort and validate the ordering.
+        Status ValidateNodesTopologicalOrder();
+
+        // Resolve <*this> graph inputs/outputs.
+        Status ResolveInputsOutputs();
+
+        // Infer and set type information across <*this> graph if needed.
+        Status InferAndVerifyTypeMatch(const Node* p_node,
+            const OpSignature* p_op,
+            const std::unordered_map<std::string, ONNX_NAMESPACE::TypeProto>& p_inputTypes);
+
+        // Set graph inputs/outputs when resolving a graph..
+        Status SetInputsOutputs();
+
+        // Sync graph inputs/outputs when serializing to proto.
+        void SyncInputsOutputs();
+
+        // Construct a Graph instance for subgraph.
+        // The parent graph is responsible for the lifetime of the subgraph.
+        Graph* CreateSubgraph();
+
+        // Get all subgraphs.
+        std::vector<Graph*> GetAllSubgraphs()
+        {
+            return m_subgraphs;
+        }
+
+        // Get all subgraphs.
+        std::vector<const Graph*> GetAllSubgraphs() const
+        {
+            std::vector<const Graph*> result;
+            for (auto& subgraph : m_subgraphs)
+            {
+                result.push_back(subgraph);
+            }
+            return result;
+        }
+
+        // Serialize the <*this> graph into GraphProto.
+        GraphProto ToGraphProto();
+
+        // Serialize the <*this> graph into GraphProto.
+        void ToGraphProto(GraphProto& p_graphProto);
+
+        // Iterate through all nodes in <*this> graph.
+        // The iteration order is not defined.
+        void ForEachNode(std::function<void(Node*)> p_func);
+
+        // Iterate through all nodes in <*this> graph.
+        // The iteration order is not defined.
+        void ForEachNode(std::function<void(const Node*)> p_func) const;
+
+        // Iterate through all nodes in <*this> graph in topological order.
+        void ForEachNodeInTopologicalOrder(std::function<void(Node*)> p_func);
+
+        // Iterate through all nodes in <*this> graph in topological order.
+        void ForEachNodeInTopologicalOrder(std::function<void(const Node*)> p_func) const;
+
+        // Iterate through all NodeArgs in <*this> graph.
+        // The iteration order is not defined.
+        void ForEachNodeArg(std::function<void(NodeArg*)> p_func);
+
+        // Iterate through all NodeArgs in <*this> graph.
+        // The iteration order is not defined.
+        void ForEachNodeArg(std::function<void(const NodeArg*)> p_func) const;
+
+        // Iterate through all initializers in <*this> graph.
+        // The iteration order is not defined.
+        void ForEachInitializedTensor(std::function<void(const ONNX_NAMESPACE::TensorProto*)> p_func) const;
+
+        // Iterate through all inputs in <*this> graph.
+        // The iteration order is not defined.
+        void ForEachGraphInput(std::function<void(const NodeArg*)> p_func) const;
+
+        // Iterate through all outputs in <*this> graph.
+        // The iteration order is not defined.
+        void ForEachGraphOutput(std::function<void(const NodeArg*)> p_func) const;
+
+        // Add a NodeArg name into source node list.
+        void AddSourceNodeArg(const std::string& p_name)
+        {
+            auto iter = m_nameToNodeArgs.find(p_name);
+            if (m_nameToNodeArgs.end() != iter)
+            {
+                m_sourceNodeArgs.insert(iter->second.get());
+            }
+        }
+
+        // Add a NodeArg name into sink node list.
+        void AddSinkNodeArg(const std::string& p_name)
+        {
+            auto iter = m_nameToNodeArgs.find(p_name);
+            if (m_nameToNodeArgs.end() != iter)
+            {
+                m_sinkNodeArgs.insert(iter->second.get());
+            }
+        }
+
+        // Check whether a NodeArg is a source node.
+        bool IsSourceNode(const std::string& p_name) const
+        {
+            return m_graphInputs.end() != std::find_if(m_graphInputs.begin(), m_graphInputs.end(),
+                [&p_name](const NodeArg* nodearg) { return (nodearg->Name() == p_name); });
+        }
+
+        // Check whether a NodeArg is a sink node.
+        bool IsSinkNode(const std::string& p_name) const
+        {
+            return m_graphOutputs.end() != std::find_if(m_graphOutputs.begin(), m_graphOutputs.end(),
+                [&p_name](const NodeArg* nodearg) { return (nodearg->Name() == p_name); });
+        }
+
+        // Check whether a Node is a source node.
+        bool IsSourceNode(const Node* p_node) const
+        {
+            return m_sourceNodes.end() != m_sourceNodes.find(const_cast<Node*>(p_node));
+        }
+
+        // Check whether a Node is a sink node.
+        bool IsSinkNode(const Node* p_node) const
+        {
+            return m_sinkNodes.end() != m_sinkNodes.find(const_cast<Node*>(p_node));
+        }
+
+        // Get the maximum NodeIndex value used in the graph.
+        int MaxNodeIndex() const
+        {
+            return m_maxNodeIndex;
+        }
+
+        // Get the maximum NodeEdgeIndex value used in the graph.
+        int MaxNodeEdgeIndex() const
+        {
+            return m_maxNodeEdgeIndex;
+        }
+
+        // Get the node with the specified node index.
+        const Node* GetNodeByIndex(int p_index) const
+        {
+            return m_nodes.at(p_index);
+        }
+
+        // Get the node with the specified node index.
+        Node* GetNodeByIndex(int p_index)
+        {
+            return m_nodes.at(p_index);
+        }
+
+        // Get the mutable node with the specified node index.
+        Node* GetMutableNodeByIndex(int p_index)
+        {
+            return m_nodes.at(p_index);
+        }
+
+        // Get the node with the specified node name.
+        const Node* GetNodeByName(const std::string& p_name) const
+        {
+            auto iter = m_nameToNodeMap.find(p_name);
+            if (m_nameToNodeMap.end() == iter)
+            {
+                return nullptr;
+            }
+            return iter->second.get();
+        }
+
+        // Get the node with the specified node name.
+        Node* GetNodeByName(const std::string& p_name)
+        {
+            auto iter = m_nameToNodeMap.find(p_name);
+            if (m_nameToNodeMap.end() == iter)
+            {
+                return nullptr;
+            }
+            return iter->second.get();
+        }
+
+        // Add a new node to <*this> graph.
+        Node* AddNode(const std::string& p_name,
+            const std::string& p_opType,
+            const std::string& p_description,
+            const std::vector<NodeArg*>& p_inputArgs,
+            const std::vector<NodeArg*>& p_outputArgs,
+            const NodeAttributes& p_attributes,
+            const std::string& p_domain);
+
+        // Add a new control edge to <*this> graph.
+        // The edge is added between p_srcNode and p_dstNode.
+        bool AddControlEdge(NodeIndex p_srcNodeIndex, NodeIndex p_dstNodeIndex);
+
+        // Resolve the graph.
+        Status Resolve();
+
+        // Verify that the graph is acyclic.
+        Status VerifyIsAcyclic() const;
+
+        // Verify that the graph is topologically sorted.
+        Status VerifyTopologicalSortOrder() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraph() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInNode(const Node* p_node) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInNodeArgs(const std::vector<const NodeArg*>& p_nodeArgs) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInNodeArg(const NodeArg* p_nodeArg) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInInitializer(const ONNX_NAMESPACE::TensorProto* p_initializer) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInValueInfo(const ValueInfoProto* p_valueInfo) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInTypeProto(const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInTensorShapeProto(const TensorShapeProto* p_tensorShapeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInDimension(const TensorShapeProto_Dimension* p_dimension) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInSequenceType(const TypeProto_Sequence* p_sequenceType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInMapType(const TypeProto_Map* p_mapType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInOpsetImport() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphInputs() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphOutputs() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphInitializers() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphValueInfos() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodes() const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeInputs(const Node* p_node) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeOutputs(const Node* p_node) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributes(const Node* p_node) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttribute(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensor(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeGraph(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeSparseTensor(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProto(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProto(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeSparseTensorProto(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeGraphProto(const Node* p_node, const AttributeProto* p_attribute) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensor(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSequence(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMap(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaque(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensor(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOptional(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorShape(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TensorShapeProto_Dimension* p_dimension) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSequenceType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Sequence* p_sequenceType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMapType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Map* p_mapType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOptionalType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Optional* p_optionalType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaqueType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Opaque* p_opaqueType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorTypeShape(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType, const TensorShapeProto* p_tensorShape) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorTypeShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType, const TensorShapeProto* p_tensorShape, const TensorShapeProto_Dimension* p_dimension) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorTypeShape(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType, const TensorShapeProto* p_tensorShape) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorTypeShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType, const TensorShapeProto* p_tensorShape, const TensorShapeProto_Dimension* p_dimension) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSequenceTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Sequence* p_sequenceType, const TypeProto* p_elemType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMapTypeKeyType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Map* p_mapType, const TypeProto* p_keyType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMapTypeValueType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Map* p_mapType, const TypeProto* p_valueType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOptionalTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Optional* p_optionalType, const TypeProto* p_elemType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType, int p_elemType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType, int p_elemType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaqueTypeDomain(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Opaque* p_opaqueType, const std::string& p_domain) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaqueName(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Opaque* p_opaqueType, const std::string& p_name) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoShape(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, int64_t p_dimension) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoDataType(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, int p_dataType) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoRawData(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const std::string& p_rawData) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoExternalData(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const StringStringEntryProto* p_externalData) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoExternalDataKey(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const StringStringEntryProto* p_externalData, const std::string& p_key) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoExternalDataValue(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const StringStringEntryProto* p_externalData, const std::string& p_value) const;
+
+        // Verify that the graph has no unresolved shape inference.
+        Status VerifyNoUnresolvedShapeIn
