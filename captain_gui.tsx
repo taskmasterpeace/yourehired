@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-react'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 
@@ -33,6 +33,10 @@ export default function CAPTAINGui() {
     { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const quickChatOptions = [
     "Analyze my resume",
@@ -46,6 +50,17 @@ export default function CAPTAINGui() {
     { id: 2, company: "DataInc", position: "Data Scientist", status: "Interview Scheduled", appliedDate: "May 10, 2023", jobDescription: "DataInc is looking for a Data Scientist to help us derive insights from our vast datasets...", resume: "John Doe\n\nExperience:\n- Data Analyst at BigData Co.\n- Research Assistant at University XYZ\n\nSkills:\n- Python, R, SQL\n- Machine Learning, Deep Learning\n- Data Visualization (Tableau, D3.js)" },
     { id: 3, company: "AIStartup", position: "Machine Learning Engineer", status: "Applied", appliedDate: "May 5, 2023", jobDescription: "Join our cutting-edge AI startup as a Machine Learning Engineer and help shape the future of AI...", resume: "John Doe\n\nExperience:\n- AI Researcher at Tech University\n- Machine Learning Intern at AI Solutions Inc.\n\nSkills:\n- Python, TensorFlow, PyTorch\n- Natural Language Processing\n- Computer Vision" }
   ]);
+
+  // Filter opportunities based on search term and status filter
+  const filteredOpportunities = opportunities.filter(opp => {
+    const matchesSearch = 
+      opp.company.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      opp.position.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "All" || opp.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const [newOpportunity, setNewOpportunity] = useState({
     company: "",
@@ -225,24 +240,73 @@ export default function CAPTAINGui() {
             <Card className="col-span-1 bg-blue-50">
               <CardHeader>
                 <CardTitle className="text-blue-700">Job List</CardTitle>
+                <div className="space-y-2 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <Search className="h-4 w-4 text-gray-500" />
+                    <Input 
+                      placeholder="Search by company or position..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-4 w-4 text-gray-500" />
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="Applied">Applied</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
+                        <SelectItem value="Offered">Offered</SelectItem>
+                        <SelectItem value="Rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[700px]">
-                  {opportunities.map((opp, index) => (
-                    <Card key={opp.id} className={`mb-2 cursor-pointer ${index === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} onClick={() => setSelectedOpportunityIndex(index)}>
-                      <CardHeader className="py-3">
-                        <CardTitle className="text-base">{opp.position}</CardTitle>
-                        <CardDescription>{opp.company}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="py-2">
-                        <Badge>{opp.status}</Badge>
-                        <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
-                        <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
-                          {opp.jobDescription.substring(0, 150)}...
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {filteredOpportunities.length > 0 ? (
+                    filteredOpportunities.map((opp, index) => {
+                      const originalIndex = opportunities.findIndex(o => o.id === opp.id);
+                      return (
+                        <Card 
+                          key={opp.id} 
+                          className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} 
+                          onClick={() => setSelectedOpportunityIndex(originalIndex)}
+                        >
+                          <CardHeader className="py-3">
+                            <CardTitle className="text-base">{opp.position}</CardTitle>
+                            <CardDescription>{opp.company}</CardDescription>
+                          </CardHeader>
+                          <CardContent className="py-2">
+                            <Badge>{opp.status}</Badge>
+                            <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
+                            <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
+                              {opp.jobDescription.substring(0, 150)}...
+                            </p>
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No opportunities match your search criteria</p>
+                      <Button 
+                        variant="link" 
+                        onClick={() => {
+                          setSearchTerm("");
+                          setStatusFilter("All");
+                        }}
+                      >
+                        Clear filters
+                      </Button>
+                    </div>
+                  )}
                 </ScrollArea>
               </CardContent>
             </Card>
