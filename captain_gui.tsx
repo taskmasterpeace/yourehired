@@ -224,16 +224,19 @@ export default function CAPTAINGui() {
                 <CardTitle className="text-blue-700">Job List</CardTitle>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[600px]">
+                <ScrollArea className="h-[700px]">
                   {opportunities.map((opp, index) => (
                     <Card key={opp.id} className={`mb-2 cursor-pointer ${index === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} onClick={() => setSelectedOpportunityIndex(index)}>
-                      <CardHeader>
-                        <CardTitle>{opp.position}</CardTitle>
+                      <CardHeader className="py-3">
+                        <CardTitle className="text-base">{opp.position}</CardTitle>
                         <CardDescription>{opp.company}</CardDescription>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="py-2">
                         <Badge>{opp.status}</Badge>
                         <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
+                        <p className="text-xs mt-2 text-gray-600 line-clamp-3">
+                          {opp.jobDescription.substring(0, 150)}...
+                        </p>
                       </CardContent>
                     </Card>
                   ))}
@@ -625,4 +628,3 @@ export default function CAPTAINGui() {
     </div>
   )
 }
-
