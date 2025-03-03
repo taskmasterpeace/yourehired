@@ -1,0 +1,6 @@
+/* Add this to your globals.css */
+.opportunities-list {
+  height: calc(100vh - 220px);
+  min-height: 500px;
+  overflow-y: auto;
+}
