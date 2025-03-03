@@ -34,6 +34,7 @@ export default function CAPTAINGui() {
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState({});
+  const [isJobDescriptionExpanded, setIsJobDescriptionExpanded] = useState(false);
   
   // New state variables for editing job details, contact info, and notes
   const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
@@ -57,6 +58,10 @@ export default function CAPTAINGui() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
   const [viewMode, setViewMode] = useState("card"); // "card" or "list"
+  
+  // Sorting states
+  const [sortBy, setSortBy] = useState("lastModified");
+  const [sortDirection, setSortDirection] = useState("desc"); // "asc" or "desc"
 
   const quickChatOptions = [
     "Analyze my resume",
@@ -109,6 +114,36 @@ export default function CAPTAINGui() {
     }
     
     return matchesSearch && matchesStatus && matchesDate;
+  });
+  
+  // Sort the filtered opportunities
+  const sortedOpportunities = [...filteredOpportunities].sort((a, b) => {
+    switch(sortBy) {
+      case 'lastModified':
+        const aTime = lastModifiedTimestamps[a.id] ? new Date(lastModifiedTimestamps[a.id]).getTime() : 0;
+        const bTime = lastModifiedTimestamps[b.id] ? new Date(lastModifiedTimestamps[b.id]).getTime() : 0;
+        return sortDirection === 'asc' ? aTime - bTime : bTime - aTime;
+      
+      case 'appliedDate':
+        const aDate = new Date(a.appliedDate).getTime();
+        const bDate = new Date(b.appliedDate).getTime();
+        return sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
+      
+      case 'company':
+        const compResult = a.company.localeCompare(b.company);
+        return sortDirection === 'asc' ? compResult : -compResult;
+      
+      case 'position':
+        const posResult = a.position.localeCompare(b.position);
+        return sortDirection === 'asc' ? posResult : -posResult;
+      
+      case 'status':
+        const statResult = a.status.localeCompare(b.status);
+        return sortDirection === 'asc' ? statResult : -statResult;
+      
+      default:
+        return 0;
+    }
   });
 
   const [newOpportunity, setNewOpportunity] = useState({
@@ -503,8 +538,8 @@ export default function CAPTAINGui() {
             </Dialog>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="col-span-1 bg-blue-50">
+          <div className="grid grid-cols-3 gap-4 h-[calc(100vh-200px)]">
+            <Card className="col-span-1 bg-blue-50 flex flex-col">
               <CardHeader>
                 <CardTitle className="text-blue-700">Job List</CardTitle>
                 <div className="space-y-2 mt-2">
@@ -592,6 +627,41 @@ export default function CAPTAINGui() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                    <Select value={`${sortBy}-${sortDirection}`} onValueChange={(value) => {
+                      const [field, direction] = value.split('-');
+                      setSortBy(field);
+                      setSortDirection(direction);
+                    }}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Sort by Date</SelectLabel>
+                          <SelectItem value="lastModified-desc">Last Modified (Newest First)</SelectItem>
+                          <SelectItem value="lastModified-asc">Last Modified (Oldest First)</SelectItem>
+                          <SelectItem value="appliedDate-desc">Date Applied (Newest First)</SelectItem>
+                          <SelectItem value="appliedDate-asc">Date Applied (Oldest First)</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Sort by Name</SelectLabel>
+                          <SelectItem value="company-asc">Company (A-Z)</SelectItem>
+                          <SelectItem value="company-desc">Company (Z-A)</SelectItem>
+                          <SelectItem value="position-asc">Position (A-Z)</SelectItem>
+                          <SelectItem value="position-desc">Position (Z-A)</SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Sort by Status</SelectLabel>
+                          <SelectItem value="status-asc">Status (A-Z)</SelectItem>
+                          <SelectItem value="status-desc">Status (Z-A)</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-sm text-gray-500">View Mode:</span>
                     <div className="flex space-x-1">
@@ -619,10 +689,10 @@ export default function CAPTAINGui() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[700px]">
-                  {filteredOpportunities.length > 0 ? (
-                    filteredOpportunities.map((opp, index) => {
+              <CardContent className="flex-grow overflow-hidden">
+                <ScrollArea className="h-full">
+                  {sortedOpportunities.length > 0 ? (
+                    sortedOpportunities.map((opp, index) => {
                       const originalIndex = opportunities.findIndex(o => o.id === opp.id);
                       
                       if (viewMode === "card") {
@@ -691,7 +761,7 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
 
-            <Card className="col-span-2">
+            <Card className="col-span-2 flex flex-col">
               {selectedOpportunity ? (
                 <>
                   <CardHeader>
@@ -826,14 +896,14 @@ export default function CAPTAINGui() {
                       </p>
                     )}
                   </CardHeader>
-                  <CardContent>
-                    <Tabs defaultValue="details">
+                  <CardContent className="flex-grow overflow-auto">
+                    <Tabs defaultValue="details" className="h-full flex flex-col">
                       <TabsList>
                         <TabsTrigger value="details">Details</TabsTrigger>
                         <TabsTrigger value="resume">Resume</TabsTrigger>
                         <TabsTrigger value="chat">Chat</TabsTrigger>
                       </TabsList>
-                      <TabsContent value="details">
+                      <TabsContent value="details" className="flex-grow overflow-auto">
                         <div className="grid grid-cols-2 gap-6 mb-6">
                           {/* Left Card - Job Details with enhanced styling */}
                           <Card className="bg-white overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
@@ -1208,12 +1278,22 @@ export default function CAPTAINGui() {
                           </Card>
                         </div>
                         
-                        {/* Job Description - Enhanced styling */}
-                        <div className="mb-6">
+                        {/* Job Description - Enhanced styling with expand/collapse */}
+                        <div className="mb-6 flex-grow">
                           <div className="flex justify-between items-center mb-3">
                             <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                               <FileText className="h-5 w-5 mr-2 text-blue-600" />
                               Job Description
+                              {!isEditingJobDescription && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => setIsJobDescriptionExpanded(!isJobDescriptionExpanded)}
+                                  className="ml-2"
+                                >
+                                  {isJobDescriptionExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                                </Button>
+                              )}
                             </h3>
                             <Button 
                               variant="outline" 
@@ -1233,7 +1313,7 @@ export default function CAPTAINGui() {
                           {isEditingJobDescription ? (
                             <div className="space-y-3">
                               <Textarea 
-                                className="h-[350px] font-mono whitespace-pre-wrap border-2 border-blue-200 focus:border-blue-400 focus:ring-blue-400 transition-colors"
+                                className={`${isJobDescriptionExpanded ? 'h-[600px]' : 'h-[350px]'} font-mono whitespace-pre-wrap border-2 border-blue-200 focus:border-blue-400 focus:ring-blue-400 transition-colors`}
                                 value={editedJobDescription}
                                 onChange={(e) => setEditedJobDescription(e.target.value)}
                               />
@@ -1269,24 +1349,24 @@ export default function CAPTAINGui() {
                               </div>
                             </div>
                           ) : (
-                            <ScrollArea className="h-[350px] border rounded-md p-5 bg-white shadow-sm hover:shadow transition-shadow">
+                            <ScrollArea className={`${isJobDescriptionExpanded ? 'h-[600px]' : 'h-[350px]'} border rounded-md p-5 bg-white shadow-sm hover:shadow transition-shadow`}>
                               <pre className="whitespace-pre-wrap text-gray-700 font-sans">{selectedOpportunity.jobDescription}</pre>
                             </ScrollArea>
                           )}
                         </div>
                         
-                        {/* Notes at Bottom - Enhanced styling with inline editing */}
+                        {/* Notes at Bottom - Changed from amber to blue styling */}
                         <Card className="bg-white border-0 shadow-md overflow-hidden">
-                          <div className="bg-gradient-to-r from-amber-50 to-amber-100 px-6 py-4 border-b border-amber-200">
+                          <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
                             <div className="flex justify-between items-center">
-                              <CardTitle className="text-base text-amber-700 flex items-center">
-                                <MessageSquare className="h-4 w-4 mr-2 text-amber-500" />
+                              <CardTitle className="text-base text-blue-700 flex items-center">
+                                <MessageSquare className="h-4 w-4 mr-2 text-blue-500" />
                                 Notes
                               </CardTitle>
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                className="text-amber-600 hover:text-amber-800 hover:bg-amber-100"
+                                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
                                 onClick={() => {
                                   setIsEditingNotes(true);
                                   setEditedNotes(selectedOpportunity.notes || "");
@@ -1303,7 +1383,7 @@ export default function CAPTAINGui() {
                             {isEditingNotes ? (
                               <div className="space-y-3">
                                 <Textarea 
-                                  className="min-h-[100px] border-2 border-amber-200 focus:border-amber-400 focus:ring-amber-400 transition-colors"
+                                  className="min-h-[100px] border-2 border-blue-200 focus:border-blue-400 focus:ring-blue-400 transition-colors"
                                   value={editedNotes}
                                   onChange={(e) => setEditedNotes(e.target.value)}
                                   placeholder="Add notes about this opportunity..."
@@ -1333,20 +1413,20 @@ export default function CAPTAINGui() {
                                       
                                       setIsEditingNotes(false);
                                     }}
-                                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
                                   >
                                     Save Notes
                                   </Button>
                                 </div>
                               </div>
                             ) : (
-                              <div className="min-h-[100px] bg-amber-50 rounded-md p-4 border border-amber-100">
+                              <div className="min-h-[100px] bg-blue-50 rounded-md p-4 border border-blue-100">
                                 {selectedOpportunity.notes ? (
                                   <p className="whitespace-pre-wrap text-gray-700">{selectedOpportunity.notes}</p>
                                 ) : (
                                   <div className="flex items-center justify-center h-16 text-center">
-                                    <p className="text-amber-400 italic flex items-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <p className="text-blue-400 italic flex items-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
                                       No notes added yet
