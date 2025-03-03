@@ -25,6 +25,8 @@ export default function CAPTAINGui() {
   const [masterResume, setMasterResume] = useState("")
   const [jobChats, setJobChats] = useState<{ [key: number]: { message: string, sender: 'user' | 'ai' }[] }>({})
   const [currentMessage, setCurrentMessage] = useState("")
+  const [isEditingJobDescription, setIsEditingJobDescription] = useState(false)
+  const [editedJobDescription, setEditedJobDescription] = useState("")
   const [jobRecommendations, setJobRecommendations] = useState([
     { id: 1, company: "TechGiant", position: "Senior Frontend Developer", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
     { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
@@ -191,9 +193,10 @@ export default function CAPTAINGui() {
                     <Label htmlFor="jobDescription" className="text-right">Job Description</Label>
                     <Textarea
                       id="jobDescription"
-                      className="col-span-3"
+                      className="col-span-3 font-mono whitespace-pre-wrap"
                       value={newOpportunity.jobDescription}
                       onChange={handleNewOpportunityChange}
+                      rows={10}
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -234,7 +237,7 @@ export default function CAPTAINGui() {
                       <CardContent className="py-2">
                         <Badge>{opp.status}</Badge>
                         <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
-                        <p className="text-xs mt-2 text-gray-600 line-clamp-3">
+                        <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
                           {opp.jobDescription.substring(0, 150)}...
                         </p>
                       </CardContent>
@@ -279,10 +282,53 @@ export default function CAPTAINGui() {
                         <TabsTrigger value="chat">Chat</TabsTrigger>
                       </TabsList>
                       <TabsContent value="details">
-                        <h3 className="text-lg font-semibold mb-2">Job Description</h3>
-                        <ScrollArea className="h-[400px] border rounded-md p-4 bg-white">
-                          <p>{selectedOpportunity.jobDescription}</p>
-                        </ScrollArea>
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-lg font-semibold">Job Description</h3>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setIsEditingJobDescription(true);
+                              setEditedJobDescription(selectedOpportunity.jobDescription);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        </div>
+                        {isEditingJobDescription ? (
+                          <div className="space-y-2">
+                            <Textarea 
+                              className="h-[350px] font-mono whitespace-pre-wrap"
+                              value={editedJobDescription}
+                              onChange={(e) => setEditedJobDescription(e.target.value)}
+                            />
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => setIsEditingJobDescription(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button 
+                                onClick={() => {
+                                  const updatedOpportunities = [...opportunities];
+                                  updatedOpportunities[selectedOpportunityIndex] = {
+                                    ...selectedOpportunity,
+                                    jobDescription: editedJobDescription
+                                  };
+                                  setOpportunities(updatedOpportunities);
+                                  setIsEditingJobDescription(false);
+                                }}
+                              >
+                                Save
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <ScrollArea className="h-[400px] border rounded-md p-4 bg-white">
+                            <pre className="whitespace-pre-wrap">{selectedOpportunity.jobDescription}</pre>
+                          </ScrollArea>
+                        )}
                       </TabsContent>
                       <TabsContent value="resume">
                         <h3 className="text-lg font-semibold mb-2">Submitted Resume</h3>
@@ -361,7 +407,7 @@ export default function CAPTAINGui() {
                 <Button disabled={isMasterResumeFrozen}>Save Changes</Button>
               </div>
               <Textarea
-                className="min-h-[400px] mb-4"
+                className="min-h-[400px] mb-4 font-mono whitespace-pre-wrap"
                 placeholder="Paste your master resume here..."
                 value={masterResume}
                 onChange={(e) => setMasterResume(e.target.value)}
