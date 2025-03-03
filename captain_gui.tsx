@@ -33,6 +33,7 @@ export default function CAPTAINGui() {
   const [currentMessage, setCurrentMessage] = useState("")
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState({});
   
   // New state variables for editing job details, contact info, and notes
   const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
@@ -128,6 +129,11 @@ export default function CAPTAINGui() {
     // Use dispatch instead of setState
     dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpp });
     
+    // Update last modified timestamp
+    const newTimestamps = {...lastModifiedTimestamps};
+    newTimestamps[newOpp.id] = new Date().toISOString();
+    setLastModifiedTimestamps(newTimestamps);
+    
     // Reset form
     setNewOpportunity({
       company: "",
@@ -164,6 +170,11 @@ export default function CAPTAINGui() {
         updates: { appliedDate: formattedDate } 
       } 
     });
+    
+    // Update last modified timestamp
+    const newTimestamps = {...lastModifiedTimestamps};
+    newTimestamps[selectedOpportunity.id] = new Date().toISOString();
+    setLastModifiedTimestamps(newTimestamps);
     
     setIsEditingDate(false);
   };
@@ -556,6 +567,11 @@ export default function CAPTAINGui() {
                           <CardContent className="py-2">
                             <Badge>{opp.status}</Badge>
                             <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
+                            {lastModifiedTimestamps[opp.id] && (
+                              <p className="text-xs mt-2 text-gray-500">
+                                Last modified: {new Date(lastModifiedTimestamps[opp.id]).toLocaleString()}
+                              </p>
+                            )}
                             <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
                               {opp.jobDescription.substring(0, 150)}...
                             </p>
@@ -646,6 +662,11 @@ export default function CAPTAINGui() {
                                 updates: { status: value }
                               }
                             });
+                            
+                            // Update last modified timestamp
+                            const newTimestamps = {...lastModifiedTimestamps};
+                            newTimestamps[selectedOpportunity.id] = new Date().toISOString();
+                            setLastModifiedTimestamps(newTimestamps);
                           }}
                         >
                           <SelectTrigger className="w-[180px]">
@@ -705,6 +726,11 @@ export default function CAPTAINGui() {
                         </Select>
                       </div>
                     </div>
+                    {lastModifiedTimestamps[selectedOpportunity.id] && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Last modified: {new Date(lastModifiedTimestamps[selectedOpportunity.id]).toLocaleString()}
+                      </p>
+                    )}
                   </CardHeader>
                   <CardContent>
                     <Tabs defaultValue="details">
@@ -804,6 +830,12 @@ export default function CAPTAINGui() {
                                             updates: editedJobDetails
                                           }
                                         });
+                                        
+                                        // Update last modified timestamp
+                                        const newTimestamps = {...lastModifiedTimestamps};
+                                        newTimestamps[selectedOpportunity.id] = new Date().toISOString();
+                                        setLastModifiedTimestamps(newTimestamps);
+                                        
                                         setIsEditingJobDetails(false);
                                       }}
                                       className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -893,16 +925,16 @@ export default function CAPTAINGui() {
                           
                           {/* Right Card - Contact Info with enhanced styling */}
                           <Card className="bg-white overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-                            <div className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 border-b border-green-200">
+                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
                               <div className="flex justify-between items-center">
-                                <CardTitle className="text-base text-green-700 flex items-center">
-                                  <User className="h-4 w-4 mr-2 text-green-500" />
+                                <CardTitle className="text-base text-blue-700 flex items-center">
+                                  <User className="h-4 w-4 mr-2 text-blue-500" />
                                   Contact Information
                                 </CardTitle>
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
-                                  className="text-green-600 hover:text-green-800 hover:bg-green-100"
+                                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
                                   onClick={() => {
                                     setIsEditingContactInfo(true);
                                     setEditedContactInfo({
@@ -969,9 +1001,15 @@ export default function CAPTAINGui() {
                                             updates: editedContactInfo
                                           }
                                         });
+                                        
+                                        // Update last modified timestamp
+                                        const newTimestamps = {...lastModifiedTimestamps};
+                                        newTimestamps[selectedOpportunity.id] = new Date().toISOString();
+                                        setLastModifiedTimestamps(newTimestamps);
+                                        
                                         setIsEditingContactInfo(false);
                                       }}
-                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white"
                                     >
                                       Save
                                     </Button>
@@ -985,7 +1023,7 @@ export default function CAPTAINGui() {
                                       {selectedOpportunity.recruiterName && (
                                         <div>
                                           <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
                                             Name
@@ -997,7 +1035,7 @@ export default function CAPTAINGui() {
                                       {selectedOpportunity.recruiterEmail && (
                                         <div>
                                           <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
                                             Email
@@ -1005,10 +1043,10 @@ export default function CAPTAINGui() {
                                           <div className="ml-5 mt-1">
                                             <a 
                                               href={`mailto:${selectedOpportunity.recruiterEmail}`} 
-                                              className="text-green-600 hover:text-green-800 hover:underline transition-colors flex items-center"
+                                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center"
                                             >
                                               {selectedOpportunity.recruiterEmail}
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                               </svg>
                                             </a>
@@ -1019,7 +1057,7 @@ export default function CAPTAINGui() {
                                       {selectedOpportunity.recruiterPhone && (
                                         <div>
                                           <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                             </svg>
                                             Phone
@@ -1027,10 +1065,10 @@ export default function CAPTAINGui() {
                                           <div className="ml-5 mt-1">
                                             <a 
                                               href={`tel:${selectedOpportunity.recruiterPhone}`} 
-                                              className="text-green-600 hover:text-green-800 hover:underline transition-colors flex items-center"
+                                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center"
                                             >
                                               {selectedOpportunity.recruiterPhone}
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                               </svg>
                                             </a>
@@ -1040,8 +1078,8 @@ export default function CAPTAINGui() {
                                     </>
                                   ) : (
                                     <div className="flex items-center justify-center h-16 text-center">
-                                      <p className="text-green-400 italic flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <p className="text-blue-400 italic flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         No contact information added yet
@@ -1053,7 +1091,7 @@ export default function CAPTAINGui() {
                                   <div className={`${(!selectedOpportunity.recruiterName && !selectedOpportunity.recruiterEmail && 
                                                    !selectedOpportunity.recruiterPhone) ? "mt-0" : "mt-2 pt-4 border-t border-gray-100"}`}>
                                     <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                       </svg>
                                       Current Status
@@ -1122,6 +1160,12 @@ export default function CAPTAINGui() {
                                         updates: { jobDescription: editedJobDescription }
                                       }
                                     });
+                                    
+                                    // Update last modified timestamp
+                                    const newTimestamps = {...lastModifiedTimestamps};
+                                    newTimestamps[selectedOpportunity.id] = new Date().toISOString();
+                                    setLastModifiedTimestamps(newTimestamps);
+                                    
                                     setIsEditingJobDescription(false);
                                   }}
                                   className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -1187,6 +1231,12 @@ export default function CAPTAINGui() {
                                           updates: { notes: editedNotes }
                                         }
                                       });
+                                      
+                                      // Update last modified timestamp
+                                      const newTimestamps = {...lastModifiedTimestamps};
+                                      newTimestamps[selectedOpportunity.id] = new Date().toISOString();
+                                      setLastModifiedTimestamps(newTimestamps);
+                                      
                                       setIsEditingNotes(false);
                                     }}
                                     className="bg-amber-600 hover:bg-amber-700 text-white"
