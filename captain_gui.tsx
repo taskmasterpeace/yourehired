@@ -113,6 +113,10 @@ export default function CAPTAINGui() {
     notes: ""
   });
 
+  // Batch selection states
+  const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
+  const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
+
   const quickChatOptions = [
     "Analyze my resume",
     "Suggest skills to improve",
@@ -167,6 +171,30 @@ export default function CAPTAINGui() {
     }
     
     return streak;
+  };
+
+  // Function to handle batch deletion
+  const handleBatchDelete = () => {
+    // Show confirmation dialog
+    if (window.confirm(`Are you sure you want to delete ${selectedJobIds.length} selected job(s)?`)) {
+      // Delete each selected job
+      selectedJobIds.forEach(id => {
+        dispatch({ type: 'DELETE_OPPORTUNITY', payload: id });
+      });
+      
+      // Reset selection
+      setSelectedJobIds([]);
+      setIsBatchSelectMode(false);
+    }
+  };
+
+  // Toggle function for selecting/deselecting a job
+  const toggleJobSelection = (id: number) => {
+    if (selectedJobIds.includes(id)) {
+      setSelectedJobIds(selectedJobIds.filter(jobId => jobId !== id));
+    } else {
+      setSelectedJobIds([...selectedJobIds, id]);
+    }
   };
 
   // Generate analytics data using useMemo to prevent recalculation on every render
@@ -312,7 +340,7 @@ export default function CAPTAINGui() {
     }
   });
 
-  const [newOpportunity, setNewOpportunity] = useState({
+  const [newOpportunity, setNewOpportunity] =  useState({
     company: "",
     position: "",
     jobDescription: "",
@@ -908,6 +936,45 @@ export default function CAPTAINGui() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Batch selection controls */}
+                <div className="flex justify-between items-center mb-2 mt-3">
+                  <div className="flex items-center">
+                    <Button 
+                      variant={isBatchSelectMode ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => {
+                        setIsBatchSelectMode(!isBatchSelectMode);
+                        setSelectedJobIds([]);
+                      }}
+                      className="mr-2"
+                    >
+                      {isBatchSelectMode ? "Cancel Selection" : "Select Jobs"}
+                    </Button>
+                    
+                    {isBatchSelectMode && (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setSelectedJobIds(sortedOpportunities.map(opp => opp.id))}
+                          className="mr-2"
+                        >
+                          Select All
+                        </Button>
+                        
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={handleBatchDelete}
+                          disabled={selectedJobIds.length === 0}
+                        >
+                          Delete Selected ({selectedJobIds.length})
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="flex-grow overflow-hidden">
                 <ScrollArea className="h-full">
@@ -917,25 +984,104 @@ export default function CAPTAINGui() {
                       
                       if (viewMode === "card") {
                         return (
-                          <Card 
-                            key={opp.id} 
-                            className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : '  bg-white'}`} 
-                            onClick={() => setSelectedOpportunityIndex(originalIndex)}
-                          >
-                            <CardHeader className="py-3">
-                              <CardTitle className="text-base">{opp.position}</CardTitle>
-                              <CardDescription>{opp.company}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="py-2">
-                              <Badge>{opp.status}</Badge>
-                              <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
-                              {lastModifiedTimestamps[opp.id] && (
-                                <p className="text-xs mt-2 text-gray-500">
-                                  Last modified: {new Date(lastModifiedTimestamps[opp.id]).toLocaleString()}
+                          <div key={opp.id} className="relative">
+                            {isBatchSelectMode && (
+                              <div className="absolute top-2 left-2 z-10">
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedJobIds.includes(opp.id)}
+                                  onChange={() => toggleJobSelection(opp.id)}
+                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                              </div>
+                            )}
+                            <Card 
+                              className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} 
+                              onClick={() => {
+                                if (isBatchSelectMode) {
+                                  toggleJobSelection(opp.id);
+                                } else {
+                                  setSelectedOpportunityIndex(originalIndex);
+                                }
+                              }}
+                            >
+                              <CardHeader className="py-3">
+                                <CardTitle className="text-base">{opp.position}</CardTitle>
+                                <CardDescription>{opp.company}</CardDescription>
+                              </CardHeader>
+                              <CardContent className="py-2">
+                                <Badge>{opp.status}</Badge>
+                                <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
+                                {lastModifiedTimestamps[opp.id] && (
+                                  <p className="text-xs mt-2 text-gray-500">
+                                    Last modified: {new Date(lastModifiedTimestamps[opp.id]).toLocaleString()}
+                                  </p>
+                                )}
+                                {opp.tags && opp.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {opp.tags.map(tag => (
+                                      <Badge 
+                                        key={tag.i  d} 
+                                        className={`
+                                          ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
+                                          ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
+                                          ${TAG_COLOR_CLASSES[tag.color]?.border || TAG_COLOR_CLASSES.gray.border}
+                                        `}
+                                      >
+                                        {tag.name}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                                <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
+                                  {opp.jobDescription.substring(0, 150)}...
                                 </p>
-                              )}
+                              </CardContent>
+                            </Card>
+                          </div>
+                        );
+                      } else {
+                        // List view - more compact and reorganized
+                        return (
+                          <div key={opp.id} className="relative">
+                            {isBatchSelectMode && (
+                              <div className="absolute top-2 left-2 z-10">
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedJobIds.includes(opp.id)}
+                                  onChange={() => toggleJobSelection(opp.id)}
+                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                              </div>
+                            )}
+                            <div 
+                              className={`p-2 mb-1 border rounded cursor-pointer ${isBatchSelectMode ? 'pl-8' : ''} ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200 border-blue-300' : 'bg-white border-gray-200'}`}
+                              onClick={() => {
+                                if (isBatchSelectMode) {
+                                  toggleJobSelection(opp.id);
+                                } else {
+                                  setSelectedOpportunityIndex(originalIndex);
+                                }
+                              }}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <h4 className="font-medium">{opp.position}</h4>
+                                <Badge className="ml-2">{opp.status}</Badge>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
+                                <div>Company: {opp.company}</div>
+                                <div>Applied: {opp.appliedDate}</div>
+                                <div>Location: {opp.location || 'Not specified'}</div>
+                                <div>
+                                  Last modified: {lastModifiedTimestamps[opp.id] 
+                                    ? new Date(lastModifiedTimestamps[opp.id]).toLocaleDateString() 
+                                    : 'N/A'}
+                                </div>
+                              </div>
+                              
                               {opp.tags && opp.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
+                                <div className="flex flex-wrap gap-1 mt-1">
                                   {opp.tags.map(tag => (
                                     <Badge 
                                       key={tag.id} 
@@ -943,6 +1089,7 @@ export default function CAPTAINGui() {
                                         ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
                                         ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
                                         ${TAG_COLOR_CLASSES[tag.color]?.border || TAG_COLOR_CLASSES.gray.border}
+                                        text-xs py-0 px-1
                                       `}
                                     >
                                       {tag.name}
@@ -950,53 +1097,7 @@ export default function CAPTAINGui() {
                                   ))}
                                 </div>
                               )}
-                              <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
-                                {opp.jobDescription.substring(0, 150)}...
-                              </p>
-                            </CardContent>
-                          </Card>
-                        );
-                      } else {
-                        // List view - more compact and reorganized
-                        return (
-                          <div 
-                            key={opp.id} 
-                            className={`p-2 mb-1 border rounded cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200 border-blue-300' : 'bg-white border-gray-200'}`}
-                            onClick={() => setSelectedOpportunityIndex(originalIndex)}
-                          >
-                            <div className="flex justify-between items-center mb-1">
-                              <h4 className="font-medium">{opp.position}</h4>
-                              <Badge className="ml-2">{opp.status}</Badge>
                             </div>
-                            
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
-                              <div>Company: {opp.company}</div>
-                              <div>Applied: {opp.appliedDate}</div>
-                              <div>Location: {opp.location || 'Not specified'}</div>
-                              <div>
-                                Last modified: {lastModifiedTimestamps[opp.id] 
-                                  ? new Date(lastModifiedTimestamps[opp.id]).toLocaleDateString() 
-                                  : 'N/A'}
-                              </div>
-                            </div>
-                            
-                            {opp.tags && opp.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {opp.tags.map(tag => (
-                                  <Badge 
-                                    key={tag.id} 
-                                    className={`
-                                      ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
-                                      ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
-                                      ${TAG_COLOR_CLASSES[tag.color]?.border || TAG_COLOR_CLASSES.gray.border}
-                                      text-xs py-0 px-1
-                                    `}
-                                  >
-                                    {tag.name}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         );
                       }
@@ -1638,7 +1739,42 @@ export default function CAPTAINGui() {
                                     </div>
                                     
                                     <DialogFooter>
-                                      <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
+                                      <Button type="submit" onClick={() => {
+                                        // Set the opportunityId to the current opportunity
+                                        const updatedEvent = {
+                                          ...newEvent,
+                                          opportunityId: selectedOpportunity.id.toString()
+                                        };
+                                        setNewEvent(updatedEvent);
+                                        
+                                        // Create the event
+                                        const dateObj = new Date(updatedEvent.date);
+                                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                                          year: 'numeric', 
+                                          month: 'long', 
+                                          day: 'numeric' 
+                                        });
+                                        
+                                        const newEventObj = {
+                                          id: Date.now(),
+                                          title: updatedEvent.title,
+                                          date: formattedDate,
+                                          type: updatedEvent.type,
+                                          opportunityId: parseInt(updatedEvent.opportunityId),
+                                          notes: updatedEvent.notes
+                                        };
+                                        
+                                        dispatch({ type: 'ADD_EVENT', payload: newEventObj });
+                                        
+                                        // Reset form
+                                        setNewEvent({
+                                          title: "",
+                                          date: new Date().toISOString().split('T')[0],
+                                          type: "interview",
+                                          opportunityId: "",
+                                          notes: ""
+                                        });
+                                      }}>Add Event</Button>
                                     </DialogFooter>
                                   </DialogContent>
                                 </Dialog>
@@ -1651,18 +1787,31 @@ export default function CAPTAINGui() {
                                   {events
                                     .filter(event => event.opportunityId === selectedOpportunity.id)
                                     .map(event => (
-                                      <li key={event.id} className="flex items-center p-2 border rounded-md bg-gray-50">
+                                      <li key={event.id} className="flex items-start p-2 border rounded-md bg-gray-50">
                                         <div className={`
-                                          w-2 h-10 rounded-full mr-3
+                                          w-2 h-full rounded-full mr-3 self-stretch
                                           ${event.type === 'interview' ? 'bg-blue-500' : 
                                             event.type === 'followup' ? 'bg-green-500' : 
                                             event.type === 'deadline' ? 'bg-red-500' : 
                                             'bg-purple-500'}
                                         `}></div>
-                                        <div>
+                                        <div className="flex-grow">
                                           <p className="font-medium">{event.title}</p>
                                           <p className="text-sm text-gray-500">{event.date}</p>
+                                          {event.notes && (
+                                            <p className="text-xs text-gray-600 mt-1 italic">{event.notes}</p>
+                                          )}
                                         </div>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                          onClick={() => dispatch({ type: 'DELETE_EVENT', payload: event.id })}
+                                        >
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          </svg>
+                                        </Button>
                                       </li>
                                     ))}
                                 </ul>
@@ -1735,7 +1884,42 @@ export default function CAPTAINGui() {
                                       </div>
                                       
                                       <DialogFooter>
-                                        <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
+                                        <Button type="submit" onClick={() => {
+                                          // Set the opportunityId to the current opportunity
+                                          const updatedEvent = {
+                                            ...newEvent,
+                                            opportunityId: selectedOpportunity.id.toString()
+                                          };
+                                          setNewEvent(updatedEvent);
+                                          
+                                          // Create the event
+                                          const dateObj = new Date(updatedEvent.date);
+                                          const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                          });
+                                          
+                                          const newEventObj = {
+                                            id: Date.now(),
+                                            title: updatedEvent.title,
+                                            date: formattedDate,
+                                            type: updatedEvent.type,
+                                            opportunityId: parseInt(updatedEvent.opportunityId),
+                                            notes: updatedEvent.notes
+                                          };
+                                          
+                                          dispatch({ type: 'ADD_EVENT', payload: newEventObj });
+                                          
+                                          // Reset form
+                                          setNewEvent({
+                                            title: "",
+                                            date: new Date().toISOString().split('T')[0],
+                                            type: "interview",
+                                            opportunityId: "",
+                                            notes: ""
+                                          });
+                                        }}>Add Event</Button>
                                       </DialogFooter>
                                     </DialogContent>
                                   </Dialog>
@@ -2262,20 +2446,46 @@ export default function CAPTAINGui() {
                   <CardContent>
                     <ScrollArea className="h-[300px]">
                       <ul className="space-y-4">
-                        {events.map((event) => (
-                          <li key={event.id} className="flex items-center">
-                            <CalendarIcon className={`mr-2 h-4 w-4 ${
-                              event.type === 'interview' ? 'text-blue-500' : 
-                              event.type === 'followup' ? 'text-green-500' : 
-                              event.type === 'deadline' ? 'text-red-500' : 
-                              'text-purple-500'
-                            }`} />
-                            <div>
-                              <p className="font-semibold">{event.title}</p>
-                              <p className="text-sm text-gray-500">{event.date}</p>
-                            </div>
-                          </li>
-                        ))}
+                        {events.map((event) => {
+                          // Find the associated opportunity if it exists
+                          const relatedOpportunity = event.opportunityId 
+                            ? opportunities.find(opp => opp.id === event.opportunityId)
+                            : null;
+                            
+                          return (
+                            <li key={event.id} className="flex items-start p-2 border rounded-md hover:bg-gray-50">
+                              <div className={`
+                                w-2 h-full rounded-full mr-3 self-stretch
+                                ${event.type === 'interview' ? 'bg-blue-500' : 
+                                  event.type === 'followup' ? 'bg-green-500' : 
+                                  event.type === 'deadline' ? 'bg-red-500' : 
+                                  'bg-purple-500'}
+                              `}></div>
+                              <div className="flex-grow">
+                                <p className="font-semibold">{event.title}</p>
+                                <p className="text-sm text-gray-500">{event.date}</p>
+                                {relatedOpportunity && (
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    Related to: {relatedOpportunity.position} at {relatedOpportunity.company}
+                                  </p>
+                                )}
+                                {event.notes && (
+                                  <p className="text-xs text-gray-600 mt-1 italic">{event.notes}</p>
+                                )}
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => dispatch({ type: 'DELETE_EVENT', payload: event.id })}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </Button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </ScrollArea>
                   </CardContent>

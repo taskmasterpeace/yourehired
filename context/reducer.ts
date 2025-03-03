@@ -123,7 +123,11 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
       return {
         ...state,
         opportunities: state.opportunities.filter(opp => opp.id !== opportunityId),
-        events: state.events.filter(event => event.opportunityId !== opportunityId)
+        events: state.events.filter(event => event.opportunityId !== opportunityId),
+        // Also clear any chat messages for this opportunity
+        chatMessages: Object.fromEntries(
+          Object.entries(state.chatMessages).filter(([id]) => parseInt(id) !== opportunityId)
+        )
       };
     }
     
