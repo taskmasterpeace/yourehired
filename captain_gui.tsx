@@ -55,6 +55,8 @@ export default function CAPTAINGui() {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("card"); // "card" or "list"
 
   const quickChatOptions = [
     "Analyze my resume",
@@ -69,15 +71,44 @@ export default function CAPTAINGui() {
     { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
 
-  // Filter opportunities based on search term and status filter
+  // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter(opp => {
+    // Search term matching
     const matchesSearch = 
       opp.company.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      opp.position.toLowerCase().includes(searchTerm.toLowerCase());
+      opp.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      opp.jobDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (opp.notes && opp.notes.toLowerCase().includes(searchTerm.toLowerCase()));
     
+    // Status filtering
     const matchesStatus = statusFilter === "All" || opp.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    // Date filtering
+    let matchesDate = true;
+    if (dateFilter !== "All") {
+      const today = new Date();
+      const appliedDate = new Date(opp.appliedDate);
+      
+      switch(dateFilter) {
+        case "Last 7 Days":
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(today.getDate() - 7);
+          matchesDate = appliedDate >= sevenDaysAgo;
+          break;
+        case "Last 30 Days":
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(today.getDate() - 30);
+          matchesDate = appliedDate >= thirtyDaysAgo;
+          break;
+        case "Last 90 Days":
+          const ninetyDaysAgo = new Date();
+          ninetyDaysAgo.setDate(today.getDate() - 90);
+          matchesDate = appliedDate >= ninetyDaysAgo;
+          break;
+      }
+    }
+    
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const [newOpportunity, setNewOpportunity] = useState({
@@ -480,7 +511,7 @@ export default function CAPTAINGui() {
                   <div className="flex items-center space-x-2">
                     <Search className="h-4 w-4 text-gray-500" />
                     <Input 
-                      placeholder="Search by company or position..." 
+                      placeholder="Search by company, position, or description..." 
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="flex-1"
@@ -547,6 +578,45 @@ export default function CAPTAINGui() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <CalendarIcon className="h-4 w-4 text-gray-500" />
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Filter by date" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Dates</SelectItem>
+                        <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
+                        <SelectItem value="Last 30 Days">Last 30 Days</SelectItem>
+                        <SelectItem value="Last 90 Days">Last 90 Days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-sm text-gray-500">View Mode:</span>
+                    <div className="flex space-x-1">
+                      <Button 
+                        variant={viewMode === "card" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => setViewMode("card")}
+                        className="px-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                      </Button>
+                      <Button 
+                        variant={viewMode === "list" ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => setViewMode("list")}
+                        className="px-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -554,30 +624,53 @@ export default function CAPTAINGui() {
                   {filteredOpportunities.length > 0 ? (
                     filteredOpportunities.map((opp, index) => {
                       const originalIndex = opportunities.findIndex(o => o.id === opp.id);
-                      return (
-                        <Card 
-                          key={opp.id} 
-                          className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} 
-                          onClick={() => setSelectedOpportunityIndex(originalIndex)}
-                        >
-                          <CardHeader className="py-3">
-                            <CardTitle className="text-base">{opp.position}</CardTitle>
-                            <CardDescription>{opp.company}</CardDescription>
-                          </CardHeader>
-                          <CardContent className="py-2">
-                            <Badge>{opp.status}</Badge>
-                            <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
-                            {lastModifiedTimestamps[opp.id] && (
-                              <p className="text-xs mt-2 text-gray-500">
-                                Last modified: {new Date(lastModifiedTimestamps[opp.id]).toLocaleString()}
+                      
+                      if (viewMode === "card") {
+                        return (
+                          <Card 
+                            key={opp.id} 
+                            className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : '  bg-white'}`} 
+                            onClick={() => setSelectedOpportunityIndex(originalIndex)}
+                          >
+                            <CardHeader className="py-3">
+                              <CardTitle className="text-base">{opp.position}</CardTitle>
+                              <CardDescription>{opp.company}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="py-2">
+                              <Badge>{opp.status}</Badge>
+                              <p className="text-sm mt-2">Applied: {opp.appliedDate}</p>
+                              {lastModifiedTimestamps[opp.id] && (
+                                <p className="text-xs mt-2 text-gray-500">
+                                  Last modified: {new Date(lastModifiedTimestamps[opp.id]).toLocaleString()}
+                                </p>
+                              )}
+                              <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
+                                {opp.jobDescription.substring(0, 150)}...
                               </p>
-                            )}
-                            <p className="text-xs mt-2 text-gray-600 line-clamp-3 whitespace-pre-line">
-                              {opp.jobDescription.substring(0, 150)}...
-                            </p>
-                          </CardContent>
-                        </Card>
-                      );
+                            </CardContent>
+                          </Card>
+                        );
+                      } else {
+                        // List view - more compact
+                        return (
+                          <div 
+                            key={opp.id} 
+                            className={`p-2 mb-1 border rounded cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200 border-blue-300' : 'bg-white border-gray-200'}`}
+                            onClick={() => setSelectedOpportunityIndex(originalIndex)}
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="font-medium">{opp.position}</h4>
+                                <p className="text-sm text-gray-600">{opp.company}</p>
+                              </div>
+                              <div className="text-right">
+                                <Badge className="mb-1">{opp.status}</Badge>
+                                <p className="text-xs text-gray-500">{opp.appliedDate}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
                     })
                   ) : (
                     <div className="text-center py-8 text-gray-500">
@@ -587,6 +680,7 @@ export default function CAPTAINGui() {
                         onClick={() => {
                           setSearchTerm("");
                           setStatusFilter("All");
+                          setDateFilter("All");
                         }}
                       >
                         Clear filters
@@ -852,7 +946,7 @@ export default function CAPTAINGui() {
                                       {selectedOpportunity.location && (
                                         <div>
                                           <h4 className="text-sm font-medium text-gray-500 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="current  Color">
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
