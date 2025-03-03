@@ -66,7 +66,7 @@ export default function CAPTAINGui() {
     company: "",
     position: "",
     jobDescription: "",
-    status: "Interested", // Changed default to "Interested"
+    status: "Interested", // Default is "Interested"
     appliedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     recruiterName: "",
     recruiterEmail: "",
