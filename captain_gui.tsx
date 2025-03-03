@@ -16,24 +16,21 @@ import { Switch } from "@/components/ui/switch"
 import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-react'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
+import { useAppState } from '@/context/context'
 
 export default function CAPTAINGui() {
+  const { state, dispatch } = useAppState();
+  const { opportunities, masterResume, events, chatMessages } = state;
+  
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [activeTab, setActiveTab] = useState("opportunities")
   const [selectedOpportunityIndex, setSelectedOpportunityIndex] = useState(0)
   const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false)
-  const [masterResume, setMasterResume] = useState("")
-  const [jobChats, setJobChats] = useState<{ [key: number]: { message: string, sender: 'user' | 'ai' }[] }>({})
-  const [currentMessage, setCurrentMessage] = useState("")
   const [isEditingJobDescription, setIsEditingJobDescription] = useState(false)
   const [editedJobDescription, setEditedJobDescription] = useState("")
   const [isEditingDate, setIsEditingDate] = useState(false)
   const [editedDate, setEditedDate] = useState("")
-  const [jobRecommendations, setJobRecommendations] = useState([
-    { id: 1, company: "TechGiant", position: "Senior Frontend Developer", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
-    { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
-    { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
-  ]);
+  const [currentMessage, setCurrentMessage] = useState("")
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   
   // Search and filter states
@@ -47,10 +44,10 @@ export default function CAPTAINGui() {
     "Tips for salary negotiation"
   ];
 
-  const [opportunities, setOpportunities] = useState([
-    { id: 1, company: "TechCorp", position: "Software Engineer", status: "In Progress", appliedDate: "May 15, 2023", jobDescription: "We are seeking a talented Software Engineer to join our innovative team...", resume: "John Doe\n\nExperience:\n- Software Developer at XYZ Corp\n- Intern at ABC Tech\n\nSkills:\n- JavaScript, React, Node.js\n- Python, Django\n- SQL, MongoDB" },
-    { id: 2, company: "DataInc", position: "Data Scientist", status: "Interview Scheduled", appliedDate: "May 10, 2023", jobDescription: "DataInc is looking for a Data Scientist to help us derive insights from our vast datasets...", resume: "John Doe\n\nExperience:\n- Data Analyst at BigData Co.\n- Research Assistant at University XYZ\n\nSkills:\n- Python, R, SQL\n- Machine Learning, Deep Learning\n- Data Visualization (Tableau, D3.js)" },
-    { id: 3, company: "AIStartup", position: "Machine Learning Engineer", status: "Applied", appliedDate: "May 5, 2023", jobDescription: "Join our cutting-edge AI startup as a Machine Learning Engineer and help shape the future of AI...", resume: "John Doe\n\nExperience:\n- AI Researcher at Tech University\n- Machine Learning Intern at AI Solutions Inc.\n\nSkills:\n- Python, TensorFlow, PyTorch\n- Natural Language Processing\n- Computer Vision" }
+  const [jobRecommendations, setJobRecommendations] = useState([
+    { id: 1, company: "TechGiant", position: "Senior Frontend Developer", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
+    { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
+    { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
 
   // Filter opportunities based on search term and status filter
@@ -101,7 +98,11 @@ export default function CAPTAINGui() {
       appliedDate: formattedDate,
       resume: masterResume, // Use the master resume for the new opportunity
     };
-    setOpportunities([...opportunities, newOpp]);
+    
+    // Use dispatch instead of setState
+    dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpp });
+    
+    // Reset form
     setNewOpportunity({
       company: "",
       position: "",
@@ -112,7 +113,7 @@ export default function CAPTAINGui() {
   };
 
   const handleSaveDateChange = () => {
-    const updatedOpportunities = [...opportunities];
+    const selectedOpportunity = opportunities[selectedOpportunityIndex];
     // Convert from YYYY-MM-DD to a more readable format
     const dateObj = new Date(editedDate);
     const formattedDate = dateObj.toLocaleDateString('en-US', { 
@@ -121,11 +122,15 @@ export default function CAPTAINGui() {
       day: 'numeric' 
     });
     
-    updatedOpportunities[selectedOpportunityIndex] = {
-      ...selectedOpportunity,
-      appliedDate: formattedDate
-    };
-    setOpportunities(updatedOpportunities);
+    // Use dispatch instead of setState
+    dispatch({ 
+      type: 'UPDATE_OPPORTUNITY', 
+      payload: { 
+        id: selectedOpportunity.id, 
+        updates: { appliedDate: formattedDate } 
+      } 
+    });
+    
     setIsEditingDate(false);
   };
 
@@ -182,9 +187,29 @@ export default function CAPTAINGui() {
 
       const data = await response.json();
       setChatMessages(prev => [...prev, { role: 'assistant', content: data.content || "I'm sorry, I couldn't generate a response." }]);
+      
+      // Add to global state
+      dispatch({
+        type: 'ADD_CHAT_MESSAGE',
+        payload: {
+          opportunityId: selectedOpportunity.id,
+          message: data.content || "I'm sorry, I couldn't generate a response.",
+          sender: 'ai'
+        }
+      });
     } catch (error) {
       console.error('Error in chat:', error);
       setChatMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, there was an error processing your request." }]);
+      
+      // Add error message to global state
+      dispatch({
+        type: 'ADD_CHAT_MESSAGE',
+        payload: {
+          opportunityId: selectedOpportunity.id,
+          message: "I'm sorry, there was an error processing your request.",
+          sender: 'ai'
+        }
+      });
     }
   };
 
@@ -414,12 +439,13 @@ export default function CAPTAINGui() {
                         <Select 
                           value={selectedOpportunity.status} 
                           onValueChange={(value) => {
-                            const updatedOpportunities = [...opportunities];
-                            updatedOpportunities[selectedOpportunityIndex] = {
-                              ...selectedOpportunity,
-                              status: value
-                            };
-                            setOpportunities(updatedOpportunities);
+                            dispatch({
+                              type: 'UPDATE_OPPORTUNITY',
+                              payload: {
+                                id: selectedOpportunity.id,
+                                updates: { status: value }
+                              }
+                            });
                           }}
                         >
                           <SelectTrigger className="w-[180px]">
@@ -474,12 +500,13 @@ export default function CAPTAINGui() {
                               </Button>
                               <Button 
                                 onClick={() => {
-                                  const updatedOpportunities = [...opportunities];
-                                  updatedOpportunities[selectedOpportunityIndex] = {
-                                    ...selectedOpportunity,
-                                    jobDescription: editedJobDescription
-                                  };
-                                  setOpportunities(updatedOpportunities);
+                                  dispatch({
+                                    type: 'UPDATE_OPPORTUNITY',
+                                    payload: {
+                                      id: selectedOpportunity.id,
+                                      updates: { jobDescription: editedJobDescription }
+                                    }
+                                  });
                                   setIsEditingJobDescription(false);
                                 }}
                               >
@@ -567,13 +594,18 @@ export default function CAPTAINGui() {
                     onCheckedChange={setIsMasterResumeFrozen}
                   />
                 </div>
-                <Button disabled={isMasterResumeFrozen}>Save Changes</Button>
+                <Button 
+                  disabled={isMasterResumeFrozen}
+                  onClick={() => dispatch({ type: 'UPDATE_MASTER_RESUME', payload: masterResume })}
+                >
+                  Save Changes
+                </Button>
               </div>
               <Textarea
                 className="min-h-[400px] mb-4 font-mono whitespace-pre-wrap"
                 placeholder="Paste your master resume here..."
                 value={masterResume}
-                onChange={(e) => setMasterResume(e.target.value)}
+                onChange={(e) => dispatch({ type: 'UPDATE_MASTER_RESUME', payload: e.target.value })}
                 disabled={isMasterResumeFrozen}
               />
               <div className="grid grid-cols-2 gap-4">
@@ -743,7 +775,7 @@ export default function CAPTAINGui() {
                     <CardTitle>Interview Success Rate</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-[200px] flex items-center justify-center bg-gray-200 rounded-md">
+                    <div className="h-[200px]  flex items-center justify-center bg-gray-200 rounded-md">
                       <PieChartIcon className="h-32 w-32 text-green-500" />
                     </div>
                   </CardContent>
@@ -796,34 +828,20 @@ export default function CAPTAINGui() {
                   <CardContent>
                     <ScrollArea className="h-[300px]">
                       <ul className="space-y-4">
-                        <li className="flex items-center">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-blue-500" />
-                          <div>
-                            <p className="font-semibold">Interview with TechCorp</p>
-                            <p className="text-sm text-gray-500">May 25, 2023</p>
-                          </div>
-                        </li>
-                        <li className="flex items-center">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-green-500" />
-                          <div>
-                            <p className="font-semibold">Follow-up with DataInc</p>
-                            <p className="text-sm text-gray-500">May 27, 2023</p>
-                          </div>
-                        </li>
-                        <li className="flex items-center">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-red-500" />
-                          <div>
-                            <p className="font-semibold">Application deadline for AIStartup</p>
-                            <p className="text-sm text-gray-500">June 1, 2023</p>
-                          </div>
-                        </li>
-                        <li className="flex items-center">
-                          <CalendarIcon className="mr-2 h-4 w-4 text-purple-500" />
-                          <div>
-                            <p className="font-semibold">Technical assessment for CloudTech</p>
-                            <p className="text-sm text-gray-500">June 5, 2023</p>
-                          </div>
-                        </li>
+                        {events.map((event) => (
+                          <li key={event.id} className="flex items-center">
+                            <CalendarIcon className={`mr-2 h-4 w-4 ${
+                              event.type === 'interview' ? 'text-blue-500' : 
+                              event.type === 'followup' ? 'text-green-500' : 
+                              event.type === 'deadline' ? 'text-red-500' : 
+                              'text-purple-500'
+                            }`} />
+                            <div>
+                              <p className="font-semibold">{event.title}</p>
+                              <p className="text-sm text-gray-500">{event.date}</p>
+                            </div>
+                          </li>
+                        ))}
                       </ul>
                     </ScrollArea>
                   </CardContent>
