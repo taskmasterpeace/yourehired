@@ -27,6 +27,8 @@ export default function CAPTAINGui() {
   const [currentMessage, setCurrentMessage] = useState("")
   const [isEditingJobDescription, setIsEditingJobDescription] = useState(false)
   const [editedJobDescription, setEditedJobDescription] = useState("")
+  const [isEditingDate, setIsEditingDate] = useState(false)
+  const [editedDate, setEditedDate] = useState("")
   const [jobRecommendations, setJobRecommendations] = useState([
     { id: 1, company: "TechGiant", position: "Senior Frontend Developer", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
     { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
@@ -66,7 +68,8 @@ export default function CAPTAINGui() {
     company: "",
     position: "",
     jobDescription: "",
-    status: "Applied",
+    status: "Interested", // Changed default to "Interested"
+    appliedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
   });
 
   const handleNewOpportunityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -84,11 +87,18 @@ export default function CAPTAINGui() {
   };
 
   const handleSaveNewOpportunity = () => {
-    const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    // Convert from YYYY-MM-DD to a more readable format
+    const dateObj = new Date(newOpportunity.appliedDate);
+    const formattedDate = dateObj.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
     const newOpp = {
       ...newOpportunity,
       id: opportunities.length + 1,
-      appliedDate: currentDate,
+      appliedDate: formattedDate,
       resume: masterResume, // Use the master resume for the new opportunity
     };
     setOpportunities([...opportunities, newOpp]);
@@ -96,8 +106,27 @@ export default function CAPTAINGui() {
       company: "",
       position: "",
       jobDescription: "",
-      status: "Applied",
+      status: "Interested",
+      appliedDate: new Date().toISOString().split('T')[0],
     });
+  };
+
+  const handleSaveDateChange = () => {
+    const updatedOpportunities = [...opportunities];
+    // Convert from YYYY-MM-DD to a more readable format
+    const dateObj = new Date(editedDate);
+    const formattedDate = dateObj.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    updatedOpportunities[selectedOpportunityIndex] = {
+      ...selectedOpportunity,
+      appliedDate: formattedDate
+    };
+    setOpportunities(updatedOpportunities);
+    setIsEditingDate(false);
   };
 
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
@@ -221,12 +250,27 @@ export default function CAPTAINGui() {
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="Interested">Interested</SelectItem>
                         <SelectItem value="Applied">Applied</SelectItem>
                         <SelectItem value="Interviewing">Interviewing</SelectItem>
                         <SelectItem value="Offered">Offered</SelectItem>
                         <SelectItem value="Rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="appliedDate" className="text-right">Date</Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="appliedDate"
+                        type="date"
+                        value={newOpportunity.appliedDate || new Date().toISOString().split('T')[0]}
+                        onChange={handleNewOpportunityChange}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {newOpportunity.status === "Interested" ? "Date added" : "Date applied"}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>
@@ -258,6 +302,7 @@ export default function CAPTAINGui() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="Interested">Interested</SelectItem>
                         <SelectItem value="Applied">Applied</SelectItem>
                         <SelectItem value="In Progress">In Progress</SelectItem>
                         <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
@@ -336,7 +381,61 @@ export default function CAPTAINGui() {
                         </Button>
                       </div>
                     </div>
-                    <CardDescription>Applied on: {selectedOpportunity.appliedDate}</CardDescription>
+                    <div className="flex justify-between items-center">
+                      <CardDescription>
+                        {isEditingDate ? (
+                          <div className="flex items-center space-x-2">
+                            <Input 
+                              type="date" 
+                              value={editedDate} 
+                              onChange={(e) => setEditedDate(e.target.value)}
+                              className="w-40"
+                            />
+                            <Button size="sm" variant="outline" onClick={handleSaveDateChange}>Save</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setIsEditingDate(false)}>Cancel</Button>
+                          </div>
+                        ) : (
+                          <span>
+                            {selectedOpportunity.status === "Interested" ? "Added on: " : "Applied on: "}
+                            {selectedOpportunity.appliedDate} 
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              setIsEditingDate(true);
+                              // Convert the date string to YYYY-MM-DD format for the input
+                              const dateObj = new Date(selectedOpportunity.appliedDate);
+                              const year = dateObj.getFullYear();
+                              const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                              const day = String(dateObj.getDate()).padStart(2, '0');
+                              setEditedDate(`${year}-${month}-${day}`);
+                            }}>Edit</Button>
+                          </span>
+                        )}
+                      </CardDescription>
+                      <div>
+                        <Select 
+                          value={selectedOpportunity.status} 
+                          onValueChange={(value) => {
+                            const updatedOpportunities = [...opportunities];
+                            updatedOpportunities[selectedOpportunityIndex] = {
+                              ...selectedOpportunity,
+                              status: value
+                            };
+                            setOpportunities(updatedOpportunities);
+                          }}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Interested">Interested</SelectItem>
+                            <SelectItem value="Applied">Applied</SelectItem>
+                            <SelectItem value="In Progress">In Progress</SelectItem>
+                            <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
+                            <SelectItem value="Offered">Offered</SelectItem>
+                            <SelectItem value="Rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <Tabs defaultValue="details">
