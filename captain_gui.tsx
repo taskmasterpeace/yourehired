@@ -134,7 +134,7 @@ export default function CAPTAINGui() {
     setIsEditingDate(false);
   };
 
-  const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
+  const [localChatMessages, setLocalChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const selectedOpportunity = opportunities[selectedOpportunityIndex];
@@ -162,7 +162,7 @@ export default function CAPTAINGui() {
     if (currentMessage.trim() === "" || !selectedOpportunity) return;
 
     const userMessage = { role: 'user', content: currentMessage };
-    setChatMessages(prev => [...prev, userMessage]);
+    setLocalChatMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
 
     try {
@@ -175,7 +175,7 @@ export default function CAPTAINGui() {
           action: 'chat',
           messages: [
             { role: 'system', content: `You are a career advisor. The user's resume is: ${selectedOpportunity.resume}\n\nThe job description is: ${selectedOpportunity.jobDescription}` },
-            ...chatMessages,
+            ...localChatMessages,
             userMessage
           ],
         }),
@@ -186,7 +186,7 @@ export default function CAPTAINGui() {
       }
 
       const data = await response.json();
-      setChatMessages(prev => [...prev, { role: 'assistant', content: data.content || "I'm sorry, I couldn't generate a response." }]);
+      setLocalChatMessages(prev => [...prev, { role: 'assistant', content: data.content || "I'm sorry, I couldn't generate a response." }]);
       
       // Add to global state
       dispatch({
@@ -199,7 +199,7 @@ export default function CAPTAINGui() {
       });
     } catch (error) {
       console.error('Error in chat:', error);
-      setChatMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, there was an error processing your request." }]);
+      setLocalChatMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, there was an error processing your request." }]);
       
       // Add error message to global state
       dispatch({
@@ -528,7 +528,7 @@ export default function CAPTAINGui() {
                       </TabsContent>
                       <TabsContent value="chat">
                         <ScrollArea className="h-[400px] border rounded-md p-4 mb-4 bg-white">
-                          {chatMessages.map((msg, index) => (
+                          {localChatMessages.map((msg, index) => (
                             <div key={index} className={`flex items-start mb-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                               {msg.role === 'assistant' && <Bot className="mr-2 h-6 w-6 text-blue-500" />}
                               <Card className={msg.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'}>
