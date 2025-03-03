@@ -1426,7 +1426,7 @@ export default function CAPTAINGui() {
                             <div className="space-y-3">
                               <Textarea 
                                 className={`${isJobDescriptionExpanded ? 'h-[600px]' : 'h-[350px]'} font-mono whitespace-pre-wrap border-2 border-blue-200 focus:border-blue-400 focus:ring-blue-400 transition-colors`}
-                                value={edit  edJobDescription}
+                                value={editedJobDescription}
                                 onChange={(e) => setEditedJobDescription(e.target.value)}
                               />
                               <div className="flex justify-end space-x-3">
