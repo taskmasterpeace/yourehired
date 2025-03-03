@@ -104,6 +104,15 @@ export default function CAPTAINGui() {
   const [sortBy, setSortBy] = useState("lastModified");
   const [sortDirection, setSortDirection] = useState("desc"); // "asc" or "desc"
 
+  // New state for calendar event creation
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    date: new Date().toISOString().split('T')[0],
+    type: "interview",
+    opportunityId: "",
+    notes: ""
+  });
+
   const quickChatOptions = [
     "Analyze my resume",
     "Suggest skills to improve",
@@ -134,6 +143,30 @@ export default function CAPTAINGui() {
       }
     });
     updateLastModified(opportunityId);
+  };
+
+  // Helper function to calculate application streak
+  const calculateStreak = (opportunities) => {
+    const today = new Date();
+    let streak = 0;
+    
+    for (let i = 0; i < 30; i++) { // Check up to 30 days back
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      
+      const hasApplication = opportunities.some(opp => {
+        const appDate = new Date(opp.appliedDate);
+        return appDate.toDateString() === checkDate.toDateString();
+      });
+      
+      if (hasApplication) {
+        streak++;
+      } else if (i > 0) { // If we're not checking today
+        break; // End streak on first day with no applications
+      }
+    }
+    
+    return streak;
   };
 
   // Generate analytics data using useMemo to prevent recalculation on every render
@@ -184,6 +217,17 @@ export default function CAPTAINGui() {
       ? (offerCount / interviewCount * 100).toFixed(1) 
       : '0';
     
+    // Weekly application count
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const weeklyApplicationCount = opportunities.filter(opp => {
+      const appDate = new Date(opp.appliedDate);
+      return appDate >= startOfWeek;
+    }).length;
+    
     return {
       statusCounts,
       applicationsByWeek,
@@ -193,7 +237,8 @@ export default function CAPTAINGui() {
       totalApplications: opportunities.length,
       activeApplications: opportunities.filter(opp => 
         !['Rejected', 'Withdrawn', 'Offer Declined', 'Position Filled', 'Position Cancelled'].includes(opp.status)
-      ).length
+      ).length,
+      weeklyApplicationCount
     };
   }, [opportunities]);
 
@@ -355,6 +400,57 @@ export default function CAPTAINGui() {
     setIsEditingDate(false);
   };
 
+  const handleNewEventChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setNewEvent({
+      ...newEvent,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleNewEventTypeChange = (value: string) => {
+    setNewEvent({
+      ...newEvent,
+      type: value,
+    });
+  };
+
+  const handleNewEventOpportunityChange = (value: string) => {
+    setNewEvent({
+      ...newEvent,
+      opportunityId: value,
+    });
+  };
+
+  const handleSaveNewEvent = () => {
+    // Convert from YYYY-MM-DD to a more readable format
+    const dateObj = new Date(newEvent.date);
+    const formattedDate = dateObj.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    const newEventObj = {
+      id: Date.now(),
+      title: newEvent.title,
+      date: formattedDate,
+      type: newEvent.type,
+      opportunityId: newEvent.opportunityId !== "none" ? parseInt(newEvent.opportunityId) : undefined,
+      notes: newEvent.notes
+    };
+    
+    dispatch({ type: 'ADD_EVENT', payload: newEventObj });
+    
+    // Reset form
+    setNewEvent({
+      title: "",
+      date: new Date().toISOString().split('T')[0],
+      type: "interview",
+      opportunityId: "",
+      notes: ""
+    });
+  };
+
   const [localChatMessages, setLocalChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
@@ -454,11 +550,11 @@ export default function CAPTAINGui() {
 
 
   return (
-    <div className="container mx-auto p-4 bg-gray-100 min-h-screen">
+    <div className="container mx-auto p-4 bg-gray-100 min-h-screen flex flex-col">
       <h1 className="text-3xl font-bold mb-4 text-blue-600">CAPTAIN - Career Application Tracking and Intelligence Navigation</h1>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded-lg shadow-md">
-        <TabsList className="mb-4 p-2 bg-blue-100 rounded-t-lg">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded-lg shadow-md flex-grow flex flex-col">
+        <TabsList className="mb-4 p-2 bg-blue-100 rounded-t-lg sticky top-0 z-10">
           <TabsTrigger value="opportunities" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Opportunities</TabsTrigger>
           <TabsTrigger value="resume" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Master Resume</TabsTrigger>
           <TabsTrigger value="captain" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Captain</TabsTrigger>
@@ -466,7 +562,7 @@ export default function CAPTAINGui() {
           <TabsTrigger value="calendar" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Calendar</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="opportunities" className="p-4">
+        <TabsContent value="opportunities" className="p-4 flex-grow overflow-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold text-blue-700">Job Opportunities</h2>
             <Dialog>
@@ -615,7 +711,7 @@ export default function CAPTAINGui() {
                   </div>
                   
                   {/* Show recruiter fields if status is Recruiter Contact */}
-                  {(newOpportunity.status === "Recruiter Contact" || newOpportunity.status === "Networking") && (
+                  {(newOpportunity.status === "Recruiter Contact" || newOpportunity.status ===  "Networking") && (
                     <>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="recruiterName" className="text-right">Contact Name</Label>
@@ -680,75 +776,80 @@ export default function CAPTAINGui() {
                       className="flex-1"
                     />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Filter className="h-4 w-4 text-gray-500" />
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Filter by status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Statuses</SelectItem>
-                        
-                        <SelectGroup>
-                          <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
-                          <SelectItem value="Bookmarked">Bookmarked</SelectItem>
-                          <SelectItem value="Interested">Interested</SelectItem>
-                          <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
-                          <SelectItem value="Networking">Networking</SelectItem>
-                        </SelectGroup>
-                        
-                        <SelectGroup>
-                          <SelectLabel className="select-category-label">Application</SelectLabel>
-                          <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                          <SelectItem value="Applied">Applied</SelectItem>
-                          <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
-                        </SelectGroup>
-                        
-                        <SelectGroup>
-                          <SelectLabel className="select-category-label">Interview Process</SelectLabel>
-                          <SelectItem value="Screening">Screening</SelectItem>
-                          <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
-                          <SelectItem value="First Interview">First Interview</SelectItem>
-                          <SelectItem value="Second Interview">Second Interview</SelectItem>
-                          <SelectItem value="Final Interview">Final Interview</SelectItem>
-                          <SelectItem value="Reference Check">Reference Check</SelectItem>
-                        </SelectGroup>
-                        
-                        <SelectGroup>
-                          <SelectLabel className="select-category-label">Decision</SelectLabel>
-                          <SelectItem value="Negotiating">Negotiating</SelectItem>
-                          <SelectItem value="Offer Received">Offer Received</SelectItem>
-                          <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
-                          <SelectItem value="Offer Declined">Offer Declined</SelectItem>
-                          <SelectItem value="Rejected">Rejected</SelectItem>
-                          <SelectItem value="Withdrawn">Withdrawn</SelectItem>
-                          <SelectItem value="Position Filled">Position Filled</SelectItem>
-                          <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
-                        </SelectGroup>
-                        
-                        <SelectGroup>
-                          <SelectLabel className="select-category-label">Follow-up</SelectLabel>
-                          <SelectItem value="Following Up">Following Up</SelectItem>
-                          <SelectItem value="Waiting">Waiting</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center space-x-2">
+                      <Filter className="h-4 w-4 text-gray-500" />
+                      <Select value={statusFilter} onValueChange={setStatusFilter} className="flex-1">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Statuses</SelectItem>
+                          
+                          <SelectGroup>
+                            <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
+                            <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                            <SelectItem value="Interested">Interested</SelectItem>
+                            <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                            <SelectItem value="Networking">Networking</SelectItem>
+                          </SelectGroup>
+                          
+                          <SelectGroup>
+                            <SelectLabel className="select-category-label">Application</SelectLabel>
+                            <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                            <SelectItem value="Applied">Applied</SelectItem>
+                            <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                          </SelectGroup>
+                          
+                          <SelectGroup>
+                            <SelectLabel className="select-category-label">Interview Process</SelectLabel>
+                            <SelectItem value="Screening">Screening</SelectItem>
+                            <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                            <SelectItem value="First Interview">First Interview</SelectItem>
+                            <SelectItem value="Second Interview">Second Interview</SelectItem>
+                            <SelectItem value="Final Interview">Final Interview</SelectItem>
+                            <SelectItem value="Reference Check">Reference Check</SelectItem>
+                          </SelectGroup>
+                          
+                          <SelectGroup>
+                            <SelectLabel className="select-category-label">Decision</SelectLabel>
+                            <SelectItem value="Negotiating">Negotiating</SelectItem>
+                            <SelectItem value="Offer Received">Offer Received</SelectItem>
+                            <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                            <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                            <SelectItem value="Rejected">Rejected</SelectItem>
+                            <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                            <SelectItem value="Position Filled">Position Filled</SelectItem>
+                            <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                          </SelectGroup>
+                          
+                          <SelectGroup>
+                            <SelectLabel className="select-category-label">Follow-up</SelectLabel>
+                            <SelectItem value="Following Up">Following Up</SelectItem>
+                            <SelectItem value="Waiting">Waiting</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <CalendarIcon className="h-4 w-4 text-gray-500" />
+                      <Select value={dateFilter} onValueChange={setDateFilter} className="flex-1">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by date" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Dates</SelectItem>
+                          <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
+                          <SelectItem value="Last 30 Days">Last 30 Days</SelectItem>
+                          <SelectItem value="Last 90 Days">Last 90 Days</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+                  
                   <div className="flex items-center space-x-2">
-                    <CalendarIcon className="h-4 w-4 text-gray-500" />
-                    <Select value={dateFilter} onValueChange={setDateFilter}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Filter by date" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Dates</SelectItem>
-                        <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
-                        <SelectItem value="Last 30 Days">Last 30 Days</SelectItem>
-                        <SelectItem value="Last 90 Days">Last 90 Days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center space-x-2 mt-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
                     </svg>
@@ -756,8 +857,8 @@ export default function CAPTAINGui() {
                       const [field, direction] = value.split('-');
                       setSortBy(field);
                       setSortDirection(direction);
-                    }}>
-                      <SelectTrigger className="flex-1">
+                    }} className="flex-1">
+                      <SelectTrigger>
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
                       <SelectContent>
@@ -782,9 +883,7 @@ export default function CAPTAINGui() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm text-gray-500">View Mode:</span>
+                    
                     <div className="flex space-x-1">
                       <Button 
                         variant={viewMode === "card" ? "default" : "outline"} 
@@ -858,23 +957,29 @@ export default function CAPTAINGui() {
                           </Card>
                         );
                       } else {
-                        // List view - more compact
+                        // List view - more compact and reorganized
                         return (
                           <div 
                             key={opp.id} 
                             className={`p-2 mb-1 border rounded cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200 border-blue-300' : 'bg-white border-gray-200'}`}
                             onClick={() => setSelectedOpportunityIndex(originalIndex)}
                           >
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center mb-1">
+                              <h4 className="font-medium">{opp.position}</h4>
+                              <Badge className="ml-2">{opp.status}</Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
+                              <div>Company: {opp.company}</div>
+                              <div>Applied: {opp.appliedDate}</div>
+                              <div>Location: {opp.location || 'Not specified'}</div>
                               <div>
-                                <h4 className="font-medium">{opp.position}</h4>
-                                <p className="text-sm text-gray-600">{opp.company}</p>
-                              </div>
-                              <div className="text-right">
-                                <Badge className="mb-1">{opp.status}</Badge>
-                                <p className="text-xs text-gray-500">{opp.appliedDate}</p>
+                                Last modified: {lastModifiedTimestamps[opp.id] 
+                                  ? new Date(lastModifiedTimestamps[opp.id]).toLocaleDateString() 
+                                  : 'N/A'}
                               </div>
                             </div>
+                            
                             {opp.tags && opp.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {opp.tags.map(tag => (
@@ -1375,7 +1480,7 @@ export default function CAPTAINGui() {
                                     <div className="ml-5 mt-2">
                                       <Badge className={`
                                         ${selectedOpportunity.status === "Offer Received" || selectedOpportunity.status === "Offer Accepted" ? "bg-green-100 text-green-800 border-green-200" : ""}
-                                        ${selectedOpportunity.status === "Applied" || selectedOpportunity.status === "Interested" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}
+                                        ${selectedOp  portunity.status === "Applied" || selectedOpportunity.status === "Interested" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}
                                         ${selectedOpportunity.status === "First Interview" || selectedOpportunity.status === "Second Interview" ? "bg-purple-100 text-purple-800 border-purple-200" : ""}
                                         ${selectedOpportunity.status === "Rejected" || selectedOpportunity.status === "Withdrawn" ? "bg-red-100 text-red-800 border-red-200" : ""}
                                         px-3 py-1 text-xs rounded-full border
@@ -1455,8 +1560,193 @@ export default function CAPTAINGui() {
                           )}
                         </div>
                         
+                        {/* Upcoming Events Section */}
+                        <div className="mt-6">
+                          <Card className="bg-white border-0 shadow-md overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-base text-blue-700 flex items-center">
+                                  <CalendarIcon className="h-4 w-4 mr-2 text-blue-500" />
+                                  Upcoming Events
+                                </CardTitle>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                    >
+                                      <PlusCircle className="h-4 w-4 mr-1" />
+                                      Add Event
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Add Calendar Event</DialogTitle>
+                                      <DialogDescription>Create a new event for this job opportunity</DialogDescription>
+                                    </DialogHeader>
+                                    
+                                    <div className="grid gap-4 py-4">
+                                      <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="title" className="text-right">Title</Label>
+                                        <Input 
+                                          id="title" 
+                                          className="col-span-3" 
+                                          placeholder="e.g., Interview with Company X"
+                                          value={newEvent.title}
+                                          onChange={handleNewEventChange}
+                                        />
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="date" className="text-right">Date</Label>
+                                        <Input 
+                                          id="date" 
+                                          type="date" 
+                                          className="col-span-3"
+                                          value={newEvent.date}
+                                          onChange={handleNewEventChange}
+                                        />
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="type" className="text-right">Type</Label>
+                                        <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
+                                          <SelectTrigger className="col-span-3">
+                                            <SelectValue placeholder="Select event type" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="interview">Interview</SelectItem>
+                                            <SelectItem value="followup">Follow-up</SelectItem>
+                                            <SelectItem value="deadline">Deadline</SelectItem>
+                                            <SelectItem value="assessment">Assessment</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="notes" className="text-right">Notes</Label>
+                                        <Textarea 
+                                          id="notes" 
+                                          className="col-span-3" 
+                                          placeholder="Add any additional notes about this event"
+                                          rows={3}
+                                          value={newEvent.notes}
+                                          onChange={handleNewEventChange}
+                                        />
+                                      </div>
+                                    </div>
+                                    
+                                    <DialogFooter>
+                                      <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+                            </div>
+                            <CardContent className="p-6">
+                              {/* Filter events for this job */}
+                              {events.filter(event => event.opportunityId === selectedOpportunity.id).length > 0 ? (
+                                <ul className="space-y-3">
+                                  {events
+                                    .filter(event => event.opportunityId === selectedOpportunity.id)
+                                    .map(event => (
+                                      <li key={event.id} className="flex items-center p-2 border rounded-md bg-gray-50">
+                                        <div className={`
+                                          w-2 h-10 rounded-full mr-3
+                                          ${event.type === 'interview' ? 'bg-blue-500' : 
+                                            event.type === 'followup' ? 'bg-green-500' : 
+                                            event.type === 'deadline' ? 'bg-red-500' : 
+                                            'bg-purple-500'}
+                                        `}></div>
+                                        <div>
+                                          <p className="font-medium">{event.title}</p>
+                                          <p className="text-sm text-gray-500">{event.date}</p>
+                                        </div>
+                                      </li>
+                                    ))}
+                                </ul>
+                              ) : (
+                                <div className="text-center py-6 text-gray-400">
+                                  <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                                  <p>No upcoming events for this opportunity</p>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="outline" size="sm" className="mt-2">
+                                        <PlusCircle className="h-4 w-4 mr-1" />
+                                        Schedule an event
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                      <DialogHeader>
+                                        <DialogTitle>Add Calendar Event</DialogTitle>
+                                        <DialogDescription>Create a new event for this job opportunity</DialogDescription>
+                                      </DialogHeader>
+                                      
+                                      <div className="grid gap-4 py-4">
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                          <Label htmlFor="title" className="text-right">Title</Label>
+                                          <Input 
+                                            id="title" 
+                                            className="col-span-3" 
+                                            placeholder="e.g., Interview with Company X"
+                                            value={newEvent.title}
+                                            onChange={handleNewEventChange}
+                                          />
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                          <Label htmlFor="date" className="text-right">Date</Label>
+                                          <Input 
+                                            id="date" 
+                                            type="date" 
+                                            className="col-span-3"
+                                            value={newEvent.date}
+                                            onChange={handleNewEventChange}
+                                          />
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                          <Label htmlFor="type" className="text-right">Type</Label>
+                                          <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
+                                            <SelectTrigger className="col-span-3">
+                                              <SelectValue placeholder="Select event type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="interview">Interview</SelectItem>
+                                              <SelectItem value="followup">Follow-up</SelectItem>
+                                              <SelectItem value="deadline">Deadline</SelectItem>
+                                              <SelectItem value="assessment">Assessment</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                          <Label htmlFor="notes" className="text-right">Notes</Label>
+                                          <Textarea 
+                                            id="notes" 
+                                            className="col-span-3" 
+                                            placeholder="Add any additional notes about this event"
+                                            rows={3}
+                                            value={newEvent.notes}
+                                            onChange={handleNewEventChange}
+                                          />
+                                        </div>
+                                      </div>
+                                      
+                                      <DialogFooter>
+                                        <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
+                                      </DialogFooter>
+                                    </DialogContent>
+                                  </Dialog>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+                        
                         {/* Notes at Bottom - Changed from amber to blue styling */}
-                        <Card className="bg-white border-0 shadow-md overflow-hidden">
+                        <Card className="bg-white border-0 shadow-md overflow-hidden mt-6">
                           <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
                             <div className="flex justify-between items-center">
                               <CardTitle className="text-base text-blue-700 flex items-center">
@@ -1584,7 +1874,7 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="resume" className="p-4">
+        <TabsContent value="resume" className="p-4 flex-grow overflow-auto">
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl font-semibold text-blue-700">Master Resume</CardTitle>
@@ -1647,7 +1937,7 @@ export default function CAPTAINGui() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="captain" className="p-4">
+        <TabsContent value="captain" className="p-4 flex-grow overflow-auto">
           <div className="grid grid-cols-2 gap-4">
             <Card>
               <CardHeader>
@@ -1761,7 +2051,7 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="analytics" className="p-4">
+        <TabsContent value="analytics" className="p-4 flex-grow overflow-auto">
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl font-semibold text-blue-700">Job Search Analytics</CardTitle>
@@ -1800,21 +2090,59 @@ export default function CAPTAINGui() {
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Skill Match Trends</CardTitle>
+                    <CardTitle>Application Streak</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-[200px] flex items-center justify-center bg-gray-200 rounded-md">
-                      <LineChartIcon className="h-32 w-32 text-purple-500" />
+                  <CardContent className="text-center">
+                    <div className="text-5xl font-bold text-blue-600 mb-2">
+                      {calculateStreak(opportunities)}
+                    </div>
+                    <p className="text-sm text-gray-500">days in a row</p>
+                    <div className="flex justify-center mt-4">
+                      {Array.from({length: 7}).map((_, i) => {
+                        const today = new Date();
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - (6 - i));
+                        
+                        const hasApplication = opportunities.some(opp => {
+                          const appDate = new Date(opp.appliedDate);
+                          return appDate.toDateString() === date.toDateString();
+                        });
+                        
+                        return (
+                          <div 
+                            key={i} 
+                            className={`
+                              w-8 h-8 mx-1 rounded-full flex items-center justify-center text-xs
+                              ${hasApplication ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}
+                            `}
+                            title={date.toLocaleDateString()}
+                          >
+                            {date.getDate()}
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Application Timeline</CardTitle>
+                    <CardTitle>Weekly Goal Progress</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-[200px] flex items-center justify-center bg-gray-200 rounded-md">
-                      <ActivityIcon className="h-32 w-32 text-red-500" />
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span>Applications this week</span>
+                        <span className="font-bold">{analytics.weeklyApplicationCount}/10</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-blue-600 h-2.5 rounded-full" 
+                          style={{ width: `${Math.min(analytics.weeklyApplicationCount * 10, 100)}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Goal: 10 applications per week
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1823,11 +2151,99 @@ export default function CAPTAINGui() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="calendar" className="p-4">
+        <TabsContent value="calendar" className="p-4 flex-grow overflow-auto">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-blue-700">Application Calendar</CardTitle>
-              <CardDescription>View your application events and deadlines</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-semibold text-blue-700">Application Calendar</CardTitle>
+                <CardDescription>View your application events and deadlines</CardDescription>
+              </div>
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-green-500 hover:bg-green-600">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Event
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Calendar Event</DialogTitle>
+                    <DialogDescription>Create a new event for your job search calendar</DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="title" className="text-right">Title</Label>
+                      <Input 
+                        id="title" 
+                        className="col-span-3" 
+                        placeholder="e.g., Interview with Company X"
+                        value={newEvent.title}
+                        onChange={handleNewEventChange}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="date" className="text-right">Date</Label>
+                      <Input 
+                        id="date" 
+                        type="date" 
+                        className="col-span-3"
+                        value={newEvent.date}
+                        onChange={handleNewEventChange}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="type" className="text-right">Type</Label>
+                      <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select event type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="interview">Interview</SelectItem>
+                          <SelectItem value="followup">Follow-up</SelectItem>
+                          <SelectItem value="deadline">Deadline</SelectItem>
+                          <SelectItem value="assessment">Assessment</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="opportunityId" className="text-right">Related Job</Label>
+                      <Select value={newEvent.opportunityId} onValueChange={handleNewEventOpportunityChange}>
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select related job" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {opportunities.map(opp => (
+                            <SelectItem key={opp.id} value={opp.id.toString()}>
+                              {opp.position} at {opp.company}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="none">None (General Event)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="notes" className="text-right">Notes</Label>
+                      <Textarea 
+                        id="notes" 
+                        className="col-span-3" 
+                        placeholder="Add any additional notes about this event"
+                        rows={3}
+                        value={newEvent.notes}
+                        onChange={handleNewEventChange}
+                      />
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
