@@ -18,6 +18,8 @@ import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { useAppState } from '@/context/context'
 import { Opportunity } from '@/context/types'
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import { format, parseISO, isEqual, isSameDay } from 'date-fns'
 
 // Configuration for tag colors
 const TAG_COLOR_CLASSES = {
@@ -117,6 +119,12 @@ export default function CAPTAINGui() {
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
   const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
 
+  // Calendar enhancement states
+  const [calendarView, setCalendarView] = useState("month"); // "month" or "week"
+  const [eventTypeFilter, setEventTypeFilter] = useState('all');
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [draggedEvent, setDraggedEvent] = useState(null);
+
   const quickChatOptions = [
     "Analyze my resume",
     "Suggest skills to improve",
@@ -171,6 +179,28 @@ export default function CAPTAINGui() {
     }
     
     return streak;
+  };
+
+  // Helper functions for calendar
+  // Helper function to parse date strings
+  const parseEventDate = (dateString) => {
+    try {
+      return new Date(dateString);
+    } catch (e) {
+      return new Date();
+    }
+  };
+
+  // Helper function to get events for a specific day
+  const getEventsForDay = (day) => {
+    return events
+      .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
+      .filter(event => {
+        const eventDate = parseEventDate(event.date);
+        return day.getDate() === eventDate.getDate() && 
+               day.getMonth() === eventDate.getMonth() && 
+               day.getFullYear() === eventDate.getFullYear();
+      });
   };
 
   // Function to handle batch deletion
@@ -1304,7 +1334,7 @@ export default function CAPTAINGui() {
                                     <Input
                                       id="applicationUrl"
                                       value={editedJobDetails.applicationUrl}
-                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, applicationUrl: e.target.value})}
+                                      onChange={(e) =>  setEditedJobDetails({...editedJobDetails, applicationUrl: e.target.value})}
                                       placeholder="https://..."
                                       className="mt-1"
                                     />
@@ -2430,69 +2460,647 @@ export default function CAPTAINGui() {
               </Dialog>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              {/* Event Type Filtering */}
+              <div className="flex flex-wrap space-x-2 mb-4">
+                <Button 
+                  variant={eventTypeFilter === 'all' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setEventTypeFilter('all')}
+                  className="mb-2"
+                >
+                  All Events
+                </Button>
+                <Button 
+                  variant={eventTypeFilter === 'interview' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setEventTypeFilter('interview')}
+                  className="mb-2"
+                >
+                  <div className="w-2 h-2 rounded-full bg-blue-500 mr-1.5"></div>
+                  Interviews
+                </Button>
+                <Button 
+                  variant={eventTypeFilter === 'followup' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setEventTypeFilter('followup')}
+                  className="mb-2"
+                >
+                  <div className="w-2 h-2 rounded-full bg-green-500 mr-1.5"></div>
+                  Follow-ups
+                </Button>
+                <Button 
+                  variant={eventTypeFilter === 'deadline' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setEventTypeFilter('deadline')}
+                  className="mb-2"
+                >
+                  <div className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div>
+                  Deadlines
+                </Button>
+                <Button 
+                  variant={eventTypeFilter === 'assessment' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setEventTypeFilter('assessment')}
+                  className="mb-2"
+                >
+                  <div className="w-2 h-2 rounded-full bg-purple-500 mr-1.5"></div>
+                  Assessments
+                </Button>
+              </div>
+
+              {/* Calendar Controls */}
+              <div className="flex justify-between items-center mb-4">
                 <div>
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="rounded-md border"
-                  />
+                  <h3 className="text-lg font-medium">
+                    {date ? date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Calendar'}
+                  </h3>
                 </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Upcoming Events</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[300px]">
-                      <ul className="space-y-4">
-                        {events.map((event) => {
-                          // Find the associated opportunity if it exists
-                          const relatedOpportunity = event.opportunityId 
-                            ? opportunities.find(opp => opp.id === event.opportunityId)
-                            : null;
+                <div className="flex items-center space-x-2">
+                  <div className="flex border rounded-md overflow-hidden">
+                    <Button 
+                      variant={calendarView === "month" ? "default" : "ghost"} 
+                      size="sm"
+                      onClick={() => setCalendarView("month")}
+                      className="rounded-none"
+                    >
+                      Month
+                    </Button>
+                    <Button 
+                      variant={calendarView === "week" ? "default" : "ghost"} 
+                      size="sm"
+                      onClick={() => setCalendarView("week")}
+                      className="rounded-none"
+                    >
+                      Week
+                    </Button>
+                  </div>
+                  <div className="flex space-x-1">
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const newDate = new Date(date || new Date());
+                        if (calendarView === "month") {
+                          newDate.setMonth(newDate.getMonth() - 1);
+                        } else {
+                          newDate.setDate(newDate.getDate() - 7);
+                        }
+                        setDate(newDate);
+                      }}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setDate(new Date())}
+                    >
+                      Today
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        const newDate = new Date(date || new Date());
+                        if (calendarView === "month") {
+                          newDate.setMonth(newDate.getMonth() + 1);
+                        } else {
+                          newDate.setDate(newDate.getDate() + 7);
+                        }
+                        setDate(newDate);
+                      }}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  {/* Calendar with Event Indicators */}
+                  <div className="bg-white rounded-md border p-3">
+                    <DragDropContext
+                      onDragEnd={(result) => {
+                        if (!result.destination || !draggedEvent) return;
+                        
+                        // Get the date from the destination droppable ID
+                        const dropDate = new Date(result.destination.droppableId);
+                        
+                        // Format the date for the event
+                        const formattedDate = dropDate.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        });
+                        
+                        // Update the event with the new date
+                        dispatch({
+                          type: 'UPDATE_EVENT',
+                          payload: {
+                            id: draggedEvent.id,
+                            updates: { date: formattedDate }
+                          }
+                        });
+                        
+                        setDraggedEvent(null);
+                      }}
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        className="rounded-md"
+                        onDayClick={(day) => {
+                          setDate(day);
+                        }}
+                        components={{
+                          Day: ({ day, ...props }) => {
+                            // Filter events for this day
+                            const dayEvents = events
+                              .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
+                              .filter(event => {
+                                try {
+                                  const eventDate = new Date(event.date);
+                                  return day.getDate() === eventDate.getDate() && 
+                                        day.getMonth() === eventDate.getMonth() && 
+                                        day.getFullYear() === eventDate.getFullYear();
+                                } catch (e) {
+                                  return false;
+                                }
+                              });
                             
-                          return (
-                            <li key={event.id} className="flex items-start p-2 border rounded-md hover:bg-gray-50">
-                              <div className={`
-                                w-2 h-full rounded-full mr-3 self-stretch
-                                ${event.type === 'interview' ? 'bg-blue-500' : 
-                                  event.type === 'followup' ? 'bg-green-500' : 
-                                  event.type === 'deadline' ? 'bg-red-500' : 
-                                  'bg-purple-500'}
-                              `}></div>
-                              <div className="flex-grow">
-                                <p className="font-semibold">{event.title}</p>
-                                <p className="text-sm text-gray-500">{event.date}</p>
-                                {relatedOpportunity && (
-                                  <p className="text-xs text-blue-600 mt-1">
-                                    Related to: {relatedOpportunity.position} at {relatedOpportunity.company}
-                                  </p>
+                            // Create a droppable area for each day
+                            return (
+                              <Droppable droppableId={day.toISOString()} type="EVENT">
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    {...props}
+                                  >
+                                    <div className="relative h-full w-full p-2">
+                                      <div className="text-center">{day.getDate()}</div>
+                                      
+                                      {/* Event indicators */}
+                                      {dayEvents.length > 0 && (
+                                        <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1">
+                                          {dayEvents.slice(0, 3).map((event, i) => (
+                                            <div 
+                                              key={i}
+                                              className={`w-1.5 h-1.5 rounded-full 
+                                                ${event.type === 'interview' ? 'bg-blue-500' : 
+                                                  event.type === 'followup' ? 'bg-green-500' : 
+                                                  event.type === 'deadline' ? 'bg-red-500' : 
+                                                  'bg-purple-500'}`}
+                                            ></div>
+                                          ))}
+                                          {dayEvents.length > 3 && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                          )}
+                                        </div>
+                                      )}
+                                      {provided.placeholder}
+                                    </div>
+                                  </div>
                                 )}
-                                {event.notes && (
-                                  <p className="text-xs text-gray-600 mt-1 italic">{event.notes}</p>
-                                )}
-                              </div>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => dispatch({ type: 'DELETE_EVENT', payload: event.id })}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </Button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
+                              </Droppable>
+                            );
+                          }
+                        }}
+                      />
+                    </DragDropContext>
+                  </div>
+                  
+                  {/* Event Categories Legend */}
+                  <div className="flex flex-wrap gap-4 mt-4 justify-center">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-blue-500 mr-1.5"></div>
+                      <span className="text-xs">Interview</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mr-1.5"></div>
+                      <span className="text-xs">Follow-up</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-red-500 mr-1.5"></div>
+                      <span className="text-xs">Deadline</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-purple-500 mr-1.5"></div>
+                      <span className="text-xs">Assessment</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Selected Date Events */}
+                  <Card>
+                    <CardHeader className="py-3">
+                      <CardTitle className="text-lg">
+                        Events for {date ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Selected Date'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-[200px]">
+                        {events
+                          .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
+                          .filter(event => {
+                            if (!date) return false;
+                            try {
+                              const eventDate = new Date(event.date);
+                              return date.getDate() === eventDate.getDate() && 
+                                    date.getMonth() === eventDate.getMonth() && 
+                                    date.getFullYear() === eventDate.getFullYear();
+                            } catch (e) {
+                              return false;
+                            }
+                          }).length > 0 ? (
+                          <DragDropContext
+                            onDragStart={(start) => {
+                              const eventId = parseInt(start.draggableId);
+                              const event = events.find(e => e.id === eventId);
+                              if (event) {
+                                setDraggedEvent(event);
+                              }
+                            }}
+                          >
+                            <Droppable droppableId="selected-date-events" type="EVENT">
+                              {(provided) => (
+                                <ul 
+                                  className="space-y-2"
+                                  ref={provided.innerRef}
+                                  {...provided.droppableProps}
+                                >
+                                  {events
+                                    .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
+                                    .filter(event => {
+                                      if (!date) return false;
+                                      try {
+                                        const eventDate = new Date(event.date);
+                                        return date.getDate() === eventDate.getDate() && 
+                                              date.getMonth() === eventDate.getMonth() && 
+                                              date.getFullYear() === eventDate.getFullYear();
+                                      } catch (e) {
+                                        return false;
+                                      }
+                                    })
+                                    .map((event, index) => {
+                                      const relatedOpportunity = event.opportunityId 
+                                        ? opportunities.find(opp => opp.id === event.opportunityId)
+                                        : null;
+                                        
+                                      return (
+                                        <Draggable 
+                                          key={event.id} 
+                                          draggableId={event.id.toString()} 
+                                          index={index}
+                                        >
+                                          {(provided) => (
+                                            <li 
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              className="flex items-start p-2 border rounded-md hover:bg-gray-50 cursor-move"
+                                            >
+                                              <div className={`
+                                                w-2 h-full rounded-full mr-3 self-stretch
+                                                ${event.type === 'interview' ? 'bg-blue-500' : 
+                                                  event.type === 'followup' ? 'bg-green-500' : 
+                                                  event.type === 'deadline' ? 'bg-red-500' : 
+                                                  'bg-purple-500'}
+                                              `}></div>
+                                              <div className="flex-grow">
+                                                <p className="font-semibold">{event.title}</p>
+                                                <p className="text-sm text-gray-500">{event.date}</p>
+                                                {relatedOpportunity && (
+                                                  <p className="text-xs text-blue-600 mt-1">
+                                                    Related to: {relatedOpportunity.position} at {relatedOpportunity.company}
+                                                  </p>
+                                                )}
+                                                {event.notes && (
+                                                  <p className="text-xs text-gray-600 mt-1 italic">{event.notes}</p>
+                                                )}
+                                              </div>
+                                              <div className="flex space-x-1">
+                                                <Button 
+                                                  variant="ghost" 
+                                                  size="sm"
+                                                  className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                                  onClick={() => setEditingEvent(event)}
+                                                >
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                  </svg>
+                                                </Button>
+                                                <Button 
+                                                  variant="ghost" 
+                                                  size="sm"
+                                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                  onClick={() => dispatch({ type: 'DELETE_EVENT', payload: event.id })}
+                                                >
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                  </svg>
+                                                </Button>
+                                              </div>
+                                            </li>
+                                          )}
+                                        </Draggable>
+                                      );
+                                    })}
+                                  {provided.placeholder}
+                                </ul>
+                              )}
+                            </Droppable>
+                          </DragDropContext>
+                        ) : (
+                          <div className="text-center py-6 text-gray-400">
+                            <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                            <p>No events scheduled for this date</p>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="mt-2" onClick={() => {
+                                  // Pre-fill the date field with the selected date
+                                  if (date) {
+                                    const formattedDate = date.toISOString().split('T')[0];
+                                    setNewEvent({
+                                      ...newEvent,
+                                      date: formattedDate
+                                    });
+                                  }
+                                }}>
+                                  <PlusCircle className="h-4 w-4 mr-1" />
+                                  Add event for this date
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Add Calendar Event</DialogTitle>
+                                  <DialogDescription>Create a new event for your job search calendar</DialogDescription>
+                                </DialogHeader>
+                                
+                                <div className="grid gap-4 py-4">
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="title" className="text-right">Title</Label>
+                                    <Input 
+                                      id="title" 
+                                      className="col-span-3" 
+                                      placeholder="e.g., Interview with Company X"
+                                      value={newEvent.title}
+                                      onChange={handleNewEventChange}
+                                    />
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="date" className="text-right">Date</Label>
+                                    <Input 
+                                      id="date" 
+                                      type="date" 
+                                      className="col-span-3"
+                                      value={newEvent.date}
+                                      onChange={handleNewEventChange}
+                                    />
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="type" className="text-right">Type</Label>
+                                    <Select value={newEvent.type} onValueChange={handleNewEventTypeChange}>
+                                      <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select event type" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="interview">Interview</SelectItem>
+                                        <SelectItem value="followup">Follow-up</SelectItem>
+                                        <SelectItem value="deadline">Deadline</SelectItem>
+                                        <SelectItem value="assessment">Assessment</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="opportunityId" className="text-right">Related Job</Label>
+                                    <Select value={newEvent.opportunityId} onValueChange={handleNewEventOpportunityChange}>
+                                      <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select related job" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {opportunities.map(opp => (
+                                          <SelectItem key={opp.id} value={opp.id.toString()}>
+                                            {opp.position} at {opp.company}
+                                          </SelectItem>
+                                        ))}
+                                        <SelectItem value="none">None (General Event)</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="notes" className="text-right">Notes</Label>
+                                    <Textarea 
+                                      id="notes" 
+                                      className="col-span-3" 
+                                      placeholder="Add any additional notes about this event"
+                                      rows={3}
+                                      value={newEvent.notes}
+                                      onChange={handleNewEventChange}
+                                    />
+                                  </div>
+                                </div>
+                                
+                                <DialogFooter>
+                                  <Button type="submit" onClick={handleSaveNewEvent}>Add Event</Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Upcoming Events */}
+                  <Card>
+                    <CardHeader className="py-3">
+                      <CardTitle className="text-lg">Upcoming Events</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-[200px]">
+                        <ul className="space-y-2">
+                          {events
+                            .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
+                            .sort((a, b) => {
+                              const dateA = new Date(a.date);
+                              const dateB = new Date(b.date);
+                              return dateA.getTime() - dateB.getTime();
+                            })
+                            .filter(event => {
+                              const eventDate = new Date(event.date);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              return eventDate >= today;
+                            })
+                            .slice(0, 5)
+                            .map(event => {
+                              const relatedOpportunity = event.opportunityId 
+                                ? opportunities.find(opp => opp.id === event.opportunityId)
+                                : null;
+                                
+                              return (
+                                <li key={event.id} className="flex items-start p-2 border rounded-md hover:bg-gray-50">
+                                  <div className={`
+                                    w-2 h-full rounded-full mr-3 self-stretch
+                                    ${event.type === 'interview' ? 'bg-blue-500' : 
+                                      event.type === 'followup' ? 'bg-green-500' : 
+                                      event.type === 'deadline' ? 'bg-red-500' : 
+                                      'bg-purple-500'}
+                                  `}></div>
+                                  <div className="flex-grow">
+                                    <p className="font-semibold">{event.title}</p>
+                                    <p className="text-sm text-gray-500">{event.date}</p>
+                                    {relatedOpportunity && (
+                                      <p className="text-xs text-blue-600 mt-1">
+                                        Related to: {relatedOpportunity.position} at {relatedOpportunity.company}
+                                      </p>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            })}
+                        </ul>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Event Editing Dialog */}
+          <Dialog open={!!editingEvent} onOpenChange={(open) => !open && setEditingEvent(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Calendar Event</DialogTitle>
+                <DialogDescription>Update the details of this event</DialogDescription>
+              </DialogHeader>
+              
+              {editingEvent && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-title" className="text-right">Title</Label>
+                    <Input 
+                      id="edit-title" 
+                      className="col-span-3" 
+                      value={editingEvent.title}
+                      onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-date" className="text-right">Date</Label>
+                    <Input 
+                      id="edit-date" 
+                      type="date" 
+                      className="col-span-3"
+                      value={(() => {
+                        try {
+                          const date = new Date(editingEvent.date);
+                          return date.toISOString().split('T')[0];
+                        } catch (e) {
+                          return new Date().toISOString().split('T')[0];
+                        }
+                      })()}
+                      onChange={(e) => {
+                        const dateObj = new Date(e.target.value);
+                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        });
+                        setEditingEvent({...editingEvent, date: formattedDate});
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-type" className="text-right">Type</Label>
+                    <Select 
+                      value={editingEvent.type} 
+                      onValueChange={(value) => setEditingEvent({...editingEvent, type: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="interview">Interview</SelectItem>
+                        <SelectItem value="followup">Follow-up</SelectItem>
+                        <SelectItem value="deadline">Deadline</SelectItem>
+                        <SelectItem value="assessment">Assessment</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-opportunity" className="text-right">Related Job</Label>
+                    <Select 
+                      value={editingEvent.opportunityId ? editingEvent.opportunityId.toString() : "none"}
+                      onValueChange={(value) => setEditingEvent({
+                        ...editingEvent, 
+                        opportunityId: value === "none" ? undefined : parseInt(value)
+                      })}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select related job" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {opportunities.map(opp => (
+                          <SelectItem key={opp.id} value={opp.id.toString()}>
+                            {opp.position} at {opp.company}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="none">None (General Event)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-notes" className="text-right">Notes</Label>
+                    <Textarea 
+                      id="edit-notes" 
+                      className="col-span-3" 
+                      rows={3}
+                      value={editingEvent.notes || ""}
+                      onChange={(e) => setEditingEvent({...editingEvent, notes: e.target.value})}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={()=> setEditingEvent(null)}>Cancel</Button>
+                <Button onClick={() => {
+                  if (editingEvent) {
+                    dispatch({
+                      type: 'UPDATE_EVENT',
+                      payload: {
+                        id: editingEvent.id,
+                        updates: {
+                          title: editingEvent.title,
+                          date: editingEvent.date,
+                          type: editingEvent.type,
+                          opportunityId: editingEvent.opportunityId,
+                          notes: editingEvent.notes
+                        }
+                      }
+                    });
+                    setEditingEvent(null);
+                  }
+                }}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
       </Tabs>
