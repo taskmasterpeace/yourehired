@@ -3,42 +3,92 @@ import { AppState, AppAction, CalendarEvent } from './types';
 // Helper function to generate events from an opportunity
 const generateEventsFromOpportunity = (opportunity) => {
   const events: CalendarEvent[] = [];
+  const now = Date.now();
   
-  // Create an event based on the opportunity status
-  if (opportunity.status === 'Interview Scheduled') {
-    // Parse the date from the appliedDate string
-    const dateObj = new Date(opportunity.appliedDate);
-    // Add 7 days for the interview (just an example)
-    dateObj.setDate(dateObj.getDate() + 7);
-    
-    events.push({
-      id: Date.now(),
-      title: `Interview with ${opportunity.company}`,
-      date: dateObj.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      type: 'interview',
-      opportunityId: opportunity.id
-    });
-  } else if (opportunity.status === 'Applied') {
-    // Parse the date from the appliedDate string
-    const dateObj = new Date(opportunity.appliedDate);
-    // Add 14 days for the follow-up (just an example)
-    dateObj.setDate(dateObj.getDate() + 14);
-    
-    events.push({
-      id: Date.now() + 1,
-      title: `Follow-up with ${opportunity.company}`,
-      date: dateObj.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      type: 'followup',
-      opportunityId: opportunity.id
-    });
+  // Parse the date from the appliedDate string
+  const dateObj = new Date(opportunity.appliedDate);
+  
+  switch(opportunity.status) {
+    case 'Technical Assessment':
+      // Add an event for the assessment (3 days from now)
+      const assessmentDate = new Date(dateObj);
+      assessmentDate.setDate(assessmentDate.getDate() + 3);
+      events.push({
+        id: now,
+        title: `Technical Assessment for ${opportunity.company}`,
+        date: assessmentDate.toLocaleDateString('en-US', { 
+          year: 'numeric', month: 'long', day: 'numeric' 
+        }),
+        type: 'assessment',
+        opportunityId: opportunity.id
+      });
+      break;
+      
+    case 'First Interview':
+    case 'Second Interview':
+    case 'Final Interview':
+      // Add an interview event
+      const interviewDate = new Date(dateObj);
+      interviewDate.setDate(interviewDate.getDate() + 5);
+      events.push({
+        id: now + 1,
+        title: `${opportunity.status} with ${opportunity.company}`,
+        date: interviewDate.toLocaleDateString('en-US', { 
+          year: 'numeric', month: 'long', day: 'numeric' 
+        }),
+        type: 'interview',
+        opportunityId: opportunity.id
+      });
+      break;
+      
+    case 'Applied':
+    case 'Following Up':
+      // Add a follow-up reminder
+      const followupDate = new Date(dateObj);
+      followupDate.setDate(followupDate.getDate() + 7);
+      events.push({
+        id: now + 2,
+        title: `Follow up with ${opportunity.company}`,
+        date: followupDate.toLocaleDateString('en-US', { 
+          year: 'numeric', month: 'long', day: 'numeric' 
+        }),
+        type: 'followup',
+        opportunityId: opportunity.id
+      });
+      break;
+      
+    case 'Offer Received':
+      // Add a deadline to respond to offer
+      const decisionDate = new Date(dateObj);
+      decisionDate.setDate(decisionDate.getDate() + 7);
+      events.push({
+        id: now + 3,
+        title: `Deadline to respond to ${opportunity.company} offer`,
+        date: decisionDate.toLocaleDateString('en-US', { 
+          year: 'numeric', month: 'long', day: 'numeric' 
+        }),
+        type: 'deadline',
+        opportunityId: opportunity.id
+      });
+      break;
+      
+    case 'Interview Scheduled':
+      // Keep the original logic for backward compatibility
+      const interviewScheduledDate = new Date(dateObj);
+      interviewScheduledDate.setDate(interviewScheduledDate.getDate() + 7);
+      
+      events.push({
+        id: now + 4,
+        title: `Interview with ${opportunity.company}`,
+        date: interviewScheduledDate.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        type: 'interview',
+        opportunityId: opportunity.id
+      });
+      break;
   }
   
   return events;

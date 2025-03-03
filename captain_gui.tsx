@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "@/components/ui/calendar"
@@ -32,6 +32,7 @@ export default function CAPTAINGui() {
   const [editedDate, setEditedDate] = useState("")
   const [currentMessage, setCurrentMessage] = useState("")
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,6 +68,14 @@ export default function CAPTAINGui() {
     jobDescription: "",
     status: "Interested", // Changed default to "Interested"
     appliedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+    recruiterName: "",
+    recruiterEmail: "",
+    recruiterPhone: "",
+    notes: "",
+    location: "",
+    salary: "",
+    applicationUrl: "",
+    source: ""
   });
 
   const handleNewOpportunityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -109,6 +118,14 @@ export default function CAPTAINGui() {
       jobDescription: "",
       status: "Interested",
       appliedDate: new Date().toISOString().split('T')[0],
+      recruiterName: "",
+      recruiterEmail: "",
+      recruiterPhone: "",
+      notes: "",
+      location: "",
+      salary: "",
+      applicationUrl: "",
+      source: ""
     });
   };
 
@@ -122,7 +139,7 @@ export default function CAPTAINGui() {
       day: 'numeric' 
     });
     
-    // Use dispatch instead of setState
+    //  Use dispatch instead of setState
     dispatch({ 
       type: 'UPDATE_OPPORTUNITY', 
       payload: { 
@@ -234,7 +251,7 @@ export default function CAPTAINGui() {
               <DialogTrigger asChild>
                 <Button className="bg-green-500 hover:bg-green-600 text-white"><PlusCircle className="mr-2 h-4 w-4" /> Add New Opportunity</Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-3xl">
                 <DialogHeader>
                   <DialogTitle>Add New Opportunity</DialogTitle>
                   <DialogDescription>Enter the details of your new job opportunity</DialogDescription>
@@ -259,6 +276,46 @@ export default function CAPTAINGui() {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="location" className="text-right">Location</Label>
+                    <Input
+                      id="location"
+                      className="col-span-3"
+                      value={newOpportunity.location}
+                      onChange={handleNewOpportunityChange}
+                      placeholder="e.g., Remote, New York, NY"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="salary" className="text-right">Salary Range</Label>
+                    <Input
+                      id="salary"
+                      className="col-span-3"
+                      value={newOpportunity.salary}
+                      onChange={handleNewOpportunityChange}
+                      placeholder="e.g., $80,000 - $100,000"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="applicationUrl" className="text-right">Application URL</Label>
+                    <Input
+                      id="applicationUrl"
+                      className="col-span-3"
+                      value={newOpportunity.applicationUrl}
+                      onChange={handleNewOpportunityChange}
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="source" className="text-right">Source</Label>
+                    <Input
+                      id="source"
+                      className="col-span-3"
+                      value={newOpportunity.source}
+                      onChange={handleNewOpportunityChange}
+                      placeholder="e.g., LinkedIn, Indeed, Referral"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="jobDescription" className="text-right">Job Description</Label>
                     <Textarea
                       id="jobDescription"
@@ -275,11 +332,48 @@ export default function CAPTAINGui() {
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Interested">Interested</SelectItem>
-                        <SelectItem value="Applied">Applied</SelectItem>
-                        <SelectItem value="Interviewing">Interviewing</SelectItem>
-                        <SelectItem value="Offered">Offered</SelectItem>
-                        <SelectItem value="Rejected">Rejected</SelectItem>
+                        <SelectGroup>
+                          <SelectLabel>Initial Contact</SelectLabel>
+                          <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                          <SelectItem value="Interested">Interested</SelectItem>
+                          <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                          <SelectItem value="Networking">Networking</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Application</SelectLabel>
+                          <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                          <SelectItem value="Applied">Applied</SelectItem>
+                          <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Interview Process</SelectLabel>
+                          <SelectItem value="Screening">Screening</SelectItem>
+                          <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                          <SelectItem value="First Interview">First Interview</SelectItem>
+                          <SelectItem value="Second Interview">Second Interview</SelectItem>
+                          <SelectItem value="Final Interview">Final Interview</SelectItem>
+                          <SelectItem value="Reference Check">Reference Check</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Decision</SelectLabel>
+                          <SelectItem value="Negotiating">Negotiating</SelectItem>
+                          <SelectItem value="Offer Received">Offer Received</SelectItem>
+                          <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                          <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                          <SelectItem value="Rejected">Rejected</SelectItem>
+                          <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                          <SelectItem value="Position Filled">Position Filled</SelectItem>
+                          <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Follow-up</SelectLabel>
+                          <SelectItem value="Following Up">Following Up</SelectItem>
+                          <SelectItem value="Waiting">Waiting</SelectItem>
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
@@ -296,6 +390,51 @@ export default function CAPTAINGui() {
                         {newOpportunity.status === "Interested" ? "Date added" : "Date applied"}
                       </p>
                     </div>
+                  </div>
+                  
+                  {/* Show recruiter fields if status is Recruiter Contact */}
+                  {(newOpportunity.status === "Recruiter Contact" || newOpportunity.status === "Networking") && (
+                    <>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="recruiterName" className="text-right">Contact Name</Label>
+                        <Input
+                          id="recruiterName"
+                          className="col-span-3"
+                          value={newOpportunity.recruiterName || ""}
+                          onChange={handleNewOpportunityChange}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="recruiterEmail" className="text-right">Contact Email</Label>
+                        <Input
+                          id="recruiterEmail"
+                          className="col-span-3"
+                          value={newOpportunity.recruiterEmail || ""}
+                          onChange={handleNewOpportunityChange}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="recruiterPhone" className="text-right">Contact Phone</Label>
+                        <Input
+                          id="recruiterPhone"
+                          className="col-span-3"
+                          value={newOpportunity.recruiterPhone || ""}
+                          onChange={handleNewOpportunityChange}
+                        />
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="text-right">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      className="col-span-3"
+                      value={newOpportunity.notes || ""}
+                      onChange={handleNewOpportunityChange}
+                      placeholder="Add any additional notes about this opportunity"
+                      rows={3}
+                    />
                   </div>
                 </div>
                 <DialogFooter>
@@ -327,12 +466,56 @@ export default function CAPTAINGui() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="All">All Statuses</SelectItem>
-                        <SelectItem value="Interested">Interested</SelectItem>
-                        <SelectItem value="Applied">Applied</SelectItem>
-                        <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
-                        <SelectItem value="Offered">Offered</SelectItem>
-                        <SelectItem value="Rejected">Rejected</SelectItem>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Initial Contact</SelectLabel>
+                          <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                          <SelectItem value="Interested">Interested</SelectItem>
+                          <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                          <SelectItem value="Networking">Networking</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Application</SelectLabel>
+                          <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                          <SelectItem value="Applie">Applied</SelectItem>
+                          <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Interview Process</SelectLabel>
+                          <SelectItem value="Screening">Screening</SelectItem>
+                          <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                          <SelectItem value="First Interview">First Interview</SelectItem>
+                          <SelectItem value="Second Interview">Second Interview</SelectItem>
+                          <SelectItem value="Final Interview">Final Interview</SelectItem>
+                          <SelectItem value="Reference Check">Reference Check</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Decision</SelectLabel>
+                          <SelectItem value="Negotiating">Negotiating</SelectItem>
+                          <SelectItem value="Offer Received">Offer Received</SelectItem>
+                          <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                          <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                          <SelectItem value="Rejected">Rejected</SelectItem>
+                          <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                          <SelectItem value="Position Filled">Position Filled</SelectItem>
+                          <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                        </SelectGroup>
+                        
+                        <SelectGroup>
+                          <SelectLabel>Follow-up</SelectLabel>
+                          <SelectItem value="Following Up">Following Up</SelectItem>
+                          <SelectItem value="Waiting">Waiting</SelectItem>
+                        </SelectGroup>
+                        
+                        {/* Legacy statuses */}
+                        <SelectGroup>
+                          <SelectLabel>Legacy Statuses</SelectLabel>
+                          <SelectItem value="In Progress">In Progress</SelectItem>
+                          <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
@@ -452,12 +635,55 @@ export default function CAPTAINGui() {
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Interested">Interested</SelectItem>
-                            <SelectItem value="Applied">Applied</SelectItem>
-                            <SelectItem value="In Progress">In Progress</SelectItem>
-                            <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
-                            <SelectItem value="Offered">Offered</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
+                            <SelectGroup>
+                              <SelectLabel>Initial Contact</SelectLabel>
+                              <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                              <SelectItem value="Interested">Interested</SelectItem>
+                              <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                              <SelectItem value="Networking">Networking</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel>Application</SelectLabel>
+                              <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                              <SelectItem value="Applied">Applied</SelectItem>
+                              <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel>Interview Process</SelectLabel>
+                              <SelectItem value="Screening">Screening</SelectItem>
+                              <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                              <SelectItem value="First Interview">First Interview</SelectItem>
+                              <SelectItem value="Second Interview">Second Interview</SelectItem>
+                              <SelectItem value="Final Interview">Final Interview</SelectItem>
+                              <SelectItem value="Reference Check">Reference Check</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel>Decision</SelectLabel>
+                              <SelectItem value="Negotiating">Negotiating</SelectItem>
+                              <SelectItem value="Offer Received">Offer Received</SelectItem>
+                              <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                              <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                              <SelectItem value="Rejected">Rejected</SelectItem>
+                              <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                              <SelectItem value="Position Filled">Position Filled</SelectItem>
+                              <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel>Follow-up</SelectLabel>
+                              <SelectItem value="Following Up">Following Up</SelectItem>
+                              <SelectItem value="Waiting">Waiting</SelectItem>
+                            </SelectGroup>
+                            
+                            {/* Legacy statuses */}
+                            <SelectGroup>
+                              <SelectLabel>Legacy Statuses</SelectLabel>
+                              <SelectItem value="In Progress">In Progress</SelectItem>
+                              <SelectItem value="Interview Scheduled">Interview Scheduled</SelectItem>
+                            </SelectGroup>
                           </SelectContent>
                         </Select>
                       </div>
@@ -852,6 +1078,24 @@ export default function CAPTAINGui() {
         </TabsContent>
 
       </Tabs>
+      
+      {/* Debug Panel Button */}
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => setShowDebugPanel(!showDebugPanel)}
+        className="fixed bottom-4 right-4 z-50"
+      >
+        {showDebugPanel ? "Hide Debug" : "Show Debug"}
+      </Button>
+
+      {/* Debug Panel */}
+      {showDebugPanel && (
+        <div className="fixed bottom-16 right-4 w-96 h-96 bg-white border shadow-lg rounded-md p-4 overflow-auto z-50">
+          <h3 className="font-bold mb-2">Global State</h3>
+          <pre className="text-xs">{JSON.stringify(state, null, 2)}</pre>
+        </div>
+      )}
     </div>
   )
 }

@@ -7,6 +7,14 @@ export interface Opportunity {
   appliedDate: string;
   jobDescription: string;
   resume: string;
+  recruiterName?: string;
+  recruiterEmail?: string;
+  recruiterPhone?: string;
+  notes?: string;
+  location?: string;
+  salary?: string;
+  applicationUrl?: string;
+  source?: string;
 }
 
 export interface CalendarEvent {
