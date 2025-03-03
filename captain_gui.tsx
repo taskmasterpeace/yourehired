@@ -333,7 +333,7 @@ export default function CAPTAINGui() {
       
       case 'status':
         const statResult = a.status.localeCompare(b.status);
-        return sortDirection === 'a  sc' ? statResult : -statResult;
+        return sortDirection === 'asc' ? statResult : -statResult;
       
       default:
         return 0;
@@ -1021,7 +1021,7 @@ export default function CAPTAINGui() {
                                   <div className="flex flex-wrap gap-1 mt-2">
                                     {opp.tags.map(tag => (
                                       <Badge 
-                                        key={tag.id} 
+                                        key={tag.id}
                                         className={`
                                           ${TAG_COLOR_CLASSES[tag.color]?.bg || TAG_COLOR_CLASSES.gray.bg} 
                                           ${TAG_COLOR_CLASSES[tag.color]?.text || TAG_COLOR_CLASSES.gray.text} 
@@ -1329,7 +1329,7 @@ export default function CAPTAINGui() {
                                     </Button>
                                     <Button 
                                       onClick={() => {
-                                        updateOpportunity(selectedOpportunity.i  d, editedJobDetails);
+                                        updateOpportunity(selectedOpportunity.id, editedJobDetails);
                                         setIsEditingJobDetails(false);
                                       }}
                                       className="bg-blue-600 hover:bg-blue-700 text-white"
