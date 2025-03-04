@@ -1936,28 +1936,55 @@ export default function CAPTAINGui() {
             
             <Card className="col-span-3 lg:col-span-1">
               <CardHeader>
-                <CardTitle>Job Recommendations</CardTitle>
+                <CardTitle>AI Job Recommendations</CardTitle>
                 <CardDescription>
-                  Based on your profile and applications
+                  Rate these opportunities
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {jobRecommendations.map((job) => (
-                    <Card key={job.id} className="overflow-hidden">
-                      <CardHeader className="p-3">
-                        <CardTitle className="text-base">{job.position}</CardTitle>
-                        <CardDescription>{job.company}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-3 pt-0">
-                        <p className="text-sm line-clamp-3">{job.description}</p>
-                      </CardContent>
-                      <CardFooter className="p-3 pt-0 flex justify-between">
-                        <Button variant="outline" size="sm">View Details</Button>
-                        <Button size="sm">Apply</Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg">Senior Frontend Developer</h3>
+                    <p className="text-sm font-medium text-blue-700 mb-2">TechGiant</p>
+                    <div className="max-h-64 overflow-y-auto mb-4">
+                      <p className="text-sm whitespace-pre-wrap">
+                        TechGiant is seeking a Senior Frontend Developer to lead our web application team. 
+                        The ideal candidate will have 5+ years of experience with React, TypeScript, and 
+                        state management libraries. You'll be responsible for architecting scalable 
+                        frontend solutions and mentoring junior developers.
+                      </p>
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-gray-500"
+                      >
+                        Skip
+                      </Button>
+                      
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-500 border-red-200 hover:bg-red-50"
+                        >
+                          <ThumbsDown className="h-5 w-5 mr-1" />
+                          Not Interested
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-green-500 border-green-200 hover:bg-green-50"
+                        >
+                          <ThumbsUp className="h-5 w-5 mr-1" />
+                          Interested
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
