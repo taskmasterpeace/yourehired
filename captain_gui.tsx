@@ -2154,66 +2154,11 @@ export default function CAPTAINGui() {
                           <Card className="col-span-1 md:col-span-2 hidden md:block">
                             <CardHeader className="py-3">
                               <div className="flex justify-between items-center">
-                                <CardTitle className="text-sm font-medium">Status</CardTitle>
+                                <CardTitle className="text-sm font-medium">Delete Opportunity</CardTitle>
                               </div>
                             </CardHeader>
                             <CardContent className="py-2">
-                              <Select 
-                                value={selectedOpportunity.status} 
-                                onValueChange={(value) => {
-                                  updateOpportunity(selectedOpportunity.id, { status: value });
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
-                                    <SelectItem value="Bookmarked">Bookmarked</SelectItem>
-                                    <SelectItem value="Interested">Interested</SelectItem>
-                                    <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
-                                    <SelectItem value="Networking">Networking</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Application</SelectLabel>
-                                    <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                                    <SelectItem value="Applied">Applied</SelectItem>
-                                    <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Interview Process</SelectLabel>
-                                    <SelectItem value="Screening">Screening</SelectItem>
-                                    <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
-                                    <SelectItem value="First Interview">First Interview</SelectItem>
-                                    <SelectItem value="Second Interview">Second Interview</SelectItem>
-                                    <SelectItem value="Final Interview">Final Interview</SelectItem>
-                                    <SelectItem value="Reference Check">Reference Check</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Decision</SelectLabel>
-                                    <SelectItem value="Negotiating">Negotiating</SelectItem>
-                                    <SelectItem value="Offer Received">Offer Received</SelectItem>
-                                    <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
-                                    <SelectItem value="Offer Declined">Offer Declined</SelectItem>
-                                    <SelectItem value="Rejected">Rejected</SelectItem>
-                                    <SelectItem value="Withdrawn">Withdrawn</SelectItem>
-                                    <SelectItem value="Position Filled">Position Filled</SelectItem>
-                                    <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Follow-up</SelectLabel>
-                                    <SelectItem value="Following Up">Following Up</SelectItem>
-                                    <SelectItem value="Waiting">Waiting</SelectItem>
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                              
-                              <div className="mt-4 flex justify-end">
+                              <div className="flex justify-end">
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
