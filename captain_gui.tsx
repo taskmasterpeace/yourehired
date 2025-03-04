@@ -320,8 +320,6 @@ export default function CAPTAINGui() {
     "How to prepare for interviews",
     "Tips for salary negotiation"
   ];
-  
-  const selectedOpportunity = opportunities[selectedOpportunityIndex];
 
   const [jobRecommendations, setJobRecommendations] = useState([
     { id: 1, company: "TechGiant", position: "Senior Frontend Developer", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
@@ -562,6 +560,9 @@ export default function CAPTAINGui() {
     };
   }, [opportunities]);
 
+  // Define selectedOpportunity before any useEffect that uses it
+  const selectedOpportunity = opportunities[selectedOpportunityIndex];
+  
   // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter(opp => {
     // Search term matching
@@ -1442,6 +1443,62 @@ export default function CAPTAINGui() {
                         <CardDescription className="text-lg font-medium">{selectedOpportunity.position}</CardDescription>
                       </div>
                       <div className="flex flex-col items-start sm:items-end">
+                        <Select 
+                          value={selectedOpportunity.status} 
+                          onValueChange={(value) => {
+                            updateOpportunity(selectedOpportunity.id, { status: value });
+                          }}
+                          className="w-full sm:w-[200px] mb-2"
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
+                              <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                              <SelectItem value="Interested">Interested</SelectItem>
+                              <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                              <SelectItem value="Networking">Networking</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel className="select-category-label">Application</SelectLabel>
+                              <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                              <SelectItem value="Applied">Applied</SelectItem>
+                              <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel className="select-category-label">Interview Process</SelectLabel>
+                              <SelectItem value="Screening">Screening</SelectItem>
+                              <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                              <SelectItem value="First Interview">First Interview</SelectItem>
+                              <SelectItem value="Second Interview">Second Interview</SelectItem>
+                              <SelectItem value="Final Interview">Final Interview</SelectItem>
+                              <SelectItem value="Reference Check">Reference Check</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel className="select-category-label">Decision</SelectLabel>
+                              <SelectItem value="Negotiating">Negotiating</SelectItem>
+                              <SelectItem value="Offer Received">Offer Received</SelectItem>
+                              <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                              <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                              <SelectItem value="Rejected">Rejected</SelectItem>
+                              <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                              <SelectItem value="Position Filled">Position Filled</SelectItem>
+                              <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                            </SelectGroup>
+                            
+                            <SelectGroup>
+                              <SelectLabel className="select-category-label">Follow-up</SelectLabel>
+                              <SelectItem value="Following Up">Following Up</SelectItem>
+                              <SelectItem value="Waiting">Waiting</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        
                         <Badge 
                           className={
                             selectedOpportunity.status === 'Offer Received' || selectedOpportunity.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
@@ -2013,65 +2070,10 @@ export default function CAPTAINGui() {
 
                           <Collapsible className="md:hidden">
                             <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
-                              Status <ChevronRight className="h-4 w-4" />
+                              Delete Opportunity <ChevronRight className="h-4 w-4" />
                             </CollapsibleTrigger>
                             <CollapsibleContent className="p-4">
-                              <Select 
-                                value={selectedOpportunity.status} 
-                                onValueChange={(value) => {
-                                  updateOpportunity(selectedOpportunity.id, { status: value });
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
-                                    <SelectItem value="Bookmarked">Bookmarked</SelectItem>
-                                    <SelectItem value="Interested">Interested</SelectItem>
-                                    <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
-                                    <SelectItem value="Networking">Networking</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Application</SelectLabel>
-                                    <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                                    <SelectItem value="Applied">Applied</SelectItem>
-                                    <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Interview Process</SelectLabel>
-                                    <SelectItem value="Screening">Screening</SelectItem>
-                                    <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
-                                    <SelectItem value="First Interview">First Interview</SelectItem>
-                                    <SelectItem value="Second Interview">Second Interview</SelectItem>
-                                    <SelectItem value="Final Interview">Final Interview</SelectItem>
-                                    <SelectItem value="Reference Check">Reference Check</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Decision</SelectLabel>
-                                    <SelectItem value="Negotiating">Negotiating</SelectItem>
-                                    <SelectItem value="Offer Received">Offer Received</SelectItem>
-                                    <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
-                                    <SelectItem value="Offer Declined">Offer Declined</SelectItem>
-                                    <SelectItem value="Rejected">Rejected</SelectItem>
-                                    <SelectItem value="Withdrawn">Withdrawn</SelectItem>
-                                    <SelectItem value="Position Filled">Position Filled</SelectItem>
-                                    <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
-                                  </SelectGroup>
-                                  
-                                  <SelectGroup>
-                                    <SelectLabel className="select-category-label">Follow-up</SelectLabel>
-                                    <SelectItem value="Following Up">Following Up</SelectItem>
-                                    <SelectItem value="Waiting">Waiting</SelectItem>
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                              
-                              <div className="mt-4 flex justify-end">
+                              <div className="flex justify-end">
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
