@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'CAPTAIN - Career Application Tracking Assistant',
+  description: 'AI-powered job application tracking and career management tool',
   generator: 'v0.dev',
 }
 
