@@ -21,6 +21,187 @@ import { Opportunity } from '@/context/types'
 import { format, parseISO, isEqual, isSameDay } from 'date-fns'
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { motion } from "framer-motion" // For animations
+
+// Define prompts by status and category
+const promptsByStatus = {
+  // Initial Contact Category
+  "Bookmarked": [
+    "Analyze this job description and identify my top 3 matching qualifications and 2 areas I should strengthen before applying",
+    "Create a research plan for this company including their culture, recent news, and competitors",
+    "Based on this job description, what unique skills from my resume would make me stand out?",
+    "What industry trends should I be familiar with before applying to this position?"
+  ],
+  "Interested": [
+    "What specific keywords from this job description should I incorporate in my application materials?",
+    "Based on my experience, what compelling achievements should I emphasize for this role?",
+    "Generate 5 tailored questions I should research about this company before applying",
+    "How does my career trajectory align with this role, and how should I frame this narrative?"
+  ],
+  "Recruiter Contact": [
+    "Help me draft a professional response to the recruiter that highlights my interest and qualifications",
+    "What specific questions should I ask the recruiter about this role and company?",
+    "How should I prepare for an initial screening call with the recruiter?",
+    "What salary range research should I do before discussing compensation with this recruiter?"
+  ],
+  "Networking": [
+    "Help me craft a networking message to connect with employees at this company",
+    "What questions should I ask during an informational interview about this role?",
+    "How can I leverage my existing network to get an introduction at this company?",
+    "Draft a follow-up thank you message after a networking conversation"
+  ],
+  // Application Category
+  "Preparing Application": [
+    "Tailor my resume for this specific job by highlighting relevant experience and using keywords from the description",
+    "Draft a compelling cover letter that addresses why I'm interested in this role and company",
+    "What portfolio pieces or work samples should I prepare to showcase for this application?",
+    "How should I address potential gaps in my qualifications in my application materials?"
+  ],
+  "Applied": [
+    "What follow-up strategy should I use after submitting this application?",
+    "Help me prepare a 30-second elevator pitch about why I'm perfect for this role",
+    "Draft a follow-up email to send if I don't hear back within two weeks",
+    "What additional research should I do now to prepare for a potential interview?"
+  ],
+  "Application Acknowledged": [
+    "Draft a response thanking them for acknowledging my application",
+    "What should I do to prepare while waiting to hear back about next steps?",
+    "How long should I wait before following up on my application status?",
+    "What can I research about their interview process based on online reviews?"
+  ],
+  // Interview Process Category
+  "Screening": [
+    "What are the most common screening interview questions and how should I answer them?",
+    "How should I prepare for a phone screening interview for this position?",
+    "Draft concise answers to 'Tell me about yourself' and 'Why are you interested in this role?'",
+    "What questions should I ask during a screening interview to stand out?"
+  ],
+  "Technical Assessment": [
+    "What skills is this technical assessment likely testing and how should I prepare?",
+    "Help me create a study plan for this technical assessment based on the job requirements",
+    "What common mistakes should I avoid during this type of technical assessment?",
+    "How should I approach time management during the technical assessment?"
+  ],
+  "First Interview": [
+    "What are the most important questions to prepare for in a first interview for this role?",
+    "Help me prepare the STAR method answers for likely behavioral questions",
+    "What should I research about the team and interviewer before this first interview?",
+    "Draft powerful questions to ask at the end of my first interview that demonstrate my interest and research"
+  ],
+  "Second Interview": [
+    "How should my approach differ in a second interview compared to the first?",
+    "What deeper questions about the role and team should I prepare to ask?",
+    "Help me prepare to discuss salary expectations if asked during this round",
+    "What case studies or specific examples should I prepare to discuss in more detail?"
+  ],
+  "Final Interview": [
+    "How should I prepare differently for a final interview with senior leadership?",
+    "What questions should I ask about company vision and how my role contributes?",
+    "Help me prepare to discuss compensation package details and negotiation points",
+    "What closing statement should I prepare to reinforce my interest and fit for the role?"
+  ],
+  "Reference Check": [
+    "How should I prepare my references for calls from this employer?",
+    "What information should I provide to my references about this specific role?",
+    "Draft an email to send to my references with details about this position",
+    "What does it typically mean when a company is checking references at this stage?"
+  ],
+  // Decision Category
+  "Negotiating": [
+    "How should I negotiate the salary offer based on market research and my experience?",
+    "What benefits beyond salary should I prioritize in negotiations?",
+    "Help me draft a professional counter-offer email that maintains positive relations",
+    "What's the best approach to negotiate remote work or flexible schedule arrangements?"
+  ],
+  "Offer Received": [
+    "What questions should I ask to fully understand the compensation package?",
+    "Help me evaluate this offer against my career goals and other opportunities",
+    "What is a reasonable timeframe to request for making my decision?",
+    "Draft a professional email asking for clarification on specific benefits or terms"
+  ],
+  "Offer Accepted": [
+    "What should I do to prepare for my first day in this new role?",
+    "Help me draft a graceful resignation letter for my current employer",
+    "What questions should I ask HR before my start date?",
+    "How should I approach the first 30/60/90 days in this new position?"
+  ],
+  "Offer Declined": [
+    "Help me draft a professional email declining the offer while maintaining the relationship",
+    "What feedback should I provide when declining this offer?",
+    "How can I keep the door open for future opportunities with this company?",
+    "What should I learn from this process to improve my job search going forward?"
+  ],
+  "Rejected": [
+    "What can I learn from this rejection to improve future applications?",
+    "Help me draft a professional email asking for feedback on my application/interview",
+    "How should I evaluate if I should apply to other positions at this company?",
+    "What skills or experiences should I focus on developing based on this rejection?"
+  ],
+  "Withdrawn": [
+    "Help me draft a professional email withdrawing my application",
+    "How can I maintain a positive relationship with this company for the future?",
+    "What should I learn from this experience to refine my job search criteria?",
+    "Should I provide feedback about why I'm withdrawing my application?"
+  ],
+  "Position Filled": [
+    "What follow-up would be appropriate to stay on their radar for future opportunities?",
+    "How can I use this experience to improve my applications for similar roles?",
+    "Should I connect with the hiring manager on LinkedIn despite not getting the role?",
+    "What similar companies should I target based on my interest in this position?"
+  ],
+  "Position Cancelled": [
+    "What might this cancellation indicate about the company that could inform my job search?",
+    "Should I follow up to express continued interest in future opportunities?",
+    "What similar positions should I look for based on my interest in this role?",
+    "How should I adjust my job search strategy based on this experience?"
+  ],
+  // Follow-up Category
+  "Following Up": [
+    "Help me draft a professional follow-up email that adds value and reiterates my interest",
+    "What is the appropriate timing for following up after each interview stage?",
+    "How can I follow up without seeming desperate or pushy?",
+    "What additional information or materials could I provide in my follow-up to strengthen my candidacy?"
+  ],
+  "Waiting": [
+    "What productive activities should I focus on while waiting to hear back?",
+    "When would be an appropriate time to follow up on my application status?",
+    "Help me draft a check-in email that's professional and demonstrates continued interest",
+    "How should I manage my expectations during this waiting period?"
+  ]
+};
+
+const promptsByCategory = {
+  "Initial Contact": [
+    "What company values are evident in their materials and how do they align with my experience?",
+    "Create a competitive analysis of how I compare to likely other candidates for this position",
+    "What specialized knowledge or certifications would give me an edge for this role?",
+    "Based on the company's size and industry, what challenges might they be facing that I can help solve?"
+  ],
+  "Application": [
+    "Transform my resume to explicitly match this job description while highlighting my unique value",
+    "Create a compelling cover letter that tells a story connecting my experience to their needs",
+    "What metrics and achievements should I quantify differently for this specific application?",
+    "Identify the top 5 most relevant projects from my experience to emphasize for this role"
+  ],
+  "Interview Process": [
+    "Prepare me for the 10 most likely technical questions for this role based on the job description",
+    "How should I structure my answers to behavioral questions using the STAR method?",
+    "What research about this company would impress interviewers with my preparation?",
+    "Help me craft a compelling story about my career path that positions this role as the perfect next step"
+  ],
+  "Decision": [
+    "What factors should I consider when evaluating this opportunity against my career goals?",
+    "How should I approach salary negotiation for this specific industry and role level?",
+    "What questions should I ask to better understand growth opportunities at this company?",
+    "Help me create a decision matrix to objectively evaluate this opportunity"
+  ],
+  "Follow-up": [
+    "What value-adding content could I include in my follow-up communications?",
+    "How can I maintain a relationship with this company even if this opportunity doesn't work out?",
+    "Draft a check-in email that demonstrates my continued interest without being pushy",
+    "What is the appropriate cadence for following up at different stages of the hiring process?"
+  ]
+};
 
 // Configuration for tag colors
 const TAG_COLOR_CLASSES = {
@@ -121,13 +302,17 @@ export default function CAPTAINGui() {
   const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
 
   // Calendar enhancement states
-  const [calendarView, setCalendarView] = useState("month"); // "month" or "week"
+  const [calendarView, setCalendarView] = useState("month"); //  "month" or "week"
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [editingEvent, setEditingEvent] = useState(null);
 
   // Mobile touch handling
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  // AI prompt states
+  const [aiPrompts, setAiPrompts] = useState([]);
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
 
   const quickChatOptions = [
     "Analyze my resume",
@@ -141,6 +326,36 @@ export default function CAPTAINGui() {
     { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
     { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
+
+  // Helper function to get prompts based on status
+  const getPromptsForStatus = (status) => {
+    // Get the category based on status
+    let category = "";
+    if (["Bookmarked", "Interested", "Recruiter Contact", "Networking"].includes(status)) {
+      category = "Initial Contact";
+    } else if (["Preparing Application", "Applied", "Application Acknowledged"].includes(status)) {
+      category = "Application";
+    } else if (["Screening", "Technical Assessment", "First Interview", "Second Interview", "Final Interview", "Reference Check"].includes(status)) {
+      category = "Interview Process";
+    } else if (["Negotiating", "Offer Received", "Offer Accepted", "Offer Declined", "Rejected", "Withdrawn", "Position Filled", "Position Cancelled"].includes(status)) {
+      category = "Decision";
+    } else if (["Following Up", "Waiting"].includes(status)) {
+      category = "Follow-up";
+    }
+    
+    // Get prompts from our predefined list
+    const statusPrompts = promptsByStatus[status] || [];
+    const categoryPrompts = promptsByCategory[category] || [];
+    
+    // Return 2 from status and 2 from category (if available)
+    const selectedStatusPrompts = statusPrompts.sort(() => 0.5 - Math.random()).slice(0, 2);
+    const selectedCategoryPrompts = categoryPrompts
+      .filter(prompt => !selectedStatusPrompts.includes(prompt))
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 2);
+      
+    return [...selectedStatusPrompts, ...selectedCategoryPrompts];
+  };
 
   // Helper function for updating last modified timestamp
   const updateLastModified = (opportunityId: number) => {
@@ -259,6 +474,18 @@ export default function CAPTAINGui() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Effect to update prompts when opportunity changes
+  useEffect(() => {
+    if (selectedOpportunity) {
+      setIsLoadingPrompts(true);
+      // Simulate loading for animation effect
+      setTimeout(() => {
+        setAiPrompts(getPromptsForStatus(selectedOpportunity.status));
+        setIsLoadingPrompts(false);
+      }, 300);
+    }
+  }, [selectedOpportunity?.id, selectedOpportunity?.status]);
 
   // Generate analytics data using useMemo to prevent recalculation on every render
   const analytics = useMemo(() => {
@@ -2154,40 +2381,42 @@ export default function CAPTAINGui() {
                           <CardContent className="flex-grow overflow-hidden flex flex-col p-0">
                             <div className="flex-grow overflow-y-auto p-4">
                               {opportunityMessages.length > 0 ? (
-                                opportunityMessages.map((msg, index) => (
-                                  <div 
-                                    key={index} 
-                                    className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                                  >
+                                <>
+                                  {opportunityMessages.map((msg, index) => (
                                     <div 
-                                      className={`max-w-[90%] sm:max-w-[80%] rounded-lg p-3 ${
-                                        msg.sender === 'user' 
-                                          ? 'bg-blue-500 text-white' 
-                                          : 'bg-gray-100 text-gray-800'
-                                      }`}
+                                      key={index} 
+                                      className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                                     >
-                                      <div className="flex items-center mb-1">
-                                        {msg.sender === 'user' ? (
-                                          <>
-                                            <span className="text-xs opacity-75">You</span>
-                                            <User className="h-3 w-3 ml-1 opacity-75" />
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Bot className="h-3 w-3 mr-1 opacity-75" />
-                                            <span className="text-xs opacity-75">AI Assistant</span>
-                                          </>
-                                        )}
-                                      </div>
-                                      <p className="whitespace-pre-wrap">{msg.message}</p>
-                                      <div className="text-right">
-                                        <span className="text-xs opacity-75">
-                                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
+                                      <div 
+                                        className={`max-w-[90%] sm:max-w-[80%] rounded-lg p-3 ${
+                                          msg.sender === 'user' 
+                                            ? 'bg-blue-500 text-white' 
+                                            : 'bg-gray-100 text-gray-800'
+                                        }`}
+                                      >
+                                        <div className="flex items-center mb-1">
+                                          {msg.sender === 'user' ? (
+                                            <>
+                                              <span className="text-xs opacity-75">You</span>
+                                              <User className="h-3 w-3 ml-1 opacity-75" />
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Bot className="h-3 w-3 mr-1 opacity-75" />
+                                              <span className="text-xs opacity-75">AI Assistant</span>
+                                            </>
+                                          )}
+                                        </div>
+                                        <p className="whitespace-pre-wrap">{msg.message}</p>
+                                        <div className="text-right">
+                                          <span className="text-xs opacity-75">
+                                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          </span>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                ))
+                                  ))}
+                                </>
                               ) : (
                                 <div className="h-full flex flex-col items-center justify-center text-center p-4">
                                   <MessageSquare className="h-12 w-12 text-gray-300 mb-2" />
@@ -2195,24 +2424,102 @@ export default function CAPTAINGui() {
                                   <p className="text-gray-500 max-w-md mt-1">
                                     Start a conversation with the AI assistant to get help with your job application
                                   </p>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 w-full max-w-md">
-                                    {quickChatOptions.map((option, index) => (
-                                      <Button
-                                        key={index}
-                                        variant="outline"
-                                        className="justify-start text-left"
+                                  
+                                  {/* New section for suggested prompts */}
+                                  <div className="w-full max-w-md mt-6">
+                                    <div className="flex justify-between items-center mb-3">
+                                      <h4 className="font-medium text-gray-700">Suggested prompts for this stage:</h4>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
                                         onClick={() => {
-                                          setCurrentMessage(option);
-                                          setTimeout(() => handleSendMessage(), 100);
+                                          setIsLoadingPrompts(true);
+                                          setTimeout(() => {
+                                            setAiPrompts(getPromptsForStatus(selectedOpportunity.status));
+                                            setIsLoadingPrompts(false);
+                                          }, 300);
                                         }}
+                                        className="h-8 w-8 p-0"
                                       >
-                                        {option}
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
                                       </Button>
-                                    ))}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
+                                      {isLoadingPrompts ? (
+                                        // Loading placeholders
+                                        Array(4).fill(0).map((_, i) => (
+                                          <div key={i} className="h-16 bg-gray-100 animate-pulse rounded-md"></div>
+                                        ))
+                                      ) : (
+                                        aiPrompts.map((prompt, index) => (
+                                          <motion.div
+                                            key={index}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                                          >
+                                            <Button
+                                              variant="outline"
+                                              className="justify-start text-left h-auto py-3 w-full"
+                                              onClick={() => {
+                                                setCurrentMessage(prompt);
+                                                setTimeout(() => handleSendMessage(), 100);
+                                              }}
+                                            >
+                                              {prompt}
+                                            </Button>
+                                          </motion.div>
+                                        ))
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               )}
                             </div>
+                            
+                            {/* Add prompt suggestion section for when there are already messages */}
+                            {opportunityMessages.length > 0 && (
+                              <div className="px-4 mb-4">
+                                <Collapsible>
+                                  <CollapsibleTrigger className="flex items-center text-sm text-blue-600 hover:text-blue-800">
+                                    <ChevronRight className="h-4 w-4 mr-1" />
+                                    <span>Show suggested prompts</span>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="mt-3">
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {isLoadingPrompts ? (
+                                        Array(4).fill(0).map((_, i) => (
+                                          <div key={i} className="h-12 bg-gray-100 animate-pulse rounded-md"></div>
+                                        ))
+                                      ) : (
+                                        aiPrompts.map((prompt, index) => (
+                                          <motion.div
+                                            key={index}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.2, delay: index * 0.05 }}
+                                          >
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="justify-start text-left h-auto py-2 w-full text-sm"
+                                              onClick={() => {
+                                                setCurrentMessage(prompt);
+                                                setTimeout(() => handleSendMessage(), 100);
+                                              }}
+                                            >
+                                              {prompt}
+                                            </Button>
+                                          </motion.div>
+                                        ))
+                                      )}
+                                    </div>
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              </div>
+                            )}
                             
                             <div className="p-4 border-t">
                               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
@@ -2341,7 +2648,7 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="captain" className="p-2 sm:p-4 flex-grow overflow-auto">
+        <TabsContent value="captain" className="p-2 sm: p-4 flex-grow overflow-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Captain AI Assistant</h2>
           </div>
