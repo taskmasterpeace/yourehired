@@ -3210,6 +3210,35 @@ export default function CAPTAINGui() {
           <ArrowUp className="h-5 w-5" />
         </Button>
       )}
+      
+      <footer className="mt-8 py-4 border-t border-gray-200">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center">
+            <p className="text-sm text-gray-500 mb-3 sm:mb-0">© 2023 CAPTAIN</p>
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={isDarkMode}
+                  onCheckedChange={(checked) => {
+                    setIsDarkMode(checked);
+                    document.documentElement.classList.toggle('dark', checked);
+                  }}
+                  id="footer-dark-mode"
+                />
+                <Label htmlFor="footer-dark-mode" className="text-sm text-gray-500">
+                  {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                </Label>
+              </div>
+              
+              <div className="text-sm text-gray-500">
+                <a href="#" className="hover:text-blue-600 mr-3">Privacy</a>
+                <a href="#" className="hover:text-blue-600">Terms</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
