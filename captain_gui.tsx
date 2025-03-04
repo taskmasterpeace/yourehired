@@ -310,6 +310,27 @@ export default function CAPTAINGui() {
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Initialize dark mode based on user preferences
+  useEffect(() => {
+    // Check if user has a preference stored
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    
+    // Check if user prefers dark mode at the OS level
+    const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Set dark mode based on saved preference or OS preference
+    const initialDarkMode = savedDarkMode || prefersDarkMode;
+    setIsDarkMode(initialDarkMode);
+    document.documentElement.classList.toggle('dark', initialDarkMode);
+  }, []);
+
+  // Function to toggle dark mode and save preference
+  const toggleDarkMode = (checked) => {
+    setIsDarkMode(checked);
+    document.documentElement.classList.toggle('dark', checked);
+    localStorage.setItem('darkMode', checked.toString());
+  };
 
   // AI prompt states
   const [aiPrompts, setAiPrompts] = useState([]);
@@ -870,17 +891,14 @@ export default function CAPTAINGui() {
 
 
   return (
-    <div className="container mx-auto p-2 sm:p-4 bg-gray-100 min-h-screen flex flex-col">
+    <div className={`container mx-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'} min-h-screen flex flex-col`}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">CAPTAIN</h1>
           <div className="hidden sm:flex items-center">
             <Switch
               checked={isDarkMode}
-              onCheckedChange={(checked) => {
-                setIsDarkMode(checked);
-                document.documentElement.classList.toggle('dark', checked);
-              }}
+              onCheckedChange={toggleDarkMode}
               id="dark-mode"
             />
             <Label htmlFor="dark-mode" className="ml-2 text-sm">
@@ -941,13 +959,13 @@ export default function CAPTAINGui() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded-lg shadow-md flex-grow flex flex-col">
-        <TabsList className="mb-4 p-2 bg-blue-100 rounded-t-lg sticky top-0 z-10 overflow-x-auto flex-wrap md:flex-nowrap">
-          <TabsTrigger value="opportunities" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Opportunities</TabsTrigger>
-          <TabsTrigger value="resume" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Master Resume</TabsTrigger>
-          <TabsTrigger value="captain" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Captain</TabsTrigger>
-          <TabsTrigger value="analytics" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Analytics</TabsTrigger>
-          <TabsTrigger value="calendar" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Calendar</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}>
+        <TabsList className={`mb-4 p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-t-lg sticky top-0 z-10 overflow-x-auto flex-wrap md:flex-nowrap`}>
+          <TabsTrigger value="opportunities" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Opportunities</TabsTrigger>
+          <TabsTrigger value="resume" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Master Resume</TabsTrigger>
+          <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Captain</TabsTrigger>
+          <TabsTrigger value="analytics" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Analytics</TabsTrigger>
+          <TabsTrigger value="calendar" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Calendar</TabsTrigger>
         </TabsList>
 
         <TabsContent value="opportunities" className="p-2 sm:p-4 flex-grow overflow-auto">
@@ -1153,9 +1171,9 @@ export default function CAPTAINGui() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
-            <Card className="col-span-1 bg-blue-50 flex flex-col order-2 md:order-1">
+            <Card className={`col-span-1 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50'} flex flex-col order-2 md:order-1`}>
               <CardHeader>
-                <CardTitle className="text-blue-700">Job List</CardTitle>
+                <CardTitle className={isDarkMode ? 'text-blue-400' : 'text-blue-700'}>Job List</CardTitle>
                 <div className="space-y-2 mt-2">
                   <div className="flex items-center space-x-2">
                     <Search className="h-4 w-4 text-gray-500" />
@@ -1391,7 +1409,11 @@ export default function CAPTAINGui() {
                               </div>
                             )}
                             <Card 
-                              className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} 
+                              className={`mb-2 cursor-pointer ${
+                                originalIndex === selectedOpportunityIndex 
+                                  ? isDarkMode ? 'bg-blue-900' : 'bg-blue-200' 
+                                  : isDarkMode ? 'bg-gray-700' : 'bg-white'
+                              }`} 
                               onClick={() => {
                                 if (isBatchSelectMode) {
                                   toggleJobSelection(opp.id);
@@ -1438,7 +1460,11 @@ export default function CAPTAINGui() {
                         return (
                           <div 
                             key={opp.id}
-                            className={`flex items-center p-2 mb-1 rounded cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`}
+                            className={`flex items-center p-2 mb-1 rounded cursor-pointer ${
+                              originalIndex === selectedOpportunityIndex 
+                                ? isDarkMode ? 'bg-blue-900' : 'bg-blue-200' 
+                                : isDarkMode ? 'bg-gray-700' : 'bg-white'
+                            }`}
                             onClick={() => {
                               if (isBatchSelectMode) {
                                 toggleJobSelection(opp.id);
@@ -1481,7 +1507,7 @@ export default function CAPTAINGui() {
                       }
                     })
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       <p>No opportunities found</p>
                       <p className="text-sm mt-2">Try adjusting your filters or add a new opportunity</p>
                     </div>
@@ -1491,7 +1517,7 @@ export default function CAPTAINGui() {
             </Card>
 
             <Card 
-              className="col-span-1 md:col-span-2 flex flex-col order-1 md:order-2"
+              className={`col-span-1 md:col-span-2 flex flex-col order-1 md:order-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
             >
@@ -1621,7 +1647,7 @@ export default function CAPTAINGui() {
                       <TabsContent value="details" className="flex-grow overflow-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <Collapsible className="md:hidden">
-                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                            <CollapsibleTrigger className={`flex w-full justify-between p-4 font-medium ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-lg`}>
                               Job Details <ChevronRight className="h-4 w-4" />
                             </CollapsibleTrigger>
                             <CollapsibleContent className="p-4">
@@ -1735,7 +1761,7 @@ export default function CAPTAINGui() {
                           </Collapsible>
 
                           <Collapsible className="md:hidden">
-                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                            <CollapsibleTrigger className={`flex w-full justify-between p-4 font-medium ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-lg`}>
                               Contact Information <ChevronRight className="h-4 w-4" />
                             </CollapsibleTrigger>
                             <CollapsibleContent className="p-4">
@@ -2075,7 +2101,7 @@ export default function CAPTAINGui() {
                           </Card>
                           
                           <Collapsible className="md:hidden">
-                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                            <CollapsibleTrigger className={`flex w-full justify-between p-4 font-medium ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-lg`}>
                               Notes <ChevronRight className="h-4 w-4" />
                             </CollapsibleTrigger>
                             <CollapsibleContent className="p-4">
@@ -2130,7 +2156,7 @@ export default function CAPTAINGui() {
                           </Collapsible>
 
                           <Collapsible className="md:hidden">
-                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                            <CollapsibleTrigger className={`flex w-full justify-between p-4 font-medium ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-lg`}>
                               Delete Opportunity <ChevronRight className="h-4 w-4" />
                             </CollapsibleTrigger>
                             <CollapsibleContent className="p-4">
@@ -2575,9 +2601,9 @@ export default function CAPTAINGui() {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center p-8">
-                    <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-medium text-gray-700">No opportunity selected</h3>
-                    <p className="text-gray-500 mt-2">Select an opportunity from the list or add a new one</p>
+                    <FileText className={`h-16 w-16 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
+                    <h3 className={`text-xl font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>No opportunity selected</h3>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2`}>Select an opportunity from the list or add a new one</p>
                   </div>
                 </div>
               )}
@@ -2684,10 +2710,10 @@ export default function CAPTAINGui() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow overflow-hidden flex flex-col">
-                <div className="flex-grow overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
+                <div className={`flex-grow overflow-y-auto mb-4 p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
                   <div className="mb-4">
                     <div className="flex items-start">
-                      <div className="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-[90%] sm:max-w-[80%]">
+                      <div className={`${isDarkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-800'} p-3 rounded-lg max-w-[90%] sm:max-w-[80%]`}>
                         <div className="flex items-center mb-1">
                           <Bot className="h-3 w-3 mr-1" />
                           <span className="text-xs font-medium">Captain</span>
@@ -2831,8 +2857,8 @@ export default function CAPTAINGui() {
                 <CardDescription>Distribution of your applications by status</CardDescription>
               </CardHeader>
               <CardContent className="h-60 sm:h-80 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <PieChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <PieChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
                   <p>Status distribution chart would appear here</p>
                 </div>
               </CardContent>
@@ -2844,8 +2870,8 @@ export default function CAPTAINGui() {
                 <CardDescription>Number of applications over time</CardDescription>
               </CardHeader>
               <CardContent className="h-60 sm:h-80 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <LineChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <LineChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
                   <p>Application timeline chart would appear here</p>
                 </div>
               </CardContent>
@@ -2859,8 +2885,8 @@ export default function CAPTAINGui() {
                 <CardDescription>How your applications progress through the hiring process</CardDescription>
               </CardHeader>
               <CardContent className="h-48 sm:h-64 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <BarChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <BarChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
                   <p>Conversion funnel chart would appear here</p>
                 </div>
               </CardContent>
@@ -2877,7 +2903,7 @@ export default function CAPTAINGui() {
                     <span className="text-sm font-medium">Interview Rate</span>
                     <span className="font-bold">{analytics.interviewRate}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5`}>
                     <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${analytics.interviewRate}%` }}></div>
                   </div>
                   
@@ -2885,7 +2911,7 @@ export default function CAPTAINGui() {
                     <span className="text-sm font-medium">Offer Rate</span>
                     <span className="font-bold">{analytics.offerRate}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5`}>
                     <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${analytics.offerRate}%` }}></div>
                   </div>
                   
@@ -2893,7 +2919,7 @@ export default function CAPTAINGui() {
                     <span className="text-sm font-medium">Application Streak</span>
                     <span className="font-bold">{calculateStreak(opportunities)} days</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5`}>
                     <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${Math.min(calculateStreak(opportunities) * 10, 100)}%` }}></div>
                   </div>
                 </div>
@@ -3211,29 +3237,26 @@ export default function CAPTAINGui() {
         </Button>
       )}
       
-      <footer className="mt-8 py-4 border-t border-gray-200">
+      <footer className={`mt-8 py-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-sm text-gray-500 mb-3 sm:mb-0">© 2023 CAPTAIN</p>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3 sm:mb-0`}>© 2023 CAPTAIN</p>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <Switch
                   checked={isDarkMode}
-                  onCheckedChange={(checked) => {
-                    setIsDarkMode(checked);
-                    document.documentElement.classList.toggle('dark', checked);
-                  }}
+                  onCheckedChange={toggleDarkMode}
                   id="footer-dark-mode"
                 />
-                <Label htmlFor="footer-dark-mode" className="text-sm text-gray-500">
+                <Label htmlFor="footer-dark-mode" className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   {isDarkMode ? 'Dark Mode' : 'Light Mode'}
                 </Label>
               </div>
               
-              <div className="text-sm text-gray-500">
-                <a href="#" className="hover:text-blue-600 mr-3">Privacy</a>
-                <a href="#" className="hover:text-blue-600">Terms</a>
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <a href="#" className={`hover:text-blue-400 mr-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Privacy</a>
+                <a href="#" className={`hover:text-blue-400 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Terms</a>
               </div>
             </div>
           </div>

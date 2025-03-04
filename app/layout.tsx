@@ -13,7 +13,26 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light">
+      <head>
+        <style>{`
+          :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+          }
+          
+          .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            color-scheme: dark;
+          }
+          
+          body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+          }
+        `}</style>
+      </head>
       <body>{children}</body>
     </html>
   )
