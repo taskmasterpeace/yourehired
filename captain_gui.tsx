@@ -326,6 +326,9 @@ export default function CAPTAINGui() {
     { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
     { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
+  
+  // Define selectedOpportunity before any useEffect that uses it
+  const selectedOpportunity = opportunities.length > 0 ? opportunities[selectedOpportunityIndex] : undefined;
 
   // Helper function to get prompts based on status
   const getPromptsForStatus = (status) => {
@@ -559,9 +562,6 @@ export default function CAPTAINGui() {
       weeklyApplicationCount
     };
   }, [opportunities]);
-
-  // Define selectedOpportunity before any useEffect that uses it
-  const selectedOpportunity = opportunities.length > 0 ? opportunities[selectedOpportunityIndex] : undefined;
   
   // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter(opp => {
