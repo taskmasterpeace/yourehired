@@ -1027,956 +1027,1374 @@ export default function CAPTAINGui() {
                               className={`mb-2 cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`} 
                               onClick={() => {
                                 if (isBatchSelectMode) {
-                                  toggle # Aaronlcj/CNTK
-# Source/CNTKv2LibraryDll/proto/onnx/core/model.cpp
-#include "core/model.h"
-#include "core/graph.h"
+                                  toggleJobSelection(opp.id);
+                                } else {
+                                  setSelectedOpportunityIndex(originalIndex);
+                                }
+                              }}
+                            >
+                              <CardContent className="p-3">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h3 className="font-semibold">{opp.company}</h3>
+                                    <p className="text-sm text-gray-600">{opp.position}</p>
+                                  </div>
+                                  <Badge 
+                                    className={
+                                      opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                                      opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                                      opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                                      opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
+                                      'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                    }
+                                  >
+                                    {opp.status}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">{opp.appliedDate}</p>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        );
+                      } else {
+                        // List view
+                        return (
+                          <div 
+                            key={opp.id}
+                            className={`flex items-center p-2 mb-1 rounded cursor-pointer ${originalIndex === selectedOpportunityIndex ? 'bg-blue-200' : 'bg-white'}`}
+                            onClick={() => {
+                              if (isBatchSelectMode) {
+                                toggleJobSelection(opp.id);
+                              } else {
+                                setSelectedOpportunityIndex(originalIndex);
+                              }
+                            }}
+                          >
+                            {isBatchSelectMode && (
+                              <input 
+                                type="checkbox" 
+                                checked={selectedJobIds.includes(opp.id)}
+                                onChange={() => toggleJobSelection(opp.id)}
+                                className="h-4 w-4 mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center">
+                                <h3 className="font-semibold truncate">{opp.company}</h3>
+                                <Badge 
+                                  className={
+                                    opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                                    opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                                    opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                                    opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
+                                    'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                  }
+                                  size="sm"
+                                >
+                                  {opp.status}
+                                </Badge>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500">
+                                <span className="truncate">{opp.position}</span>
+                                <span>{opp.appliedDate}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No opportunities found</p>
+                      <p className="text-sm mt-2">Try adjusting your filters or add a new opportunity</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
 
-namespace ONNXIR
-{
-    Model::Model(const std::string& p_graphName,
-        bool p_isONNX)
-        : m_modelProto(new ModelProto),
-        m_graphProto(nullptr),
-        m_graph(nullptr),
-        m_isONNX(p_isONNX)
-    {
-        m_modelProto->set_ir_version(ONNX_IRDEFS_VERSION);
-        m_modelProto->set_producer_name("CNTK");
-        m_modelProto->set_producer_version("2.4");
-        m_modelProto->set_domain("ai.cntk");
-        m_modelProto->set_model_version(1);
-        m_modelProto->set_doc_string("A CNTK model converted to ONNX.");
-        m_graphProto = m_modelProto->mutable_graph();
-        m_graphProto->set_name(p_graphName);
-        m_graph.reset(new Graph(m_graphProto, p_isONNX));
-    }
+            <Card className="col-span-2 flex flex-col">
+              {selectedOpportunity ? (
+                <>
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-xl">{selectedOpportunity.company}</CardTitle>
+                        <CardDescription className="text-lg font-medium">{selectedOpportunity.position}</CardDescription>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <Badge 
+                          className={
+                            selectedOpportunity.status === 'Offer Received' || selectedOpportunity.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                            selectedOpportunity.status === 'Rejected' || selectedOpportunity.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                            selectedOpportunity.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                            selectedOpportunity.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
+                            'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                          }
+                        >
+                          {selectedOpportunity.status}
+                        </Badge>
+                        
+                        <div className="flex items-center mt-2">
+                          {isEditingDate ? (
+                            <div className="flex items-center">
+                              <Input
+                                type="date"
+                                value={editedDate}
+                                onChange={(e) => setEditedDate(e.target.value)}
+                                className="w-40 mr-2"
+                              />
+                              <Button size="sm" onClick={handleSaveDateChange} className="mr-1">Save</Button>
+                              <Button size="sm" variant="outline" onClick={() => setIsEditingDate(false)}>Cancel</Button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="text-sm text-gray-500 mr-2">{selectedOpportunity.appliedDate}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 w-6 p-0" 
+                                onClick={() => {
+                                  // Convert from "Month Day, Year" to YYYY-MM-DD
+                                  const date = new Date(selectedOpportunity.appliedDate);
+                                  setEditedDate(date.toISOString().split('T')[0]);
+                                  setIsEditingDate(true);
+                                }}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="flex-grow overflow-hidden">
+                    <Tabs defaultValue="details" className="h-full flex flex-col">
+                      <TabsList className="mb-2">
+                        <TabsTrigger value="details">Details</TabsTrigger>
+                        <TabsTrigger value="description">Job Description</TabsTrigger>
+                        <TabsTrigger value="resume">Resume</TabsTrigger>
+                        <TabsTrigger value="chat">AI Assistant</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="details" className="flex-grow overflow-auto">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Card>
+                            <CardHeader className="py-3">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-sm font-medium">Job Details</CardTitle>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0" 
+                                  onClick={() => {
+                                    setEditedJobDetails({
+                                      location: selectedOpportunity.location || "",
+                                      salary: selectedOpportunity.salary || "",
+                                      applicationUrl: selectedOpportunity.applicationUrl || "",
+                                      source: selectedOpportunity.source || ""
+                                    });
+                                    setIsEditingJobDetails(true);
+                                  }}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                                </Button>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="py-2">
+                              {isEditingJobDetails ? (
+                                <div className="space-y-3">
+                                  <div>
+                                    <Label htmlFor="location">Location</Label>
+                                    <Input
+                                      id="location"
+                                      value={editedJobDetails.location}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, location: e.target.value})}
+                                      placeholder="e.g., Remote, New York, NY"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="salary">Salary Range</Label>
+                                    <Input
+                                      id="salary"
+                                      value={editedJobDetails.salary}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, salary: e.target.value})}
+                                      placeholder="e.g., $80,000 - $100,000"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="applicationUrl">Application URL</Label>
+                                    <Input
+                                      id="applicationUrl"
+                                      value={editedJobDetails.applicationUrl}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, applicationUrl: e.target.value})}
+                                      placeholder="https://..."
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="source">Source</Label>
+                                    <Input
+                                      id="source"
+                                      value={editedJobDetails.source}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, source: e.target.value})}
+                                      placeholder="e.g., LinkedIn, Indeed, Referral"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end space-x-2 pt-2">
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => {
+                                        updateOpportunity(selectedOpportunity.id, editedJobDetails);
+                                        setIsEditingJobDetails(false);
+                                      }}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => setIsEditingJobDetails(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="text-xs text-gray-500">Location</span>
+                                    <p>{selectedOpportunity.location || "Not specified"}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Salary Range</span>
+                                    <p>{selectedOpportunity.salary || "Not specified"}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Application URL</span>
+                                    <p>
+                                      {selectedOpportunity.applicationUrl ? (
+                                        <a 
+                                          href={selectedOpportunity.applicationUrl} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {selectedOpportunity.applicationUrl}
+                                        </a>
+                                      ) : (
+                                        "Not specified"
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Source</span>
+                                    <p>{selectedOpportunity.source || "Not specified"}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                          
+                          <Card>
+                            <CardHeader className="py-3">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-sm font-medium">Contact Information</CardTitle>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0" 
+                                  onClick={() => {
+                                    setEditedContactInfo({
+                                      recruiterName: selectedOpportunity.recruiterName || "",
+                                      recruiterEmail: selectedOpportunity.recruiterEmail || "",
+                                      recruiterPhone: selectedOpportunity.recruiterPhone || ""
+                                    });
+                                    setIsEditingContactInfo(true);
+                                  }}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                                </Button>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="py-2">
+                              {isEditingContactInfo ? (
+                                <div className="space-y-3">
+                                  <div>
+                                    <Label htmlFor="recruiterName">Contact Name</Label>
+                                    <Input
+                                      id="recruiterName"
+                                      value={editedContactInfo.recruiterName}
+                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterName: e.target.value})}
+                                      placeholder="e.g., John Smith"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="recruiterEmail">Contact Email</Label>
+                                    <Input
+                                      id="recruiterEmail"
+                                      value={editedContactInfo.recruiterEmail}
+                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterEmail: e.target.value})}
+                                      placeholder="e.g., john.smith@company.com"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="recruiterPhone">Contact Phone</Label>
+                                    <Input
+                                      id="recruiterPhone"
+                                      value={editedContactInfo.recruiterPhone}
+                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterPhone: e.target.value})}
+                                      placeholder="e.g., (123) 456-7890"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end space-x-2 pt-2">
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => {
+                                        updateOpportunity(selectedOpportunity.id, editedContactInfo);
+                                        setIsEditingContactInfo(false);
+                                      }}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => setIsEditingContactInfo(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="text-xs text-gray-500">Contact Name</span>
+                                    <p>{selectedOpportunity.recruiterName || "Not specified"}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Contact Email</span>
+                                    <p>
+                                      {selectedOpportunity.recruiterEmail ? (
+                                        <a 
+                                          href={`mailto:${selectedOpportunity.recruiterEmail}`} 
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {selectedOpportunity.recruiterEmail}
+                                        </a>
+                                      ) : (
+                                        "Not specified"
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Contact Phone</span>
+                                    <p>
+                                      {selectedOpportunity.recruiterPhone ? (
+                                        <a 
+                                          href={`tel:${selectedOpportunity.recruiterPhone}`} 
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {selectedOpportunity.recruiterPhone}
+                                        </a>
+                                      ) : (
+                                        "Not specified"
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                          
+                          <Card className="col-span-2">
+                            <CardHeader className="py-3">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-sm font-medium">Notes</CardTitle>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0" 
+                                  onClick={() => {
+                                    setEditedNotes(selectedOpportunity.notes || "");
+                                    setIsEditingNotes(true);
+                                  }}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                                </Button>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="py-2">
+                              {isEditingNotes ? (
+                                <div className="space-y-3">
+                                  <Textarea
+                                    value={editedNotes}
+                                    onChange={(e) => setEditedNotes(e.target.value)}
+                                    placeholder="Add notes about this opportunity..."
+                                    rows={5}
+                                  />
+                                  <div className="flex justify-end space-x-2">
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => {
+                                        updateOpportunity(selectedOpportunity.id, { notes: editedNotes });
+                                        setIsEditingNotes(false);
+                                      }}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => setIsEditingNotes(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  {selectedOpportunity.notes ? (
+                                    <p className="whitespace-pre-wrap">{selectedOpportunity.notes}</p>
+                                  ) : (
+                                    <p className="text-gray-500 italic">No notes added yet</p>
+                                  )}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                          
+                          <Card className="col-span-2">
+                            <CardHeader className="py-3">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-sm font-medium">Status</CardTitle>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="py-2">
+                              <Select 
+                                value={selectedOpportunity.status} 
+                                onValueChange={(value) => {
+                                  updateOpportunity(selectedOpportunity.id, { status: value });
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
+                                    <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                                    <SelectItem value="Interested">Interested</SelectItem>
+                                    <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                                    <SelectItem value="Networking">Networking</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Application</SelectLabel>
+                                    <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                                    <SelectItem value="Applied">Applied</SelectItem>
+                                    <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Interview Process</SelectLabel>
+                                    <SelectItem value="Screening">Screening</SelectItem>
+                                    <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                                    <SelectItem value="First Interview">First Interview</SelectItem>
+                                    <SelectItem value="Second Interview">Second Interview</SelectItem>
+                                    <SelectItem value="Final Interview">Final Interview</SelectItem>
+                                    <SelectItem value="Reference Check">Reference Check</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Decision</SelectLabel>
+                                    <SelectItem value="Negotiating">Negotiating</SelectItem>
+                                    <SelectItem value="Offer Received">Offer Received</SelectItem>
+                                    <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                                    <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                                    <SelectItem value="Rejected">Rejected</SelectItem>
+                                    <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                                    <SelectItem value="Position Filled">Position Filled</SelectItem>
+                                    <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Follow-up</SelectLabel>
+                                    <SelectItem value="Following Up">Following Up</SelectItem>
+                                    <SelectItem value="Waiting">Waiting</SelectItem>
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                              
+                              <div className="mt-4 flex justify-end">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => {
+                                    if (window.confirm("Are you sure you want to delete this opportunity?")) {
+                                      dispatch({ type: 'DELETE_OPPORTUNITY', payload: selectedOpportunity.id });
+                                      if (opportunities.length > 1) {
+                                        setSelectedOpportunityIndex(0);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  Delete Opportunity
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="description" className="flex-grow overflow-auto">
+                        <Card>
+                          <CardHeader className="py-3">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-sm font-medium">Job Description</CardTitle>
+                              <div className="flex space-x-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0" 
+                                  onClick={() => setIsJobDescriptionExpanded(!isJobDescriptionExpanded)}
+                                >
+                                  {isJobDescriptionExpanded ? (
+                                    <Minimize2 className="h-3 w-3" />
+                                  ) : (
+                                    <Maximize2 className="h-3 w-3" />
+                                  )}
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0" 
+                                  onClick={() => {
+                                    setEditedJobDescription(selectedOpportunity.jobDescription);
+                                    setIsEditingJobDescription(true);
+                                  }}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                  </svg>
+                                </Button>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="py-2">
+                            {isEditingJobDescription ? (
+                              <div className="space-y-3">
+                                <Textarea
+                                  value={editedJobDescription}
+                                  onChange={(e) => setEditedJobDescription(e.target.value)}
+                                  className="font-mono whitespace-pre-wrap"
+                                  rows={isJobDescriptionExpanded ? 30 : 15}
+                                />
+                                <div className="flex justify-end space-x-2">
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => {
+                                      updateOpportunity(selectedOpportunity.id, { jobDescription: editedJobDescription });
+                                      setIsEditingJobDescription(false);
+                                    }}
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => setIsEditingJobDescription(false)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className={`font-mono whitespace-pre-wrap ${isJobDescriptionExpanded ? 'h-auto' : 'max-h-[400px] overflow-y-auto'}`}>
+                                {selectedOpportunity.jobDescription || "No job description available"}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                      
+                      <TabsContent value="resume" className="flex-grow overflow-auto">
+                        <Card>
+                          <CardHeader className="py-3">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-sm font-medium">Resume for This Application</CardTitle>
+                              <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-1">
+                                  <Switch
+                                    checked={isMasterResumeFrozen}
+                                    onCheckedChange={setIsMasterResumeFrozen}
+                                    id="freeze-resume"
+                                  />
+                                  <Label htmlFor="freeze-resume" className="text-xs">
+                                    {isMasterResumeFrozen ? (
+                                      <div className="flex items-center">
+                                        <Lock className="h-3 w-3 mr-1" />
+                                        <span>Frozen</span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center">
+                                        <Unlock className="h-3 w-3 mr-1" />
+                                        <span>Synced with Master</span>
+                                      </div>
+                                    )}
+                                  </Label>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="py-2">
+                            <Textarea
+                              value={selectedOpportunity.resume}
+                              onChange={(e) => {
+                                const newResume = e.target.value;
+                                updateOpportunity(selectedOpportunity.id, { resume: newResume });
+                                
+                                // If not frozen, also update the master resume
+                                if (!isMasterResumeFrozen) {
+                                  dispatch({
+                                    type: 'UPDATE_MASTER_RESUME',
+                                    payload: newResume
+                                  });
+                                }
+                              }}
+                              className="font-mono whitespace-pre-wrap"
+                              rows={15}
+                            />
+                            
+                            <div className="mt-4">
+                              <h4 className="text-sm font-medium mb-2">AI Suggestions</h4>
+                              <div className="space-y-2">
+                                {suggestions.length >  0 ? (
+                                  suggestions.map((suggestion, index) => (
+                                    <div key={index} className="flex items-start space-x-2 p-2 bg-blue-50 rounded">
+                                      <ThumbsUp className="h-4 w-4 text-blue-500 mt-1 flex-shrink-0" />
+                                      <p className="text-sm">{suggestion}</p>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <p className="text-sm text-gray-500 italic">Loading suggestions...</p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                      
+                      <TabsContent value="chat" className="flex-grow overflow-hidden flex flex-col">
+                        <Card className="flex-grow flex flex-col overflow-hidden">
+                          <CardHeader className="py-3">
+                            <CardTitle className="text-sm font-medium">Chat with AI Assistant</CardTitle>
+                            <CardDescription>
+                              Ask questions about the job, get resume advice, or prepare for interviews
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="flex-grow overflow-hidden flex flex-col p-0">
+                            <div className="flex-grow overflow-y-auto p-4">
+                              {opportunityMessages.length > 0 ? (
+                                opportunityMessages.map((msg, index) => (
+                                  <div 
+                                    key={index} 
+                                    className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                                  >
+                                    <div 
+                                      className={`max-w-[80%] rounded-lg p-3 ${
+                                        msg.sender === 'user' 
+                                          ? 'bg-blue-500 text-white' 
+                                          : 'bg-gray-100 text-gray-800'
+                                      }`}
+                                    >
+                                      <div className="flex items-center mb-1">
+                                        {msg.sender === 'user' ? (
+                                          <>
+                                            <span className="text-xs opacity-75">You</span>
+                                            <User className="h-3 w-3 ml-1 opacity-75" />
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Bot className="h-3 w-3 mr-1 opacity-75" />
+                                            <span className="text-xs opacity-75">AI Assistant</span>
+                                          </>
+                                        )}
+                                      </div>
+                                      <p className="whitespace-pre-wrap">{msg.message}</p>
+                                      <div className="text-right">
+                                        <span className="text-xs opacity-75">
+                                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                                  <MessageSquare className="h-12 w-12 text-gray-300 mb-2" />
+                                  <h3 className="text-lg font-medium text-gray-700">No messages yet</h3>
+                                  <p className="text-gray-500 max-w-md mt-1">
+                                    Start a conversation with the AI assistant to get help with your job application
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-2 mt-4 w-full max-w-md">
+                                    {quickChatOptions.map((option, index) => (
+                                      <Button
+                                        key={index}
+                                        variant="outline"
+                                        className="justify-start text-left"
+                                        onClick={() => {
+                                          setCurrentMessage(option);
+                                          setTimeout(() => handleSendMessage(), 100);
+                                        }}
+                                      >
+                                        {option}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="p-4 border-t">
+                              <div className="flex space-x-2">
+                                <Textarea
+                                  value={currentMessage}
+                                  onChange={(e) => setCurrentMessage(e.target.value)}
+                                  placeholder="Type your message..."
+                                  className="flex-grow"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleSendMessage();
+                                    }
+                                  }}
+                                />
+                                <Button 
+                                  className="self-end"
+                                  onClick={handleSendMessage}
+                                  disabled={currentMessage.trim() === ""}
+                                >
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center p-8">
+                    <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-medium text-gray-700">No opportunity selected</h3>
+                    <p className="text-gray-500 mt-2">Select an opportunity from the list or add a new one</p>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+        </TabsContent>
 
-    Model::Model(const ModelProto& p_modelProto,
-        bool p_isONNX)
-        : m_modelProto(new ModelProto(p_modelProto)),
-        m_graphProto(nullptr),
-        m_graph(nullptr),
-        m_isONNX(p_isONNX)
-    {
-        m_graphProto = m_modelProto->mutable_graph();
-        m_graph.reset(new Graph(m_graphProto, p_isONNX));
-    }
+        <TabsContent value="resume" className="p-4 flex-grow overflow-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold text-blue-700">Master Resume</h2>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" onClick={() => {
+                if (window.confirm("Are you sure you want to update all job applications with this master resume? This will overwrite any customized resumes.")) {
+                  // Update all opportunities that aren't frozen
+                  opportunities.forEach(opp => {
+                    dispatch({
+                      type: 'UPDATE_OPPORTUNITY',
+                      payload: {
+                        id: opp.id,
+                        updates: { resume: masterResume }
+                      }
+                    });
+                  });
+                }
+              }}>
+                Sync All Applications
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <Card className="col-span-2 lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Master Resume</CardTitle>
+                <CardDescription>
+                  This is your master resume that will be used as a template for new job applications
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={masterResume}
+                  onChange={(e) => {
+                    dispatch({
+                      type: 'UPDATE_MASTER_RESUME',
+                      payload: e.target.value
+                    });
+                  }}
+                  className="font-mono whitespace-pre-wrap"
+                  rows={20}
+                />
+              </CardContent>
+            </Card>
+            
+            <Card className="col-span-2 lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Resume Tips</CardTitle>
+                <CardDescription>
+                  Suggestions to improve your master resume
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <h3 className="font-medium text-blue-800 mb-1">Quantify Your Achievements</h3>
+                    <p className="text-sm">Use numbers and percentages to demonstrate your impact. For example, "Increased website traffic by 45%" is more impactful than "Increased website traffic".</p>
+                  </div>
+                  
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <h3 className="font-medium text-green-800 mb-1">Use Action Verbs</h3>
+                    <p className="text-sm">Start bullet points with strong action verbs like "Developed," "Implemented," or "Managed" rather than passive phrases.</p>
+                  </div>
+                  
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <h3 className="font-medium text-purple-800 mb-1">Tailor to Job Descriptions</h3>
+                    <p className="text-sm">Customize your resume for each application by matching keywords from the job description. This helps with applicant tracking systems.</p>
+                  </div>
+                  
+                  <div className="p-3 bg-yellow-50 rounded-lg">
+                    <h3 className="font-medium text-yellow-800 mb-1">Keep It Concise</h3>
+                    <p className="text-sm">Aim for a 1-2 page resume. Focus on relevant experience and remove outdated or irrelevant information.</p>
+                  </div>
+                  
+                  <div className="p-3 bg-red-50 rounded-lg">
+                    <h3 className="font-medium text-red-800 mb-1">Proofread Carefully</h3>
+                    <p className="text-sm">Typos and grammatical errors can immediately disqualify you. Have someone else review your resume before submitting.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-    Model::~Model()
-    {
-    }
+        <TabsContent value="captain" className="p-4 flex-grow overflow-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold text-blue-700">Captain AI Assistant</h2>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-6">
+            <Card className="col-span-3 lg:col-span-2 flex flex-col h-[calc(100vh-250px)]">
+              <CardHeader>
+                <CardTitle>Chat with Captain</CardTitle>
+                <CardDescription>
+                  Ask for career advice, job search strategies, or help with your applications
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow overflow-hidden flex flex-col">
+                <div className="flex-grow overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="mb-4">
+                    <div className="flex items-start">
+                      <div className="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-[80%]">
+                        <div className="flex items-center mb-1">
+                          <Bot className="h-3 w-3 mr-1" />
+                          <span className="text-xs font-medium">Captain</span>
+                        </div>
+                        <p>Hello! I'm Captain, your AI career assistant. How can I help you with your job search today?</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* This would be populated with actual chat messages in a real implementation */}
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Textarea
+                    placeholder="Ask Captain anything about your job search..."
+                    className="flex-grow"
+                  />
+                  <Button className="self-end">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="col-span-3 lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Job Recommendations</CardTitle>
+                <CardDescription>
+                  Based on your profile and applications
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {jobRecommendations.map((job) => (
+                    <Card key={job.id} className="overflow-hidden">
+                      <CardHeader className="p-3">
+                        <CardTitle className="text-base">{job.position}</CardTitle>
+                        <CardDescription>{job.company}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-3 pt-0">
+                        <p className="text-sm line-clamp-3">{job.description}</p>
+                      </CardContent>
+                      <CardFooter className="p-3 pt-0 flex justify-between">
+                        <Button variant="outline" size="sm">View Details</Button>
+                        <Button size="sm">Apply</Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-    Version Model::IrVersion() const
-    {
-        return m_modelProto->ir_version();
-    }
+        <TabsContent value="analytics" className="p-4 flex-grow overflow-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold text-blue-700">Analytics Dashboard</h2>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Total Applications</p>
+                    <h3 className="text-3xl font-bold">{analytics.totalApplications}</h3>
+                  </div>
+                  <FileText className="h-8 w-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Active Applications</p>
+                    <h3 className="text-3xl font-bold">{analytics.activeApplications}</h3>
+                  </div>
+                  <ActivityIcon className="h-8 w-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Response Rate</p>
+                    <h3 className="text-3xl font-bold">{analytics.responseRate}%</h3>
+                  </div>
+                  <BarChartIcon className="h-8 w-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">This Week</p>
+                    <h3 className="text-3xl font-bold">{analytics.weeklyApplicationCount}</h3>
+                  </div>
+                  <CalendarIcon className="h-8 w-8 text-orange-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Application Status</CardTitle>
+                <CardDescription>Distribution of your applications by status</CardDescription>
+              </CardHeader>
+              <CardContent className="h-80 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <PieChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p>Status distribution chart would appear here</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Application Timeline</CardTitle>
+                <CardDescription>Number of applications over time</CardDescription>
+              </CardHeader>
+              <CardContent className="h-80 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <LineChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p>Application timeline chart would appear here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-6">
+            <Card className="col-span-3 lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Conversion Funnel</CardTitle>
+                <CardDescription>How your applications progress through the hiring process</CardDescription>
+              </CardHeader>
+              <CardContent className="h-64 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <BarChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p>Conversion funnel chart would appear here</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="col-span-3 lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Key Metrics</CardTitle>
+                <CardDescription>Important statistics about your job search</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Interview Rate</span>
+                    <span className="font-bold">{analytics.interviewRate}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${analytics.interviewRate}%` }}></div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Offer Rate</span>
+                    <span className="font-bold">{analytics.offerRate}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${analytics.offerRate}%` }}></div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Application Streak</span>
+                    <span className="font-bold">{calculateStreak(opportunities)} days</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${Math.min(calculateStreak(opportunities) * 10, 100)}%` }}></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-    void Model::SetIrVersion(Version p_irVersion)
-    {
-        m_modelProto->set_ir_version(p_irVersion);
-    }
-
-    const std::string& Model::ProducerName() const
-    {
-        return m_modelProto->producer_name();
-    }
-
-    void Model::SetProducerName(const std::string& p_producerName)
-    {
-        m_modelProto->set_producer_name(p_producerName);
-    }
-
-    const std::string& Model::ProducerVersion() const
-    {
-        return m_modelProto->producer_version();
-    }
-
-    void Model::SetProducerVersion(const std::string& p_producerVersion)
-    {
-        m_modelProto->set_producer_version(p_producerVersion);
-    }
-
-    const std::string& Model::Domain() const
-    {
-        return m_modelProto->domain();
-    }
-
-    void Model::SetDomain(const std::string& p_domain)
-    {
-        m_modelProto->set_domain(p_domain);
-    }
-
-    Version Model::ModelVersion() const
-    {
-        return m_modelProto->model_version();
-    }
-
-    void Model::SetModelversion(Version p_modelVersion)
-    {
-        m_modelProto->set_model_version(p_modelVersion);
-    }
-
-    const std::string& Model::DocString() const
-    {
-        return m_modelProto->doc_string();
-    }
-
-    void Model::SetDocString(const std::string& p_docString)
-    {
-        m_modelProto->set_doc_string(p_docString);
-    }
-
-    Graph* Model::MainGraph()
-    {
-        return m_graph.get();
-    }
-
-    const ModelProto& Model::ToProto()
-    {
-        *(m_modelProto->mutable_graph()) = m_graph->ToGraphProto();
-        return *m_modelProto;
-    }
-
-    Status Model::Load(const std::string& p_filePath, std::shared_ptr<Model>* p_model)
-    {
-        if (nullptr == p_model)
-        {
-            return Status(ONNX, INVALID_ARGUMENT, "Null model pointer.");
-        }
-
-        int fd;
-#ifdef _WIN32
-        _sopen_s(&fd, p_filePath.c_str(), _O_RDONLY | _O_SEQUENTIAL | _O_BINARY, _SH_DENYWR, _S_IREAD | _S_IWRITE);
-#else
-        fd = open(p_filePath.c_str(), O_RDONLY);
-#endif
-
-        if (0 > fd)
-        {
-            return Status(ONNX, INVALID_ARGUMENT, "File could not be opened.");
-        }
-
-#if ((GOOGLE_PROTOBUF_VERSION >= 3002000) && (GOOGLE_PROTOBUF_VERSION < 3006000))
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
-        ZeroCopyInputStream* raw_input = new FileInputStream(fd);
-        CodedInputStream* coded_input = new CodedInputStream(raw_input);
-#else
-        // for proto3.6 or later
-        FileDescriptorCloser fd_closer(fd);
-        std::unique_ptr<::google::protobuf::io::ZeroCopyInputStream> raw_input(new ::google::protobuf::io::FileInputStream(fd));
-        std::unique_ptr<::google::protobuf::io::CodedInputStream> coded_input(
-            new ::google::protobuf::io::CodedInputStream(raw_input.get()));
-#endif
-        coded_input->SetTotalBytesLimit(INT_MAX, INT_MAX);
-        ModelProto modelProto;
-        bool result = modelProto.ParseFromCodedStream(coded_input);
-
-#if ((GOOGLE_PROTOBUF_VERSION >= 3002000) && (GOOGLE_PROTOBUF_VERSION < 3006000))
-        delete coded_input;
-        delete raw_input;
-        ONNXIR_UNUSED_PARAMETER(close(fd));
-#endif
-        if (!result)
-        {
-            return Status(ONNX, INVALID_PROTOBUF, "Failed to parse model because protobuf parsing failed.");
-        }
-
-        p_model->reset(new Model(modelProto));
-
-        return Status::OK();
-    }
-
-    Status Model::Save(Model& p_model, const std::string& p_filePath)
-    {
-        int fd;
-#ifdef _WIN32
-        _sopen_s(&fd, p_filePath.c_str(), _O_WRONLY | _O_CREAT | _O_SEQUENTIAL | _O_BINARY, _SH_DENYWR, _S_IREAD | _S_IWRITE);
-#else
-        fd = open(p_filePath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-#endif
-        if (0 > fd)
-        {
-            return Status(ONNX, INVALID_ARGUMENT, "File could not be created.");
-        }
-
-        ModelProto modelProto = p_model.ToProto();
-#if ((GOOGLE_PROTOBUF_VERSION >= 3002000) && (GOOGLE_PROTOBUF_VERSION < 3006000))
-        ZeroCopyOutputStream* raw_output = new FileOutputStream(fd);
-        CodedOutputStream* coded_output = new CodedOutputStream(raw_output);
-        modelProto.SerializeToCodedStream(coded_output);
-        delete coded_output;
-        delete raw_output;
-        close(fd);
-#else
-        FileDescriptorCloser fd_closer(fd);
-        std::unique_ptr<::google::protobuf::io::ZeroCopyOutputStream> raw_output(new ::google::protobuf::io::FileOutputStream(fd));
-        std::unique_ptr<::google::protobuf::io::CodedOutputStream> coded_output(
-            new ::google::protobuf::io::CodedOutputStream(raw_output.get()));
-        modelProto.SerializeToCodedStream(coded_output.get());
-#endif
-        return Status::OK();
-    }
+        <TabsContent value="calendar" className="p-4 flex-grow overflow-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold text-blue-700">Calendar</h2>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Event
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Event</DialogTitle>
+                  <DialogDescription>Create a new event for your job search calendar</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="title" className="text-right">Title</Label>
+                    <Input
+                      id="title"
+                      className="col-span-3"
+                      value={newEvent.title}
+                      onChange={handleNewEventChange}
+                      placeholder="e.g., Interview with Company X"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="date" className="text-right">Date</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      className="col-span-3"
+                      value={newEvent.date}
+                      onChange={handleNewEventChange}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="text-right">Event Type</Label>
+                    <Select onValueChange={handleNewEventTypeChange} value={newEvent.type}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="interview">Interview</SelectItem>
+                        <SelectItem value="assessment">Technical Assessment</SelectItem>
+                        <SelectItem value="followup">Follow-up</SelectItem>
+                        <SelectItem value="deadline">Deadline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="opportunityId" className="text-right">Related Job</Label>
+                    <Select onValueChange={handleNewEventOpportunityChange} value={newEvent.opportunityId}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select related job" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {opportunities.map(opp => (
+                          <SelectItem key={opp.id} value={opp.id.toString()}>
+                            {opp.company} - {opp.position}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="text-right">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      className="col-span-3"
+                      value={newEvent.notes}
+                      onChange={handleNewEventChange}
+                      placeholder="Add any additional notes about this event"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" onClick={handleSaveNewEvent}>Save Event</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          
+          <div className="grid grid-cols-7 gap-4 mb-4">
+            <Card className="col-span-5">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>Calendar</CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => setCalendarView("month")} className={calendarView === "month" ? "bg-blue-100" : ""}>Month</Button>
+                    <Button variant="outline" size="sm" onClick={() => setCalendarView("week")} className={calendarView === "week" ? "bg-blue-100" : ""}>Week</Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="p-3 bg-white rounded-lg border">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border"
+                    components={{
+                      DayContent: (props) => {
+                        const dayEvents = getEventsForDay(props.date);
+                        return (
+                          <div className="relative h-full w-full p-2">
+                            <div className="text-center">{props.date.getDate()}</div>
+                            {dayEvents.length > 0 && (
+                              <div className="absolute bottom-1 left-0 right-0 flex justify-center">
+                                {dayEvents.slice(0, 3).map((event, i) => (
+                                  <div 
+                                    key={i}
+                                    className={`h-1.5 w-1.5 rounded-full mx-0.5 ${
+                                      event.type === 'interview' ? 'bg-blue-500' :
+                                      event.type === 'assessment' ? 'bg-purple-500' :
+                                      event.type === 'followup' ? 'bg-yellow-500' :
+                                      'bg-red-500'
+                                    }`}
+                                  />
+                                ))}
+                                {dayEvents.length > 3 && (
+                                  <div className="text-xs text-gray-500 ml-1">+{dayEvents.length - 3}</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="col-span-2">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>Events</CardTitle>
+                  <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Filter events" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Events</SelectItem>
+                      <SelectItem value="interview">Interviews</SelectItem>
+                      <SelectItem value="assessment">Assessments</SelectItem>
+                      <SelectItem value="followup">Follow-ups</SelectItem>
+                      <SelectItem value="deadline">Deadlines</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px] pr-4">
+                  {date && (
+                    <div>
+                      <h3 className="font-medium mb-2">
+                        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                      </h3>
+                      
+                      {getEventsForDay(date).length > 0 ? (
+                        <div className="space-y-3">
+                          {getEventsForDay(date).map((event) => {
+                            const relatedJob = event.opportunityId 
+                              ? opportunities.find(opp => opp.id === event.opportunityId) 
+                              : null;
+                              
+                            return (
+                              <Card key={event.id} className="overflow-hidden">
+                                <CardHeader className={`py-2 px-3 ${
+                                  event.type === 'interview' ? 'bg-blue-50' :
+                                  event.type === 'assessment' ? 'bg-purple-50' :
+                                  event.type === 'followup' ? 'bg-yellow-50' :
+                                  'bg-red-50'
+                                }`}>
+                                  <div className="flex justify-between items-center">
+                                    <Badge className={
+                                      event.type === 'interview' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                                      event.type === 'assessment' ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
+                                      event.type === 'followup' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
+                                      'bg-red-100 text-red-800 hover:bg-red-200'
+                                    }>
+                                      {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                                    </Badge>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => {
+                                        if (window.confirm("Are you sure you want to delete this event?")) {
+                                          dispatch({ type: 'DELETE_EVENT', payload: event.id });
+                                        }
+                                      }}
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    </Button>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="py-2 px-3">
+                                  <h4 className="font-medium">{event.title}</h4>
+                                  {relatedJob && (
+                                    <p className="text-xs text-gray-500">
+                                      {relatedJob.company} - {relatedJob.position}
+                                    </p>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>No events for this day</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={() => {
+                              setNewEvent({
+                                ...newEvent,
+                                date: date.toISOString().split('T')[0]
+                              });
+                              document.querySelector('[data-dialog-trigger="true"]')?.click();
+                            }}
+                          >
+                            Add Event
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="mt-6">
+                    <h3 className="font-medium mb-2">Upcoming Events</h3>
+                    {events.length > 0 ? (
+                      <div className="space-y-3">
+                        {events
+                          .filter(event => eventTypeFilter === 'all' || event.type === event.type)
+                          .filter(event => {
+                            const eventDate = new Date(event.date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return eventDate >= today;
+                          })
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                          .slice(0, 5)
+                          .map((event) => {
+                            const relatedJob = event.opportunityId 
+                              ? opportunities.find(opp => opp.id === event.opportunityId) 
+                              : null;
+                              
+                            return (
+                              <Card key={event.id} className="overflow-hidden">
+                                <CardHeader className={`py-2 px-3 ${
+                                  event.type === 'interview' ? 'bg-blue-50' :
+                                  event.type === 'assessment' ? 'bg-purple-50' :
+                                  event.type === 'followup' ? 'bg-yellow-50' :
+                                  'bg-red-50'
+                                }`}>
+                                  <div className="flex justify-between items-center">
+                                    <Badge className={
+                                      event.type === 'interview' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                                      event.type === 'assessment' ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
+                                      event.type === 'followup' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
+                                      'bg-red-100 text-red-800 hover:bg-red-200'
+                                    }>
+                                      {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                                    </Badge>
+                                    <span className="text-xs">{event.date}</span>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="py-2 px-3">
+                                  <h4 className="font-medium">{event.title}</h4>
+                                  {relatedJob && (
+                                    <p className="text-xs text-gray-500">
+                                      {relatedJob.company} - {relatedJob.position}
+                                    </p>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        <p>No upcoming events</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
 }
-End File# Aaronlcj/CNTK
-# Source/CNTKv2LibraryDll/proto/onnx/core/graph.h
-#pragma once
-
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-
-#include "core/common.h"
-#include "core/common/status.h"
-#include "core/graph/graph.h"
-#include "core/graph/graph_nodes.h"
-
-namespace ONNXIR
-{
-    typedef std::unordered_map<std::string, std::pair<std::unique_ptr<Value>, int>> NameToValInfoMap;
-    typedef std::unordered_map<std::string, std::unique_ptr<Node>> NameToNodeMap;
-
-    // A Graph.
-    class Graph
-    {
-    public:
-
-        // Resolve domain for a node based on the node's domain and the graph's
-        // domain. If the node's domain is empty, it'll be resolved as the graph's
-        // domain. If the graph's domain is empty, it'll be resolved as ONNX_DOMAIN.
-        // If the node's domain is not empty, the node's domain will be kept.
-        std::string ResolveDomain(const std::string& p_nodeDomain) const;
-
-        // Constructor: Given a <GraphProto> loaded from model file
-        // <p_isONNX> is a special flag to indicate whether this graph is
-        // an ONNX graph. It's special because we want to support both ONNX and
-        // non-ONNX graphs.
-        Graph(const GraphProto& p_graphProto, bool p_isONNX = false);
-
-        // Constructor: Given a <GraphProto> loaded from model file
-        // <p_isONNX> is a special flag to indicate whether this graph is
-        // an ONNX graph. It's special because we want to support both ONNX and
-        // non-ONNX graphs.
-        Graph(GraphProto* p_graphProto, bool p_isONNX = false);
-
-        Graph() = delete;
-
-        // Resolve <*this> graph.
-        Status Resolve();
-
-        // Add node.
-        Node* AddNode(const std::string& p_name,
-            const std::string& p_opType,
-            const std::string& p_description,
-            const std::vector<NodeArg*>& p_inputArgs,
-            const std::vector<NodeArg*>& p_outputArgs,
-            const std::string& p_domain = "");
-
-        // Add node.
-        Node* AddNode(const std::string& p_name,
-            const std::string& p_opType,
-            const std::string& p_description,
-            const std::vector<NodeArg*>& p_inputArgs,
-            const std::vector<NodeArg*>& p_outputArgs,
-            const std::vector<NodeAttributes>& p_attributes,
-            const std::string& p_domain = "");
-
-        // Add node.
-        Node* AddNode(const NodeProto& p_nodeProto,
-            const ArgNameToTypeMap& p_nameToType);
-
-        // Copy node and add to graph.
-        Node* AddNode(const Node& p_other);
-
-        // Remove node.
-        bool RemoveNode(Node* p_node);
-
-        // Add control edge.
-        // A control edge only constraints execution order, and it has no data
-        // dependency.
-        // <p_src> source node, <p_dst> destination node.
-        bool AddControlEdge(Node* p_src, Node* p_dst);
-
-        // Mark graph as needing resolve.
-        // <p_needsVerification> whether the resolve needs to include shape
-        // and type validation.
-        void SetGraphResolveNeeded(bool p_needsVerification = true)
-        {
-            m_graphResolveNeeded = true;
-            m_graphProtoSyncNeeded = true;
-            if (p_needsVerification)
-            {
-                m_needsVerification = true;
-            }
-        }
-
-        // Mark graph as needing proto sync.
-        void SetGraphProtoSyncNeeded()
-        {
-            m_graphProtoSyncNeeded = true;
-        }
-
-        // Get graph inputs.
-        const std::vector<const NodeArg*>& GetInputs() const
-        {
-            return m_graphInputs;
-        }
-
-        // Get graph inputs outputs.
-        const std::vector<const NodeArg*>& GetOutputs() const
-        {
-            return m_graphOutputs;
-        }
-
-        // Get graph inputs outputs.
-        std::vector<NodeArg*> GetOutputsInternal() const
-        {
-            std::vector<NodeArg*> outputs;
-            for (auto& nodeArg : m_graphOutputs)
-            {
-                outputs.push_back(const_cast<NodeArg*>(nodeArg));
-            }
-            return outputs;
-        }
-
-        // Get all nodes.
-        const std::vector<Node*>& GetNodes() const
-        {
-            return m_nodes;
-        }
-
-        // Get node with specified node index.
-        Node* GetNode(NodeIndex p_nodeIndex)
-        {
-            return m_nodes[p_nodeIndex];
-        }
-
-        // Get node with specified node index.
-        const Node* GetNode(NodeIndex p_nodeIndex) const
-        {
-            return m_nodes[p_nodeIndex];
-        }
-
-        // Get the mutable GraphProto.
-        GraphProto* GetMutableGraphProto()
-        {
-            return m_graphProto;
-        }
-
-        // Get GraphProto.
-        const GraphProto& GetGraphProto() const;
-
-        // Get node name to node map.
-        const NameToNodeMap& GetAllNamedNodes() const
-        {
-            return m_nameToNodeMap;
-        }
-
-        // Get initial tensors.
-        const InitialTensorSet& GetAllInitialTensors() const
-        {
-            return m_nameToInitialTensor;
-        }
-
-        // Remove initial tensor. Return true if remove successfully.
-        bool RemoveInitialTensor(const std::string& p_tensorName)
-        {
-            auto iter = m_nameToInitialTensor.find(p_tensorName);
-            if (m_nameToInitialTensor.end() != iter)
-            {
-                m_nameToInitialTensor.erase(iter);
-                m_graphProtoSyncNeeded = true;
-                return true;
-            }
-            return false;
-        }
-
-        // Get all ValueInfo.
-        const std::unordered_map<std::string, ValueInfoProto>& GetAllValueInfos() const
-        {
-            return m_nameToValueInfo;
-        }
-
-        // Get whether the specified op type is in the specified domain.
-        bool IsRegisteredInDomain(const std::string& p_domain, const std::string& p_opType) const;
-
-        // Get <*this> graph's domain.
-        const std::string& DomainToVersionMap() const
-        {
-            return m_domainToVersionMap;
-        }
-
-        // Get <*this> graph's name.
-        const std::string& Name() const
-        {
-            return m_graphProto->name();
-        }
-
-        // Set <*this> graph's name.
-        void SetName(const std::string& p_name)
-        {
-            m_graphProto->set_name(p_name);
-        }
-
-        // Add an input or output <nodearg> to <*this> graph.
-        // The input or output is owned by <*this> graph. Returns the added nodearg.
-        NodeArg* AddNodeArg(const std::string& p_name, const TypeProto* p_typeProto = nullptr)
-        {
-            auto result = m_nameToNodeArgs.insert({ p_name, std::unique_ptr<NodeArg>(new NodeArg(p_name, p_typeProto)) });
-            if (!result.second)
-            {
-                // NodeArg already exists.
-                return result.first->second.get();
-            }
-            else
-            {
-                // This is a newly added NodeArg.
-                // Add source/sink nodes if needed.
-                if (IsSourceNode(p_name))
-                {
-                    // The NodeArg is potentially an input to the graph.
-                    m_sourceNodeArgs.insert(result.first->second.get());
-                }
-                if (IsSinkNode(p_name))
-                {
-                    // The NodeArg is potentially an output to the graph.
-                    m_sinkNodeArgs.insert(result.first->second.get());
-                }
-                return result.first->second.get();
-            }
-        }
-
-        // Get NodeArg by name.
-        NodeArg* GetNodeArg(const std::string& p_name)
-        {
-            auto iter = m_nameToNodeArgs.find(p_name);
-            if (m_nameToNodeArgs.end() != iter)
-            {
-                return iter->second.get();
-            }
-            return nullptr;
-        }
-
-        // Get NodeArg by name.
-        const NodeArg* GetNodeArg(const std::string& p_name) const
-        {
-            auto iter = m_nameToNodeArgs.find(p_name);
-            if (m_nameToNodeArgs.end() != iter)
-            {
-                return iter->second.get();
-            }
-            return nullptr;
-        }
-
-        // Get NodeArg by name.
-        NodeArg* GetNodeArg(const std::string& p_name, const TypeProto& p_typeProto)
-        {
-            auto iter = m_nameToNodeArgs.find(p_name);
-            if (m_nameToNodeArgs.end() != iter)
-            {
-                // The NodeArg exists. Validate that the existing type
-                // is the same as the required type.
-                const TypeProto* existingType = iter->second->TypeAsProto();
-                if (nullptr == existingType)
-                {
-                    // The NodeArg was previously created without a type.
-                    // Update it to use the specified type.
-                    iter->second->SetType(p_typeProto);
-                    return iter->second.get();
-                }
-                else if (TypeProtoCompare::Identical(*existingType, p_typeProto))
-                {
-                    // The NodeArg already exists with the same type.
-                    return iter->second.get();
-                }
-                else
-                {
-                    // The NodeArg exists but has a different type.
-                    // Return nullptr because we don't allow a NodeArg to have different types.
-                    return nullptr;
-                }
-            }
-            else
-            {
-                // The NodeArg does not exist yet. Create it with the specified type.
-                auto result = m_nameToNodeArgs.insert({ p_name, std::unique_ptr<NodeArg>(new NodeArg(p_name, &p_typeProto)) });
-                if (!result.second)
-                {
-                    // The NodeArg was added by a concurrent call to AddNodeArg.
-                    // Return nullptr because we don't know if the concurrently-added NodeArg has the same type.
-                    return nullptr;
-                }
-                else
-                {
-                    // This is a newly added NodeArg.
-                    // Add source/sink nodes if needed.
-                    if (IsSourceNode(p_name))
-                    {
-                        // The NodeArg is potentially an input to the graph.
-                        m_sourceNodeArgs.insert(result.first->second.get());
-                    }
-                    if (IsSinkNode(p_name))
-                    {
-                        // The NodeArg is potentially an output to the graph.
-                        m_sinkNodeArgs.insert(result.first->second.get());
-                    }
-                    return result.first->second.get();
-                }
-            }
-        }
-
-        // Get the map of name to NodeArg.
-        const std::unordered_map<std::string, std::unique_ptr<NodeArg>>& GetNodeArgMap() const
-        {
-            return m_nameToNodeArgs;
-        }
-
-        // Get the map of operator domains to their opset versions.
-        const std::unordered_map<std::string, int>& DomainToVersionMap() const
-        {
-            return m_domainToVersion;
-        }
-
-        // Get the map of operator domains to their opset versions.
-        std::unordered_map<std::string, int>& DomainToVersionMap()
-        {
-            return m_domainToVersion;
-        }
-
-        // Add an initializer tensor to <*this> graph.
-        // The tensor is owned by <*this> graph. Returns the added tensor.
-        const ONNX_NAMESPACE::TensorProto* AddInitializedTensor(const ONNX_NAMESPACE::TensorProto& p_tensor)
-        {
-            if (m_nameToInitialTensor.end() != m_nameToInitialTensor.find(p_tensor.name()))
-            {
-                return nullptr;
-            }
-
-            auto tensor = std::make_unique<ONNX_NAMESPACE::TensorProto>(p_tensor);
-            auto* result = tensor.get();
-            m_nameToInitialTensor[tensor->name()] = std::move(tensor);
-            m_graphProtoSyncNeeded = true;
-            return result;
-        }
-
-        // Get an initializer tensor by name.
-        const ONNX_NAMESPACE::TensorProto* GetInitializedTensor(const std::string& p_name) const
-        {
-            auto iter = m_nameToInitialTensor.find(p_name);
-            if (m_nameToInitialTensor.end() != iter)
-            {
-                return iter->second.get();
-            }
-            return nullptr;
-        }
-
-        // Return true if a NodeArg with <p_name> exists.
-        bool IsNodeArgExist(const std::string& p_name) const
-        {
-            return m_nameToNodeArgs.end() != m_nameToNodeArgs.find(p_name);
-        }
-
-        // Return true if a node with <p_name> exists.
-        bool IsNodeExist(const std::string& p_name) const
-        {
-            return m_nameToNodeMap.end() != m_nameToNodeMap.find(p_name);
-        }
-
-        // Get graph inputs/outputs.
-        void GetInputsOutputs(std::vector<const NodeArg*>& p_inputs,
-            std::vector<const NodeArg*>& p_outputs) const;
-
-        // Build and verify node connection (edges).
-        // Verify NodeArg name/type/shape matching correctly.
-        Status BuildConnections();
-
-        // Check whether <*this> graph is acyclic.
-        // Return true means it's acyclic, false means it's cyclic.
-        bool IsAcyclic() const;
-
-        // Topological sort nodes of <*this> graph.
-        Status TopologicalSort(std::vector<Node*>& p_nodesInTopologicalOrder);
-
-        // Perform the topological sort and validate the ordering.
-        Status ValidateNodesTopologicalOrder();
-
-        // Resolve <*this> graph inputs/outputs.
-        Status ResolveInputsOutputs();
-
-        // Infer and set type information across <*this> graph if needed.
-        Status InferAndVerifyTypeMatch(const Node* p_node,
-            const OpSignature* p_op,
-            const std::unordered_map<std::string, ONNX_NAMESPACE::TypeProto>& p_inputTypes);
-
-        // Set graph inputs/outputs when resolving a graph..
-        Status SetInputsOutputs();
-
-        // Sync graph inputs/outputs when serializing to proto.
-        void SyncInputsOutputs();
-
-        // Construct a Graph instance for subgraph.
-        // The parent graph is responsible for the lifetime of the subgraph.
-        Graph* CreateSubgraph();
-
-        // Get all subgraphs.
-        std::vector<Graph*> GetAllSubgraphs()
-        {
-            return m_subgraphs;
-        }
-
-        // Get all subgraphs.
-        std::vector<const Graph*> GetAllSubgraphs() const
-        {
-            std::vector<const Graph*> result;
-            for (auto& subgraph : m_subgraphs)
-            {
-                result.push_back(subgraph);
-            }
-            return result;
-        }
-
-        // Serialize the <*this> graph into GraphProto.
-        GraphProto ToGraphProto();
-
-        // Serialize the <*this> graph into GraphProto.
-        void ToGraphProto(GraphProto& p_graphProto);
-
-        // Iterate through all nodes in <*this> graph.
-        // The iteration order is not defined.
-        void ForEachNode(std::function<void(Node*)> p_func);
-
-        // Iterate through all nodes in <*this> graph.
-        // The iteration order is not defined.
-        void ForEachNode(std::function<void(const Node*)> p_func) const;
-
-        // Iterate through all nodes in <*this> graph in topological order.
-        void ForEachNodeInTopologicalOrder(std::function<void(Node*)> p_func);
-
-        // Iterate through all nodes in <*this> graph in topological order.
-        void ForEachNodeInTopologicalOrder(std::function<void(const Node*)> p_func) const;
-
-        // Iterate through all NodeArgs in <*this> graph.
-        // The iteration order is not defined.
-        void ForEachNodeArg(std::function<void(NodeArg*)> p_func);
-
-        // Iterate through all NodeArgs in <*this> graph.
-        // The iteration order is not defined.
-        void ForEachNodeArg(std::function<void(const NodeArg*)> p_func) const;
-
-        // Iterate through all initializers in <*this> graph.
-        // The iteration order is not defined.
-        void ForEachInitializedTensor(std::function<void(const ONNX_NAMESPACE::TensorProto*)> p_func) const;
-
-        // Iterate through all inputs in <*this> graph.
-        // The iteration order is not defined.
-        void ForEachGraphInput(std::function<void(const NodeArg*)> p_func) const;
-
-        // Iterate through all outputs in <*this> graph.
-        // The iteration order is not defined.
-        void ForEachGraphOutput(std::function<void(const NodeArg*)> p_func) const;
-
-        // Add a NodeArg name into source node list.
-        void AddSourceNodeArg(const std::string& p_name)
-        {
-            auto iter = m_nameToNodeArgs.find(p_name);
-            if (m_nameToNodeArgs.end() != iter)
-            {
-                m_sourceNodeArgs.insert(iter->second.get());
-            }
-        }
-
-        // Add a NodeArg name into sink node list.
-        void AddSinkNodeArg(const std::string& p_name)
-        {
-            auto iter = m_nameToNodeArgs.find(p_name);
-            if (m_nameToNodeArgs.end() != iter)
-            {
-                m_sinkNodeArgs.insert(iter->second.get());
-            }
-        }
-
-        // Check whether a NodeArg is a source node.
-        bool IsSourceNode(const std::string& p_name) const
-        {
-            return m_graphInputs.end() != std::find_if(m_graphInputs.begin(), m_graphInputs.end(),
-                [&p_name](const NodeArg* nodearg) { return (nodearg->Name() == p_name); });
-        }
-
-        // Check whether a NodeArg is a sink node.
-        bool IsSinkNode(const std::string& p_name) const
-        {
-            return m_graphOutputs.end() != std::find_if(m_graphOutputs.begin(), m_graphOutputs.end(),
-                [&p_name](const NodeArg* nodearg) { return (nodearg->Name() == p_name); });
-        }
-
-        // Check whether a Node is a source node.
-        bool IsSourceNode(const Node* p_node) const
-        {
-            return m_sourceNodes.end() != m_sourceNodes.find(const_cast<Node*>(p_node));
-        }
-
-        // Check whether a Node is a sink node.
-        bool IsSinkNode(const Node* p_node) const
-        {
-            return m_sinkNodes.end() != m_sinkNodes.find(const_cast<Node*>(p_node));
-        }
-
-        // Get the maximum NodeIndex value used in the graph.
-        int MaxNodeIndex() const
-        {
-            return m_maxNodeIndex;
-        }
-
-        // Get the maximum NodeEdgeIndex value used in the graph.
-        int MaxNodeEdgeIndex() const
-        {
-            return m_maxNodeEdgeIndex;
-        }
-
-        // Get the node with the specified node index.
-        const Node* GetNodeByIndex(int p_index) const
-        {
-            return m_nodes.at(p_index);
-        }
-
-        // Get the node with the specified node index.
-        Node* GetNodeByIndex(int p_index)
-        {
-            return m_nodes.at(p_index);
-        }
-
-        // Get the mutable node with the specified node index.
-        Node* GetMutableNodeByIndex(int p_index)
-        {
-            return m_nodes.at(p_index);
-        }
-
-        // Get the node with the specified node name.
-        const Node* GetNodeByName(const std::string& p_name) const
-        {
-            auto iter = m_nameToNodeMap.find(p_name);
-            if (m_nameToNodeMap.end() == iter)
-            {
-                return nullptr;
-            }
-            return iter->second.get();
-        }
-
-        // Get the node with the specified node name.
-        Node* GetNodeByName(const std::string& p_name)
-        {
-            auto iter = m_nameToNodeMap.find(p_name);
-            if (m_nameToNodeMap.end() == iter)
-            {
-                return nullptr;
-            }
-            return iter->second.get();
-        }
-
-        // Add a new node to <*this> graph.
-        Node* AddNode(const std::string& p_name,
-            const std::string& p_opType,
-            const std::string& p_description,
-            const std::vector<NodeArg*>& p_inputArgs,
-            const std::vector<NodeArg*>& p_outputArgs,
-            const NodeAttributes& p_attributes,
-            const std::string& p_domain);
-
-        // Add a new control edge to <*this> graph.
-        // The edge is added between p_srcNode and p_dstNode.
-        bool AddControlEdge(NodeIndex p_srcNodeIndex, NodeIndex p_dstNodeIndex);
-
-        // Resolve the graph.
-        Status Resolve();
-
-        // Verify that the graph is acyclic.
-        Status VerifyIsAcyclic() const;
-
-        // Verify that the graph is topologically sorted.
-        Status VerifyTopologicalSortOrder() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraph() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInNode(const Node* p_node) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInNodeArgs(const std::vector<const NodeArg*>& p_nodeArgs) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInNodeArg(const NodeArg* p_nodeArg) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInInitializer(const ONNX_NAMESPACE::TensorProto* p_initializer) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInValueInfo(const ValueInfoProto* p_valueInfo) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInTypeProto(const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInTensorShapeProto(const TensorShapeProto* p_tensorShapeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInDimension(const TensorShapeProto_Dimension* p_dimension) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInSequenceType(const TypeProto_Sequence* p_sequenceType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInMapType(const TypeProto_Map* p_mapType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInOpsetImport() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphInputs() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphOutputs() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphInitializers() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphValueInfos() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodes() const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeInputs(const Node* p_node) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeOutputs(const Node* p_node) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributes(const Node* p_node) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttribute(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensor(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeGraph(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeSparseTensor(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProto(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProto(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeSparseTensorProto(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeGraphProto(const Node* p_node, const AttributeProto* p_attribute) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensor(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSequence(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMap(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaque(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensor(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOptional(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorShape(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TensorShapeProto_Dimension* p_dimension) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSequenceType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Sequence* p_sequenceType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMapType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Map* p_mapType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOptionalType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Optional* p_optionalType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaqueType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Opaque* p_opaqueType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorTypeShape(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType, const TensorShapeProto* p_tensorShape) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorTypeShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType, const TensorShapeProto* p_tensorShape, const TensorShapeProto_Dimension* p_dimension) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorTypeShape(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType, const TensorShapeProto* p_tensorShape) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorTypeShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType, const TensorShapeProto* p_tensorShape, const TensorShapeProto_Dimension* p_dimension) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSequenceTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Sequence* p_sequenceType, const TypeProto* p_elemType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMapTypeKeyType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Map* p_mapType, const TypeProto* p_keyType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoMapTypeValueType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Map* p_mapType, const TypeProto* p_valueType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOptionalTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Optional* p_optionalType, const TypeProto* p_elemType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoTensorTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Tensor* p_tensorType, int p_elemType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoSparseTensorTypeElemType(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_SparseTensor* p_sparseTensorType, int p_elemType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaqueTypeDomain(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Opaque* p_opaqueType, const std::string& p_domain) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTypeProtoOpaqueName(const Node* p_node, const AttributeProto* p_attribute, const TypeProto* p_typeProto, const TypeProto_Opaque* p_opaqueType, const std::string& p_name) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoShape(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoShapeDimension(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, int64_t p_dimension) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoDataType(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, int p_dataType) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoRawData(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const std::string& p_rawData) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoExternalData(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const StringStringEntryProto* p_externalData) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoExternalDataKey(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const StringStringEntryProto* p_externalData, const std::string& p_key) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeInferenceInGraphNodeAttributeTensorProtoExternalDataValue(const Node* p_node, const AttributeProto* p_attribute, const TensorProto* p_tensorProto, const StringStringEntryProto* p_externalData, const std::string& p_value) const;
-
-        // Verify that the graph has no unresolved shape inference.
-        Status VerifyNoUnresolvedShapeIn
