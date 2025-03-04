@@ -320,6 +320,8 @@ export default function CAPTAINGui() {
     "How to prepare for interviews",
     "Tips for salary negotiation"
   ];
+  
+  const selectedOpportunity = opportunities[selectedOpportunityIndex];
 
   const [jobRecommendations, setJobRecommendations] = useState([
     { id: 1, company: "TechGiant", position: "Senior Frontend Developer", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
@@ -485,7 +487,7 @@ export default function CAPTAINGui() {
         setIsLoadingPrompts(false);
       }, 300);
     }
-  }, [selectedOpportunity?.id, selectedOpportunity?.status]);
+  }, [selectedOpportunity]);
 
   // Generate analytics data using useMemo to prevent recalculation on every render
   const analytics = useMemo(() => {
@@ -771,8 +773,6 @@ export default function CAPTAINGui() {
 
   const [localChatMessages, setLocalChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-
-  const selectedOpportunity = opportunities[selectedOpportunityIndex];
   
   // Get chat messages for the selected opportunity
   const opportunityMessages = useMemo(() => {
