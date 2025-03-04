@@ -561,7 +561,7 @@ export default function CAPTAINGui() {
   }, [opportunities]);
 
   // Define selectedOpportunity before any useEffect that uses it
-  const selectedOpportunity = opportunities[selectedOpportunityIndex];
+  const selectedOpportunity = opportunities.length > 0 ? opportunities[selectedOpportunityIndex] : undefined;
   
   // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter(opp => {
