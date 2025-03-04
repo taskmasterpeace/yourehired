@@ -13,12 +13,14 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-react'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { useAppState } from '@/context/context'
 import { Opportunity } from '@/context/types'
 import { format, parseISO, isEqual, isSameDay } from 'date-fns'
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 // Configuration for tag colors
 const TAG_COLOR_CLASSES = {
@@ -123,6 +125,10 @@ export default function CAPTAINGui() {
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [editingEvent, setEditingEvent] = useState(null);
 
+  // Mobile touch handling
+  const [touchStart, setTouchStart] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
   const quickChatOptions = [
     "Analyze my resume",
     "Suggest skills to improve",
@@ -224,6 +230,35 @@ export default function CAPTAINGui() {
       setSelectedJobIds([...selectedJobIds, id]);
     }
   };
+
+  // Mobile touch handlers
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  
+  const handleTouchMove = (e) => {
+    if (touchStart - e.targetTouches[0].clientX > 50) {
+      // Swipe left - go to next opportunity if available
+      if (selectedOpportunityIndex < opportunities.length - 1) {
+        setSelectedOpportunityIndex(selectedOpportunityIndex + 1);
+      }
+    } else if (touchStart - e.targetTouches[0].clientX < -50) {
+      // Swipe right - go to previous opportunity if available
+      if (selectedOpportunityIndex > 0) {
+        setSelectedOpportunityIndex(selectedOpportunityIndex - 1);
+      }
+    }
+  };
+
+  // Scroll handler for back to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Generate analytics data using useMemo to prevent recalculation on every render
   const analytics = useMemo(() => {
@@ -606,103 +641,158 @@ export default function CAPTAINGui() {
 
 
   return (
-    <div className="container mx-auto p-4 bg-gray-100 min-h-screen flex flex-col">
-      <h1 className="text-3xl font-bold mb-4 text-blue-600">CAPTAIN - Career Application Tracking and Intelligence Navigation</h1>
+    <div className="container mx-auto p-2 sm:p-4 bg-gray-100 min-h-screen flex flex-col">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">CAPTAIN</h1>
+        <div className="block md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[80vw] sm:w-[350px]">
+              <div className="py-4">
+                <h2 className="text-lg font-semibold mb-4">Navigation</h2>
+                <div className="flex flex-col space-y-2">
+                  <Button 
+                    variant={activeTab === "opportunities" ? "default" : "ghost"} 
+                    className="justify-start" 
+                    onClick={() => setActiveTab("opportunities")}
+                  >
+                    Opportunities
+                  </Button>
+                  <Button 
+                    variant={activeTab === "resume" ? "default" : "ghost"} 
+                    className="justify-start" 
+                    onClick={() => setActiveTab("resume")}
+                  >
+                    Master Resume
+                  </Button>
+                  <Button 
+                    variant={activeTab === "captain" ? "default" : "ghost"} 
+                    className="justify-start" 
+                    onClick={() => setActiveTab("captain")}
+                  >
+                    Captain
+                  </Button>
+                  <Button 
+                    variant={activeTab === "analytics" ? "default" : "ghost"} 
+                    className="justify-start" 
+                    onClick={() => setActiveTab("analytics")}
+                  >
+                    Analytics
+                  </Button>
+                  <Button 
+                    variant={activeTab === "calendar" ? "default" : "ghost"} 
+                    className="justify-start" 
+                    onClick={() => setActiveTab("calendar")}
+                  >
+                    Calendar
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-white rounded-lg shadow-md flex-grow flex flex-col">
-        <TabsList className="mb-4 p-2 bg-blue-100 rounded-t-lg sticky top-0 z-10">
-          <TabsTrigger value="opportunities" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Opportunities</TabsTrigger>
-          <TabsTrigger value="resume" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Master Resume</TabsTrigger>
-          <TabsTrigger value="captain" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Captain</TabsTrigger>
-          <TabsTrigger value="analytics" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Analytics</TabsTrigger>
-          <TabsTrigger value="calendar" className="px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Calendar</TabsTrigger>
+        <TabsList className="mb-4 p-2 bg-blue-100 rounded-t-lg sticky top-0 z-10 overflow-x-auto flex-wrap md:flex-nowrap">
+          <TabsTrigger value="opportunities" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Opportunities</TabsTrigger>
+          <TabsTrigger value="resume" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Master Resume</TabsTrigger>
+          <TabsTrigger value="captain" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Captain</TabsTrigger>
+          <TabsTrigger value="analytics" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Analytics</TabsTrigger>
+          <TabsTrigger value="calendar" className="px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white">Calendar</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="opportunities" className="p-4 flex-grow overflow-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-blue-700">Job Opportunities</h2>
+        <TabsContent value="opportunities" className="p-2 sm:p-4 flex-grow overflow-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Job Opportunities</h2>
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-green-500 hover:bg-green-600 text-white"><PlusCircle className="mr-2 h-4 w-4" /> Add New Opportunity</Button>
+                <Button className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add New Opportunity
+                </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl">
+              <DialogContent className="w-[90vw] max-w-3xl">
                 <DialogHeader>
                   <DialogTitle>Add New Opportunity</DialogTitle>
                   <DialogDescription>Enter the details of your new job opportunity</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="company" className="text-right">Company</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="company" className="sm:text-right">Company</Label>
                     <Input
                       id="company"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newOpportunity.company}
                       onChange={handleNewOpportunityChange}
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="position" className="text-right">Position</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="position" className="sm:text-right">Position</Label>
                     <Input
                       id="position"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newOpportunity.position}
                       onChange={handleNewOpportunityChange}
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="location" className="text-right">Location</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="location" className="sm:text-right">Location</Label>
                     <Input
                       id="location"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newOpportunity.location}
                       onChange={handleNewOpportunityChange}
                       placeholder="e.g., Remote, New York, NY"
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="salary" className="text-right">Salary Range</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="salary" className="sm:text-right">Salary Range</Label>
                     <Input
                       id="salary"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newOpportunity.salary}
                       onChange={handleNewOpportunityChange}
                       placeholder="e.g., $80,000 - $100,000"
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="applicationUrl" className="text-right">Application URL</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="applicationUrl" className="sm:text-right">Application URL</Label>
                     <Input
                       id="applicationUrl"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newOpportunity.applicationUrl}
                       onChange={handleNewOpportunityChange}
                       placeholder="https://..."
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="source" className="text-right">Source</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="source" className="sm:text-right">Source</Label>
                     <Input
                       id="source"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newOpportunity.source}
                       onChange={handleNewOpportunityChange}
                       placeholder="e.g., LinkedIn, Indeed, Referral"
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="jobDescription" className="text-right">Job Description</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="jobDescription" className="sm:text-right">Job Description</Label>
                     <Textarea
                       id="jobDescription"
-                      className="col-span-3 font-mono whitespace-pre-wrap"
+                      className="col-span-1 sm:col-span-3 font-mono whitespace-pre-wrap"
                       value={newOpportunity.jobDescription}
                       onChange={handleNewOpportunityChange}
                       rows={10}
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="status" className="text-right">Status</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="status" className="sm:text-right">Status</Label>
                     <Select onValueChange={handleNewOpportunityStatusChange} value={newOpportunity.status}>
-                      <SelectTrigger className="col-span-3">
+                      <SelectTrigger className="col-span-1 sm:col-span-3">
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -751,9 +841,9 @@ export default function CAPTAINGui() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="appliedDate" className="text-right">Date</Label>
-                    <div className="col-span-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="appliedDate" className="sm:text-right">Date</Label>
+                    <div className="col-span-1 sm:col-span-3">
                       <Input
                         id="appliedDate"
                         type="date"
@@ -769,29 +859,29 @@ export default function CAPTAINGui() {
                   {/* Show recruiter fields if status is Recru  iter Contact */}
                   {(newOpportunity.status === "Recruiter Contact" || newOpportunity.status ===  "Networking") && (
                     <>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="recruiterName" className="text-right">Contact Name</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                        <Label htmlFor="recruiterName" className="sm:text-right">Contact Name</Label>
                         <Input
                           id="recruiterName"
-                          className="col-span-3"
+                          className="col-span-1 sm:col-span-3"
                           value={newOpportunity.recruiterName || ""}
                           onChange={handleNewOpportunityChange}
                         />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="recruiterEmail" className="text-right">Contact Email</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                        <Label htmlFor="recruiterEmail" className="sm:text-right">Contact Email</Label>
                         <Input
                           id="recruiterEmail"
-                          className="col-span-3"
+                          className="col-span-1 sm:col-span-3"
                           value={newOpportunity.recruiterEmail || ""}
                           onChange={handleNewOpportunityChange}
                         />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="recruiterPhone" className="text-right">Contact Phone</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                        <Label htmlFor="recruiterPhone" className="sm:text-right">Contact Phone</Label>
                         <Input
                           id="recruiterPhone"
-                          className="col-span-3"
+                          className="col-span-1 sm:col-span-3"
                           value={newOpportunity.recruiterPhone || ""}
                           onChange={handleNewOpportunityChange}
                         />
@@ -799,11 +889,11 @@ export default function CAPTAINGui() {
                     </>
                   )}
                   
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="notes" className="text-right">Notes</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="sm:text-right">Notes</Label>
                     <Textarea
                       id="notes"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newOpportunity.notes || ""}
                       onChange={handleNewOpportunityChange}
                       placeholder="Add any additional notes about this opportunity"
@@ -811,15 +901,15 @@ export default function CAPTAINGui() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button type="submit" onClick={handleSaveNewOpportunity}>Save Opportunity</Button>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                  <Button type="submit" onClick={handleSaveNewOpportunity} className="w-full sm:w-auto">Save Opportunity</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 h-[calc(100vh-200px)]">
-            <Card className="col-span-1 bg-blue-50 flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
+            <Card className="col-span-1 bg-blue-50 flex flex-col order-2 md:order-1">
               <CardHeader>
                 <CardTitle className="text-blue-700">Job List</CardTitle>
                 <div className="space-y-2 mt-2">
@@ -833,7 +923,7 @@ export default function CAPTAINGui() {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="flex items-center space-x-2">
                       <Filter className="h-4 w-4 text-gray-500" />
                       <Select value={statusFilter} onValueChange={setStatusFilter} className="flex-1">
@@ -943,9 +1033,9 @@ export default function CAPTAINGui() {
                     <div className="flex space-x-1">
                       <Button 
                         variant={viewMode === "card" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => setViewMode("card")}
+                        size="sm" 
                         className="px-2"
+                        onClick={() => setViewMode("card")}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -967,7 +1057,7 @@ export default function CAPTAINGui() {
                 
                 {/* Batch selection controls */}
                 <div className="flex justify-between items-center mb-2 mt-3">
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-wrap gap-2">
                     <Button 
                       variant={isBatchSelectMode ? "default" : "outline"} 
                       size="sm"
@@ -975,7 +1065,6 @@ export default function CAPTAINGui() {
                         setIsBatchSelectMode(!isBatchSelectMode);
                         setSelectedJobIds([]);
                       }}
-                      className="mr-2"
                     >
                       {isBatchSelectMode ? "Cancel Selection" : "Select Jobs"}
                     </Button>
@@ -986,7 +1075,6 @@ export default function CAPTAINGui() {
                           variant="outline" 
                           size="sm"
                           onClick={() => setSelectedJobIds(sortedOpportunities.map(opp => opp.id))}
-                          className="mr-2"
                         >
                           Select All
                         </Button>
@@ -1019,7 +1107,7 @@ export default function CAPTAINGui() {
                                   type="checkbox" 
                                   checked={selectedJobIds.includes(opp.id)}
                                   onChange={() => toggleJobSelection(opp.id)}
-                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                               </div>
                             )}
@@ -1075,7 +1163,7 @@ export default function CAPTAINGui() {
                                 type="checkbox" 
                                 checked={selectedJobIds.includes(opp.id)}
                                 onChange={() => toggleJobSelection(opp.id)}
-                                className="h-4 w-4 mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                className="h-5 w-5 mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                               />
                             )}
                             <div className="flex-1 min-w-0">
@@ -1113,16 +1201,20 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
 
-            <Card className="col-span-2 flex flex-col">
+            <Card 
+              className="col-span-1 md:col-span-2 flex flex-col order-1 md:order-2"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+            >
               {selectedOpportunity ? (
                 <>
                   <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                       <div>
                         <CardTitle className="text-xl">{selectedOpportunity.company}</CardTitle>
                         <CardDescription className="text-lg font-medium">{selectedOpportunity.position}</CardDescription>
                       </div>
-                      <div className="flex flex-col items-end">
+                      <div className="flex flex-col items-start sm:items-end">
                         <Badge 
                           className={
                             selectedOpportunity.status === 'Offer Received' || selectedOpportunity.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
@@ -1137,12 +1229,12 @@ export default function CAPTAINGui() {
                         
                         <div className="flex items-center mt-2">
                           {isEditingDate ? (
-                            <div className="flex items-center">
+                            <div className="flex items-center flex-wrap gap-2">
                               <Input
                                 type="date"
                                 value={editedDate}
                                 onChange={(e) => setEditedDate(e.target.value)}
-                                className="w-40 mr-2"
+                                className="w-40"
                               />
                               <Button size="sm" onClick={handleSaveDateChange} className="mr-1">Save</Button>
                               <Button size="sm" variant="outline" onClick={() => setIsEditingDate(false)}>Cancel</Button>
@@ -1174,7 +1266,7 @@ export default function CAPTAINGui() {
                   
                   <CardContent className="flex-grow overflow-hidden">
                     <Tabs defaultValue="details" className="h-full flex flex-col">
-                      <TabsList className="mb-2">
+                      <TabsList className="mb-2 overflow-x-auto flex-nowrap">
                         <TabsTrigger value="details">Details</TabsTrigger>
                         <TabsTrigger value="description">Job Description</TabsTrigger>
                         <TabsTrigger value="resume">Resume</TabsTrigger>
@@ -1182,8 +1274,231 @@ export default function CAPTAINGui() {
                       </TabsList>
                       
                       <TabsContent value="details" className="flex-grow overflow-auto">
-                        <div className="grid grid-cols-2 gap-4">
-                          <Card>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Collapsible className="md:hidden">
+                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                              Job Details <ChevronRight className="h-4 w-4" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="p-4">
+                              {isEditingJobDetails ? (
+                                <div className="space-y-3">
+                                  <div>
+                                    <Label htmlFor="location">Location</Label>
+                                    <Input
+                                      id="location"
+                                      value={editedJobDetails.location}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, location: e.target.value})}
+                                      placeholder="e.g., Remote, New York, NY"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="salary">Salary Range</Label>
+                                    <Input
+                                      id="salary"
+                                      value={editedJobDetails.salary}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, salary: e.target.value})}
+                                      placeholder="e.g., $80,000 - $100,000"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="applicationUrl">Application URL</Label>
+                                    <Input
+                                      id="applicationUrl"
+                                      value={editedJobDetails.applicationUrl}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, applicationUrl: e.target.value})}
+                                      placeholder="https://..."
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="source">Source</Label>
+                                    <Input
+                                      id="source"
+                                      value={editedJobDetails.source}
+                                      onChange={(e) => setEditedJobDetails({...editedJobDetails, source: e.target.value})}
+                                      placeholder="e.g., LinkedIn, Indeed, Referral"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end space-x-2 pt-2">
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => {
+                                        updateOpportunity(selectedOpportunity.id, editedJobDetails);
+                                        setIsEditingJobDetails(false);
+                                      }}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => setIsEditingJobDetails(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="text-xs text-gray-500">Location</span>
+                                    <p>{selectedOpportunity.location || "Not specified"}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Salary Range</span>
+                                    <p>{selectedOpportunity.salary || "Not specified"}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Application URL</span>
+                                    <p>
+                                      {selectedOpportunity.applicationUrl ? (
+                                        <a 
+                                          href={selectedOpportunity.applicationUrl} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {selectedOpportunity.applicationUrl}
+                                        </a>
+                                      ) : (
+                                        "Not specified"
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Source</span>
+                                    <p>{selectedOpportunity.source || "Not specified"}</p>
+                                  </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="mt-2" 
+                                    onClick={() => {
+                                      setEditedJobDetails({
+                                        location: selectedOpportunity.location || "",
+                                        salary: selectedOpportunity.salary || "",
+                                        applicationUrl: selectedOpportunity.applicationUrl || "",
+                                        source: selectedOpportunity.source || ""
+                                      });
+                                      setIsEditingJobDetails(true);
+                                    }}
+                                  >
+                                    Edit Details
+                                  </Button>
+                                </div>
+                              )}
+                            </CollapsibleContent>
+                          </Collapsible>
+
+                          <Collapsible className="md:hidden">
+                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                              Contact Information <ChevronRight className="h-4 w-4" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="p-4">
+                              {isEditingContactInfo ? (
+                                <div className="space-y-3">
+                                  <div>
+                                    <Label htmlFor="recruiterName">Contact Name</Label>
+                                    <Input
+                                      id="recruiterName"
+                                      value={editedContactInfo.recruiterName}
+                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterName: e.target.value})}
+                                      placeholder="e.g., John Smith"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="recruiterEmail">Contact Email</Label>
+                                    <Input
+                                      id="recruiterEmail"
+                                      value={editedContactInfo.recruiterEmail}
+                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterEmail: e.target.value})}
+                                      placeholder="e.g., john.smith@company.com"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="recruiterPhone">Contact Phone</Label>
+                                    <Input
+                                      id="recruiterPhone"
+                                      value={editedContactInfo.recruiterPhone}
+                                      onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterPhone: e.target.value})}
+                                      placeholder="e.g., (123) 456-7890"
+                                    />
+                                  </div>
+                                  <div className="flex justify-end space-x-2 pt-2">
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => {
+                                        updateOpportunity(selectedOpportunity.id, editedContactInfo);
+                                        setIsEditingContactInfo(false);
+                                      }}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => setIsEditingContactInfo(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="text-xs text-gray-500">Contact Name</span>
+                                    <p>{selectedOpportunity.recruiterName || "Not specified"}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Contact Email</span>
+                                    <p>
+                                      {selectedOpportunity.recruiterEmail ? (
+                                        <a 
+                                          href={`mailto:${selectedOpportunity.recruiterEmail}`} 
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {selectedOpportunity.recruiterEmail}
+                                        </a>
+                                      ) : (
+                                        "Not specified"
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">Contact Phone</span>
+                                    <p>
+                                      {selectedOpportunity.recruiterPhone ? (
+                                        <a 
+                                          href={`tel:${selectedOpportunity.recruiterPhone}`} 
+                                          className="text-blue-600 hover:underline"
+                                        >
+                                          {selectedOpportunity.recruiterPhone}
+                                        </a>
+                                      ) : (
+                                        "Not specified"
+                                      )}
+                                    </p>
+                                  </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="mt-2" 
+                                    onClick={() => {
+                                      setEditedContactInfo({
+                                        recruiterName: selectedOpportunity.recruiterName || "",
+                                        recruiterEmail: selectedOpportunity.recruiterEmail || "",
+                                        recruiterPhone: selectedOpportunity.recruiterPhone || ""
+                                      });
+                                      setIsEditingContactInfo(true);
+                                    }}
+                                  >
+                                    Edit Contact Info
+                                  </Button>
+                                </div>
+                              )}
+                            </CollapsibleContent>
+                          </Collapsible>
+
+                          <Card className="hidden md:block">
                             <CardHeader className="py-3">
                               <div className="flex justify-between items-center">
                                 <CardTitle className="text-sm font-medium">Job Details</CardTitle>
@@ -1301,7 +1616,7 @@ export default function CAPTAINGui() {
                             </CardContent>
                           </Card>
                           
-                          <Card>
+                          <Card className="hidden md:block">
                             <CardHeader className="py-3">
                               <div className="flex justify-between items-center">
                                 <CardTitle className="text-sm font-medium">Contact Information</CardTitle>
@@ -1414,7 +1729,141 @@ export default function CAPTAINGui() {
                             </CardContent>
                           </Card>
                           
-                          <Card className="col-span-2">
+                          <Collapsible className="md:hidden">
+                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                              Notes <ChevronRight className="h-4 w-4" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="p-4">
+                              {isEditingNotes ? (
+                                <div className="space-y-3">
+                                  <Textarea
+                                    value={editedNotes}
+                                    onChange={(e) => setEditedNotes(e.target.value)}
+                                    placeholder="Add notes about this opportunity..."
+                                    rows={5}
+                                  />
+                                  <div className="flex justify-end space-x-2">
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => {
+                                        updateOpportunity(selectedOpportunity.id, { notes: editedNotes });
+                                        setIsEditingNotes(false);
+                                      }}
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => setIsEditingNotes(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  {selectedOpportunity.notes ? (
+                                    <p className="whitespace-pre-wrap">{selectedOpportunity.notes}</p>
+                                  ) : (
+                                    <p className="text-gray-500 italic">No notes added yet</p>
+                                  )}
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="mt-2" 
+                                    onClick={() => {
+                                      setEditedNotes(selectedOpportunity.notes || "");
+                                      setIsEditingNotes(true);
+                                    }}
+                                  >
+                                    Edit Notes
+                                  </Button>
+                                </div>
+                              )}
+                            </CollapsibleContent>
+                          </Collapsible>
+
+                          <Collapsible className="md:hidden">
+                            <CollapsibleTrigger className="flex w-full justify-between p-4 font-medium bg-blue-50 rounded-lg">
+                              Status <ChevronRight className="h-4 w-4" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="p-4">
+                              <Select 
+                                value={selectedOpportunity.status} 
+                                onValueChange={(value) => {
+                                  updateOpportunity(selectedOpportunity.id, { status: value });
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
+                                    <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                                    <SelectItem value="Interested">Interested</SelectItem>
+                                    <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                                    <SelectItem value="Networking">Networking</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Application</SelectLabel>
+                                    <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                                    <SelectItem value="Applied">Applied</SelectItem>
+                                    <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Interview Process</SelectLabel>
+                                    <SelectItem value="Screening">Screening</SelectItem>
+                                    <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                                    <SelectItem value="First Interview">First Interview</SelectItem>
+                                    <SelectItem value="Second Interview">Second Interview</SelectItem>
+                                    <SelectItem value="Final Interview">Final Interview</SelectItem>
+                                    <SelectItem value="Reference Check">Reference Check</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Decision</SelectLabel>
+                                    <SelectItem value="Negotiating">Negotiating</SelectItem>
+                                    <SelectItem value="Offer Received">Offer Received</SelectItem>
+                                    <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                                    <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                                    <SelectItem value="Rejected">Rejected</SelectItem>
+                                    <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                                    <SelectItem value="Position Filled">Position Filled</SelectItem>
+                                    <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                                  </SelectGroup>
+                                  
+                                  <SelectGroup>
+                                    <SelectLabel className="select-category-label">Follow-up</SelectLabel>
+                                    <SelectItem value="Following Up">Following Up</SelectItem>
+                                    <SelectItem value="Waiting">Waiting</SelectItem>
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                              
+                              <div className="mt-4 flex justify-end">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => {
+                                    if (window.confirm("Are you sure you want to delete this opportunity?")) {
+                                      dispatch({ type: 'DELETE_OPPORTUNITY', payload: selectedOpportunity.id });
+                                      if (opportunities.length > 1) {
+                                        setSelectedOpportunityIndex(0);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  Delete Opportunity
+                                </Button>
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                          
+                          <Card className="col-span-1 md:col-span-2 hidden md:block">
                             <CardHeader className="py-3">
                               <div className="flex justify-between items-center">
                                 <CardTitle className="text-sm font-medium">Notes</CardTitle>
@@ -1473,7 +1922,7 @@ export default function CAPTAINGui() {
                             </CardContent>
                           </Card>
                           
-                          <Card className="col-span-2">
+                          <Card className="col-span-1 md:col-span-2 hidden md:block">
                             <CardHeader className="py-3">
                               <div className="flex justify-between items-center">
                                 <CardTitle className="text-sm font-medium">Status</CardTitle>
@@ -1711,7 +2160,7 @@ export default function CAPTAINGui() {
                                     className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                                   >
                                     <div 
-                                      className={`max-w-[80%] rounded-lg p-3 ${
+                                      className={`max-w-[90%] sm:max-w-[80%] rounded-lg p-3 ${
                                         msg.sender === 'user' 
                                           ? 'bg-blue-500 text-white' 
                                           : 'bg-gray-100 text-gray-800'
@@ -1746,7 +2195,7 @@ export default function CAPTAINGui() {
                                   <p className="text-gray-500 max-w-md mt-1">
                                     Start a conversation with the AI assistant to get help with your job application
                                   </p>
-                                  <div className="grid grid-cols-2 gap-2 mt-4 w-full max-w-md">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 w-full max-w-md">
                                     {quickChatOptions.map((option, index) => (
                                       <Button
                                         key={index}
@@ -1766,7 +2215,7 @@ export default function CAPTAINGui() {
                             </div>
                             
                             <div className="p-4 border-t">
-                              <div className="flex space-x-2">
+                              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                                 <Textarea
                                   value={currentMessage}
                                   onChange={(e) => setCurrentMessage(e.target.value)}
@@ -1807,10 +2256,10 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="resume" className="p-4 flex-grow overflow-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-blue-700">Master Resume</h2>
-            <div className="flex items-center space-x-2">
+        <TabsContent value="resume" className="p-2 sm:p-4 flex-grow overflow-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Master Resume</h2>
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
               <Button variant="outline" onClick={() => {
                 if (window.confirm("Are you sure you want to update all job applications with this master resume? This will overwrite any customized resumes.")) {
                   // Update all opportunities that aren't frozen
@@ -1824,14 +2273,14 @@ export default function CAPTAINGui() {
                     });
                   });
                 }
-              }}>
+              }} className="w-full sm:w-auto">
                 Sync All Applications
               </Button>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-6">
-            <Card className="col-span-2 lg:col-span-1">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="col-span-1">
               <CardHeader>
                 <CardTitle>Master Resume</CardTitle>
                 <CardDescription>
@@ -1853,7 +2302,7 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
             
-            <Card className="col-span-2 lg:col-span-1">
+            <Card className="col-span-1">
               <CardHeader>
                 <CardTitle>Resume Tips</CardTitle>
                 <CardDescription>
@@ -1892,13 +2341,13 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="captain" className="p-4 flex-grow overflow-auto">
+        <TabsContent value="captain" className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-blue-700">Captain AI Assistant</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Captain AI Assistant</h2>
           </div>
           
-          <div className="grid grid-cols-3 gap-6">
-            <Card className="col-span-3 lg:col-span-2 flex flex-col h-[calc(100vh-250px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="col-span-1 lg:col-span-2 flex flex-col h-[calc(100vh-250px)]">
               <CardHeader>
                 <CardTitle>Chat with Captain</CardTitle>
                 <CardDescription>
@@ -1909,7 +2358,7 @@ export default function CAPTAINGui() {
                 <div className="flex-grow overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
                   <div className="mb-4">
                     <div className="flex items-start">
-                      <div className="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-[80%]">
+                      <div className="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-[90%] sm:max-w-[80%]">
                         <div className="flex items-center mb-1">
                           <Bot className="h-3 w-3 mr-1" />
                           <span className="text-xs font-medium">Captain</span>
@@ -1922,7 +2371,7 @@ export default function CAPTAINGui() {
                   {/* This would be populated with actual chat messages in a real implementation */}
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <Textarea
                     placeholder="Ask Captain anything about your job search..."
                     className="flex-grow"
@@ -1934,7 +2383,7 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
             
-            <Card className="col-span-3 lg:col-span-1">
+            <Card className="col-span-1">
               <CardHeader>
                 <CardTitle>AI Job Recommendations</CardTitle>
                 <CardDescription>
@@ -1955,20 +2404,20 @@ export default function CAPTAINGui() {
                       </p>
                     </div>
                     
-                    <div className="flex justify-between items-center pt-2 border-t">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-2 border-t gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-gray-500"
+                        className="text-gray-500 w-full sm:w-auto"
                       >
                         Skip
                       </Button>
                       
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-2 w-full sm:w-auto">
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-auto"
                         >
                           <ThumbsDown className="h-5 w-5 mr-1" />
                           Not Interested
@@ -1977,7 +2426,7 @@ export default function CAPTAINGui() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-green-500 border-green-200 hover:bg-green-50"
+                          className="text-green-500 border-green-200 hover:bg-green-50 flex-1 sm:flex-auto"
                         >
                           <ThumbsUp className="h-5 w-5 mr-1" />
                           Interested
@@ -1991,18 +2440,18 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="analytics" className="p-4 flex-grow overflow-auto">
+        <TabsContent value="analytics" className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-blue-700">Analytics Dashboard</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Analytics Dashboard</h2>
           </div>
           
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Total Applications</p>
-                    <h3 className="text-3xl font-bold">{analytics.totalApplications}</h3>
+                    <h3 className="text-2xl sm:text-3xl font-bold">{analytics.totalApplications}</h3>
                   </div>
                   <FileText className="h-8 w-8 text-blue-500" />
                 </div>
@@ -2010,11 +2459,11 @@ export default function CAPTAINGui() {
             </Card>
             
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Active Applications</p>
-                    <h3 className="text-3xl font-bold">{analytics.activeApplications}</h3>
+                    <h3 className="text-2xl sm:text-3xl font-bold">{analytics.activeApplications}</h3>
                   </div>
                   <ActivityIcon className="h-8 w-8 text-green-500" />
                 </div>
@@ -2022,11 +2471,11 @@ export default function CAPTAINGui() {
             </Card>
             
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Response Rate</p>
-                    <h3 className="text-3xl font-bold">{analytics.responseRate}%</h3>
+                    <h3 className="text-2xl sm:text-3xl font-bold">{analytics.responseRate}%</h3>
                   </div>
                   <BarChartIcon className="h-8 w-8 text-purple-500" />
                 </div>
@@ -2034,11 +2483,11 @@ export default function CAPTAINGui() {
             </Card>
             
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-gray-500">This Week</p>
-                    <h3 className="text-3xl font-bold">{analytics.weeklyApplicationCount}</h3>
+                    <h3 className="text-2xl sm:text-3xl font-bold">{analytics.weeklyApplicationCount}</h3>
                   </div>
                   <CalendarIcon className="h-8 w-8 text-orange-500" />
                 </div>
@@ -2046,13 +2495,13 @@ export default function CAPTAINGui() {
             </Card>
           </div>
           
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <Card>
               <CardHeader>
                 <CardTitle>Application Status</CardTitle>
                 <CardDescription>Distribution of your applications by status</CardDescription>
               </CardHeader>
-              <CardContent className="h-80 flex items-center justify-center">
+              <CardContent className="h-60 sm:h-80 flex items-center justify-center">
                 <div className="text-center text-gray-500">
                   <PieChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                   <p>Status distribution chart would appear here</p>
@@ -2065,7 +2514,7 @@ export default function CAPTAINGui() {
                 <CardTitle>Application Timeline</CardTitle>
                 <CardDescription>Number of applications over time</CardDescription>
               </CardHeader>
-              <CardContent className="h-80 flex items-center justify-center">
+              <CardContent className="h-60 sm:h-80 flex items-center justify-center">
                 <div className="text-center text-gray-500">
                   <LineChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                   <p>Application timeline chart would appear here</p>
@@ -2074,13 +2523,13 @@ export default function CAPTAINGui() {
             </Card>
           </div>
           
-          <div className="grid grid-cols-3 gap-6">
-            <Card className="col-span-3 lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
                 <CardTitle>Conversion Funnel</CardTitle>
                 <CardDescription>How your applications progress through the hiring process</CardDescription>
               </CardHeader>
-              <CardContent className="h-64 flex items-center justify-center">
+              <CardContent className="h-48 sm:h-64 flex items-center justify-center">
                 <div className="text-center text-gray-500">
                   <BarChartIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                   <p>Conversion funnel chart would appear here</p>
@@ -2088,7 +2537,7 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
             
-            <Card className="col-span-3 lg:col-span-1">
+            <Card className="col-span-1">
               <CardHeader>
                 <CardTitle>Key Metrics</CardTitle>
                 <CardDescription>Important statistics about your job search</CardDescription>
@@ -2124,45 +2573,45 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="calendar" className="p-4 flex-grow overflow-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-blue-700">Calendar</h2>
+        <TabsContent value="calendar" className="p-2 sm:p-4 flex-grow overflow-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Calendar</h2>
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                <Button className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto">
                   <PlusCircle className="mr-2 h-4 w-4" /> Add Event
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="w-[90vw] max-w-md">
                 <DialogHeader>
                   <DialogTitle>Add New Event</DialogTitle>
                   <DialogDescription>Create a new event for your job search calendar</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="title" className="text-right">Title</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="title" className="sm:text-right">Title</Label>
                     <Input
                       id="title"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newEvent.title}
                       onChange={handleNewEventChange}
                       placeholder="e.g., Interview with Company X"
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="date" className="text-right">Date</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="date" className="sm:text-right">Date</Label>
                     <Input
                       id="date"
                       type="date"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newEvent.date}
                       onChange={handleNewEventChange}
                     />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="type" className="text-right">Event Type</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="sm:text-right">Event Type</Label>
                     <Select onValueChange={handleNewEventTypeChange} value={newEvent.type}>
-                      <SelectTrigger className="col-span-3">
+                      <SelectTrigger className="col-span-1 sm:col-span-3">
                         <SelectValue placeholder="Select event type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -2173,10 +2622,10 @@ export default function CAPTAINGui() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="opportunityId" className="text-right">Related Job</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="opportunityId" className="sm:text-right">Related Job</Label>
                     <Select onValueChange={handleNewEventOpportunityChange} value={newEvent.opportunityId}>
-                      <SelectTrigger className="col-span-3">
+                      <SelectTrigger className="col-span-1 sm:col-span-3">
                         <SelectValue placeholder="Select related job" />
                       </SelectTrigger>
                       <SelectContent>
@@ -2189,11 +2638,11 @@ export default function CAPTAINGui() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="notes" className="text-right">Notes</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="sm:text-right">Notes</Label>
                     <Textarea
                       id="notes"
-                      className="col-span-3"
+                      className="col-span-1 sm:col-span-3"
                       value={newEvent.notes}
                       onChange={handleNewEventChange}
                       placeholder="Add any additional notes about this event"
@@ -2201,21 +2650,21 @@ export default function CAPTAINGui() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button type="submit" onClick={handleSaveNewEvent}>Save Event</Button>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                  <Button type="submit" onClick={handleSaveNewEvent} className="w-full sm:w-auto">Save Event</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
           
-          <div className="grid grid-cols-7 gap-4 mb-4">
-            <Card className="col-span-5">
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-4 mb-4">
+            <Card className="col-span-1 md:col-span-5 order-2 md:order-1">
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <CardTitle>Calendar</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => setCalendarView("month")} className={calendarView === "month" ? "bg-blue-100" : ""}>Month</Button>
-                    <Button variant="outline" size="sm" onClick={() => setCalendarView("week")} className={calendarView === "week" ? "bg-blue-100" : ""}>Week</Button>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <Button variant="outline" size="sm" onClick={() => setCalendarView("month")} className={calendarView === "month" ? "bg-blue-100 w-full sm:w-auto" : "w-full sm:w-auto"}>Month</Button>
+                    <Button variant="outline" size="sm" onClick={() => setCalendarView("week")} className={calendarView === "week" ? "bg-blue-100 w-full sm:w-auto" : "w-full sm:w-auto"}>Week</Button>
                   </div>
                 </div>
               </CardHeader>
@@ -2259,12 +2708,12 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
             
-            <Card className="col-span-2">
+            <Card className="col-span-1 md:col-span-2 order-1 md:order-2">
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <CardTitle>Events</CardTitle>
-                  <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-                    <SelectTrigger className="w-[130px]">
+                  <Select value={eventTypeFilter} onValueChange={setEventTypeFilter} className="w-full sm:w-[130px]">
+                    <SelectTrigger>
                       <SelectValue placeholder="Filter events" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2278,7 +2727,7 @@ export default function CAPTAINGui() {
                 </div>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[400px] pr-4">
+                <ScrollArea className="h-[300px] sm:h-[400px] pr-4">
                   {date && (
                     <div>
                       <h3 className="font-medium mb-2">
@@ -2343,7 +2792,7 @@ export default function CAPTAINGui() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="mt-2"
+                            className="mt-2 w-full sm:w-auto"
                             onClick={() => {
                               setNewEvent({
                                 ...newEvent,
@@ -2422,6 +2871,16 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Back to top button */}
+      {showBackToTop && (
+        <Button 
+          className="fixed bottom-4 right-4 rounded-full md:hidden h-10 w-10 p-0" 
+          onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   )
 }
