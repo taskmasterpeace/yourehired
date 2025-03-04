@@ -309,6 +309,7 @@ export default function CAPTAINGui() {
   // Mobile touch handling
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // AI prompt states
   const [aiPrompts, setAiPrompts] = useState([]);
@@ -871,7 +872,22 @@ export default function CAPTAINGui() {
   return (
     <div className="container mx-auto p-2 sm:p-4 bg-gray-100 min-h-screen flex flex-col">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">CAPTAIN</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">CAPTAIN</h1>
+          <div className="hidden sm:flex items-center">
+            <Switch
+              checked={isDarkMode}
+              onCheckedChange={(checked) => {
+                setIsDarkMode(checked);
+                document.documentElement.classList.toggle('dark', checked);
+              }}
+              id="dark-mode"
+            />
+            <Label htmlFor="dark-mode" className="ml-2 text-sm">
+              Dark Mode
+            </Label>
+          </div>
+        </div>
         <div className="block md:hidden">
           <Sheet>
             <SheetTrigger asChild>
@@ -1151,6 +1167,41 @@ export default function CAPTAINGui() {
                     />
                   </div>
                   
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={statusFilter === "All" ? "bg-blue-100" : ""}
+                      onClick={() => setStatusFilter("All")}
+                    >
+                      All
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={statusFilter === "Applied" ? "bg-blue-100" : ""}
+                      onClick={() => setStatusFilter("Applied")}
+                    >
+                      Applied
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={statusFilter.includes("Interview") ? "bg-purple-100" : ""}
+                      onClick={() => setStatusFilter("First Interview")}
+                    >
+                      Interviews
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={statusFilter === "Offer Received" ? "bg-green-100" : ""}
+                      onClick={() => setStatusFilter("Offer Received")}
+                    >
+                      Offers
+                    </Button>
+                  </div>
+                  
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="flex items-center space-x-2">
                       <Filter className="h-4 w-4 text-gray-500" />
@@ -1368,6 +1419,16 @@ export default function CAPTAINGui() {
                                   </Badge>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">{opp.appliedDate}</p>
+                                <p className="text-xs text-gray-400">
+                                  Updated: {lastModifiedTimestamps[opp.id] 
+                                    ? new Date(lastModifiedTimestamps[opp.id]).toLocaleString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      }) 
+                                    : 'Never'}
+                                </p>
                               </CardContent>
                             </Card>
                           </div>
@@ -1443,73 +1504,73 @@ export default function CAPTAINGui() {
                         <CardDescription className="text-lg font-medium">{selectedOpportunity.position}</CardDescription>
                       </div>
                       <div className="flex flex-col items-start sm:items-end">
-                        <Select 
-                          value={selectedOpportunity.status} 
-                          onValueChange={(value) => {
-                            updateOpportunity(selectedOpportunity.id, { status: value });
-                          }}
-                          className="w-full sm:w-[200px] mb-2"
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
-                              <SelectItem value="Bookmarked">Bookmarked</SelectItem>
-                              <SelectItem value="Interested">Interested</SelectItem>
-                              <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
-                              <SelectItem value="Networking">Networking</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Application</SelectLabel>
-                              <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                              <SelectItem value="Applied">Applied</SelectItem>
-                              <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Interview Process</SelectLabel>
-                              <SelectItem value="Screening">Screening</SelectItem>
-                              <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
-                              <SelectItem value="First Interview">First Interview</SelectItem>
-                              <SelectItem value="Second Interview">Second Interview</SelectItem>
-                              <SelectItem value="Final Interview">Final Interview</SelectItem>
-                              <SelectItem value="Reference Check">Reference Check</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Decision</SelectLabel>
-                              <SelectItem value="Negotiating">Negotiating</SelectItem>
-                              <SelectItem value="Offer Received">Offer Received</SelectItem>
-                              <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
-                              <SelectItem value="Offer Declined">Offer Declined</SelectItem>
-                              <SelectItem value="Rejected">Rejected</SelectItem>
-                              <SelectItem value="Withdrawn">Withdrawn</SelectItem>
-                              <SelectItem value="Position Filled">Position Filled</SelectItem>
-                              <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
-                            </SelectGroup>
-                            
-                            <SelectGroup>
-                              <SelectLabel className="select-category-label">Follow-up</SelectLabel>
-                              <SelectItem value="Following Up">Following Up</SelectItem>
-                              <SelectItem value="Waiting">Waiting</SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                        
-                        <Badge 
-                          className={
-                            selectedOpportunity.status === 'Offer Received' || selectedOpportunity.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                            selectedOpportunity.status === 'Rejected' || selectedOpportunity.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
-                            selectedOpportunity.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                            selectedOpportunity.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
-                            'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                          }
-                        >
-                          {selectedOpportunity.status}
-                        </Badge>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <Select 
+                            value={selectedOpportunity.status} 
+                            onValueChange={(value) => {
+                              updateOpportunity(selectedOpportunity.id, { status: value });
+                            }}
+                            className="w-full sm:w-[200px]"
+                          >
+                            <SelectTrigger className={
+                              selectedOpportunity.status === 'Offer Received' || selectedOpportunity.status === 'Offer Accepted' ? 'border-green-300 bg-green-50' :
+                              selectedOpportunity.status === 'Rejected' || selectedOpportunity.status === 'Withdrawn' ? 'border-red-300 bg-red-50' :
+                              selectedOpportunity.status === 'Applied' ? 'border-blue-300 bg-blue-50' :
+                              selectedOpportunity.status.includes('Interview') ? 'border-purple-300 bg-purple-50' :
+                              'border-gray-300 bg-gray-50'
+                            }>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
+                                <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                                <SelectItem value="Interested">Interested</SelectItem>
+                                <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                                <SelectItem value="Networking">Networking</SelectItem>
+                              </SelectGroup>
+                              
+                              <SelectGroup>
+                                <SelectLabel className="select-category-label">Application</SelectLabel>
+                                <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                                <SelectItem value="Applied">Applied</SelectItem>
+                                <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                              </SelectGroup>
+                              
+                              <SelectGroup>
+                                <SelectLabel className="select-category-label">Interview Process</SelectLabel>
+                                <SelectItem value="Screening">Screening</SelectItem>
+                                <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                                <SelectItem value="First Interview">First Interview</SelectItem>
+                                <SelectItem value="Second Interview">Second Interview</SelectItem>
+                                <SelectItem value="Final Interview">Final Interview</SelectItem>
+                                <SelectItem value="Reference Check">Reference Check</SelectItem>
+                              </SelectGroup>
+                              
+                              <SelectGroup>
+                                <SelectLabel className="select-category-label">Decision</SelectLabel>
+                                <SelectItem value="Negotiating">Negotiating</SelectItem>
+                                <SelectItem value="Offer Received">Offer Received</SelectItem>
+                                <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                                <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                                <SelectItem value="Rejected">Rejected</SelectItem>
+                                <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                                <SelectItem value="Position Filled">Position Filled</SelectItem>
+                                <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                              </SelectGroup>
+                              
+                              <SelectGroup>
+                                <SelectLabel className="select-category-label">Follow-up</SelectLabel>
+                                <SelectItem value="Following Up">Following Up</SelectItem>
+                                <SelectItem value="Waiting">Waiting</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          
+                          <div className="text-xs text-gray-500 hidden sm:block">
+                            Status
+                          </div>
+                        </div>
                         
                         <div className="flex items-center mt-2">
                           {isEditingDate ? (
@@ -2196,6 +2257,20 @@ export default function CAPTAINGui() {
                                   ) : (
                                     <Maximize2 className="h-3 w-3" />
                                   )}
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0" 
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(selectedOpportunity.jobDescription);
+                                    // You could add a toast notification here
+                                  }}
+                                  title="Copy to clipboard"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                  </svg>
                                 </Button>
                                 <Button 
                                   variant="ghost" 
