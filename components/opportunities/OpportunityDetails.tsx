@@ -27,6 +27,7 @@ interface OpportunityDetailsProps {
   isMasterResumeFrozen: boolean;
   setIsMasterResumeFrozen: (frozen: boolean) => void;
   updateMasterResume: (resume: string) => void;
+  openGuide?: (guideId: string, sectionId?: string) => void;
 }
 
 export const OpportunityDetails = ({
@@ -105,6 +106,7 @@ export const OpportunityDetails = ({
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
                   isDarkMode={isDarkMode}
+                  openGuide={openGuide}
                 />
               </div>
               
@@ -113,6 +115,7 @@ export const OpportunityDetails = ({
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
                   isDarkMode={isDarkMode}
+                  openGuide={openGuide}
                 />
               </div>
               

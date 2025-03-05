@@ -21,9 +21,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-react'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
+import { HelpCenter } from '@/components/help/HelpCenter'
+import { GuideViewer } from '@/components/help/GuideViewer'
 import { useAppState } from '@/context/context'
 import { Opportunity } from '@/context/types'
 import { format, parseISO, isEqual, isSameDay } from 'date-fns'
@@ -258,6 +260,7 @@ export default function CAPTAINGui() {
   const [isClientSide, setIsClientSide] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [activeTab, setActiveTab] = useState("opportunities")
+  const [helpView, setHelpView] = useState<{ active: boolean; guideId?: string; sectionId?: string }>({ active: false });
   
   // Set client-side flag after initial render
   useEffect(() => {
@@ -344,6 +347,12 @@ export default function CAPTAINGui() {
   
   // Define selectedOpportunity before any useEffect that uses it
   const selectedOpportunity = opportunities.length > 0 ? opportunities[selectedOpportunityIndex] : undefined;
+
+  // Helper function to open a specific guide
+  const openGuide = useCallback((guideId: string, sectionId?: string) => {
+    setActiveTab('help');
+    setHelpView({ active: true, guideId, sectionId });
+  }, []);
 
   // Helper function to get prompts based on status
   const getPromptsForStatus = (status) => {
@@ -951,6 +960,14 @@ export default function CAPTAINGui() {
                   >
                     Calendar
                   </Button>
+                  <Button 
+                    variant={activeTab === "help" ? "default" : "ghost"} 
+                    className="justify-start" 
+                    onClick={() => setActiveTab("help")}
+                  >
+                    <HelpCircle className="h-4 w-4 mr-1" />
+                    Help
+                  </Button>
                 </div>
               </div>
             </SheetContent>
@@ -958,13 +975,24 @@ export default function CAPTAINGui() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}>
+      <Tabs value={activeTab} onValueChange={(value) => {
+        setActiveTab(value);
+        if (value === 'help') {
+          setHelpView({ active: true });
+        } else {
+          setHelpView({ active: false });
+        }
+      }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}>
         <TabsList className={`mb-4 p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-t-lg sticky top-0 z-10 overflow-x-auto flex-wrap md:flex-nowrap`}>
           <TabsTrigger value="opportunities" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Opportunities</TabsTrigger>
           <TabsTrigger value="resume" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Master Resume</TabsTrigger>
           <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Captain</TabsTrigger>
           <TabsTrigger value="analytics" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Analytics</TabsTrigger>
           <TabsTrigger value="calendar" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Calendar</TabsTrigger>
+          <TabsTrigger value="help" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
+            <HelpCircle className="h-4 w-4 mr-1" />
+            Help
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="opportunities" className="p-2 sm:p-4 flex-grow overflow-auto">
@@ -1225,6 +1253,7 @@ export default function CAPTAINGui() {
                     payload: resume
                   });
                 }}
+                openGuide={openGuide}
               />
               ) : (
                 <div className="flex items-center justify-center h-full">
@@ -1852,6 +1881,26 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="help" className="p-2 sm:p-4 flex-grow overflow-auto">
+          {helpView.active && !helpView.guideId && (
+            <HelpCenter 
+              onSelectGuide={(guideId, sectionId) => {
+                setHelpView({ active: true, guideId, sectionId });
+              }}
+              isDarkMode={isDarkMode}
+            />
+          )}
+          
+          {helpView.active && helpView.guideId && (
+            <GuideViewer 
+              guideId={helpView.guideId}
+              sectionId={helpView.sectionId}
+              onBack={() => setHelpView({ active: true })}
+              isDarkMode={isDarkMode}
+            />
+          )}
         </TabsContent>
       </Tabs>
 

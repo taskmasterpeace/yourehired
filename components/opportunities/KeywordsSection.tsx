@@ -42,12 +42,14 @@ interface KeywordsSectionProps {
   opportunity: Opportunity;
   updateOpportunity: (id: number, updates: Partial<Opportunity>) => void;
   isDarkMode: boolean;
+  openGuide?: (guideId: string, sectionId?: string) => void;
 }
 
 export const KeywordsSection = ({
   opportunity,
   updateOpportunity,
-  isDarkMode
+  isDarkMode,
+  openGuide
 }: KeywordsSectionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [keywords, setKeywords] = useState<Keyword[]>([]);
@@ -56,7 +58,7 @@ export const KeywordsSection = ({
   const [newKeyword, setNewKeyword] = useState({ text: '', relevance: 3 });
   const [editingKeywordIndex, setEditingKeywordIndex] = useState<number | null>(null);
   const [editedKeyword, setEditedKeyword] = useState({ text: '', relevance: 3 });
-  const [showHelpDialog, setShowHelpDialog] = useState(false);
+  const [showHelpDialog, setShowHelpDialog] = useState<boolean | string>(false);
   const [highlightInResume, setHighlightInResume] = useState(false);
   const [keywordMatchPercentage, setKeywordMatchPercentage] = useState(0);
   const [showOptimizeDialog, setShowOptimizeDialog] = useState(false);
@@ -323,7 +325,7 @@ export const KeywordsSection = ({
                   variant="ghost" 
                   size="sm" 
                   className="ml-1 h-6 w-6 p-0"
-                  onClick={() => setShowHelpDialog(true)}
+                  onClick={() => setShowHelpDialog("keywords-feature")}
                 >
                   <HelpCircle className="h-3 w-3" />
                 </Button>
@@ -817,7 +819,8 @@ export const KeywordsSection = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('/help/guides/tags-keywords#keywords-feature', '_blank')}
+              onClick={() => window.open('#', '_blank')}
+              className="hidden" // Hide this button until we implement the full routing
             >
               View Full Guide
             </Button>
@@ -903,7 +906,8 @@ export const KeywordsSection = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('/help/guides/tags-keywords#keyword-optimization', '_blank')}
+              onClick={() => window.open('#', '_blank')}
+              className="hidden" // Hide this button until we implement the full routing
             >
               View Guide
             </Button>

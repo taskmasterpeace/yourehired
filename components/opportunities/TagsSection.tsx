@@ -75,12 +75,14 @@ interface TagsSectionProps {
   opportunity: Opportunity;
   updateOpportunity: (id: number, updates: Partial<Opportunity>) => void;
   isDarkMode: boolean;
+  openGuide?: (guideId: string, sectionId?: string) => void;
 }
 
 export const TagsSection = ({
   opportunity,
   updateOpportunity,
-  isDarkMode
+  isDarkMode,
+  openGuide
 }: TagsSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newTagText, setNewTagText] = useState('');
@@ -89,7 +91,7 @@ export const TagsSection = ({
   const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
   const [editedTagText, setEditedTagText] = useState('');
   const [editedTagColor, setEditedTagColor] = useState('');
-  const [showHelpDialog, setShowHelpDialog] = useState(false);
+  const [showHelpDialog, setShowHelpDialog] = useState<boolean | string>(false);
   const [recentlyUsedTags, setRecentlyUsedTags] = useState<Tag[]>([]);
 
   // Load recently used tags from localStorage
@@ -234,7 +236,7 @@ export const TagsSection = ({
                   variant="ghost" 
                   size="sm" 
                   className="ml-1 h-6 w-6 p-0"
-                  onClick={() => setShowHelpDialog(true)}
+                  onClick={() => setShowHelpDialog("tags-feature")}
                 >
                   <HelpCircle className="h-3 w-3" />
                 </Button>
@@ -470,13 +472,18 @@ export const TagsSection = ({
           </div>
           
           <DialogFooter className="flex justify-between items-center">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('/help/guides/tags-keywords#tags-feature', '_blank')}
-            >
-              View Full Guide
-            </Button>
+            {openGuide && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setShowHelpDialog(false);
+                  openGuide('tags-keywords', 'tags-feature');
+                }}
+              >
+                View Full Guide
+              </Button>
+            )}
             <Button onClick={() => setShowHelpDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
