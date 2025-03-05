@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar as CalendarIcon2 } from 'lucide-react'
-import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area, COLORS, STATUS_COLORS } from '@/components/recharts'
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area, COLORS, STATUS_COLORS } from '../components/recharts'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { HelpCenter } from '@/components/help/HelpCenter'
 import { GuideViewer } from '@/components/help/GuideViewer'
