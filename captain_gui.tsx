@@ -247,8 +247,14 @@ export default function CAPTAINGui() {
   const { state, dispatch } = useAppState();
   const { opportunities, masterResume, events, chatMessages } = state;
   
+  const [isClientSide, setIsClientSide] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [activeTab, setActiveTab] = useState("opportunities")
+  
+  // Set client-side flag after initial render
+  useEffect(() => {
+    setIsClientSide(true);
+  }, []);
   const [selectedOpportunityIndex, setSelectedOpportunityIndex] = useState(0)
   const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false)
   const [isEditingJobDescription, setIsEditingJobDescription] = useState(false)
@@ -890,7 +896,7 @@ export default function CAPTAINGui() {
   };
 
 
-  return (
+  return isClientSide ? (
     <div className={`container mx-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'} min-h-screen flex flex-col`}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
@@ -1428,17 +1434,21 @@ export default function CAPTAINGui() {
                                     <h3 className="font-semibold">{opp.company}</h3>
                                     <p className="text-sm text-gray-600">{opp.position}</p>
                                   </div>
-                                  <Badge 
-                                    className={
-                                      opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                                      opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
-                                      opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                                      opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
-                                      'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                    }
-                                  >
-                                    {opp.status}
-                                  </Badge>
+                                  {isClientSide ? (
+                                    <Badge 
+                                      className={
+                                        opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                                        opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                                        opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                                        opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
+                                        'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                      }
+                                    >
+                                      {opp.status}
+                                    </Badge>
+                                  ) : (
+                                    <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                  )}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">{opp.appliedDate}</p>
                                 <p className="text-xs text-gray-400">
@@ -1484,18 +1494,22 @@ export default function CAPTAINGui() {
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-center">
                                 <h3 className="font-semibold truncate">{opp.company}</h3>
-                                <Badge 
-                                  className={
-                                    opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                                    opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
-                                    opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                                    opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
-                                    'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                  }
-                                  size="sm"
-                                >
-                                  {opp.status}
-                                </Badge>
+                                {isClientSide ? (
+                                  <Badge 
+                                    className={
+                                      opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                                      opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                                      opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                                      opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
+                                      'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                    }
+                                    size="sm"
+                                  >
+                                    {opp.status}
+                                  </Badge>
+                                ) : (
+                                  <div className="h-5 w-14 bg-gray-200 rounded animate-pulse"></div>
+                                )}
                               </div>
                               <div className="flex justify-between text-xs text-gray-500">
                                 <span className="truncate">{opp.position}</span>
@@ -1531,13 +1545,14 @@ export default function CAPTAINGui() {
                       </div>
                       <div className="flex flex-col items-start sm:items-end">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                          <Select 
-                            value={selectedOpportunity.status} 
-                            onValueChange={(value) => {
-                              updateOpportunity(selectedOpportunity.id, { status: value });
-                            }}
-                            className="w-full sm:w-[200px]"
-                          >
+                          {isClientSide ? (
+                            <Select 
+                              value={selectedOpportunity.status} 
+                              onValueChange={(value) => {
+                                updateOpportunity(selectedOpportunity.id, { status: value });
+                              }}
+                              className="w-full sm:w-[200px]"
+                            >
                             <SelectTrigger className={
                               selectedOpportunity.status === 'Offer Received' || selectedOpportunity.status === 'Offer Accepted' ? 'border-green-300 bg-green-50' :
                               selectedOpportunity.status === 'Rejected' || selectedOpportunity.status === 'Withdrawn' ? 'border-red-300 bg-red-50' :
@@ -1592,6 +1607,9 @@ export default function CAPTAINGui() {
                               </SelectGroup>
                             </SelectContent>
                           </Select>
+                          ) : (
+                            <div className="h-10 w-full sm:w-[200px] bg-gray-200 rounded animate-pulse"></div>
+                          )}
                           
                           <div className="text-xs text-gray-500 hidden sm:block">
                             Status
@@ -3263,5 +3281,12 @@ export default function CAPTAINGui() {
         </div>
       </footer>
     </div>
-  )
+  ) : (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="h-16 w-16 bg-blue-200 rounded-full animate-pulse mx-auto mb-4"></div>
+        <h2 className="text-xl font-semibold">Loading CAPTAIN...</h2>
+      </div>
+    </div>
+  );
 }
