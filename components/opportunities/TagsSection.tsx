@@ -421,11 +421,18 @@ export const TagsSection = ({
           <DialogHeader>
             <DialogTitle>Using Tags</DialogTitle>
             <DialogDescription>
-              Tags help you categorize and filter your job opportunities.
+              Tags are customizable labels that help you organize your job opportunities.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 my-2">
+            <div>
+              <h4 className="font-medium mb-1">Understanding Tags</h4>
+              <p className="text-sm text-gray-500">
+                Unlike the fixed "Status" field, tags are completely customizable and you can apply multiple tags to a single opportunity.
+              </p>
+            </div>
+            
             <div>
               <h4 className="font-medium mb-1">Creating Tags</h4>
               <p className="text-sm text-gray-500">
@@ -444,14 +451,32 @@ export const TagsSection = ({
               <h4 className="font-medium mb-1">Best Practices</h4>
               <ul className="text-sm text-gray-500 list-disc pl-5">
                 <li>Use consistent naming conventions</li>
-                <li>Limit to 5-7 tags per opportunity</li>
+                <li>Create specific tags rather than vague ones</li>
                 <li>Color-code by category (location, priority, etc.)</li>
                 <li>Use Alt+T keyboard shortcut to quickly add tags</li>
+                <li>Regularly review and clean up unused tags</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-1">Example Tag Categories</h4>
+              <ul className="text-sm text-gray-500 list-disc pl-5">
+                <li>Industry: "Finance," "Healthcare," "Tech"</li>
+                <li>Role type: "Remote," "Hybrid," "On-site"</li>
+                <li>Application effort: "Quick Apply," "Custom Resume"</li>
+                <li>Personal interest: "High Priority," "Dream Company"</li>
               </ul>
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.open('/help/tags-keywords-guide', '_blank')}
+            >
+              View Full Guide
+            </Button>
             <Button onClick={() => setShowHelpDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>

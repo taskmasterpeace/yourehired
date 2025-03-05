@@ -777,13 +777,20 @@ export const KeywordsSection = ({
             <div>
               <h4 className="font-medium mb-1">Understanding Keywords</h4>
               <p className="text-sm text-gray-500">
-                Keywords are automatically extracted from the job description. Each keyword has:
+                Keywords are specific terms, skills, and qualifications that employers look for in candidates. Each keyword has:
               </p>
               <ul className="text-sm text-gray-500 list-disc pl-5 mt-1">
                 <li>A relevance score (1-5 stars)</li>
                 <li>Green highlighting if found in your resume</li>
                 <li>Yellow highlighting if missing from your resume</li>
               </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-1">Automatic Extraction</h4>
+              <p className="text-sm text-gray-500">
+                CAPTAIN uses AI to automatically identify important terms from job descriptions. You can also add keywords manually.
+              </p>
             </div>
             
             <div>
@@ -801,11 +808,19 @@ export const KeywordsSection = ({
                 <li>Include keywords in section headings when possible</li>
                 <li>Use Alt+H to highlight keywords in your resume</li>
                 <li>Aim for a keyword match rate of 80% or higher</li>
+                <li>Balance hard skills and soft skills</li>
               </ul>
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.open('/help/tags-keywords-guide', '_blank')}
+            >
+              View Full Guide
+            </Button>
             <Button onClick={() => setShowHelpDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
@@ -855,6 +870,28 @@ export const KeywordsSection = ({
               </ul>
             </div>
             
+            <div className="mt-4">
+              <h4 className="font-medium mb-2">Implementation Tips</h4>
+              <ul className="space-y-2">
+                <li className="flex items-start">
+                  <div className="h-4 w-4 text-green-500 mt-1 mr-2 flex-shrink-0 flex items-center justify-center">1</div>
+                  <p className="text-sm">Focus on quality over quantity - incorporate keywords naturally</p>
+                </li>
+                <li className="flex items-start">
+                  <div className="h-4 w-4 text-green-500 mt-1 mr-2 flex-shrink-0 flex items-center justify-center">2</div>
+                  <p className="text-sm">Create dedicated skills sections to highlight key technical abilities</p>
+                </li>
+                <li className="flex items-start">
+                  <div className="h-4 w-4 text-green-500 mt-1 mr-2 flex-shrink-0 flex items-center justify-center">3</div>
+                  <p className="text-sm">Use exact phrasing from the job description when possible</p>
+                </li>
+                <li className="flex items-start">
+                  <div className="h-4 w-4 text-green-500 mt-1 mr-2 flex-shrink-0 flex items-center justify-center">4</div>
+                  <p className="text-sm">Ensure keywords appear in context, not just as a list</p>
+                </li>
+              </ul>
+            </div>
+            
             <div className="mt-2 pt-2 border-t border-gray-200">
               <p className="text-sm text-gray-500">
                 After updating your resume, click "Extract Keywords" again to recalculate your match rate.
@@ -862,7 +899,14 @@ export const KeywordsSection = ({
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.open('/help/tags-keywords-guide#keyword-optimization', '_blank')}
+            >
+              View Guide
+            </Button>
             <Button onClick={() => setShowOptimizeDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
