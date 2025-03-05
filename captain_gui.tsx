@@ -450,6 +450,39 @@ export default function CAPTAINGui() {
       });
   };
 
+  // Enhanced function to get events for a day with job application info
+  const getEnhancedEventsForDay = (day) => {
+    // Get regular events
+    const dayEvents = events
+      .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
+      .filter(event => {
+        const eventDate = parseEventDate(event.date);
+        return isSameDay(day, eventDate);
+      });
+    
+    // Check for job applications on this day
+    const jobApplications = opportunities.filter(opp => {
+      try {
+        const appDate = parseISO(opp.appliedDate);
+        return isSameDay(day, appDate);
+      } catch (e) {
+        // Handle date parsing errors gracefully
+        try {
+          const appDate = new Date(opp.appliedDate);
+          return isSameDay(day, appDate);
+        } catch (e2) {
+          return false;
+        }
+      }
+    });
+    
+    return {
+      events: dayEvents,
+      applications: jobApplications,
+      totalActivity: dayEvents.length + jobApplications.length
+    };
+  };
+
   // Function to handle batch deletion
   const handleBatchDelete = () => {
     // Show confirmation dialog
@@ -1676,6 +1709,14 @@ export default function CAPTAINGui() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <CardTitle>Calendar</CardTitle>
                   <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setDate(new Date())} 
+                      className="w-full sm:w-auto"
+                    >
+                      Today
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => setCalendarView("month")} className={calendarView === "month" ? "bg-blue-100 w-full sm:w-auto" : "w-full sm:w-auto"}>Month</Button>
                     <Button variant="outline" size="sm" onClick={() => setCalendarView("week")} className={calendarView === "week" ? "bg-blue-100 w-full sm:w-auto" : "w-full sm:w-auto"}>Week</Button>
                   </div>
@@ -1690,25 +1731,39 @@ export default function CAPTAINGui() {
                     className="rounded-md border"
                     components={{
                       DayContent: (props) => {
-                        const dayEvents = getEventsForDay(props.date);
+                        const { events: dayEvents, applications, totalActivity } = getEnhancedEventsForDay(props.date);
+                        const isToday = isSameDay(props.date, new Date());
+                      
                         return (
-                          <div className="relative h-full w-full p-2">
-                            <div className="text-center">{props.date.getDate()}</div>
-                            {dayEvents.length > 0 && (
-                              <div className="absolute bottom-1 left-0 right-0 flex justify-center">
-                                {dayEvents.slice(0, 3).map((event, i) => (
-                                  <div 
-                                    key={i}
-                                    className={`h-1.5 w-1.5 rounded-full mx-0.5 ${
-                                      event.type === 'interview' ? 'bg-blue-500' :
-                                      event.type === 'assessment' ? 'bg-purple-500' :
-                                      event.type === 'followup' ? 'bg-yellow-500' :
-                                      'bg-red-500'
-                                    }`}
-                                  />
+                          <div className={`relative h-full w-full p-2 ${isToday ? 'bg-blue-50 rounded-md' : ''}`}>
+                            <div className={`text-center font-medium ${isToday ? 'text-blue-600' : ''}`}>
+                              {props.date.getDate()}
+                            </div>
+                          
+                            {totalActivity > 0 && (
+                              <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-0.5">
+                                {applications.length > 0 && (
+                                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" 
+                                       title={`${applications.length} job application(s)`} />
+                                )}
+                              
+                                {dayEvents.map((event, i) => (
+                                  i < 2 && (
+                                    <div 
+                                      key={i}
+                                      className={`h-1.5 w-1.5 rounded-full ${
+                                        event.type === 'interview' ? 'bg-blue-500' :
+                                        event.type === 'assessment' ? 'bg-purple-500' :
+                                        event.type === 'followup' ? 'bg-yellow-500' :
+                                        'bg-red-500'
+                                      }`}
+                                      title={event.title}
+                                    />
+                                  )
                                 ))}
-                                {dayEvents.length > 3 && (
-                                  <div className="text-xs text-gray-500 ml-1">+{dayEvents.length - 3}</div>
+                              
+                                {totalActivity > 3 && (
+                                  <span className="text-xs text-gray-500">+{totalActivity - 3}</span>
                                 )}
                               </div>
                             )}
@@ -1802,20 +1857,6 @@ export default function CAPTAINGui() {
                       ) : (
                         <div className="text-center py-8 text-gray-500">
                           <p>No events for this day</p>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-2 w-full sm:w-auto"
-                            onClick={() => {
-                              setNewEvent({
-                                ...newEvent,
-                                date: date.toISOString().split('T')[0]
-                              });
-                              document.querySelector('[data-dialog-trigger="true"]')?.click();
-                            }}
-                          >
-                            Add Event
-                          </Button>
                         </div>
                       )}
                     </div>
