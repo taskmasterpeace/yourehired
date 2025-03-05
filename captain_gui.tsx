@@ -2693,6 +2693,18 @@ export default function CAPTAINGui() {
                                       {event.notes}
                                     </p>
                                   )}
+                                  <div className="mt-2">
+                                    <AddToCalendarButton 
+                                      event={{
+                                        title: event.title,
+                                        startDate: new Date(event.date),
+                                        description: event.notes || '',
+                                        location: relatedJob?.location || ''
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                    />
+                                  </div>
                                 </CardContent>
                               </Card>
                             );
@@ -2854,6 +2866,18 @@ export default function CAPTAINGui() {
                                       </span>
                                     </div>
                                   )}
+                                  <div className="mt-2">
+                                    <AddToCalendarButton 
+                                      event={{
+                                        title: event.title,
+                                        startDate: new Date(event.date),
+                                        description: event.notes || '',
+                                        location: relatedJob?.location || ''
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                    />
+                                  </div>
                                 </CardContent>
                               </Card>
                             );
