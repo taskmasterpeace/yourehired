@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar as CalendarIcon2 } from 'lucide-react'
-import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area, COLORS, STATUS_COLORS } from '../components/recharts'
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area } from 'recharts'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { HelpCenter } from '@/components/help/HelpCenter'
 import { GuideViewer } from '@/components/help/GuideViewer'
@@ -212,6 +212,35 @@ const promptsByCategory = {
     "Draft a check-in email that demonstrates my continued interest without being pushy",
     "What is the appropriate cadence for following up at different stages of the hiring process?"
   ]
+};
+
+// Define chart colors
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+const STATUS_COLORS = {
+  "Bookmarked": "#9333ea",
+  "Interested": "#3b82f6",
+  "Recruiter Contact": "#06b6d4",
+  "Networking": "#0ea5e9",
+  "Preparing Application": "#10b981",
+  "Applied": "#22c55e",
+  "Application Acknowledged": "#84cc16",
+  "Screening": "#eab308",
+  "Technical Assessment": "#f59e0b",
+  "First Interview": "#f97316",
+  "Second Interview": "#ef4444",
+  "Final Interview": "#dc2626",
+  "Reference Check": "#9f1239",
+  "Negotiating": "#7c3aed",
+  "Offer Received": "#6366f1",
+  "Offer Accepted": "#14b8a6",
+  "Offer Declined": "#f43f5e",
+  "Rejected": "#64748b",
+  "Withdrawn": "#94a3b8",
+  "Position Filled": "#6b7280",
+  "Position Cancelled": "#4b5563",
+  "Following Up": "#8b5cf6",
+  "Waiting": "#a855f7"
 };
 
 // Configuration for tag colors
