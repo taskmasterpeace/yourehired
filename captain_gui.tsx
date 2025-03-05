@@ -2003,8 +2003,11 @@ export default function CAPTAINGui() {
                                 ...newEvent,
                                 date: date.toISOString().split('T')[0]
                               });
-                              // Open the add event dialog
-                              document.getElementById('add-event-trigger')?.click();
+                              // Use a different approach to trigger the dialog
+                              const addEventDialog = document.querySelector('[id="add-event-trigger"]');
+                              if (addEventDialog) {
+                                (addEventDialog as HTMLButtonElement).click();
+                              }
                             }}
                           >
                             <PlusCircle className="h-4 w-4 mr-1" />
@@ -2100,10 +2103,84 @@ export default function CAPTAINGui() {
               </CardContent>
             </Card>
 
-            {/* Hidden trigger for add event dialog */}
-            <DialogTrigger asChild id="add-event-trigger" className="hidden">
-              <button>Add Event</button>
-            </DialogTrigger>
+            {/* Properly wrap the hidden trigger in a Dialog component */}
+            <Dialog>
+              <DialogTrigger asChild id="add-event-trigger" className="hidden">
+                <button>Add Event</button>
+              </DialogTrigger>
+              <DialogContent className="w-[90vw] max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New Event</DialogTitle>
+                  <DialogDescription>Create a new event for your job search calendar</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="title" className="sm:text-right">Title</Label>
+                    <Input
+                      id="title"
+                      className="col-span-1 sm:col-span-3"
+                      value={newEvent.title}
+                      onChange={handleNewEventChange}
+                      placeholder="e.g., Interview with Company X"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="date" className="sm:text-right">Date</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      className="col-span-1 sm:col-span-3"
+                      value={newEvent.date}
+                      onChange={handleNewEventChange}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="sm:text-right">Event Type</Label>
+                    <Select onValueChange={handleNewEventTypeChange} value={newEvent.type}>
+                      <SelectTrigger className="col-span-1 sm:col-span-3">
+                        <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="interview">Interview</SelectItem>
+                        <SelectItem value="assessment">Technical Assessment</SelectItem>
+                        <SelectItem value="followup">Follow-up</SelectItem>
+                        <SelectItem value="deadline">Deadline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="opportunityId" className="sm:text-right">Related Job</Label>
+                    <Select onValueChange={handleNewEventOpportunityChange} value={newEvent.opportunityId}>
+                      <SelectTrigger className="col-span-1 sm:col-span-3">
+                        <SelectValue placeholder="Select related job" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {opportunities.map(opp => (
+                          <SelectItem key={opp.id} value={opp.id.toString()}>
+                            {opp.company} - {opp.position}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="sm:text-right">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      className="col-span-1 sm:col-span-3"
+                      value={newEvent.notes}
+                      onChange={handleNewEventChange}
+                      placeholder="Add any additional notes about this event"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                  <Button type="submit" onClick={handleSaveNewEvent} className="w-full sm:w-auto">Save Event</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </TabsContent>
         
