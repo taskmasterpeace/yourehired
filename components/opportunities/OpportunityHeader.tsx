@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CardHeader } from "@/components/ui/card";
+import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
@@ -72,7 +72,7 @@ export const OpportunityHeader = ({
             </div>
           ) : (
             <div className="flex items-center">
-              <h3 className="text-xl">{opportunity.company}</h3>
+              <CardTitle className="text-xl">{opportunity.company}</CardTitle>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -117,7 +117,7 @@ export const OpportunityHeader = ({
             </div>
           ) : (
             <div className="flex items-center">
-              <h4 className="text-lg font-medium">{opportunity.position}</h4>
+              <CardDescription className="text-lg font-medium">{opportunity.position}</CardDescription>
               <Button 
                 variant="ghost" 
                 size="sm" 

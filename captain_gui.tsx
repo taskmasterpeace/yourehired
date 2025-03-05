@@ -4,6 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { StatusBadge } from '@/components/opportunities/StatusBadge'
+import { OpportunityHeader } from '@/components/opportunities/OpportunityHeader'
+import { JobDetailsSection } from '@/components/opportunities/JobDetailsSection'
+import { ContactInfoSection } from '@/components/opportunities/ContactInfoSection'
+import { NotesSection } from '@/components/opportunities/NotesSection'
+import { OpportunityDetails } from '@/components/opportunities/OpportunityDetails'
+import { OpportunityList } from '@/components/opportunities/OpportunityList'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -315,28 +323,7 @@ export default function CAPTAINGui() {
   // Mobile touch handling
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  // Initialize dark mode based on user preferences
-  useEffect(() => {
-    // Check if user has a preference stored
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    
-    // Check if user prefers dark mode at the OS level
-    const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Set dark mode based on saved preference or OS preference
-    const initialDarkMode = savedDarkMode || prefersDarkMode;
-    setIsDarkMode(initialDarkMode);
-    document.documentElement.classList.toggle('dark', initialDarkMode);
-  }, []);
-
-  // Function to toggle dark mode and save preference
-  const toggleDarkMode = (checked) => {
-    setIsDarkMode(checked);
-    document.documentElement.classList.toggle('dark', checked);
-    localStorage.setItem('darkMode', checked.toString());
-  };
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   // AI prompt states
   const [aiPrompts, setAiPrompts] = useState([]);
@@ -470,6 +457,12 @@ export default function CAPTAINGui() {
 
   // Toggle function for selecting/deselecting a job
   const toggleJobSelection = (id: number) => {
+    if (id === -1) {
+      // Special case to clear all selections
+      setSelectedJobIds([]);
+      return;
+    }
+    
     if (selectedJobIds.includes(id)) {
       setSelectedJobIds(selectedJobIds.filter(jobId => jobId !== id));
     } else {
@@ -1177,358 +1170,30 @@ export default function CAPTAINGui() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
-            <Card className={`col-span-1 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50'} flex flex-col order-2 md:order-1`}>
-              <CardHeader>
-                <CardTitle className={isDarkMode ? 'text-blue-400' : 'text-blue-700'}>Job List</CardTitle>
-                <div className="space-y-2 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <Search className="h-4 w-4 text-gray-500" />
-                    <Input 
-                      placeholder="Search by company, position, or description..." 
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={statusFilter === "All" ? "bg-blue-100" : ""}
-                      onClick={() => setStatusFilter("All")}
-                    >
-                      All
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={statusFilter === "Applied" ? "bg-blue-100" : ""}
-                      onClick={() => setStatusFilter("Applied")}
-                    >
-                      Applied
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={statusFilter.includes("Interview") ? "bg-purple-100" : ""}
-                      onClick={() => setStatusFilter("First Interview")}
-                    >
-                      Interviews
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className={statusFilter === "Offer Received" ? "bg-green-100" : ""}
-                      onClick={() => setStatusFilter("Offer Received")}
-                    >
-                      Offers
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="flex items-center space-x-2">
-                      <Filter className="h-4 w-4 text-gray-500" />
-                      <Select value={statusFilter} onValueChange={setStatusFilter} className="flex-1">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Filter by status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="All">All Statuses</SelectItem>
-                          
-                          <SelectGroup>
-                            <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
-                            <SelectItem value="Bookmarked">Bookmarked</SelectItem>
-                            <SelectItem value="Interested">Interested</SelectItem>
-                            <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
-                            <SelectItem value="Networking">Networking</SelectItem>
-                          </SelectGroup>
-                          
-                          <SelectGroup>
-                            <SelectLabel className="select-category-label">Application</SelectLabel>
-                            <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                            <SelectItem value="Applied">Applied</SelectItem>
-                            <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
-                          </SelectGroup>
-                          
-                          <SelectGroup>
-                            <SelectLabel className="select-category-label">Interview Process</SelectLabel>
-                            <SelectItem value="Screening">Screening</SelectItem>
-                            <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
-                            <SelectItem value="First Interview">First Interview</SelectItem>
-                            <SelectItem value="Second Interview">Second Interview</SelectItem>
-                            <SelectItem value="Final Interview">Final Interview</SelectItem>
-                            <SelectItem value="Reference Check">Reference Check</SelectItem>
-                          </SelectGroup>
-                          
-                          <SelectGroup>
-                            <SelectLabel className="select-category-label">Decision</SelectLabel>
-                            <SelectItem value="Negotiating">Negotiating</SelectItem>
-                            <SelectItem value="Offer Received">Offer Received</SelectItem>
-                            <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
-                            <SelectItem value="Offer Declined">Offer Declined</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
-                            <SelectItem value="Withdrawn">Withdrawn</SelectItem>
-                            <SelectItem value="Position Filled">Position Filled</SelectItem>
-                            <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
-                          </SelectGroup>
-                          
-                          <SelectGroup>
-                            <SelectLabel className="select-category-label">Follow-up</SelectLabel>
-                            <SelectItem value="Following Up">Following Up</SelectItem>
-                            <SelectItem value="Waiting">Waiting</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <CalendarIcon className="h-4 w-4 text-gray-500" />
-                      <Select value={dateFilter} onValueChange={setDateFilter} className="flex-1">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Filter by date" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="All">All Dates</SelectItem>
-                          <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
-                          <SelectItem value="Last 30 Days">Last 30 Days</SelectItem>
-                          <SelectItem value="Last 90 Days">Last 90 Days</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                    </svg>
-                    <Select value={`${sortBy}-${sortDirection}`} onValueChange={(value) => {
-                      const [field, direction] = value.split('-');
-                      setSortBy(field);
-                      setSortDirection(direction);
-                    }} className="flex-1">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Sort by Date</SelectLabel>
-                          <SelectItem value="lastModified-desc">Last Modified (Newest First)</SelectItem>
-                          <SelectItem value="lastModified-asc">Last Modified (Oldest First)</SelectItem>
-                          <SelectItem value="appliedDate-desc">Date Applied (Newest First)</SelectItem>
-                          <SelectItem value="appliedDate-asc">Date Applied (Oldest First)</SelectItem>
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>Sort by Name</SelectLabel>
-                          <SelectItem value="company-asc">Company (A-Z)</SelectItem>
-                          <SelectItem value="company-desc">Company (Z-A)</SelectItem>
-                          <SelectItem value="position-asc">Position (A-Z)</SelectItem>
-                          <SelectItem value="position-desc">Position (Z-A)</SelectItem>
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>Sort by Status</SelectLabel>
-                          <SelectItem value="status-asc">Status (A-Z)</SelectItem>
-                          <SelectItem value="status-desc">Status (Z-A)</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    
-                    <div className="flex space-x-1">
-                      <Button 
-                        variant={viewMode === "card" ? "default" : "outline"} 
-                        size="sm" 
-                        className="px-2"
-                        onClick={() => setViewMode("card")}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
-                      </Button>
-                      <Button 
-                        variant={viewMode === "list" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => setViewMode("list")}
-                        className="px-2"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Batch selection controls */}
-                <div className="flex justify-between items-center mb-2 mt-3">
-                  <div className="flex items-center flex-wrap gap-2">
-                    <Button 
-                      variant={isBatchSelectMode ? "default" : "outline"} 
-                      size="sm"
-                      onClick={() => {
-                        setIsBatchSelectMode(!isBatchSelectMode);
-                        setSelectedJobIds([]);
-                      }}
-                    >
-                      {isBatchSelectMode ? "Cancel Selection" : "Select Jobs"}
-                    </Button>
-                    
-                    {isBatchSelectMode && (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setSelectedJobIds(sortedOpportunities.map(opp => opp.id))}
-                        >
-                          Select All
-                        </Button>
-                        
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={handleBatchDelete}
-                          disabled={selectedJobIds.length === 0}
-                        >
-                          Delete Selected ({selectedJobIds.length})
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow overflow-hidden">
-                <ScrollArea className="h-full">
-                  {sortedOpportunities.length > 0 ? (
-                    sortedOpportunities.map((opp, index) => {
-                      const originalIndex = opportunities.findIndex(o => o.id === opp.id);
-                      
-                      if (viewMode === "card") {
-                        return (
-                          <div key={opp.id} className="relative">
-                            {isBatchSelectMode && (
-                              <div className="absolute top-2 left-2 z-10">
-                                <input 
-                                  type="checkbox" 
-                                  checked={selectedJobIds.includes(opp.id)}
-                                  onChange={() => toggleJobSelection(opp.id)}
-                                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                              </div>
-                            )}
-                            <Card 
-                              className={`mb-2 cursor-pointer ${
-                                originalIndex === selectedOpportunityIndex 
-                                  ? isDarkMode ? 'bg-blue-900' : 'bg-blue-200' 
-                                  : isDarkMode ? 'bg-gray-700' : 'bg-white'
-                              }`} 
-                              onClick={() => {
-                                if (isBatchSelectMode) {
-                                  toggleJobSelection(opp.id);
-                                } else {
-                                  setSelectedOpportunityIndex(originalIndex);
-                                }
-                              }}
-                            >
-                              <CardContent className="p-3">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h3 className="font-semibold">{opp.company}</h3>
-                                    <p className="text-sm text-gray-600">{opp.position}</p>
-                                  </div>
-                                  {isClientSide ? (
-                                    <Badge 
-                                      className={
-                                        opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                                        opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
-                                        opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                                        opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
-                                        'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                      }
-                                    >
-                                      {opp.status}
-                                    </Badge>
-                                  ) : (
-                                    <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
-                                  )}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">{opp.appliedDate}</p>
-                                <p className="text-xs text-gray-400">
-                                  Updated: {lastModifiedTimestamps[opp.id] 
-                                    ? new Date(lastModifiedTimestamps[opp.id]).toLocaleString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      }) 
-                                    : 'Never'}
-                                </p>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        );
-                      } else {
-                        // List view
-                        return (
-                          <div 
-                            key={opp.id}
-                            className={`flex items-center p-2 mb-1 rounded cursor-pointer ${
-                              originalIndex === selectedOpportunityIndex 
-                                ? isDarkMode ? 'bg-blue-900' : 'bg-blue-200' 
-                                : isDarkMode ? 'bg-gray-700' : 'bg-white'
-                            }`}
-                            onClick={() => {
-                              if (isBatchSelectMode) {
-                                toggleJobSelection(opp.id);
-                              } else {
-                                setSelectedOpportunityIndex(originalIndex);
-                              }
-                            }}
-                          >
-                            {isBatchSelectMode && (
-                              <input 
-                                type="checkbox" 
-                                checked={selectedJobIds.includes(opp.id)}
-                                onChange={() => toggleJobSelection(opp.id)}
-                                className="h-5 w-5 mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-center">
-                                <h3 className="font-semibold truncate">{opp.company}</h3>
-                                {isClientSide ? (
-                                  <Badge 
-                                    className={
-                                      opp.status === 'Offer Received' || opp.status === 'Offer Accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                                      opp.status === 'Rejected' || opp.status === 'Withdrawn' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
-                                      opp.status === 'Applied' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                                      opp.status.includes('Interview') ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
-                                      'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                    }
-                                    size="sm"
-                                  >
-                                    {opp.status}
-                                  </Badge>
-                                ) : (
-                                  <div className="h-5 w-14 bg-gray-200 rounded animate-pulse"></div>
-                                )}
-                              </div>
-                              <div className="flex justify-between text-xs text-gray-500">
-                                <span className="truncate">{opp.position}</span>
-                                <span>{opp.appliedDate}</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                    })
-                  ) : (
-                    <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      <p>No opportunities found</p>
-                      <p className="text-sm mt-2">Try adjusting your filters or add a new opportunity</p>
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
+            <OpportunityList
+              opportunities={opportunities}
+              selectedOpportunityIndex={selectedOpportunityIndex}
+              setSelectedOpportunityIndex={setSelectedOpportunityIndex}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              dateFilter={dateFilter}
+              setDateFilter={setDateFilter}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              lastModifiedTimestamps={lastModifiedTimestamps}
+              isBatchSelectMode={isBatchSelectMode}
+              setIsBatchSelectMode={setIsBatchSelectMode}
+              selectedJobIds={selectedJobIds}
+              toggleJobSelection={toggleJobSelection}
+              handleBatchDelete={handleBatchDelete}
+              isDarkMode={isDarkMode}
+            />
 
             <Card 
               className={`col-span-1 md:col-span-2 flex flex-col order-1 md:order-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}
