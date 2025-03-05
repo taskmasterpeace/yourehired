@@ -47,9 +47,9 @@ export const generateICalString = (event) => {
   // Generate the iCalendar string
   return `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//CAPTAIN//Job Application Tracker//EN
+PRODID:-//You're Hired!//Job Application Tracker//EN
 BEGIN:VEVENT
-UID:${Date.now()}@captain.app
+UID:${Date.now()}@yourehired.app
 DTSTAMP:${formatICalDate(new Date())}
 DTSTART:${formatICalDate(startDate)}
 DTEND:${formatICalDate(endDate)}

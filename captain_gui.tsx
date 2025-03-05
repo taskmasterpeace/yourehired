@@ -1350,7 +1350,19 @@ export default function CAPTAINGui() {
     <div className={`container mx-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'} min-h-screen flex flex-col`}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">CAPTAIN</h1>
+          <div className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="You're Hired Logo" 
+              className="h-10 w-10 mr-2" 
+              style={{ 
+                objectFit: 'contain',
+                maxWidth: '100%',
+                height: 'auto'
+              }}
+            />
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">You're Hired!</h1>
+          </div>
           <div className="hidden sm:flex items-center">
             <Switch
               checked={isDarkMode}
@@ -1392,7 +1404,7 @@ export default function CAPTAINGui() {
                     className="justify-start" 
                     onClick={() => setActiveTab("captain")}
                   >
-                    Captain
+                    Coach
                   </Button>
                   <Button 
                     variant={activeTab === "analytics" ? "default" : "ghost"} 
@@ -1435,7 +1447,7 @@ export default function CAPTAINGui() {
           <div className="flex space-x-1">
             <TabsTrigger value="opportunities" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Opportunities</TabsTrigger>
             <TabsTrigger value="resume" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Master Resume</TabsTrigger>
-            <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Captain</TabsTrigger>
+            <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Coach</TabsTrigger>
             <TabsTrigger value="analytics" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Analytics</TabsTrigger>
             <TabsTrigger value="calendar" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Calendar</TabsTrigger>
             <TabsTrigger value="help" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
@@ -1806,13 +1818,13 @@ export default function CAPTAINGui() {
 
         <TabsContent value="captain" className="p-2 sm: p-4 flex-grow overflow-auto">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Captain AI Assistant</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Career Coach</h2>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="col-span-1 lg:col-span-2 flex flex-col h-[calc(100vh-250px)]">
               <CardHeader>
-                <CardTitle>Chat with Captain</CardTitle>
+                <CardTitle>Chat with Coach</CardTitle>
                 <CardDescription>
                   Ask for career advice, job search strategies, or help with your applications
                 </CardDescription>
@@ -1824,7 +1836,7 @@ export default function CAPTAINGui() {
                       <div className={`${isDarkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-800'} p-3 rounded-lg max-w-[90%] sm:max-w-[80%]`}>
                         <div className="flex items-center mb-1">
                           <Bot className="h-3 w-3 mr-1" />
-                          <span className="text-xs font-medium">Captain</span>
+                          <span className="text-xs font-medium">Coach</span>
                         </div>
                         <p>Hello! I'm Captain, your AI career assistant. How can I help you with your job search today?</p>
                       </div>
@@ -3256,7 +3268,7 @@ export default function CAPTAINGui() {
       <footer className={`mt-8 py-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3 sm:mb-0`}>© 2023 CAPTAIN</p>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3 sm:mb-0`}>© 2025 You're Hired!</p>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
@@ -3283,7 +3295,7 @@ export default function CAPTAINGui() {
     <div className="flex items-center justify-center h-screen">
       <div className="text-center">
         <div className="h-16 w-16 bg-blue-200 rounded-full animate-pulse mx-auto mb-4"></div>
-        <h2 className="text-xl font-semibold">Loading CAPTAIN...</h2>
+        <h2 className="text-xl font-semibold">Loading You're Hired!...</h2>
       </div>
     </div>
   );
