@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { QRCodeSVG } from 'qrcode.react'
 import { StatusBadge } from '@/components/opportunities/StatusBadge'
 import { OpportunityHeader } from '@/components/opportunities/OpportunityHeader'
 import { JobDetailsSection } from '@/components/opportunities/JobDetailsSection'
@@ -12,6 +13,8 @@ import { NotesSection } from '@/components/opportunities/NotesSection'
 import { OpportunityDetails } from '@/components/opportunities/OpportunityDetails'
 import { OpportunityList } from '@/components/opportunities/OpportunityList'
 import { useDarkMode } from '@/hooks/useDarkMode'
+import AddToCalendarButton from './AddToCalendarButton'
+import { generateICalString } from './calendarUtils'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -2359,6 +2362,42 @@ export default function CAPTAINGui() {
                 <DialogFooter className="flex-col sm:flex-row gap-2">
                   <Button type="submit" onClick={handleSaveNewEvent} className="w-full sm:w-auto">Save Event</Button>
                 </DialogFooter>
+                
+                <style jsx>{`
+                  .qr-container {
+                    transition: all 0.3s ease;
+                    position: relative;
+                  }
+                  
+                  .qr-container:after {
+                    content: '';
+                    position: absolute;
+                    top: -5px;
+                    left: -5px;
+                    right: -5px;
+                    bottom: -5px;
+                    border-radius: 12px;
+                    background: rgba(59, 130, 246, 0.1);
+                    z-index: -1;
+                    opacity: 0;
+                    animation: pulse 2s infinite;
+                  }
+                  
+                  @keyframes pulse {
+                    0% {
+                      transform: scale(0.95);
+                      opacity: 0;
+                    }
+                    70% {
+                      transform: scale(1);
+                      opacity: 0.6;
+                    }
+                    100% {
+                      transform: scale(0.95);
+                      opacity: 0;
+                    }
+                  }
+                `}</style>
               </DialogContent>
             </Dialog>
           </div>
