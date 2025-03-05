@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle } from 'lucide-react'
-import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar } from 'lucide-react'
+import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar as CalendarIcon2 } from 'lucide-react'
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area, COLORS, STATUS_COLORS } from '@/components/recharts'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { HelpCenter } from '@/components/help/HelpCenter'
@@ -736,7 +736,7 @@ export default function CAPTAINGui() {
           id: 'perfect_week',
           name: 'Perfect Week',
           description: 'Apply to at least one job every day for a week',
-          icon: 'Calendar',
+          icon: 'CalendarIcon2',
           unlocked: calculateStreak(opportunities) >= 7,
           progress: Math.min(calculateStreak(opportunities), 7),
           total: 7
@@ -2100,7 +2100,7 @@ export default function CAPTAINGui() {
                         {achievement.icon === 'Award' && <Award className={`h-5 w-5 ${
                           achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
                         }`} />}
-                        {achievement.icon === 'Calendar' && <Calendar className={`h-5 w-5 ${
+                        {achievement.icon === 'CalendarIcon2' && <CalendarIcon2 className={`h-5 w-5 ${
                           achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
                         }`} />}
                       </div>
@@ -2185,7 +2185,7 @@ export default function CAPTAINGui() {
                   <div className="p-3 bg-green-50 rounded-lg mb-3 sm:mb-0">
                     <h4 className="text-sm font-medium text-green-800">Most Active Day</h4>
                     <div className="flex items-center mt-1">
-                      <Calendar className="h-5 w-5 text-green-600 mr-2" />
+                      <CalendarIcon2 className="h-5 w-5 text-green-600 mr-2" />
                       <span className="text-lg font-bold text-green-700">{analytics.weeklyPatterns.mostActiveDay.day}</span>
                       <span className="ml-2 text-sm text-green-600">({analytics.weeklyPatterns.mostActiveDay.count} activities)</span>
                     </div>
@@ -2194,7 +2194,7 @@ export default function CAPTAINGui() {
                   <div className="p-3 bg-amber-50 rounded-lg">
                     <h4 className="text-sm font-medium text-amber-800">Least Active Day</h4>
                     <div className="flex items-center mt-1">
-                      <Calendar className="h-5 w-5 text-amber-600 mr-2" />
+                      <CalendarIcon2 className="h-5 w-5 text-amber-600 mr-2" />
                       <span className="text-lg font-bold text-amber-700">{analytics.weeklyPatterns.leastActiveDay.day}</span>
                       <span className="ml-2 text-sm text-amber-600">({analytics.weeklyPatterns.leastActiveDay.count} activities)</span>
                     </div>
