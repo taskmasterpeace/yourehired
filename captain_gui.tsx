@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { QRCodeSVG } from 'qrcode.react'
+import { Label } from "@/components/ui/label"
 
 // Define JobDetailsSection component
 export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEditedDetails, handleSaveJobDetails, handleEditJobDetails, isDarkMode }) => {
