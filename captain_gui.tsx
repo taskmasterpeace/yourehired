@@ -328,6 +328,9 @@ export default function CAPTAINGui() {
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  
+  // Status change tracking
+  const [statusChanges, setStatusChanges] = useState([]);
 
   // AI prompt states
   const [aiPrompts, setAiPrompts] = useState([]);
@@ -394,6 +397,24 @@ export default function CAPTAINGui() {
 
   // Helper function for updating an opportunity
   const updateOpportunity = (opportunityId: number, updates: Partial<Opportunity>) => {
+    // Get the current opportunity
+    const currentOpp = opportunities.find(opp => opp.id === opportunityId);
+    
+    // If we're updating status, record this change
+    if (updates.status && updates.status !== currentOpp.status) {
+      const newStatusChange = {
+        id: Date.now(),
+        opportunityId,
+        oldStatus: currentOpp.status,
+        newStatus: updates.status,
+        date: new Date().toISOString(),
+        company: currentOpp.company,
+        position: currentOpp.position
+      };
+      
+      setStatusChanges(prev => [...prev, newStatusChange]);
+    }
+    
     dispatch({
       type: 'UPDATE_OPPORTUNITY',
       payload: {
@@ -449,6 +470,14 @@ export default function CAPTAINGui() {
                day.getFullYear() === eventDate.getFullYear();
       });
   };
+  
+  // Helper function to get status changes for a specific day
+  const getStatusChangesForDay = (day) => {
+    return statusChanges.filter(change => {
+      const changeDate = new Date(change.date);
+      return isSameDay(day, changeDate);
+    });
+  };
 
   // Enhanced function to get events for a day with job application info
   const getEnhancedEventsForDay = (day) => {
@@ -476,10 +505,14 @@ export default function CAPTAINGui() {
       }
     });
     
+    // Get status changes for this day
+    const dayStatusChanges = getStatusChangesForDay(day);
+    
     return {
       events: dayEvents,
       applications: jobApplications,
-      totalActivity: dayEvents.length + jobApplications.length
+      statusChanges: dayStatusChanges,
+      totalActivity: dayEvents.length + jobApplications.length + dayStatusChanges.length
     };
   };
 
@@ -1017,7 +1050,7 @@ export default function CAPTAINGui() {
           setHelpView({ active: false });
         }
       }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}>
-        <TabsList className={`mb-4 p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-t-lg sticky top-0 z-10 overflow-x-auto flex-wrap md:flex-nowrap`}>
+        <TabsList className={`mb-4 p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-t-lg sticky top-0 z-10 flex w-full justify-between md:justify-start`}>
           <TabsTrigger value="opportunities" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Opportunities</TabsTrigger>
           <TabsTrigger value="resume" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Master Resume</TabsTrigger>
           <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Captain</TabsTrigger>
@@ -1795,7 +1828,7 @@ export default function CAPTAINGui() {
                     }}
                     components={{
                       DayContent: (props) => {
-                        const { events: dayEvents, applications, totalActivity } = getEnhancedEventsForDay(props.date);
+                        const { events: dayEvents, applications, statusChanges, totalActivity } = getEnhancedEventsForDay(props.date);
                         const isToday = isSameDay(props.date, new Date());
                         const isOutsideMonth = props.date.getMonth() !== date.getMonth();
                       
@@ -1816,6 +1849,11 @@ export default function CAPTAINGui() {
                                 {applications.length > 0 && (
                                   <div className="h-1.5 w-1.5 rounded-full bg-green-500" 
                                        title={`${applications.length} job application(s)`} />
+                                )}
+                              
+                                {statusChanges.length > 0 && (
+                                  <div className="h-1.5 w-1.5 rounded-full bg-orange-500" 
+                                       title={`${statusChanges.length} status change(s)`} />
                                 )}
                               
                                 {dayEvents.map((event, i) => (
@@ -1849,6 +1887,10 @@ export default function CAPTAINGui() {
                     <div className="flex items-center">
                       <div className="h-3 w-3 rounded-full bg-green-500 mr-1"></div>
                       <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Applications</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="h-3 w-3 rounded-full bg-orange-500 mr-1"></div>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Status Changes</span>
                     </div>
                     <div className="flex items-center">
                       <div className="h-3 w-3 rounded-full bg-blue-500 mr-1"></div>
@@ -2018,6 +2060,64 @@ export default function CAPTAINGui() {
                     </div>
                   )}
                   
+                  {date && getStatusChangesForDay(date).length > 0 && (
+                    <div className="mt-4">
+                      <h3 className={`font-medium mb-2 ${isDarkMode ? 'text-gray-200' : ''}`}>Status Changes</h3>
+                      <div className="space-y-3">
+                        {getStatusChangesForDay(date).map((change) => (
+                          <Card key={change.id} className="overflow-hidden border-l-4 border-l-orange-500">
+                            <CardHeader className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800' : 'bg-orange-50'}`}>
+                              <div className="flex justify-between items-center">
+                                <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
+                                  Status Change
+                                </Badge>
+                                <div className="flex gap-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => {
+                                      if (window.confirm("Are you sure you want to remove this status change?")) {
+                                        setStatusChanges(prev => prev.filter(sc => sc.id !== change.id));
+                                      }
+                                    }}
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="py-2 px-3">
+                              <h4 className="font-medium">{change.company} - {change.position}</h4>
+                              <div className="flex items-center mt-1 text-xs">
+                                <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  {change.oldStatus} → {change.newStatus}
+                                </span>
+                              </div>
+                              <div 
+                                className="text-xs mt-1 cursor-pointer hover:text-blue-500"
+                                onClick={() => {
+                                  // Navigate to the related job
+                                  const jobIndex = opportunities.findIndex(opp => opp.id === change.opportunityId);
+                                  if (jobIndex !== -1) {
+                                    setActiveTab("opportunities");
+                                    setSelectedOpportunityIndex(jobIndex);
+                                  }
+                                }}
+                              >
+                                <span className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                  View opportunity
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-6">
                     <h3 className={`font-medium mb-2 ${isDarkMode ? 'text-gray-200' : ''}`}>Upcoming Events</h3>
                     {events.length > 0 ? (
