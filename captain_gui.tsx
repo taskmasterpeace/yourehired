@@ -22,7 +22,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle } from 'lucide-react'
-import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon } from 'lucide-react'
+import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar } from 'lucide-react'
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area, COLORS, STATUS_COLORS } from '@/components/recharts'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { HelpCenter } from '@/components/help/HelpCenter'
 import { GuideViewer } from '@/components/help/GuideViewer'
@@ -606,6 +607,15 @@ export default function CAPTAINGui() {
       return acc;
     }, {} as Record<string, number>);
     
+    // Convert to array format for charts
+    const applicationTimeline = Object.entries(applicationsByWeek)
+      .map(([date, count]) => ({ 
+        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
+        count 
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(-8); // Last 8 weeks
+    
     // Response rate
     const responseCount = opportunities.filter(opp => 
       ['Screening', 'Technical Assessment', 'First Interview', 'Second Interview', 
@@ -646,9 +656,268 @@ export default function CAPTAINGui() {
       return appDate >= startOfWeek;
     }).length;
     
+    // Job Search Level System
+    const calculateJobSearchLevel = (opportunities) => {
+      const baseScore = opportunities.length * 10;
+      const interviewBonus = opportunities.filter(opp => 
+        ['Screening', 'Technical Assessment', 'First Interview', 'Second Interview', 'Final Interview'].includes(opp.status)
+      ).length * 25;
+      const offerBonus = opportunities.filter(opp => 
+        ['Offer Received', 'Offer Accepted'].includes(opp.status)
+      ).length * 100;
+      
+      const totalScore = baseScore + interviewBonus + offerBonus;
+      
+      // Level calculation
+      const level = Math.floor(Math.sqrt(totalScore / 10)) + 1;
+      const nextLevelScore = Math.pow((level), 2) * 10;
+      const progress = Math.min((totalScore / nextLevelScore) * 100, 100);
+      
+      return { level, totalScore, nextLevelScore, progress };
+    };
+    
+    // Achievement System
+    const calculateAchievements = (opportunities, events) => {
+      return [
+        {
+          id: 'first_application',
+          name: 'First Steps',
+          description: 'Submit your first job application',
+          icon: 'Rocket',
+          unlocked: opportunities.length > 0,
+          progress: Math.min(opportunities.length, 1),
+          total: 1
+        },
+        {
+          id: 'application_streak',
+          name: 'Consistency Champion',
+          description: 'Apply to jobs for 5 consecutive days',
+          icon: 'Flame',
+          unlocked: calculateStreak(opportunities) >= 5,
+          progress: Math.min(calculateStreak(opportunities), 5),
+          total: 5
+        },
+        {
+          id: 'interview_milestone',
+          name: 'Interview Pro',
+          description: 'Secure 5 interviews',
+          icon: 'Users',
+          unlocked: opportunities.filter(opp => 
+            ['First Interview', 'Second Interview', 'Final Interview'].includes(opp.status)
+          ).length >= 5,
+          progress: opportunities.filter(opp => 
+            ['First Interview', 'Second Interview', 'Final Interview'].includes(opp.status)
+          ).length,
+          total: 5
+        },
+        {
+          id: 'offer_milestone',
+          name: 'Offer Magnet',
+          description: 'Receive 3 job offers',
+          icon: 'Award',
+          unlocked: opportunities.filter(opp => 
+            ['Offer Received', 'Offer Accepted', 'Offer Declined'].includes(opp.status)
+          ).length >= 3,
+          progress: opportunities.filter(opp => 
+            ['Offer Received', 'Offer Accepted', 'Offer Declined'].includes(opp.status)
+          ).length,
+          total: 3
+        },
+        {
+          id: 'diverse_applications',
+          name: 'Explorer',
+          description: 'Apply to 10 different companies',
+          icon: 'Globe',
+          unlocked: new Set(opportunities.map(opp => opp.company)).size >= 10,
+          progress: Math.min(new Set(opportunities.map(opp => opp.company)).size, 10),
+          total: 10
+        },
+        {
+          id: 'perfect_week',
+          name: 'Perfect Week',
+          description: 'Apply to at least one job every day for a week',
+          icon: 'Calendar',
+          unlocked: calculateStreak(opportunities) >= 7,
+          progress: Math.min(calculateStreak(opportunities), 7),
+          total: 7
+        }
+      ];
+    };
+    
+    // Weekly Activity Patterns
+    const calculateDayOfWeekActivity = (opportunities, events) => {
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const activityByDay = daysOfWeek.map(day => ({ day, count: 0 }));
+      
+      // Count applications by day of week
+      opportunities.forEach(opp => {
+        try {
+          const date = new Date(opp.appliedDate);
+          const dayIndex = date.getDay();
+          activityByDay[dayIndex].count += 1;
+        } catch (e) {
+          // Handle invalid dates
+        }
+      });
+      
+      // Count events by day of week
+      events.forEach(event => {
+        try {
+          const date = new Date(event.date);
+          const dayIndex = date.getDay();
+          activityByDay[dayIndex].count += 1;
+        } catch (e) {
+          // Handle invalid dates
+        }
+      });
+      
+      // Find most and least active days
+      const sortedDays = [...activityByDay].sort((a, b) => b.count - a.count);
+      const mostActiveDay = sortedDays[0];
+      const leastActiveDay = [...activityByDay].filter(day => day.count > 0)
+        .sort((a, b) => a.count - b.count)[0] || { day: 'None', count: 0 };
+      
+      return { activityByDay, mostActiveDay, leastActiveDay };
+    };
+    
+    // Weekly Challenges
+    const generateWeeklyChallenges = () => {
+      // Get current week number
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const weekNumber = Math.ceil((((now - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
+      
+      // This week's applications
+      const startOfThisWeek = new Date(now);
+      startOfThisWeek.setDate(now.getDate() - now.getDay());
+      startOfThisWeek.setHours(0, 0, 0, 0);
+      
+      const thisWeekApplications = opportunities.filter(opp => {
+        try {
+          const appDate = new Date(opp.appliedDate);
+          return appDate >= startOfThisWeek;
+        } catch (e) {
+          return false;
+        }
+      }).length;
+      
+      // Use week number as seed for "random" challenges
+      const challenges = [
+        {
+          id: `week_${weekNumber}_1`,
+          name: 'Application Sprint',
+          description: 'Apply to 5 jobs this week',
+          reward: '50 points',
+          icon: 'Send',
+          target: 5,
+          progress: thisWeekApplications,
+          expires: 'Sunday'
+        },
+        {
+          id: `week_${weekNumber}_2`,
+          name: 'Network Builder',
+          description: 'Add 3 networking contacts',
+          reward: '30 points',
+          icon: 'Users',
+          target: 3,
+          progress: opportunities.filter(opp => 
+            opp.status === "Networking" && new Date(opp.appliedDate) >= startOfThisWeek
+          ).length,
+          expires: 'Sunday'
+        },
+        {
+          id: `week_${weekNumber}_3`,
+          name: 'Skill Builder',
+          description: 'Update your resume with a new skill',
+          reward: '20 points',
+          icon: 'Award',
+          target: 1,
+          progress: 0, // Would need to track resume updates
+          expires: 'Sunday'
+        }
+      ];
+      
+      return challenges;
+    };
+    
+    // Job Search Insights
+    const generateJobSearchInsights = (opportunities) => {
+      const insights = [];
+      
+      // Only generate insights if we have enough data
+      if (opportunities.length < 5) {
+        return insights;
+      }
+      
+      // Response rate by company size
+      const largeCompanies = opportunities.filter(opp => 
+        opp.company.includes("Inc") || opp.company.includes("Corp") || opp.company.includes("LLC")
+      );
+      const largeCompanyResponseRate = largeCompanies.length > 0 
+        ? (largeCompanies.filter(opp => 
+            ['Screening', 'Technical Assessment', 'First Interview'].includes(opp.status)
+          ).length / largeCompanies.length) * 100
+        : 0;
+        
+      const smallCompanies = opportunities.filter(opp => 
+        !opp.company.includes("Inc") && !opp.company.includes("Corp") && !opp.company.includes("LLC")
+      );
+      const smallCompanyResponseRate = smallCompanies.length > 0 
+        ? (smallCompanies.filter(opp => 
+            ['Screening', 'Technical Assessment', 'First Interview'].includes(opp.status)
+          ).length / smallCompanies.length) * 100
+        : 0;
+      
+      if (largeCompanies.length > 3 && smallCompanies.length > 3) {
+        if (largeCompanyResponseRate > smallCompanyResponseRate + 10) {
+          insights.push({
+            title: "Large Companies Favor Your Profile",
+            description: `You're getting ${largeCompanyResponseRate.toFixed(0)}% response rate from larger companies vs ${smallCompanyResponseRate.toFixed(0)}% from smaller ones. Consider focusing more on established companies.`,
+            icon: "Building"
+          });
+        } else if (smallCompanyResponseRate > largeCompanyResponseRate + 10) {
+          insights.push({
+            title: "Startups & Small Companies Respond Better",
+            description: `You're getting ${smallCompanyResponseRate.toFixed(0)}% response rate from smaller companies vs ${largeCompanyResponseRate.toFixed(0)}% from larger ones. Consider targeting more startups and small businesses.`,
+            icon: "Home"
+          });
+        }
+      }
+      
+      // Application volume insight
+      const last30Days = new Date();
+      last30Days.setDate(last30Days.getDate() - 30);
+      
+      const applicationsLast30Days = opportunities.filter(opp => {
+        try {
+          const appDate = new Date(opp.appliedDate);
+          return appDate >= last30Days;
+        } catch (e) {
+          return false;
+        }
+      }).length;
+      
+      if (applicationsLast30Days < 10) {
+        insights.push({
+          title: "Increase Your Application Volume",
+          description: "You've submitted only " + applicationsLast30Days + " applications in the last 30 days. Job searching is a numbers game - aim for at least 15-20 applications per month to improve your chances.",
+          icon: "BarChart"
+        });
+      } else if (applicationsLast30Days > 40) {
+        insights.push({
+          title: "Quality Over Quantity",
+          description: "You've submitted " + applicationsLast30Days + " applications in the last 30 days. Consider focusing more on quality applications with customized materials rather than high volume.",
+          icon: "Award"
+        });
+      }
+      
+      return insights;
+    };
+    
     return {
       statusCounts,
       applicationsByWeek,
+      applicationTimeline,
       responseRate,
       interviewRate,
       offerRate,
@@ -656,9 +925,14 @@ export default function CAPTAINGui() {
       activeApplications: opportunities.filter(opp => 
         !['Rejected', 'Withdrawn', 'Offer Declined', 'Position Filled', 'Position Cancelled'].includes(opp.status)
       ).length,
-      weeklyApplicationCount
+      weeklyApplicationCount,
+      jobSearchStats: calculateJobSearchLevel(opportunities),
+      achievements: calculateAchievements(opportunities, events),
+      weeklyPatterns: calculateDayOfWeekActivity(opportunities, events),
+      weeklyChallenges: generateWeeklyChallenges(),
+      jobSearchInsights: generateJobSearchInsights(opportunities)
     };
-  }, [opportunities]);
+  }, [opportunities, events]);
   
   // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter(opp => {
@@ -1526,6 +1800,32 @@ export default function CAPTAINGui() {
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Analytics Dashboard</h2>
           </div>
           
+          {/* Job Search Level Card */}
+          <Card className="col-span-1 sm:col-span-2 lg:col-span-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white mb-6">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold">Job Search Level: {analytics.jobSearchStats.level}</h3>
+                  <p className="text-sm opacity-90">Score: {analytics.jobSearchStats.totalScore} points</p>
+                </div>
+                <div className="bg-white/20 rounded-full p-3">
+                  <Trophy className="h-8 w-8 text-yellow-300" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="w-full bg-white/30 rounded-full h-2.5">
+                  <div 
+                    className="bg-yellow-300 h-2.5 rounded-full" 
+                    style={{ width: `${analytics.jobSearchStats.progress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs mt-1 text-white/80">
+                  {analytics.jobSearchStats.nextLevelScore - analytics.jobSearchStats.totalScore} points to level {analytics.jobSearchStats.level + 1}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-4 sm:p-6">
@@ -1536,6 +1836,11 @@ export default function CAPTAINGui() {
                   </div>
                   <FileText className="h-8 w-8 text-blue-500" />
                 </div>
+                {analytics.totalApplications === 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Start tracking your job applications to see analytics
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -1548,6 +1853,11 @@ export default function CAPTAINGui() {
                   </div>
                   <ActivityIcon className="h-8 w-8 text-green-500" />
                 </div>
+                {analytics.totalApplications > 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    {((analytics.activeApplications / analytics.totalApplications) * 100).toFixed(0)}% of your applications are still active
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -1560,6 +1870,11 @@ export default function CAPTAINGui() {
                   </div>
                   <BarChartIcon className="h-8 w-8 text-purple-500" />
                 </div>
+                {analytics.responseRate === '0' && analytics.totalApplications > 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    No responses yet. Keep applying and following up!
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -1572,6 +1887,11 @@ export default function CAPTAINGui() {
                   </div>
                   <CalendarIcon className="h-8 w-8 text-orange-500" />
                 </div>
+                {analytics.weeklyApplicationCount === 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    No applications this week. Set a goal to apply daily!
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -1582,11 +1902,39 @@ export default function CAPTAINGui() {
                 <CardTitle>Application Status</CardTitle>
                 <CardDescription>Distribution of your applications by status</CardDescription>
               </CardHeader>
-              <CardContent className="h-60 sm:h-80 flex items-center justify-center">
-                <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  <PieChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-                  <p>Status distribution chart would appear here</p>
-                </div>
+              <CardContent className="h-60 sm:h-80">
+                {Object.keys(analytics.statusCounts).length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={Object.entries(analytics.statusCounts).map(([status, count]) => ({
+                          name: status,
+                          value: count
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {Object.entries(analytics.statusCounts).map(([status, _], index) => (
+                          <Cell key={`cell-${index}`} fill={STATUS_COLORS[status] || COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className={`h-full flex items-center justify-center text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div>
+                      <PieChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                      <p>Add job applications to see status distribution</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -1595,26 +1943,72 @@ export default function CAPTAINGui() {
                 <CardTitle>Application Timeline</CardTitle>
                 <CardDescription>Number of applications over time</CardDescription>
               </CardHeader>
-              <CardContent className="h-60 sm:h-80 flex items-center justify-center">
-                <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  <LineChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-                  <p>Application timeline chart would appear here</p>
-                </div>
+              <CardContent className="h-60 sm:h-80">
+                {analytics.applicationTimeline.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={analytics.applicationTimeline}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className={`h-full flex items-center justify-center text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div>
+                      <LineChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                      <p>Add more applications to see your timeline</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
                 <CardTitle>Conversion Funnel</CardTitle>
                 <CardDescription>How your applications progress through the hiring process</CardDescription>
               </CardHeader>
-              <CardContent className="h-48 sm:h-64 flex items-center justify-center">
-                <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  <BarChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-                  <p>Conversion funnel chart would appear here</p>
-                </div>
+              <CardContent className="h-48 sm:h-64">
+                {analytics.totalApplications > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart
+                      data={[
+                        { name: 'Applied', value: analytics.totalApplications },
+                        { name: 'Response', value: parseInt(analytics.responseRate) * analytics.totalApplications / 100 },
+                        { name: 'Interview', value: parseInt(analytics.interviewRate) * parseInt(analytics.responseRate) * analytics.totalApplications / 10000 },
+                        { name: 'Offer', value: parseInt(analytics.offerRate) * parseInt(analytics.interviewRate) * parseInt(analytics.responseRate) * analytics.totalApplications / 1000000 }
+                      ]}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#8884d8">
+                        {[
+                          <Cell key="cell-0" fill="#3b82f6" />,
+                          <Cell key="cell-1" fill="#10b981" />,
+                          <Cell key="cell-2" fill="#f59e0b" />,
+                          <Cell key="cell-3" fill="#ef4444" />
+                        ]}
+                      </Bar>
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className={`h-full flex items-center justify-center text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div>
+                      <BarChartIcon className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                      <p>Add applications to see your conversion funnel</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -1632,6 +2026,11 @@ export default function CAPTAINGui() {
                   <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5`}>
                     <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${analytics.interviewRate}%` }}></div>
                   </div>
+                  {analytics.interviewRate === '0' && analytics.totalApplications > 0 && (
+                    <div className="text-xs text-gray-500">
+                      Keep applying! Interviews typically come after 10-15 applications.
+                    </div>
+                  )}
                   
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Offer Rate</span>
@@ -1640,6 +2039,11 @@ export default function CAPTAINGui() {
                   <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5`}>
                     <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${analytics.offerRate}%` }}></div>
                   </div>
+                  {analytics.offerRate === '0' && analytics.interviewRate !== '0' && (
+                    <div className="text-xs text-gray-500">
+                      Keep interviewing! Offers typically come after 3-5 interviews.
+                    </div>
+                  )}
                   
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Application Streak</span>
@@ -1648,10 +2052,202 @@ export default function CAPTAINGui() {
                   <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5`}>
                     <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${Math.min(calculateStreak(opportunities) * 10, 100)}%` }}></div>
                   </div>
+                  {calculateStreak(opportunities) === 0 && (
+                    <div className="text-xs text-gray-500">
+                      Apply today to start your streak!
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
+          
+          {/* Achievements Section */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Achievements</CardTitle>
+              <CardDescription>Unlock badges by reaching job search milestones</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                {analytics.achievements.map(achievement => (
+                  <div 
+                    key={achievement.id}
+                    className={`p-3 rounded-lg border ${
+                      achievement.unlocked 
+                        ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200' 
+                        : `${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`
+                    }`}
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className={`p-2 rounded-full ${
+                        achievement.unlocked 
+                          ? 'bg-yellow-400' 
+                          : `${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`
+                      }`}>
+                        {achievement.icon === 'Trophy' && <Trophy className={`h-5 w-5 ${
+                          achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
+                        }`} />}
+                        {achievement.icon === 'Rocket' && <Rocket className={`h-5 w-5 ${
+                          achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
+                        }`} />}
+                        {achievement.icon === 'Flame' && <Flame className={`h-5 w-5 ${
+                          achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
+                        }`} />}
+                        {achievement.icon === 'Users' && <Users className={`h-5 w-5 ${
+                          achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
+                        }`} />}
+                        {achievement.icon === 'Award' && <Award className={`h-5 w-5 ${
+                          achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
+                        }`} />}
+                        {achievement.icon === 'Calendar' && <Calendar className={`h-5 w-5 ${
+                          achievement.unlocked ? 'text-white' : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`
+                        }`} />}
+                      </div>
+                      <span className={`mt-2 font-medium text-sm ${
+                        achievement.unlocked ? 'text-amber-800' : `${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`
+                      }`}>
+                        {achievement.name}
+                      </span>
+                      <p className={`text-xs mt-1 ${
+                        achievement.unlocked ? 'text-amber-700' : `${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`
+                      }`}>
+                        {achievement.description}
+                      </p>
+                      <div className="mt-2 w-full">
+                        <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-1.5`}>
+                          <div 
+                            className={`${achievement.unlocked ? 'bg-yellow-400' : 'bg-blue-500'} h-1.5 rounded-full`} 
+                            style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs mt-1 text-center">
+                          {achievement.progress}/{achievement.total}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Weekly Challenges Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Weekly Challenges</CardTitle>
+                    <CardDescription>Complete challenges to earn points</CardDescription>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Resets Sunday
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {analytics.weeklyChallenges.map(challenge => (
+                    <div key={challenge.id} className="p-3 border rounded-lg flex items-center">
+                      <div className="bg-blue-100 p-2 rounded-full mr-3">
+                        {challenge.icon === 'Send' && <Send className="h-5 w-5 text-blue-600" />}
+                        {challenge.icon === 'Users' && <Users className="h-5 w-5 text-blue-600" />}
+                        {challenge.icon === 'Award' && <Award className="h-5 w-5 text-blue-600" />}
+                      </div>
+                      <div className="flex-grow">
+                        <h4 className="font-medium text-sm">{challenge.name}</h4>
+                        <p className="text-xs text-gray-500">{challenge.description}</p>
+                        <div className={`mt-1 w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-1.5`}>
+                          <div 
+                            className="bg-blue-600 h-1.5 rounded-full" 
+                            style={{ width: `${(challenge.progress / challenge.target) * 100}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          <span className="text-xs text-gray-500">{challenge.progress}/{challenge.target}</span>
+                          <span className="text-xs font-medium text-blue-600">Reward: {challenge.reward}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly Activity Patterns</CardTitle>
+                <CardDescription>Your most and least active days</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row justify-between mb-4">
+                  <div className="p-3 bg-green-50 rounded-lg mb-3 sm:mb-0">
+                    <h4 className="text-sm font-medium text-green-800">Most Active Day</h4>
+                    <div className="flex items-center mt-1">
+                      <Calendar className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="text-lg font-bold text-green-700">{analytics.weeklyPatterns.mostActiveDay.day}</span>
+                      <span className="ml-2 text-sm text-green-600">({analytics.weeklyPatterns.mostActiveDay.count} activities)</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-amber-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-amber-800">Least Active Day</h4>
+                    <div className="flex items-center mt-1">
+                      <Calendar className="h-5 w-5 text-amber-600 mr-2" />
+                      <span className="text-lg font-bold text-amber-700">{analytics.weeklyPatterns.leastActiveDay.day}</span>
+                      <span className="ml-2 text-sm text-amber-600">({analytics.weeklyPatterns.leastActiveDay.count} activities)</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2">Activity Heatmap</h4>
+                  <div className="flex justify-between">
+                    {analytics.weeklyPatterns.activityByDay.map((day, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                        <div 
+                          className="w-8 rounded-t-md" 
+                          style={{ 
+                            backgroundColor: `rgba(59, 130, 246, ${Math.min(day.count / 5, 1)})`,
+                            height: `${Math.max(day.count * 10, 5)}px`
+                          }}
+                        ></div>
+                        <span className="text-xs mt-1">{day.day.substring(0, 3)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Job Search Insights Section */}
+          {analytics.jobSearchInsights.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Job Search Insights</CardTitle>
+                <CardDescription>Personalized insights based on your application patterns</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {analytics.jobSearchInsights.map((insight, index) => (
+                    <div key={index} className="p-4 bg-purple-50 rounded-lg">
+                      <div className="flex items-start">
+                        <div className="bg-purple-100 p-2 rounded-full mr-3">
+                          <Lightbulb className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-purple-800">{insight.title}</h4>
+                          <p className="text-sm text-purple-700 mt-1">{insight.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="calendar" className="p-2 sm:p-4 flex-grow overflow-auto">
