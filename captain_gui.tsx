@@ -1713,30 +1713,63 @@ export default function CAPTAINGui() {
                       variant="outline" 
                       size="sm" 
                       onClick={() => setDate(new Date())} 
-                      className="w-full sm:w-auto"
+                      className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : ''}`}
                     >
                       Today
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setCalendarView("month")} className={calendarView === "month" ? "bg-blue-100 w-full sm:w-auto" : "w-full sm:w-auto"}>Month</Button>
-                    <Button variant="outline" size="sm" onClick={() => setCalendarView("week")} className={calendarView === "week" ? "bg-blue-100 w-full sm:w-auto" : "w-full sm:w-auto"}>Week</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCalendarView("month")} 
+                      className={`${calendarView === "month" ? (isDarkMode ? "bg-blue-800/50 text-blue-100" : "bg-blue-100") : ""} w-full sm:w-auto ${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : ''}`}
+                    >
+                      Month
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCalendarView("week")} 
+                      className={`${calendarView === "week" ? (isDarkMode ? "bg-blue-800/50 text-blue-100" : "bg-blue-100") : ""} w-full sm:w-auto ${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : ''}`}
+                    >
+                      Week
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="p-3 bg-white rounded-lg border">
+                <div className={`p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg border ${isDarkMode ? 'border-gray-700' : ''}`}>
                   <Calendar
                     mode="single"
                     selected={date}
                     onSelect={setDate}
                     className="rounded-md border"
+                    classNames={{
+                      day_today: "bg-blue-100 text-blue-900 dark:bg-blue-800 dark:text-blue-50",
+                      day_selected: "bg-blue-500 text-white hover:bg-blue-600 hover:text-white",
+                      day: isDarkMode ? "text-gray-100 h-9 w-9 p-0 font-normal" : "text-gray-900 h-9 w-9 p-0 font-normal",
+                      day_disabled: isDarkMode ? "text-gray-600" : "text-gray-400",
+                      day_outside: isDarkMode ? "text-gray-600 opacity-50" : "text-gray-400 opacity-50",
+                      day_range_middle: isDarkMode ? "bg-blue-900/20" : "bg-blue-50",
+                      caption: isDarkMode ? "flex justify-center pt-1 relative items-center text-gray-100" : "flex justify-center pt-1 relative items-center",
+                      caption_label: isDarkMode ? "text-sm font-medium text-gray-100" : "text-sm font-medium",
+                      nav_button: isDarkMode ? "border-0 p-1.5 hover:bg-gray-700 rounded-md text-gray-300" : "border-0 p-1.5 hover:bg-gray-100 rounded-md",
+                      head_cell: isDarkMode ? "text-gray-400 rounded-md w-9 font-normal text-[0.8rem]" : "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
+                    }}
                     components={{
                       DayContent: (props) => {
                         const { events: dayEvents, applications, totalActivity } = getEnhancedEventsForDay(props.date);
                         const isToday = isSameDay(props.date, new Date());
+                        const isOutsideMonth = props.date.getMonth() !== date.getMonth();
                       
                         return (
-                          <div className={`relative h-full w-full p-2 ${isToday ? 'bg-blue-50 rounded-md' : ''}`}>
-                            <div className={`text-center font-medium ${isToday ? 'text-blue-600' : ''}`}>
+                          <div className={`relative h-full w-full p-2 ${isToday ? (isDarkMode ? 'bg-blue-800/30 rounded-md' : 'bg-blue-50 rounded-md') : ''}`}>
+                            <div className={`text-center font-medium ${
+                              isToday 
+                                ? (isDarkMode ? 'text-blue-300' : 'text-blue-600') 
+                                : (isDarkMode && !isOutsideMonth ? 'text-gray-100' : '')
+                                  || (isDarkMode && isOutsideMonth ? 'text-gray-600' : '')
+                                  || (isOutsideMonth ? 'text-gray-400' : '')
+                            }`}>
                               {props.date.getDate()}
                             </div>
                           
