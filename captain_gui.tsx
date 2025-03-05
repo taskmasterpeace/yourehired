@@ -354,6 +354,7 @@ export default function CAPTAINGui() {
 
   // Calendar enhancement states
   const [calendarView, setCalendarView] = useState("month"); //  "month" or "week"
+  const [weekStartDate, setWeekStartDate] = useState(new Date());
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [editingEvent, setEditingEvent] = useState(null);
 
@@ -485,9 +486,40 @@ export default function CAPTAINGui() {
   // Helper functions for calendar
   // Helper function to parse date strings
   const parseEventDate = (dateString) => {
+    if (!dateString) return new Date();
+    
     try {
-      return new Date(dateString);
+      // Try parsing with date-fns first
+      try {
+        const parsedDate = parseISO(dateString);
+        // Check if the date is valid
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate;
+        }
+      } catch (e) {
+        // Continue to next method if this fails
+      }
+      
+      // Try regular Date constructor
+      const regularDate = new Date(dateString);
+      if (!isNaN(regularDate.getTime())) {
+        return regularDate;
+      }
+      
+      // If we have a string like "March 15, 2023"
+      if (typeof dateString === 'string' && dateString.includes(',')) {
+        const parts = dateString.split(',');
+        if (parts.length === 2) {
+          const monthDay = parts[0].trim();
+          const year = parts[1].trim();
+          return new Date(`${monthDay} ${year}`);
+        }
+      }
+      
+      // Default to current date if all parsing fails
+      return new Date();
     } catch (e) {
+      console.error("Error parsing date:", e);
       return new Date();
     }
   };
@@ -504,6 +536,23 @@ export default function CAPTAINGui() {
       });
   };
   
+  // Helper function to get the week's date range
+  const getWeekDates = (startDate) => {
+    const dates = [];
+    const currentDate = new Date(startDate);
+    
+    // Set to the start of the week (Sunday)
+    currentDate.setDate(currentDate.getDate() - currentDate.getDay());
+    
+    // Get all 7 days of the week
+    for (let i = 0; i < 7; i++) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return dates;
+  };
+  
   // Helper function to get status changes for a specific day
   const getStatusChangesForDay = (day) => {
     return statusChanges.filter(change => {
@@ -514,27 +563,53 @@ export default function CAPTAINGui() {
 
   // Enhanced function to get events for a day with job application info
   const getEnhancedEventsForDay = (day) => {
+    if (!day) return { events: [], applications: [], statusChanges: [], totalActivity: 0 };
+    
     // Get regular events
     const dayEvents = events
       .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
       .filter(event => {
-        const eventDate = parseEventDate(event.date);
-        return isSameDay(day, eventDate);
+        try {
+          // Try multiple date parsing approaches
+          let eventDate;
+          if (typeof event.date === 'string') {
+            // Try parsing with date-fns first
+            try {
+              eventDate = parseISO(event.date);
+            } catch (e) {
+              // Fall back to regular Date constructor
+              eventDate = new Date(event.date);
+            }
+          } else if (event.date instanceof Date) {
+            eventDate = event.date;
+          } else {
+            return false;
+          }
+          
+          return isSameDay(day, eventDate);
+        } catch (e) {
+          console.error("Error comparing dates:", e);
+          return false;
+        }
       });
     
     // Check for job applications on this day
     const jobApplications = opportunities.filter(opp => {
+      if (!opp.appliedDate) return false;
+      
       try {
-        const appDate = parseISO(opp.appliedDate);
+        // Try multiple date parsing approaches
+        let appDate;
+        try {
+          appDate = parseISO(opp.appliedDate);
+        } catch (e) {
+          appDate = new Date(opp.appliedDate);
+        }
+        
         return isSameDay(day, appDate);
       } catch (e) {
-        // Handle date parsing errors gracefully
-        try {
-          const appDate = new Date(opp.appliedDate);
-          return isSameDay(day, appDate);
-        } catch (e2) {
-          return false;
-        }
+        console.error("Error comparing application dates:", e);
+        return false;
       }
     });
     
@@ -2412,7 +2487,17 @@ export default function CAPTAINGui() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => setDate(new Date())} 
+                      onClick={() => {
+                        const today = new Date();
+                        setDate(today);
+                        
+                        if (calendarView === "week") {
+                          // Set week start date to the Sunday of the current week
+                          const weekStart = new Date(today);
+                          weekStart.setDate(today.getDate() - today.getDay());
+                          setWeekStartDate(weekStart);
+                        }
+                      }} 
                       className={`${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700'}`}
                     >
                       <CalendarIcon className="h-4 w-4 mr-1" />
@@ -2431,7 +2516,13 @@ export default function CAPTAINGui() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => setCalendarView("week")} 
+                      onClick={() => {
+                        setCalendarView("week");
+                        // Set the week start date based on the current selected date
+                        const currentDate = new Date(date);
+                        currentDate.setDate(currentDate.getDate() - currentDate.getDay()); // Set to Sunday
+                        setWeekStartDate(currentDate);
+                      }} 
                       className={`${calendarView === "week" ? (isDarkMode ? "bg-blue-800/50 text-blue-100" : "bg-blue-100") : ""} w-full sm:w-auto ${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : ''}`}
                     >
                       Week
@@ -2447,9 +2538,17 @@ export default function CAPTAINGui() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => {
-                        const newDate = new Date(date);
-                        newDate.setMonth(newDate.getMonth() - 1);
-                        setDate(newDate);
+                        if (calendarView === "month") {
+                          const newDate = new Date(date);
+                          newDate.setMonth(newDate.getMonth() - 1);
+                          setDate(newDate);
+                        } else {
+                          // Week view - go back one week
+                          const newDate = new Date(weekStartDate);
+                          newDate.setDate(newDate.getDate() - 7);
+                          setWeekStartDate(newDate);
+                          setDate(newDate);
+                        }
                       }}
                       className={isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : ''}
                     >
@@ -2458,16 +2557,40 @@ export default function CAPTAINGui() {
                     </Button>
                     
                     <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : ''}`}>
-                      {date ? date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Select a date'}
+                      {calendarView === "month" ? (
+                        date ? date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Select a date'
+                      ) : (
+                        // Week view header
+                        (() => {
+                          const weekDates = getWeekDates(weekStartDate);
+                          const startMonth = weekDates[0].toLocaleDateString('en-US', { month: 'short' });
+                          const endMonth = weekDates[6].toLocaleDateString('en-US', { month: 'short' });
+                          const startDay = weekDates[0].getDate();
+                          const endDay = weekDates[6].getDate();
+                          const year = weekDates[0].getFullYear();
+                          
+                          return startMonth === endMonth 
+                            ? `${startMonth} ${startDay}-${endDay}, ${year}` 
+                            : `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+                        })()
+                      )}
                     </h3>
                     
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => {
-                        const newDate = new Date(date);
-                        newDate.setMonth(newDate.getMonth() + 1);
-                        setDate(newDate);
+                        if (calendarView === "month") {
+                          const newDate = new Date(date);
+                          newDate.setMonth(newDate.getMonth() + 1);
+                          setDate(newDate);
+                        } else {
+                          // Week view - go forward one week
+                          const newDate = new Date(weekStartDate);
+                          newDate.setDate(newDate.getDate() + 7);
+                          setWeekStartDate(newDate);
+                          setDate(newDate);
+                        }
                       }}
                       className={isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : ''}
                     >
@@ -2476,99 +2599,178 @@ export default function CAPTAINGui() {
                     </Button>
                   </div>
                   
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="rounded-md border"
-                    classNames={{
-                      day_today: isDarkMode 
-                        ? "bg-blue-800/50 text-blue-100 font-medium border border-blue-500" 
-                        : "bg-blue-100 text-blue-900 font-medium border border-blue-500",
-                      day_selected: isDarkMode
-                        ? "bg-blue-600 text-white hover:bg-blue-700 hover:text-white font-medium"
-                        : "bg-blue-500 text-white hover:bg-blue-600 hover:text-white font-medium",
-                      day: isDarkMode 
-                        ? "text-gray-100 h-9 w-9 p-0 font-normal hover:bg-gray-800" 
-                        : "text-gray-900 h-9 w-9 p-0 font-normal hover:bg-gray-100",
-                      day_disabled: isDarkMode ? "text-gray-600" : "text-gray-400",
-                      day_outside: isDarkMode ? "text-gray-600 opacity-50" : "text-gray-400 opacity-50",
-                      day_range_middle: isDarkMode ? "bg-blue-900/20" : "bg-blue-50",
-                      caption: isDarkMode 
-                        ? "flex justify-center pt-1 relative items-center text-gray-100" 
-                        : "flex justify-center pt-1 relative items-center",
-                      caption_label: isDarkMode ? "text-sm font-medium text-gray-100" : "text-sm font-medium",
-                      nav_button: isDarkMode 
-                        ? "border-0 p-1.5 hover:bg-gray-700 rounded-md text-gray-300" 
-                        : "border-0 p-1.5 hover:bg-gray-100 rounded-md",
-                      head_cell: isDarkMode 
-                        ? "text-gray-400 rounded-md w-9 font-normal text-[0.8rem]" 
-                        : "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
-                    }}
-                    components={{
-                      DayContent: (props) => {
-                        const { events: dayEvents, applications, statusChanges, totalActivity } = getEnhancedEventsForDay(props.date);
-                        const isToday = isSameDay(props.date, new Date());
-                        const isOutsideMonth = props.date.getMonth() !== date.getMonth();
-                      
-                        return (
-                          <div className={`relative h-full w-full p-2 ${
-                            isToday 
-                              ? (isDarkMode ? 'bg-blue-800/30 rounded-md' : 'bg-blue-50 rounded-md') 
-                              : ''
-                          }`}>
-                            <div className={`text-center font-medium ${
+                  {calendarView === "month" ? (
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      className="rounded-md border"
+                      classNames={{
+                        day_today: isDarkMode 
+                          ? "bg-blue-800/50 text-blue-100 font-medium border border-blue-500" 
+                          : "bg-blue-100 text-blue-900 font-medium border border-blue-500",
+                        day_selected: isDarkMode
+                          ? "bg-blue-600 text-white hover:bg-blue-700 hover:text-white font-medium"
+                          : "bg-blue-500 text-white hover:bg-blue-600 hover:text-white font-medium",
+                        day: isDarkMode 
+                          ? "text-gray-100 h-9 w-9 p-0 font-normal hover:bg-gray-800" 
+                          : "text-gray-900 h-9 w-9 p-0 font-normal hover:bg-gray-100",
+                        day_disabled: isDarkMode ? "text-gray-600" : "text-gray-400",
+                        day_outside: isDarkMode ? "text-gray-600 opacity-50" : "text-gray-400 opacity-50",
+                        day_range_middle: isDarkMode ? "bg-blue-900/20" : "bg-blue-50",
+                        caption: isDarkMode 
+                          ? "flex justify-center pt-1 relative items-center text-gray-100" 
+                          : "flex justify-center pt-1 relative items-center",
+                        caption_label: isDarkMode ? "text-sm font-medium text-gray-100" : "text-sm font-medium",
+                        nav_button: isDarkMode 
+                          ? "border-0 p-1.5 hover:bg-gray-700 rounded-md text-gray-300" 
+                          : "border-0 p-1.5 hover:bg-gray-100 rounded-md",
+                        head_cell: isDarkMode 
+                          ? "text-gray-400 rounded-md w-9 font-normal text-[0.8rem]" 
+                          : "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
+                        table: "w-full border-collapse",
+                      }}
+                      components={{
+                        DayContent: (props) => {
+                          const { events: dayEvents, applications, statusChanges, totalActivity } = getEnhancedEventsForDay(props.date);
+                          const isToday = isSameDay(props.date, new Date());
+                          const isOutsideMonth = props.date.getMonth() !== date.getMonth();
+                        
+                          return (
+                            <div className={`relative h-full w-full p-2 ${
                               isToday 
-                                ? (isDarkMode ? 'text-blue-300' : 'text-blue-600') 
-                                : (isDarkMode && !isOutsideMonth ? 'text-gray-100' : '')
-                                  || (isDarkMode && isOutsideMonth ? 'text-gray-600' : '')
-                                  || (isOutsideMonth ? 'text-gray-400' : '')
+                                ? (isDarkMode ? 'bg-blue-800/30 rounded-md' : 'bg-blue-50 rounded-md') 
+                                : ''
                             }`}>
-                              {props.date.getDate()}
+                              <div className={`text-center font-medium ${
+                                isToday 
+                                  ? (isDarkMode ? 'text-blue-300' : 'text-blue-600') 
+                                  : (isDarkMode && !isOutsideMonth ? 'text-gray-100' : '')
+                                    || (isDarkMode && isOutsideMonth ? 'text-gray-600' : '')
+                                    || (isOutsideMonth ? 'text-gray-400' : '')
+                              }`}>
+                                {props.date.getDate()}
+                              </div>
+                            
+                              {totalActivity > 0 && (
+                                <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-0.5 pb-0.5">
+                                  {applications.length > 0 && (
+                                    <div className={`h-1.5 w-1.5 rounded-full bg-green-500 ${isDarkMode ? 'ring-1 ring-green-400' : ''}`} 
+                                         title={`${applications.length} job application(s)`} />
+                                  )}
+                                
+                                  {statusChanges.length > 0 && (
+                                    <div className={`h-1.5 w-1.5 rounded-full bg-orange-500 ${isDarkMode ? 'ring-1 ring-orange-400' : ''}`} 
+                                         title={`${statusChanges.length} status change(s)`} />
+                                  )}
+                                
+                                  {dayEvents.map((event, i) => (
+                                    i < 2 && (
+                                      <div 
+                                        key={i}
+                                        className={`h-1.5 w-1.5 rounded-full ${
+                                          event.type === 'interview' 
+                                            ? `bg-blue-500 ${isDarkMode ? 'ring-1 ring-blue-400' : ''}` 
+                                            : event.type === 'assessment' 
+                                              ? `bg-purple-500 ${isDarkMode ? 'ring-1 ring-purple-400' : ''}` 
+                                              : event.type === 'followup' 
+                                                ? `bg-yellow-500 ${isDarkMode ? 'ring-1 ring-yellow-400' : ''}` 
+                                                : `bg-red-500 ${isDarkMode ? 'ring-1 ring-red-400' : ''}`
+                                        }`}
+                                        title={event.title}
+                                      />
+                                    )
+                                  ))}
+                                
+                                  {totalActivity > 3 && (
+                                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                      +{totalActivity - 3}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
+                          );
+                        }
+                      }}
+                    />
+                  ) : (
+                    // Week view
+                    <div className="week-view">
+                      <div className="grid grid-cols-7 gap-1 mb-2">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
+                          <div key={i} className={`text-center text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="grid grid-cols-7 gap-1">
+                        {getWeekDates(weekStartDate).map((day, i) => {
+                          const { events: dayEvents, applications, statusChanges, totalActivity } = getEnhancedEventsForDay(day);
+                          const isToday = isSameDay(day, new Date());
+                          const isSelected = isSameDay(day, date);
                           
-                            {totalActivity > 0 && (
-                              <div className="absolute bottom-0.5 left-0 right-0 flex justify-center gap-1">
+                          return (
+                            <div 
+                              key={i} 
+                              className={`min-h-[100px] p-1 rounded-md cursor-pointer ${
+                                isToday 
+                                  ? isDarkMode ? 'bg-blue-900/30 border border-blue-800' : 'bg-blue-50 border border-blue-200'
+                                  : isSelected
+                                    ? isDarkMode ? 'bg-blue-800/20 border border-blue-700' : 'bg-blue-100/50 border border-blue-200'
+                                    : isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                              }`}
+                              onClick={() => setDate(day)}
+                            >
+                              <div className={`text-center font-medium text-sm mb-1 ${
+                                isToday 
+                                  ? isDarkMode ? 'text-blue-300' : 'text-blue-600'
+                                  : isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                              }`}>
+                                {day.getDate()}
+                              </div>
+                              
+                              <div className="space-y-1 overflow-hidden">
                                 {applications.length > 0 && (
-                                  <div className={`h-2 w-2 rounded-full bg-green-500 ${isDarkMode ? 'ring-1 ring-green-400' : 'shadow-sm'}`} 
-                                       title={`${applications.length} job application(s)`} />
+                                  <div className="flex items-center">
+                                    <div className="h-2 w-2 rounded-full bg-green-500 mr-1"></div>
+                                    <span className={`text-xs truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                      {applications.length} application{applications.length > 1 ? 's' : ''}
+                                    </span>
+                                  </div>
                                 )}
-                              
-                                {statusChanges.length > 0 && (
-                                  <div className={`h-2 w-2 rounded-full bg-orange-500 ${isDarkMode ? 'ring-1 ring-orange-400' : 'shadow-sm'}`} 
-                                       title={`${statusChanges.length} status change(s)`} />
-                                )}
-                              
-                                {dayEvents.map((event, i) => (
-                                  i < 2 && (
-                                    <div 
-                                      key={i}
-                                      className={`h-2 w-2 rounded-full ${
-                                        event.type === 'interview' 
-                                          ? `bg-blue-500 ${isDarkMode ? 'ring-1 ring-blue-400' : 'shadow-sm'}` 
-                                          : event.type === 'assessment' 
-                                            ? `bg-purple-500 ${isDarkMode ? 'ring-1 ring-purple-400' : 'shadow-sm'}` 
-                                            : event.type === 'followup' 
-                                              ? `bg-yellow-500 ${isDarkMode ? 'ring-1 ring-yellow-400' : 'shadow-sm'}` 
-                                              : `bg-red-500 ${isDarkMode ? 'ring-1 ring-red-400' : 'shadow-sm'}`
-                                      }`}
-                                      title={event.title}
-                                    />
-                                  )
+                                
+                                {dayEvents.slice(0, 3).map((event, j) => (
+                                  <div 
+                                    key={j}
+                                    className={`text-xs px-1 py-0.5 rounded truncate ${
+                                      event.type === 'interview' 
+                                        ? isDarkMode ? 'bg-blue-900/50 text-blue-200' : 'bg-blue-100 text-blue-800'
+                                        : event.type === 'assessment' 
+                                          ? isDarkMode ? 'bg-purple-900/50 text-purple-200' : 'bg-purple-100 text-purple-800'
+                                          : event.type === 'followup' 
+                                            ? isDarkMode ? 'bg-yellow-900/50 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
+                                            : isDarkMode ? 'bg-red-900/50 text-red-200' : 'bg-red-100 text-red-800'
+                                    }`}
+                                    title={event.title}
+                                  >
+                                    {event.title}
+                                  </div>
                                 ))}
-                              
+                                
                                 {totalActivity > 3 && (
-                                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    +{totalActivity - 3}
-                                  </span>
+                                  <div className={`text-xs text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    +{totalActivity - 3} more
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      }
-                    }}
-                  />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Legend for event types */}
                   <div className="mt-4 flex flex-wrap gap-3">
