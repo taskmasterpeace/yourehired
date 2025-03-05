@@ -766,7 +766,7 @@ export const KeywordsSection = ({
       </Dialog>
       
       {/* Help Dialog */}
-      <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
+      <Dialog open={Boolean(showHelpDialog)} onOpenChange={(open) => setShowHelpDialog(open ? showHelpDialog : false)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Using Keywords</DialogTitle>
@@ -816,14 +816,18 @@ export const KeywordsSection = ({
           </div>
           
           <DialogFooter className="flex justify-between items-center">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('#', '_blank')}
-              className="hidden" // Hide this button until we implement the full routing
-            >
-              View Full Guide
-            </Button>
+            {openGuide && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setShowHelpDialog(false);
+                  openGuide('tags-keywords', 'keywords-feature');
+                }}
+              >
+                View Full Guide
+              </Button>
+            )}
             <Button onClick={() => setShowHelpDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>

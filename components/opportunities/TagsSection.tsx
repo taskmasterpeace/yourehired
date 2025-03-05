@@ -480,6 +480,7 @@ export const TagsSection = ({
                   setShowHelpDialog(false);
                   openGuide('tags-keywords', 'tags-feature');
                 }}
+                className="block" // Make this button visible now that we have implemented the routing
               >
                 View Full Guide
               </Button>
