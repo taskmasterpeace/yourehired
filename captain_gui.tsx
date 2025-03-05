@@ -1603,33 +1603,34 @@ export default function CAPTAINGui() {
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
             >
-              <OpportunityDetails
-                opportunity={selectedOpportunity}
-                updateOpportunity={updateOpportunity}
-                deleteOpportunity={(id) => {
-                  if (window.confirm("Are you sure you want to delete this opportunity?")) {
-                    dispatch({ type: 'DELETE_OPPORTUNITY', payload: id });
-                    if (opportunities.length > 1) {
-                      setSelectedOpportunityIndex(0);
+              {selectedOpportunity ? (
+                <OpportunityDetails
+                  opportunity={selectedOpportunity}
+                  updateOpportunity={updateOpportunity}
+                  deleteOpportunity={(id) => {
+                    if (window.confirm("Are you sure you want to delete this opportunity?")) {
+                      dispatch({ type: 'DELETE_OPPORTUNITY', payload: id });
+                      if (opportunities.length > 1) {
+                        setSelectedOpportunityIndex(0);
+                      }
                     }
-                  }
-                }}
-                isDarkMode={isDarkMode}
-                chatMessages={opportunityMessages}
-                handleSendMessage={handleSendMessage}
-                currentMessage={currentMessage}
-                setCurrentMessage={setCurrentMessage}
-                suggestions={suggestions}
-                isMasterResumeFrozen={isMasterResumeFrozen}
-                setIsMasterResumeFrozen={setIsMasterResumeFrozen}
-                updateMasterResume={(resume) => {
-                  dispatch({
-                    type: 'UPDATE_MASTER_RESUME',
-                    payload: resume
-                  });
-                }}
-                openGuide={openGuide}
-              />
+                  }}
+                  isDarkMode={isDarkMode}
+                  chatMessages={opportunityMessages}
+                  handleSendMessage={handleSendMessage}
+                  currentMessage={currentMessage}
+                  setCurrentMessage={setCurrentMessage}
+                  suggestions={suggestions}
+                  isMasterResumeFrozen={isMasterResumeFrozen}
+                  setIsMasterResumeFrozen={setIsMasterResumeFrozen}
+                  updateMasterResume={(resume) => {
+                    dispatch({
+                      type: 'UPDATE_MASTER_RESUME',
+                      payload: resume
+                    });
+                  }}
+                  openGuide={openGuide}
+                />
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center p-8">
