@@ -1197,10 +1197,38 @@ export default function CAPTAINGui() {
 
             <Card 
               className={`col-span-1 md:col-span-2 flex flex-col order-1 md:order-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
             >
-              {selectedOpportunity ? (
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+              >
+                <OpportunityDetails
+                  opportunity={selectedOpportunity}
+                  updateOpportunity={updateOpportunity}
+                  deleteOpportunity={(id) => {
+                    if (window.confirm("Are you sure you want to delete this opportunity?")) {
+                      dispatch({ type: 'DELETE_OPPORTUNITY', payload: id });
+                      if (opportunities.length > 1) {
+                        setSelectedOpportunityIndex(0);
+                      }
+                    }
+                  }}
+                  isDarkMode={isDarkMode}
+                  chatMessages={opportunityMessages}
+                  handleSendMessage={handleSendMessage}
+                  currentMessage={currentMessage}
+                  setCurrentMessage={setCurrentMessage}
+                  suggestions={suggestions}
+                  isMasterResumeFrozen={isMasterResumeFrozen}
+                  setIsMasterResumeFrozen={setIsMasterResumeFrozen}
+                  updateMasterResume={(resume) => {
+                    dispatch({
+                      type: 'UPDATE_MASTER_RESUME',
+                      payload: resume
+                    });
+                  }}
+                />
+              </div>
                 <>
                   <CardHeader className="pb-2">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
