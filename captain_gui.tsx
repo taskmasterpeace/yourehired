@@ -1707,16 +1707,19 @@ export default function CAPTAINGui() {
             <Card className="col-span-1 md:col-span-5 order-2 md:order-1">
               <CardHeader className="pb-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <CardTitle>Calendar</CardTitle>
-                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-2">
+                    <CardTitle>Calendar</CardTitle>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={() => setDate(new Date())} 
-                      className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : ''}`}
+                      className={`${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700'}`}
                     >
+                      <CalendarIcon className="h-4 w-4 mr-1" />
                       Today
                     </Button>
+                  </div>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -1738,6 +1741,41 @@ export default function CAPTAINGui() {
               </CardHeader>
               <CardContent>
                 <div className={`p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg border ${isDarkMode ? 'border-gray-700' : ''}`}>
+                  {/* Calendar navigation header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        const newDate = new Date(date);
+                        newDate.setMonth(newDate.getMonth() - 1);
+                        setDate(newDate);
+                      }}
+                      className={isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : ''}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    
+                    <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : ''}`}>
+                      {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </h3>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        const newDate = new Date(date);
+                        newDate.setMonth(newDate.getMonth() + 1);
+                        setDate(newDate);
+                      }}
+                      className={isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : ''}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
                   <Calendar
                     mode="single"
                     selected={date}
@@ -1805,6 +1843,30 @@ export default function CAPTAINGui() {
                       }
                     }}
                   />
+                  
+                  {/* Legend for event types */}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <div className="flex items-center">
+                      <div className="h-3 w-3 rounded-full bg-green-500 mr-1"></div>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Applications</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="h-3 w-3 rounded-full bg-blue-500 mr-1"></div>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Interviews</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="h-3 w-3 rounded-full bg-purple-500 mr-1"></div>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Assessments</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="h-3 w-3 rounded-full bg-yellow-500 mr-1"></div>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Follow-ups</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="h-3 w-3 rounded-full bg-red-500 mr-1"></div>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Deadlines</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1812,7 +1874,13 @@ export default function CAPTAINGui() {
             <Card className="col-span-1 md:col-span-2 order-1 md:order-2">
               <CardHeader className="pb-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <CardTitle>Events</CardTitle>
+                  <CardTitle>
+                    {date && date.toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })} Events
+                  </CardTitle>
                   <Select value={eventTypeFilter} onValueChange={setEventTypeFilter} className="w-full sm:w-[130px]">
                     <SelectTrigger>
                       <SelectValue placeholder="Filter events" />
@@ -1831,10 +1899,6 @@ export default function CAPTAINGui() {
                 <ScrollArea className="h-[300px] sm:h-[400px] pr-4">
                   {date && (
                     <div>
-                      <h3 className="font-medium mb-2">
-                        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                      </h3>
-                      
                       {getEventsForDay(date).length > 0 ? (
                         <div className="space-y-3">
                           {getEventsForDay(date).map((event) => {
@@ -1843,12 +1907,19 @@ export default function CAPTAINGui() {
                               : null;
                               
                             return (
-                              <Card key={event.id} className="overflow-hidden">
+                              <Card key={event.id} className={`overflow-hidden border-l-4 ${
+                                event.type === 'interview' ? 'border-l-blue-500' :
+                                event.type === 'assessment' ? 'border-l-purple-500' :
+                                event.type === 'followup' ? 'border-l-yellow-500' :
+                                'border-l-red-500'
+                              }`}>
                                 <CardHeader className={`py-2 px-3 ${
-                                  event.type === 'interview' ? 'bg-blue-50' :
-                                  event.type === 'assessment' ? 'bg-purple-50' :
-                                  event.type === 'followup' ? 'bg-yellow-50' :
-                                  'bg-red-50'
+                                  isDarkMode ? 'bg-gray-800' : (
+                                    event.type === 'interview' ? 'bg-blue-50' :
+                                    event.type === 'assessment' ? 'bg-purple-50' :
+                                    event.type === 'followup' ? 'bg-yellow-50' :
+                                    'bg-red-50'
+                                  )
                                 }`}>
                                   <div className="flex justify-between items-center">
                                     <Badge className={
@@ -1859,27 +1930,59 @@ export default function CAPTAINGui() {
                                     }>
                                       {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
                                     </Badge>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-6 w-6 p-0"
-                                      onClick={() => {
-                                        if (window.confirm("Are you sure you want to delete this event?")) {
-                                          dispatch({ type: 'DELETE_EVENT', payload: event.id });
-                                        }
-                                      }}
-                                    >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                      </svg>
-                                    </Button>
+                                    <div className="flex gap-1">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => {
+                                          // Edit event functionality
+                                          setEditingEvent(event);
+                                        }}
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => {
+                                          if (window.confirm("Are you sure you want to delete this event?")) {
+                                            dispatch({ type: 'DELETE_EVENT', payload: event.id });
+                                          }
+                                        }}
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                      </Button>
+                                    </div>
                                   </div>
                                 </CardHeader>
                                 <CardContent className="py-2 px-3">
                                   <h4 className="font-medium">{event.title}</h4>
                                   {relatedJob && (
-                                    <p className="text-xs text-gray-500">
-                                      {relatedJob.company} - {relatedJob.position}
+                                    <div 
+                                      className="text-xs mt-1 cursor-pointer hover:text-blue-500"
+                                      onClick={() => {
+                                        // Navigate to the related job
+                                        const jobIndex = opportunities.findIndex(opp => opp.id === event.opportunityId);
+                                        if (jobIndex !== -1) {
+                                          setActiveTab("opportunities");
+                                          setSelectedOpportunity(jobIndex);
+                                        }
+                                      }}
+                                    >
+                                      <span className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                        {relatedJob.company} - {relatedJob.position}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {event.notes && (
+                                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                      {event.notes}
                                     </p>
                                   )}
                                 </CardContent>
@@ -1888,19 +1991,36 @@ export default function CAPTAINGui() {
                           })}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-20" />
                           <p>No events for this day</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={() => {
+                              setNewEvent({
+                                ...newEvent,
+                                date: date.toISOString().split('T')[0]
+                              });
+                              // Open the add event dialog
+                              document.getElementById('add-event-trigger')?.click();
+                            }}
+                          >
+                            <PlusCircle className="h-4 w-4 mr-1" />
+                            Add Event
+                          </Button>
                         </div>
                       )}
                     </div>
                   )}
                   
                   <div className="mt-6">
-                    <h3 className="font-medium mb-2">Upcoming Events</h3>
+                    <h3 className={`font-medium mb-2 ${isDarkMode ? 'text-gray-200' : ''}`}>Upcoming Events</h3>
                     {events.length > 0 ? (
                       <div className="space-y-3">
                         {events
-                          .filter(event => eventTypeFilter === 'all' || event.type === event.type)
+                          .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
                           .filter(event => {
                             const eventDate = new Date(event.date);
                             const today = new Date();
@@ -1915,12 +2035,19 @@ export default function CAPTAINGui() {
                               : null;
                               
                             return (
-                              <Card key={event.id} className="overflow-hidden">
+                              <Card key={event.id} className={`overflow-hidden border-l-4 ${
+                                event.type === 'interview' ? 'border-l-blue-500' :
+                                event.type === 'assessment' ? 'border-l-purple-500' :
+                                event.type === 'followup' ? 'border-l-yellow-500' :
+                                'border-l-red-500'
+                              }`}>
                                 <CardHeader className={`py-2 px-3 ${
-                                  event.type === 'interview' ? 'bg-blue-50' :
-                                  event.type === 'assessment' ? 'bg-purple-50' :
-                                  event.type === 'followup' ? 'bg-yellow-50' :
-                                  'bg-red-50'
+                                  isDarkMode ? 'bg-gray-800' : (
+                                    event.type === 'interview' ? 'bg-blue-50' :
+                                    event.type === 'assessment' ? 'bg-purple-50' :
+                                    event.type === 'followup' ? 'bg-yellow-50' :
+                                    'bg-red-50'
+                                  )
                                 }`}>
                                   <div className="flex justify-between items-center">
                                     <Badge className={
@@ -1931,15 +2058,32 @@ export default function CAPTAINGui() {
                                     }>
                                       {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
                                     </Badge>
-                                    <span className="text-xs">{event.date}</span>
+                                    <span className={`text-xs ${isDarkMode ? 'text-gray-300' : ''}`}>
+                                      {new Date(event.date).toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                      })}
+                                    </span>
                                   </div>
                                 </CardHeader>
                                 <CardContent className="py-2 px-3">
                                   <h4 className="font-medium">{event.title}</h4>
                                   {relatedJob && (
-                                    <p className="text-xs text-gray-500">
-                                      {relatedJob.company} - {relatedJob.position}
-                                    </p>
+                                    <div 
+                                      className="text-xs mt-1 cursor-pointer hover:text-blue-500"
+                                      onClick={() => {
+                                        // Navigate to the related job
+                                        const jobIndex = opportunities.findIndex(opp => opp.id === event.opportunityId);
+                                        if (jobIndex !== -1) {
+                                          setActiveTab("opportunities");
+                                          setSelectedOpportunityIndex(jobIndex);
+                                        }
+                                      }}
+                                    >
+                                      <span className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                        {relatedJob.company} - {relatedJob.position}
+                                      </span>
+                                    </div>
                                   )}
                                 </CardContent>
                               </Card>
@@ -1947,7 +2091,7 @@ export default function CAPTAINGui() {
                           })}
                       </div>
                     ) : (
-                      <div className="text-center py-4 text-gray-500">
+                      <div className={`text-center py-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <p>No upcoming events</p>
                       </div>
                     )}
@@ -1955,6 +2099,11 @@ export default function CAPTAINGui() {
                 </ScrollArea>
               </CardContent>
             </Card>
+
+            {/* Hidden trigger for add event dialog */}
+            <DialogTrigger asChild id="add-event-trigger" className="hidden">
+              <button>Add Event</button>
+            </DialogTrigger>
           </div>
         </TabsContent>
         
