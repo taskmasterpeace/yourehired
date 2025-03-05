@@ -10,6 +10,253 @@ import { OpportunityHeader } from '@/components/opportunities/OpportunityHeader'
 import { JobDetailsSection } from '@/components/opportunities/JobDetailsSection'
 import { ContactInfoSection } from '@/components/opportunities/ContactInfoSection'
 import { NotesSection } from '@/components/opportunities/NotesSection'
+
+// Define JobDetailsSection component
+export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEditedDetails, handleSaveJobDetails, handleEditJobDetails, isDarkMode }) => {
+  // Only show fields that have data
+  const hasLocation = opportunity.location && opportunity.location.trim() !== "";
+  const hasSalary = opportunity.salary && opportunity.salary.trim() !== "";
+  const hasApplicationUrl = opportunity.applicationUrl && opportunity.applicationUrl.trim() !== "";
+  const hasSource = opportunity.source && opportunity.source.trim() !== "";
+  
+  // Check if any job details exist to show the section at all
+  const hasAnyDetails = hasLocation || hasSalary || hasApplicationUrl || hasSource;
+  
+  if (!hasAnyDetails && !isEditing) {
+    return null; // Don't render the section at all if no details exist and not editing
+  }
+  
+  return (
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : ''}`}>Job Details</h3>
+        {!isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEditJobDetails}>
+            Edit
+          </Button>
+        ) : (
+          <Button variant="primary" size="sm" onClick={handleSaveJobDetails}>
+            Save
+          </Button>
+        )}
+      </div>
+      
+      {isEditing ? (
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="location">Location</Label>
+            <Input
+              id="location"
+              value={editedDetails.location || ""}
+              onChange={(e) => setEditedDetails({...editedDetails, location: e.target.value})}
+              placeholder="e.g., Remote, New York, NY"
+            />
+          </div>
+          <div>
+            <Label htmlFor="salary">Salary Range</Label>
+            <Input
+              id="salary"
+              value={editedDetails.salary || ""}
+              onChange={(e) => setEditedDetails({...editedDetails, salary: e.target.value})}
+              placeholder="e.g., $80,000 - $100,000"
+            />
+          </div>
+          <div>
+            <Label htmlFor="applicationUrl">Application URL</Label>
+            <Input
+              id="applicationUrl"
+              value={editedDetails.applicationUrl || ""}
+              onChange={(e) => setEditedDetails({...editedDetails, applicationUrl: e.target.value})}
+              placeholder="https://..."
+            />
+          </div>
+          <div>
+            <Label htmlFor="source">Source</Label>
+            <Input
+              id="source"
+              value={editedDetails.source || ""}
+              onChange={(e) => setEditedDetails({...editedDetails, source: e.target.value})}
+              placeholder="e.g., LinkedIn, Indeed, Referral"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {hasLocation && (
+            <div className="flex items-start">
+              <span className={`font-medium w-24 ${isDarkMode ? 'text-gray-300' : ''}`}>Location:</span>
+              <span className={isDarkMode ? 'text-gray-300' : ''}>{opportunity.location}</span>
+            </div>
+          )}
+          
+          {hasSalary && (
+            <div className="flex items-start">
+              <span className={`font-medium w-24 ${isDarkMode ? 'text-gray-300' : ''}`}>Salary:</span>
+              <span className={isDarkMode ? 'text-gray-300' : ''}>{opportunity.salary}</span>
+            </div>
+          )}
+          
+          {hasApplicationUrl && (
+            <div className="flex items-start">
+              <span className={`font-medium w-24 ${isDarkMode ? 'text-gray-300' : ''}`}>Apply URL:</span>
+              <a 
+                href={opportunity.applicationUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {opportunity.applicationUrl}
+              </a>
+            </div>
+          )}
+          
+          {hasSource && (
+            <div className="flex items-start">
+              <span className={`font-medium w-24 ${isDarkMode ? 'text-gray-300' : ''}`}>Source:</span>
+              <span className={isDarkMode ? 'text-gray-300' : ''}>{opportunity.source}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Define ContactInfoSection component
+export const ContactInfoSection = ({ opportunity, isEditing, editedContactInfo, setEditedContactInfo, handleSaveContactInfo, handleEditContactInfo, isDarkMode }) => {
+  // Only show fields that have data
+  const hasRecruiterName = opportunity.recruiterName && opportunity.recruiterName.trim() !== "";
+  const hasRecruiterEmail = opportunity.recruiterEmail && opportunity.recruiterEmail.trim() !== "";
+  const hasRecruiterPhone = opportunity.recruiterPhone && opportunity.recruiterPhone.trim() !== "";
+  
+  // Check if any contact info exists to show the section at all
+  const hasAnyContactInfo = hasRecruiterName || hasRecruiterEmail || hasRecruiterPhone;
+  
+  if (!hasAnyContactInfo && !isEditing) {
+    return null; // Don't render the section at all if no contact info exists and not editing
+  }
+  
+  return (
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : ''}`}>Contact Information</h3>
+        {!isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEditContactInfo}>
+            Edit
+          </Button>
+        ) : (
+          <Button variant="primary" size="sm" onClick={handleSaveContactInfo}>
+            Save
+          </Button>
+        )}
+      </div>
+      
+      {isEditing ? (
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="recruiterName">Contact Name</Label>
+            <Input
+              id="recruiterName"
+              value={editedContactInfo.recruiterName || ""}
+              onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterName: e.target.value})}
+              placeholder="e.g., John Smith"
+            />
+          </div>
+          <div>
+            <Label htmlFor="recruiterEmail">Contact Email</Label>
+            <Input
+              id="recruiterEmail"
+              value={editedContactInfo.recruiterEmail || ""}
+              onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterEmail: e.target.value})}
+              placeholder="e.g., john.smith@company.com"
+            />
+          </div>
+          <div>
+            <Label htmlFor="recruiterPhone">Contact Phone</Label>
+            <Input
+              id="recruiterPhone"
+              value={editedContactInfo.recruiterPhone || ""}
+              onChange={(e) => setEditedContactInfo({...editedContactInfo, recruiterPhone: e.target.value})}
+              placeholder="e.g., (555) 123-4567"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {hasRecruiterName && (
+            <div className="flex items-start">
+              <span className={`font-medium w-24 ${isDarkMode ? 'text-gray-300' : ''}`}>Name:</span>
+              <span className={isDarkMode ? 'text-gray-300' : ''}>{opportunity.recruiterName}</span>
+            </div>
+          )}
+          
+          {hasRecruiterEmail && (
+            <div className="flex items-start">
+              <span className={`font-medium w-24 ${isDarkMode ? 'text-gray-300' : ''}`}>Email:</span>
+              <a 
+                href={`mailto:${opportunity.recruiterEmail}`} 
+                className="text-blue-600 hover:underline"
+              >
+                {opportunity.recruiterEmail}
+              </a>
+            </div>
+          )}
+          
+          {hasRecruiterPhone && (
+            <div className="flex items-start">
+              <span className={`font-medium w-24 ${isDarkMode ? 'text-gray-300' : ''}`}>Phone:</span>
+              <a 
+                href={`tel:${opportunity.recruiterPhone}`} 
+                className="text-blue-600 hover:underline"
+              >
+                {opportunity.recruiterPhone}
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Define NotesSection component
+export const NotesSection = ({ opportunity, isEditing, editedNotes, setEditedNotes, handleSaveNotes, handleEditNotes, isDarkMode }) => {
+  // Only show if there are notes or we're editing
+  const hasNotes = opportunity.notes && opportunity.notes.trim() !== "";
+  
+  if (!hasNotes && !isEditing) {
+    return null; // Don't render the section at all if no notes exist and not editing
+  }
+  
+  return (
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : ''}`}>Notes</h3>
+        {!isEditing ? (
+          <Button variant="ghost" size="sm" onClick={handleEditNotes}>
+            Edit
+          </Button>
+        ) : (
+          <Button variant="primary" size="sm" onClick={handleSaveNotes}>
+            Save
+          </Button>
+        )}
+      </div>
+      
+      {isEditing ? (
+        <Textarea
+          value={editedNotes || ""}
+          onChange={(e) => setEditedNotes(e.target.value)}
+          placeholder="Add notes about this opportunity..."
+          rows={5}
+          className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : ''}
+        />
+      ) : (
+        <div className={`whitespace-pre-wrap ${isDarkMode ? 'text-gray-300' : ''}`}>{opportunity.notes}</div>
+      )}
+    </div>
+  );
+};
 import { OpportunityDetails } from '@/components/opportunities/OpportunityDetails'
 import { OpportunityList } from '@/components/opportunities/OpportunityList'
 import { useDarkMode } from '@/hooks/useDarkMode'
@@ -1717,6 +1964,9 @@ export default function CAPTAINGui() {
                     });
                   }}
                   openGuide={openGuide}
+                  JobDetailsSection={JobDetailsSection}
+                  ContactInfoSection={ContactInfoSection}
+                  NotesSection={NotesSection}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
