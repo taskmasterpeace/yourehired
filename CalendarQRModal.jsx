@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateICalString } from './calendarUtils.js';
 import { 
@@ -10,10 +10,11 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, X, Smartphone, Check } from 'lucide-react';
+import { CalendarIcon, X, Smartphone, Check, Download } from 'lucide-react';
 
 const CalendarQRModal = ({ event, isOpen, onClose }) => {
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   
   // Generate the iCalendar data
   const calendarData = event ? generateICalString(event) : '';
@@ -29,6 +30,32 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
       hour: 'numeric',
       minute: '2-digit'
     });
+  };
+  
+  // Handle direct download of .ics file
+  const handleDownload = () => {
+    if (!calendarData) return;
+    
+    const blob = new Blob([calendarData], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${event.title || 'event'}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  // Handle copy to clipboard
+  const handleCopy = () => {
+    if (!calendarData) return;
+    
+    navigator.clipboard.writeText(calendarData)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      })
+      .catch(err => console.error('Failed to copy: ', err));
   };
   
   const handleFeedback = (success) => {
@@ -76,6 +103,28 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
                 excavate: true
               }}
             />
+          </div>
+          
+          {/* Alternative options */}
+          <div className="mt-4 flex justify-center space-x-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDownload}
+              className="flex items-center"
+            >
+              <Download className="w-4 h-4 mr-1" />
+              Download .ics
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCopy}
+              className="flex items-center"
+            >
+              {isCopied ? <Check className="w-4 h-4 mr-1" /> : <CalendarIcon className="w-4 h-4 mr-1" />}
+              {isCopied ? 'Copied!' : 'Copy iCal'}
+            </Button>
           </div>
           
           {/* Instructions */}

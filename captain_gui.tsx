@@ -2481,16 +2481,28 @@ export default function CAPTAINGui() {
                     onSelect={setDate}
                     className="rounded-md border"
                     classNames={{
-                      day_today: "bg-blue-100 text-blue-900 dark:bg-blue-800 dark:text-blue-50",
-                      day_selected: "bg-blue-500 text-white hover:bg-blue-600 hover:text-white",
-                      day: isDarkMode ? "text-gray-100 h-9 w-9 p-0 font-normal" : "text-gray-900 h-9 w-9 p-0 font-normal",
+                      day_today: isDarkMode 
+                        ? "bg-blue-800/50 text-blue-100 font-medium border border-blue-500" 
+                        : "bg-blue-100 text-blue-900 font-medium border border-blue-500",
+                      day_selected: isDarkMode
+                        ? "bg-blue-600 text-white hover:bg-blue-700 hover:text-white font-medium"
+                        : "bg-blue-500 text-white hover:bg-blue-600 hover:text-white font-medium",
+                      day: isDarkMode 
+                        ? "text-gray-100 h-9 w-9 p-0 font-normal hover:bg-gray-800" 
+                        : "text-gray-900 h-9 w-9 p-0 font-normal hover:bg-gray-100",
                       day_disabled: isDarkMode ? "text-gray-600" : "text-gray-400",
                       day_outside: isDarkMode ? "text-gray-600 opacity-50" : "text-gray-400 opacity-50",
                       day_range_middle: isDarkMode ? "bg-blue-900/20" : "bg-blue-50",
-                      caption: isDarkMode ? "flex justify-center pt-1 relative items-center text-gray-100" : "flex justify-center pt-1 relative items-center",
+                      caption: isDarkMode 
+                        ? "flex justify-center pt-1 relative items-center text-gray-100" 
+                        : "flex justify-center pt-1 relative items-center",
                       caption_label: isDarkMode ? "text-sm font-medium text-gray-100" : "text-sm font-medium",
-                      nav_button: isDarkMode ? "border-0 p-1.5 hover:bg-gray-700 rounded-md text-gray-300" : "border-0 p-1.5 hover:bg-gray-100 rounded-md",
-                      head_cell: isDarkMode ? "text-gray-400 rounded-md w-9 font-normal text-[0.8rem]" : "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
+                      nav_button: isDarkMode 
+                        ? "border-0 p-1.5 hover:bg-gray-700 rounded-md text-gray-300" 
+                        : "border-0 p-1.5 hover:bg-gray-100 rounded-md",
+                      head_cell: isDarkMode 
+                        ? "text-gray-400 rounded-md w-9 font-normal text-[0.8rem]" 
+                        : "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
                     }}
                     components={{
                       DayContent: (props) => {
@@ -2499,7 +2511,11 @@ export default function CAPTAINGui() {
                         const isOutsideMonth = props.date.getMonth() !== date.getMonth();
                       
                         return (
-                          <div className={`relative h-full w-full p-2 ${isToday ? (isDarkMode ? 'bg-blue-800/30 rounded-md' : 'bg-blue-50 rounded-md') : ''}`}>
+                          <div className={`relative h-full w-full p-2 ${
+                            isToday 
+                              ? (isDarkMode ? 'bg-blue-800/30 rounded-md' : 'bg-blue-50 rounded-md') 
+                              : ''
+                          }`}>
                             <div className={`text-center font-medium ${
                               isToday 
                                 ? (isDarkMode ? 'text-blue-300' : 'text-blue-600') 
@@ -2511,14 +2527,14 @@ export default function CAPTAINGui() {
                             </div>
                           
                             {totalActivity > 0 && (
-                              <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-0.5">
+                              <div className="absolute bottom-0.5 left-0 right-0 flex justify-center gap-1">
                                 {applications.length > 0 && (
-                                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" 
+                                  <div className={`h-2 w-2 rounded-full bg-green-500 ${isDarkMode ? 'ring-1 ring-green-400' : 'shadow-sm'}`} 
                                        title={`${applications.length} job application(s)`} />
                                 )}
                               
                                 {statusChanges.length > 0 && (
-                                  <div className="h-1.5 w-1.5 rounded-full bg-orange-500" 
+                                  <div className={`h-2 w-2 rounded-full bg-orange-500 ${isDarkMode ? 'ring-1 ring-orange-400' : 'shadow-sm'}`} 
                                        title={`${statusChanges.length} status change(s)`} />
                                 )}
                               
@@ -2526,11 +2542,14 @@ export default function CAPTAINGui() {
                                   i < 2 && (
                                     <div 
                                       key={i}
-                                      className={`h-1.5 w-1.5 rounded-full ${
-                                        event.type === 'interview' ? 'bg-blue-500' :
-                                        event.type === 'assessment' ? 'bg-purple-500' :
-                                        event.type === 'followup' ? 'bg-yellow-500' :
-                                        'bg-red-500'
+                                      className={`h-2 w-2 rounded-full ${
+                                        event.type === 'interview' 
+                                          ? `bg-blue-500 ${isDarkMode ? 'ring-1 ring-blue-400' : 'shadow-sm'}` 
+                                          : event.type === 'assessment' 
+                                            ? `bg-purple-500 ${isDarkMode ? 'ring-1 ring-purple-400' : 'shadow-sm'}` 
+                                            : event.type === 'followup' 
+                                              ? `bg-yellow-500 ${isDarkMode ? 'ring-1 ring-yellow-400' : 'shadow-sm'}` 
+                                              : `bg-red-500 ${isDarkMode ? 'ring-1 ring-red-400' : 'shadow-sm'}`
                                       }`}
                                       title={event.title}
                                     />
@@ -2538,7 +2557,9 @@ export default function CAPTAINGui() {
                                 ))}
                               
                                 {totalActivity > 3 && (
-                                  <span className="text-xs text-gray-500">+{totalActivity - 3}</span>
+                                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    +{totalActivity - 3}
+                                  </span>
                                 )}
                               </div>
                             )}
@@ -2616,25 +2637,48 @@ export default function CAPTAINGui() {
                               
                             return (
                               <Card key={event.id} className={`overflow-hidden border-l-4 ${
-                                event.type === 'interview' ? 'border-l-blue-500' :
-                                event.type === 'assessment' ? 'border-l-purple-500' :
-                                event.type === 'followup' ? 'border-l-yellow-500' :
-                                'border-l-red-500'
+                                event.type === 'interview' 
+                                  ? isDarkMode ? 'border-l-blue-400' : 'border-l-blue-500' 
+                                  : event.type === 'assessment' 
+                                    ? isDarkMode ? 'border-l-purple-400' : 'border-l-purple-500' 
+                                    : event.type === 'followup' 
+                                      ? isDarkMode ? 'border-l-yellow-400' : 'border-l-yellow-500' 
+                                      : isDarkMode ? 'border-l-red-400' : 'border-l-red-500'
                               }`}>
                                 <CardHeader className={`py-2 px-3 ${
-                                  isDarkMode ? 'bg-gray-800' : (
-                                    event.type === 'interview' ? 'bg-blue-50' :
-                                    event.type === 'assessment' ? 'bg-purple-50' :
-                                    event.type === 'followup' ? 'bg-yellow-50' :
-                                    'bg-red-50'
-                                  )
+                                  isDarkMode 
+                                    ? (event.type === 'interview' 
+                                        ? 'bg-blue-900/30' 
+                                        : event.type === 'assessment' 
+                                          ? 'bg-purple-900/30' 
+                                          : event.type === 'followup' 
+                                            ? 'bg-yellow-900/30' 
+                                            : 'bg-red-900/30')
+                                    : (event.type === 'interview' 
+                                        ? 'bg-blue-50' 
+                                        : event.type === 'assessment' 
+                                          ? 'bg-purple-50' 
+                                          : event.type === 'followup' 
+                                            ? 'bg-yellow-50' 
+                                            : 'bg-red-50')
                                 }`}>
                                   <div className="flex justify-between items-center">
                                     <Badge className={
-                                      event.type === 'interview' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                                      event.type === 'assessment' ? 'bg-purple-100 text-purple-800 hover:bg-purple-200' :
-                                      event.type === 'followup' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
-                                      'bg-red-100 text-red-800 hover:bg-red-200'
+                                      event.type === 'interview' 
+                                        ? isDarkMode 
+                                          ? 'bg-blue-800 text-blue-100 hover:bg-blue-700' 
+                                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
+                                        : event.type === 'assessment' 
+                                          ? isDarkMode 
+                                            ? 'bg-purple-800 text-purple-100 hover:bg-purple-700' 
+                                            : 'bg-purple-100 text-purple-800 hover:bg-purple-200' 
+                                          : event.type === 'followup' 
+                                            ? isDarkMode 
+                                              ? 'bg-yellow-800 text-yellow-100 hover:bg-yellow-700' 
+                                              : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' 
+                                            : isDarkMode 
+                                              ?'bg-red-800 text-red-100 hover:bg-red-700' 
+                                              : 'bg-red-100 text-red-800 hover:bg-red-200'
                                     }>
                                       {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
                                     </Badge>
@@ -2703,6 +2747,7 @@ export default function CAPTAINGui() {
                                       }}
                                       variant="outline"
                                       size="sm"
+                                      compact={true}
                                     />
                                   </div>
                                 </CardContent>
@@ -2743,10 +2788,10 @@ export default function CAPTAINGui() {
                       <h3 className={`font-medium mb-2 ${isDarkMode ? 'text-gray-200' : ''}`}>Status Changes</h3>
                       <div className="space-y-3">
                         {getStatusChangesForDay(date).map((change) => (
-                          <Card key={change.id} className="overflow-hidden border-l-4 border-l-orange-500">
-                            <CardHeader className={`py-2 px-3 ${isDarkMode ? 'bg-gray-800' : 'bg-orange-50'}`}>
+                          <Card key={change.id} className={`overflow-hidden border-l-4 ${isDarkMode ? 'border-l-orange-400' : 'border-l-orange-500'}`}>
+                            <CardHeader className={`py-2 px-3 ${isDarkMode ? 'bg-orange-900/30' : 'bg-orange-50'}`}>
                               <div className="flex justify-between items-center">
-                                <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
+                                <Badge className={isDarkMode ? 'bg-orange-800 text-orange-100 hover:bg-orange-700' : 'bg-orange-100 text-orange-800 hover:bg-orange-200'}>
                                   Status Change
                                 </Badge>
                                 <div className="flex gap-1">
