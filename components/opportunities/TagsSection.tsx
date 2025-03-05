@@ -473,7 +473,7 @@ export const TagsSection = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('/help/tags-keywords-guide', '_blank')}
+              onClick={() => window.open('/help/guides/tags-keywords#tags-feature', '_blank')}
             >
               View Full Guide
             </Button>

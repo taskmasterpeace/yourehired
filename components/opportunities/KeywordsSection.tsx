@@ -817,7 +817,7 @@ export const KeywordsSection = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('/help/tags-keywords-guide', '_blank')}
+              onClick={() => window.open('/help/guides/tags-keywords#keywords-feature', '_blank')}
             >
               View Full Guide
             </Button>
@@ -903,7 +903,7 @@ export const KeywordsSection = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('/help/tags-keywords-guide#keyword-optimization', '_blank')}
+              onClick={() => window.open('/help/guides/tags-keywords#keyword-optimization', '_blank')}
             >
               View Guide
             </Button>
