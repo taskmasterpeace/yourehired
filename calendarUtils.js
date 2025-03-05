@@ -27,10 +27,12 @@ export const escapeICalText = (text) => {
  * @returns {string} iCalendar formatted string
  */
 export const generateICalString = (event) => {
+  if (!event) return '';
+  
   // Ensure we have dates as Date objects
   const startDate = event.startDate instanceof Date 
     ? event.startDate 
-    : new Date(event.startDate || event.date);
+    : new Date(event.startDate || event.date || new Date());
   
   // Default end date is 1 hour after start if not provided
   const endDate = event.endDate instanceof Date 

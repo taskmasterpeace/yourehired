@@ -2457,7 +2457,7 @@ export default function CAPTAINGui() {
                     </Button>
                     
                     <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : ''}`}>
-                      {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      {date ? date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Select a date'}
                     </h3>
                     
                     <Button 
@@ -2583,11 +2583,11 @@ export default function CAPTAINGui() {
               <CardHeader className="pb-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <CardTitle>
-                    {date && date.toLocaleDateString('en-US', { 
+                    {date ? date.toLocaleDateString('en-US', { 
                       weekday: 'short', 
                       month: 'short', 
                       day: 'numeric' 
-                    })} Events
+                    }) : 'Today\'s'} Events
                   </CardTitle>
                   <Select value={eventTypeFilter} onValueChange={setEventTypeFilter} className="w-full sm:w-[130px]">
                     <SelectTrigger>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from 'lucide-react';
-import CalendarQRModal from './CalendarQRModal';
+import CalendarQRModal from './CalendarQRModal.jsx';
 
 const AddToCalendarButton = ({ event, variant = "default", size = "default" }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);

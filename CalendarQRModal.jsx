@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { generateICalString } from './calendarUtils';
+import { generateICalString } from './calendarUtils.js';
 import { 
   Dialog, 
   DialogContent, 
@@ -16,7 +16,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   
   // Generate the iCalendar data
-  const calendarData = generateICalString(event);
+  const calendarData = event ? generateICalString(event) : '';
   
   // Format the event date for display
   const formatDisplayDate = (date) => {
@@ -55,9 +55,9 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           <div className="mb-4 text-center">
             <h3 className="font-medium text-lg">{event.title}</h3>
             <p className="text-sm text-gray-500">
-              {formatDisplayDate(event.startDate || event.date)}
+              {event && formatDisplayDate(event.startDate || event.date)}
             </p>
-            {event.location && (
+            {event && event.location && (
               <p className="text-sm text-gray-500">{event.location}</p>
             )}
           </div>
