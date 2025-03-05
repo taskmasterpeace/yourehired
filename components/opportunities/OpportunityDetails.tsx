@@ -8,6 +8,8 @@ import { OpportunityHeader } from './OpportunityHeader';
 import { JobDetailsSection } from './JobDetailsSection';
 import { ContactInfoSection } from './ContactInfoSection';
 import { NotesSection } from './NotesSection';
+import { TagsSection } from './TagsSection';
+import { KeywordsSection } from './KeywordsSection';
 import { ResumeSection } from './ResumeSection';
 import { AIChatSection } from './AIChatSection';
 import { JobDescriptionSection } from './JobDescriptionSection';
@@ -97,6 +99,22 @@ export const OpportunityDetails = ({
                 updateOpportunity={updateOpportunity}
                 isDarkMode={isDarkMode}
               />
+              
+              <div className="col-span-1 md:col-span-2">
+                <TagsSection
+                  opportunity={opportunity}
+                  updateOpportunity={updateOpportunity}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+              
+              <div className="col-span-1 md:col-span-2">
+                <KeywordsSection
+                  opportunity={opportunity}
+                  updateOpportunity={updateOpportunity}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
               
               <div className="col-span-1 md:col-span-2">
                 <NotesSection 
