@@ -4,6 +4,9 @@ export const useDarkMode = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') return;
+    
     // Check if user has a preference stored
     const savedDarkMode = localStorage.getItem('darkMode') === 'true';
     
@@ -17,6 +20,9 @@ export const useDarkMode = () => {
   }, []);
 
   const toggleDarkMode = (checked: boolean) => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') return;
+    
     setIsDarkMode(checked);
     document.documentElement.classList.toggle('dark', checked);
     localStorage.setItem('darkMode', checked.toString());
