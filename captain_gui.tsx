@@ -7,9 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { QRCodeSVG } from 'qrcode.react'
 import { StatusBadge } from '@/components/opportunities/StatusBadge'
 import { OpportunityHeader } from '@/components/opportunities/OpportunityHeader'
-import { JobDetailsSection } from '@/components/opportunities/JobDetailsSection'
-import { ContactInfoSection } from '@/components/opportunities/ContactInfoSection'
-import { NotesSection } from '@/components/opportunities/NotesSection'
 
 // Define JobDetailsSection component
 export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEditedDetails, handleSaveJobDetails, handleEditJobDetails, isDarkMode }) => {
