@@ -42,7 +42,8 @@ export const OpportunityDetails = ({
   suggestions,
   isMasterResumeFrozen,
   setIsMasterResumeFrozen,
-  updateMasterResume
+  updateMasterResume,
+  openGuide
 }: OpportunityDetailsProps) => {
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
   const [aiPrompts, setAiPrompts] = useState<string[]>([]);

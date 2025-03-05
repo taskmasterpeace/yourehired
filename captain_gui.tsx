@@ -262,6 +262,12 @@ export default function CAPTAINGui() {
   const [activeTab, setActiveTab] = useState("opportunities")
   const [helpView, setHelpView] = useState<{ active: boolean; guideId?: string; sectionId?: string }>({ active: false });
   
+  // Helper function to open a specific guide
+  const openGuide = useCallback((guideId: string, sectionId?: string) => {
+    setActiveTab('help');
+    setHelpView({ active: true, guideId, sectionId });
+  }, []);
+  
   // Set client-side flag after initial render
   useEffect(() => {
     setIsClientSide(true);
