@@ -385,7 +385,13 @@ export const OpportunityList = ({
                         if (isBatchSelectMode) {
                           toggleJobSelection(opp.id);
                         } else {
-                          setSelectedOpportunityIndex(originalIndex);
+                          // Find the index in the original opportunities array
+                          const index = opportunities.findIndex(o => o.id === opp.id);
+                          if (index !== -1) {
+                            setSelectedOpportunityIndex(index);
+                          } else {
+                            setSelectedOpportunityIndex(originalIndex);
+                          }
                         }
                       }}
                     >
@@ -426,7 +432,13 @@ export const OpportunityList = ({
                       if (isBatchSelectMode) {
                         toggleJobSelection(opp.id);
                       } else {
-                        setSelectedOpportunityIndex(originalIndex);
+                        // Find the index in the original opportunities array
+                        const index = opportunities.findIndex(o => o.id === opp.id);
+                        if (index !== -1) {
+                          setSelectedOpportunityIndex(index);
+                        } else {
+                          setSelectedOpportunityIndex(originalIndex);
+                        }
                       }
                     }}
                   >

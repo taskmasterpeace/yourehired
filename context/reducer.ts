@@ -83,6 +83,13 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
       // Generate events based on the new opportunity
       const newEvents = generateEventsFromOpportunity(newOpportunity);
       
+      // Ensure the ID is unique
+      const existingIds = state.opportunities.map(opp => opp.id);
+      if (existingIds.includes(newOpportunity.id)) {
+        // If ID already exists, generate a new unique ID
+        newOpportunity.id = Date.now();
+      }
+      
       return {
         ...state,
         opportunities: [...state.opportunities, newOpportunity],

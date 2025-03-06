@@ -630,6 +630,13 @@ export default function CAPTAINGui() {
   
   // Define selectedOpportunity before any useEffect that uses it
   const selectedOpportunity = opportunities.length > 0 ? opportunities[selectedOpportunityIndex] : undefined;
+  
+  // Debug logging for selection issues
+  useEffect(() => {
+    console.log("Selected opportunity index:", selectedOpportunityIndex);
+    console.log("Selected opportunity:", selectedOpportunity);
+    console.log("All opportunities:", opportunities);
+  }, [selectedOpportunityIndex, selectedOpportunity, opportunities]);
 
   // Helper function to open a specific guide
   const openGuide = useCallback((guideId: string, sectionId?: string) => {
@@ -1482,9 +1489,12 @@ export default function CAPTAINGui() {
       day: 'numeric' 
     });
     
+    // Use a timestamp for a unique ID
+    const uniqueId = Date.now();
+    
     const newOpp = {
       ...newOpportunity,
-      id: opportunities.length + 1,
+      id: uniqueId,
       appliedDate: formattedDate,
       resume: masterResume, // Use the master resume for the new opportunity
     };
@@ -1493,7 +1503,19 @@ export default function CAPTAINGui() {
     dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpp });
     
     // Update last modified timestamp
-    updateLastModified(newOpp.id);
+    updateLastModified(uniqueId);
+    
+    // After the state update, find the index of the new opportunity and select it
+    // We need to do this in the next render cycle to ensure the state has updated
+    setTimeout(() => {
+      const newIndex = opportunities.findIndex(opp => opp.id === uniqueId);
+      if (newIndex !== -1) {
+        setSelectedOpportunityIndex(newIndex);
+      } else {
+        // If we can't find it (unlikely), select the last opportunity
+        setSelectedOpportunityIndex(opportunities.length - 1);
+      }
+    }, 0);
     
     // Reset form
     setNewOpportunity({
