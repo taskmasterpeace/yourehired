@@ -97,42 +97,50 @@ export const ContactInfoSection = ({
         </div>
       ) : (
         <div className="space-y-2">
-          <div>
-            <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Contact Name</span>
-            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-              {opportunity.recruiterName || "Not specified"}
-            </p>
-          </div>
-          <div>
-            <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Contact Email</span>
-            <p>
-              {opportunity.recruiterEmail ? (
+          {opportunity.recruiterName && opportunity.recruiterName.trim() !== "" && (
+            <div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Contact Name</span>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                {opportunity.recruiterName}
+              </p>
+            </div>
+          )}
+          
+          {opportunity.recruiterEmail && opportunity.recruiterEmail.trim() !== "" && (
+            <div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Contact Email</span>
+              <p>
                 <a 
                   href={`mailto:${opportunity.recruiterEmail}`} 
                   className="text-blue-600 hover:underline"
                 >
                   {opportunity.recruiterEmail}
                 </a>
-              ) : (
-                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Not specified</span>
-              )}
-            </p>
-          </div>
-          <div>
-            <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Contact Phone</span>
-            <p>
-              {opportunity.recruiterPhone ? (
+              </p>
+            </div>
+          )}
+          
+          {opportunity.recruiterPhone && opportunity.recruiterPhone.trim() !== "" && (
+            <div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Contact Phone</span>
+              <p>
                 <a 
                   href={`tel:${opportunity.recruiterPhone}`} 
                   className="text-blue-600 hover:underline"
                 >
                   {opportunity.recruiterPhone}
                 </a>
-              ) : (
-                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Not specified</span>
-              )}
+              </p>
+            </div>
+          )}
+          
+          {(!opportunity.recruiterName || opportunity.recruiterName.trim() === "") &&
+           (!opportunity.recruiterEmail || opportunity.recruiterEmail.trim() === "") &&
+           (!opportunity.recruiterPhone || opportunity.recruiterPhone.trim() === "") && (
+            <p className={`text-sm italic ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              No contact information added yet
             </p>
-          </div>
+          )}
         </div>
       )}
     </div>
