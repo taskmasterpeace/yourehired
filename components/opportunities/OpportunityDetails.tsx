@@ -13,6 +13,7 @@ import { KeywordsSection } from './KeywordsSection';
 import { ResumeSection } from './ResumeSection';
 import { AIChatSection } from './AIChatSection';
 import { JobDescriptionSection } from './JobDescriptionSection';
+import ApplicationTimeline from '@/app/components/ApplicationTimeline';
 
 interface OpportunityDetailsProps {
   opportunity: Opportunity | undefined;
@@ -142,6 +143,12 @@ export const OpportunityDetails = ({
                       Delete Opportunity
                     </Button>
                   </div>
+                </div>
+              </div>
+              
+              <div className="col-span-1 md:col-span-2 mt-8">
+                <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                  <ApplicationTimeline opportunity={opportunity} isDarkMode={isDarkMode} />
                 </div>
               </div>
             </div>
