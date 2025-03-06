@@ -267,12 +267,13 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
-import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle, Settings } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar as CalendarIcon2 } from 'lucide-react'
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area } from 'recharts'
 import { generateChatResponse, generateSuggestions } from '@/lib/openai'
 import { HelpCenter } from '@/components/help/HelpCenter'
 import { GuideViewer } from '@/components/help/GuideViewer'
+import { allGuides } from '@/components/help/guides'
 import { useAppState } from '@/context/context'
 import { Opportunity } from '@/context/types'
 import { format, parseISO, isEqual, isSameDay } from 'date-fns'
@@ -4368,6 +4369,7 @@ export default function CAPTAINGui() {
                 setHelpView({ active: true, guideId, sectionId });
               }}
               isDarkMode={isDarkMode}
+              guides={allGuides}
             />
           )}
           
@@ -4377,6 +4379,7 @@ export default function CAPTAINGui() {
               sectionId={helpView.sectionId}
               onBack={() => setHelpView({ active: true })}
               isDarkMode={isDarkMode}
+              guides={allGuides}
             />
           )}
         </TabsContent>
