@@ -107,7 +107,8 @@ export const AIChatSection = ({
                             setTimeout(() => handleSendMessage(), 100);
                           }}
                         >
-                          {prompt}
+                          <Sparkles className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                          <span>{prompt}</span>
                         </Button>
                       </motion.div>
                     ))
