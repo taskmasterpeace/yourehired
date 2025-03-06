@@ -284,178 +284,178 @@ const promptsByStatus = {
   // Initial Contact Category
   "Bookmarked": [
     "Analyze this job description and identify my top 3 matching qualifications and 2 areas I should strengthen before applying",
-    "Create a research plan for this company including their culture, recent news, and competitors",
-    "Based on this job description, what unique skills from my resume would make me stand out?",
-    "What industry trends should I be familiar with before applying to this position?"
+    "Create a detailed research plan for this company covering their culture, recent news, competitors, and growth trajectory",
+    "Based on this job description, what unique skills from my resume would make me stand out from typical applicants?",
+    "What industry-specific trends and technologies should I be familiar with before applying to this position?"
   ],
   "Interested": [
-    "What specific keywords from this job description should I incorporate in my application materials?",
-    "Based on my experience, what compelling achievements should I emphasize for this role?",
-    "Generate 5 tailored questions I should research about this company before applying",
-    "How does my career trajectory align with this role, and how should I frame this narrative?"
+    "Extract the top 10 keywords from this job description that I should strategically incorporate in my resume and cover letter",
+    "Based on my experience, what 3-5 compelling achievements should I emphasize for this role to demonstrate my value?",
+    "Generate 5 tailored questions I should research about this company that will demonstrate my genuine interest",
+    "How does my career trajectory align with this role, and how should I frame this narrative in my application materials?"
   ],
   "Recruiter Contact": [
-    "Help me draft a professional response to the recruiter that highlights my interest and qualifications",
-    "What specific questions should I ask the recruiter about this role and company?",
-    "How should I prepare for an initial screening call with the recruiter?",
-    "What salary range research should I do before discussing compensation with this recruiter?"
+    "Draft a professional response to the recruiter that highlights my interest, qualifications, and availability for next steps",
+    "What 7 specific questions should I ask the recruiter about this role, team culture, and hiring process?",
+    "Help me prepare a concise 2-minute introduction for an initial screening call that highlights my relevant experience",
+    "What salary research should I conduct for this specific role and location before discussing compensation expectations?"
   ],
   "Networking": [
-    "Help me craft a networking message to connect with employees at this company",
-    "What questions should I ask during an informational interview about this role?",
-    "How can I leverage my existing network to get an introduction at this company?",
-    "Draft a follow-up thank you message after a networking conversation"
+    "Draft a personalized LinkedIn connection message to an employee at this company that mentions our common interests",
+    "Prepare 8 thoughtful questions for an informational interview that will provide insights about the company culture",
+    "How can I leverage my existing network to get a warm introduction to someone at this company?",
+    "Create a follow-up thank you message after a networking conversation that maintains the relationship"
   ],
   // Application Category
   "Preparing Application": [
-    "Tailor my resume for this specific job by highlighting relevant experience and using keywords from the description",
-    "Draft a compelling cover letter that addresses why I'm interested in this role and company",
-    "What portfolio pieces or work samples should I prepare to showcase for this application?",
-    "How should I address potential gaps in my qualifications in my application materials?"
+    "Rewrite my resume summary and key bullet points to directly address the requirements in this job description",
+    "Draft a compelling cover letter that tells a story about why I'm passionate about this role and company",
+    "What specific portfolio pieces or work samples should I prepare to showcase that align with this job's requirements?",
+    "Help me craft honest but effective responses to address the 2-3 qualification gaps in my application materials"
   ],
   "Applied": [
-    "What follow-up strategy should I use after submitting this application?",
-    "Help me prepare a 30-second elevator pitch about why I'm perfect for this role",
-    "Draft a follow-up email to send if I don't hear back within two weeks",
-    "What additional research should I do now to prepare for a potential interview?"
+    "Create a strategic follow-up plan with specific timing and communication templates for this application",
+    "Help me prepare a 30-second elevator pitch that clearly articulates why I'm the ideal candidate for this role",
+    "Draft a follow-up email to send in 14 days that adds value and demonstrates my continued interest",
+    "What company-specific research should I conduct now to prepare for a potential interview opportunity?"
   ],
   "Application Acknowledged": [
-    "Draft a response thanking them for acknowledging my application",
-    "What should I do to prepare while waiting to hear back about next steps?",
-    "How long should I wait before following up on my application status?",
-    "What can I research about their interview process based on online reviews?"
+    "Draft a brief but professional response thanking them for acknowledging my application",
+    "Create a preparation checklist of things I should do while waiting to hear back about next steps",
+    "What is the appropriate timeline for following up on my application status based on this company's size?",
+    "Help me research this company's typical interview process based on employee reviews and Glassdoor information"
   ],
   // Interview Process Category
   "Screening": [
-    "What are the most common screening interview questions and how should I answer them?",
-    "How should I prepare for a phone screening interview for this position?",
-    "Draft concise answers to 'Tell me about yourself' and 'Why are you interested in this role?'",
-    "What questions should I ask during a screening interview to stand out?"
+    "Prepare concise answers for the 10 most common screening questions for this type of role",
+    "Create a preparation checklist for a phone screening interview including environment, materials, and talking points",
+    "Draft a compelling 90-second response to 'Tell me about yourself' that highlights my relevant experience",
+    "What 5 thoughtful questions should I ask during a screening interview that demonstrate my research and interest?"
   ],
   "Technical Assessment": [
-    "What skills is this technical assessment likely testing and how should I prepare?",
-    "Help me create a study plan for this technical assessment based on the job requirements",
-    "What common mistakes should I avoid during this type of technical assessment?",
-    "How should I approach time management during the technical assessment?"
+    "Based on the job description, what specific technical skills will likely be tested and how should I prepare for each?",
+    "Create a 7-day study plan to prepare for this technical assessment based on the job requirements",
+    "What are the 5 most common mistakes candidates make during this type of technical assessment and how can I avoid them?",
+    "Help me develop a time management strategy for completing this technical assessment efficiently and accurately"
   ],
   "First Interview": [
-    "What are the most important questions to prepare for in a first interview for this role?",
-    "Help me prepare the STAR method answers for likely behavioral questions",
-    "What should I research about the team and interviewer before this first interview?",
-    "Draft powerful questions to ask at the end of my first interview that demonstrate my interest and research"
+    "Prepare STAR method responses for the 8 most likely behavioral questions based on this job description",
+    "What company and team research should I conduct to demonstrate my genuine interest during this interview?",
+    "Draft 3 powerful stories that demonstrate how my experience directly addresses their key requirements",
+    "What 5 thoughtful questions should I ask at the end of my interview that demonstrate my strategic thinking?"
   ],
   "Second Interview": [
-    "How should my approach differ in a second interview compared to the first?",
-    "What deeper questions about the role and team should I prepare to ask?",
-    "Help me prepare to discuss salary expectations if asked during this round",
-    "What case studies or specific examples should I prepare to discuss in more detail?"
+    "How should I adjust my interview approach for a second interview compared to what I presented in the first round?",
+    "Prepare 5 in-depth questions about the team structure, projects, and day-to-day responsibilities",
+    "Help me craft a diplomatic response if asked about salary expectations during this round",
+    "What specific work examples or case studies should I prepare to discuss in more detail during this interview?"
   ],
   "Final Interview": [
-    "How should I prepare differently for a final interview with senior leadership?",
-    "What questions should I ask about company vision and how my role contributes?",
-    "Help me prepare to discuss compensation package details and negotiation points",
-    "What closing statement should I prepare to reinforce my interest and fit for the role?"
+    "How should I prepare differently for a final interview with C-level or senior leadership?",
+    "Draft 5 strategic questions about the company vision and how my role contributes to broader objectives",
+    "Help me prepare to discuss my compensation expectations with specific numbers and negotiation points",
+    "Create a compelling closing statement that reinforces why I'm the ideal candidate and my enthusiasm for the role"
   ],
   "Reference Check": [
-    "How should I prepare my references for calls from this employer?",
-    "What information should I provide to my references about this specific role?",
-    "Draft an email to send to my references with details about this position",
-    "What does it typically mean when a company is checking references at this stage?"
+    "Create a briefing document to prepare my references with key points about this role and my relevant accomplishments",
+    "What specific information should I provide to each reference about this position and company?",
+    "Draft an email template to send to my references with details about this position and what to expect",
+    "What does the reference check stage typically indicate about my candidacy, and how should I prepare for next steps?"
   ],
   // Decision Category
   "Negotiating": [
-    "How should I negotiate the salary offer based on market research and my experience?",
-    "What benefits beyond salary should I prioritize in negotiations?",
-    "Help me draft a professional counter-offer email that maintains positive relations",
-    "What's the best approach to negotiate remote work or flexible schedule arrangements?"
+    "Based on market research for this role and location, what specific salary range should I target in negotiations?",
+    "Beyond base salary, what 5 benefits should I prioritize negotiating based on their value and this company's offerings?",
+    "Draft a professional counter-offer email that maintains positive relations while advocating for my value",
+    "What data points and accomplishments should I reference to justify my compensation requests?"
   ],
   "Offer Received": [
-    "What questions should I ask to fully understand the compensation package?",
-    "Help me evaluate this offer against my career goals and other opportunities",
-    "What is a reasonable timeframe to request for making my decision?",
-    "Draft a professional email asking for clarification on specific benefits or terms"
+    "Create a comprehensive list of questions to fully understand all components of this compensation package",
+    "Help me evaluate this offer against my career goals, market value, and other opportunities using a decision matrix",
+    "Draft a professional email requesting additional time to consider the offer (1-2 weeks)",
+    "What specific clarification should I seek about benefits, equity, bonus structure, and advancement opportunities?"
   ],
   "Offer Accepted": [
-    "What should I do to prepare for my first day in this new role?",
-    "Help me draft a graceful resignation letter for my current employer",
-    "What questions should I ask HR before my start date?",
-    "How should I approach the first 30/60/90 days in this new position?"
+    "Create a detailed checklist of things to do before my start date to ensure a smooth transition",
+    "Draft a graceful resignation letter for my current employer that maintains positive relationships",
+    "What specific questions should I ask HR about onboarding, paperwork, and first-day logistics?",
+    "Help me develop a strategic 30/60/90 day plan to make a strong impression in this new position"
   ],
   "Offer Declined": [
-    "Help me draft a professional email declining the offer while maintaining the relationship",
-    "What feedback should I provide when declining this offer?",
-    "How can I keep the door open for future opportunities with this company?",
-    "What should I learn from this process to improve my job search going forward?"
+    "Draft a professional email declining the offer while expressing gratitude and maintaining the relationship",
+    "What constructive feedback should I provide when declining this offer that would be helpful but not burning bridges?",
+    "Help me craft language that keeps the door open for future opportunities with this company",
+    "What specific lessons should I document from this process to improve my job search strategy going forward?"
   ],
   "Rejected": [
-    "What can I learn from this rejection to improve future applications?",
-    "Help me draft a professional email asking for feedback on my application/interview",
-    "How should I evaluate if I should apply to other positions at this company?",
-    "What skills or experiences should I focus on developing based on this rejection?"
+    "What specific aspects of my application or interview performance should I evaluate to improve future applications?",
+    "Draft a professional email requesting constructive feedback that might help me grow professionally",
+    "Based on this rejection, should I apply to other positions at this company? If so, what approach should I take?",
+    "Create a personal development plan to address potential skill gaps highlighted by this rejection"
   ],
   "Withdrawn": [
-    "Help me draft a professional email withdrawing my application",
-    "How can I maintain a positive relationship with this company for the future?",
-    "What should I learn from this experience to refine my job search criteria?",
-    "Should I provide feedback about why I'm withdrawing my application?"
+    "Draft a professional email withdrawing my application that maintains a positive relationship",
+    "What networking follow-up would be appropriate to maintain connections with people I met during this process?",
+    "Help me document specific insights from this experience to refine my job search criteria",
+    "What constructive feedback could I provide about why I'm withdrawing that would be helpful to the company?"
   ],
   "Position Filled": [
-    "What follow-up would be appropriate to stay on their radar for future opportunities?",
-    "How can I use this experience to improve my applications for similar roles?",
-    "Should I connect with the hiring manager on LinkedIn despite not getting the role?",
-    "What similar companies should I target based on my interest in this position?"
+    "Draft a follow-up message congratulating the hiring manager and expressing continued interest in future opportunities",
+    "What specific lessons can I apply from this experience to improve my applications for similar roles?",
+    "Create a strategy for maintaining connection with the hiring manager on LinkedIn despite not getting the role",
+    "Based on my interest in this position, what 5 similar companies should I target in my continued search?"
   ],
   "Position Cancelled": [
-    "What might this cancellation indicate about the company that could inform my job search?",
-    "Should I follow up to express continued interest in future opportunities?",
-    "What similar positions should I look for based on my interest in this role?",
-    "How should I adjust my job search strategy based on this experience?"
+    "What might this cancellation indicate about the company's stability or priorities that could inform my job search?",
+    "Draft a brief message expressing continued interest in future opportunities despite the cancellation",
+    "Based on this role's requirements, what 5 similar positions should I look for in my continued search?",
+    "How should I adjust my job search strategy based on this experience to focus on more stable opportunities?"
   ],
   // Follow-up Category
   "Following Up": [
-    "Help me draft a professional follow-up email that adds value and reiterates my interest",
-    "What is the appropriate timing for following up after each interview stage?",
-    "How can I follow up without seeming desperate or pushy?",
-    "What additional information or materials could I provide in my follow-up to strengthen my candidacy?"
+    "Draft a value-adding follow-up email that shares an interesting industry article relevant to our conversation",
+    "What is the appropriate timing for following up after each specific interview stage (screening, technical, etc.)?",
+    "Help me craft a follow-up message that demonstrates continued interest without seeming desperate",
+    "What specific work sample or additional information could I provide in my follow-up to strengthen my candidacy?"
   ],
   "Waiting": [
-    "What productive activities should I focus on while waiting to hear back?",
-    "When would be an appropriate time to follow up on my application status?",
-    "Help me draft a check-in email that's professional and demonstrates continued interest",
-    "How should I manage my expectations during this waiting period?"
+    "Create a productive daily routine to maintain momentum in my job search while waiting to hear back",
+    "Based on this company's size and hiring process, when would be the appropriate time to send a follow-up?",
+    "Draft a brief check-in email that's professional and adds value while demonstrating continued interest",
+    "What parallel opportunities should I pursue while waiting to hear back about this position?"
   ]
 };
 
 const promptsByCategory = {
   "Initial Contact": [
-    "What company values are evident in their materials and how do they align with my experience?",
-    "Create a competitive analysis of how I compare to likely other candidates for this position",
-    "What specialized knowledge or certifications would give me an edge for this role?",
-    "Based on the company's size and industry, what challenges might they be facing that I can help solve?"
+    "Analyze this company's stated values and culture, and help me align my experience with their specific mission",
+    "Create a competitive analysis of how my qualifications compare to the likely candidate pool for this position",
+    "What specialized knowledge, certifications, or training would give me a competitive edge for this specific role?",
+    "Based on this company's size, industry, and recent news, what business challenges could I help them solve?"
   ],
   "Application": [
-    "Transform my resume to explicitly match this job description while highlighting my unique value",
-    "Create a compelling cover letter that tells a story connecting my experience to their needs",
-    "What metrics and achievements should I quantify differently for this specific application?",
-    "Identify the top 5 most relevant projects from my experience to emphasize for this role"
+    "Transform my resume to explicitly match this job description while highlighting my unique value proposition",
+    "Create a compelling cover letter that tells a story connecting my specific experience to their stated needs",
+    "Help me quantify my achievements with metrics that would be most impressive for this particular industry",
+    "Identify the 5 most relevant projects from my experience that directly address their key requirements"
   ],
   "Interview Process": [
-    "Prepare me for the 10 most likely technical questions for this role based on the job description",
-    "How should I structure my answers to behavioral questions using the STAR method?",
-    "What research about this company would impress interviewers with my preparation?",
-    "Help me craft a compelling story about my career path that positions this role as the perfect next step"
+    "Based on this job description, prepare me for the 10 most likely technical questions I'll face in the interview",
+    "Help me structure powerful STAR method answers for behavioral questions specific to this role's challenges",
+    "What company-specific research would demonstrate exceptional preparation to my interviewers?",
+    "Craft a compelling narrative about my career path that positions this specific role as my ideal next step"
   ],
   "Decision": [
-    "What factors should I consider when evaluating this opportunity against my career goals?",
-    "How should I approach salary negotiation for this specific industry and role level?",
-    "What questions should I ask to better understand growth opportunities at this company?",
-    "Help me create a decision matrix to objectively evaluate this opportunity"
+    "Create a comprehensive decision matrix to evaluate this opportunity against my career goals and other options",
+    "Based on industry standards and this company's size, what specific compensation package should I target?",
+    "What strategic questions should I ask to understand the growth trajectory and advancement opportunities?",
+    "Help me objectively analyze the pros and cons of this offer compared to my current situation"
   ],
   "Follow-up": [
-    "What value-adding content could I include in my follow-up communications?",
-    "How can I maintain a relationship with this company even if this opportunity doesn't work out?",
-    "Draft a check-in email that demonstrates my continued interest without being pushy",
-    "What is the appropriate cadence for following up at different stages of the hiring process?"
+    "What specific value-adding content related to their business challenges could I include in follow-up communications?",
+    "Create a relationship-building strategy to maintain connections with this company regardless of the outcome",
+    "Draft a check-in email that demonstrates my continued interest while sharing relevant industry insights",
+    "What is the appropriate cadence for following up at each stage of this company's specific hiring process?"
   ]
 };
 
@@ -657,12 +657,13 @@ export default function CAPTAINGui() {
     const statusPrompts = promptsByStatus[status] || [];
     const categoryPrompts = promptsByCategory[category] || [];
     
-    // Return 2 from status and 2 from category (if available)
-    const selectedStatusPrompts = statusPrompts.sort(() => 0.5 - Math.random()).slice(0, 2);
+    // Prioritize status-specific prompts but ensure variety
+    // Return 3 from status and 1 from category for more specificity
+    const selectedStatusPrompts = statusPrompts.sort(() => 0.5 - Math.random()).slice(0, 3);
     const selectedCategoryPrompts = categoryPrompts
       .filter(prompt => !selectedStatusPrompts.includes(prompt))
       .sort(() => 0.5 - Math.random())
-      .slice(0, 2);
+      .slice(0, 1);
       
     return [...selectedStatusPrompts, ...selectedCategoryPrompts];
   };
@@ -934,7 +935,17 @@ export default function CAPTAINGui() {
       setIsLoadingPrompts(true);
       // Simulate loading for animation effect
       setTimeout(() => {
-        setAiPrompts(getPromptsForStatus(selectedOpportunity.status));
+        const prompts = getPromptsForStatus(selectedOpportunity.status);
+        // Add prompt categories as metadata
+        const promptsWithCategories = prompts.map(prompt => {
+          // Determine if this is a status-specific or category-general prompt
+          const isStatusPrompt = promptsByStatus[selectedOpportunity.status]?.includes(prompt);
+          return {
+            text: prompt,
+            category: isStatusPrompt ? 'Status-Specific' : 'General Advice'
+          };
+        });
+        setAiPrompts(promptsWithCategories.map(p => p.text));
         setIsLoadingPrompts(false);
       }, 300);
     }

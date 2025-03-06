@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Bot, MessageSquare, Send, ChevronRight } from 'lucide-react';
+import { User, Bot, MessageSquare, Send, ChevronRight, Sparkles } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { motion } from "framer-motion";
 
@@ -149,7 +149,8 @@ export const AIChatSection = ({
                             setTimeout(() => handleSendMessage(), 100);
                           }}
                         >
-                          {prompt}
+                          <Sparkles className="h-3 w-3 mr-2 text-blue-500 flex-shrink-0" />
+                          <span>{prompt}</span>
                         </Button>
                       </motion.div>
                     ))
