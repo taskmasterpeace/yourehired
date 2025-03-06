@@ -2041,6 +2041,8 @@ export default function CAPTAINGui() {
                   JobDetailsSection={JobDetailsSection}
                   ContactInfoSection={ContactInfoSection}
                   NotesSection={NotesSection}
+                  aiPrompts={aiPrompts || []}
+                  isLoadingPrompts={isLoadingPrompts}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
