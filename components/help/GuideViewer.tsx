@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getGuideById } from '@/data/guides';
+import { allGuides } from './guides';
 import { ChevronLeft } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -10,20 +10,23 @@ interface GuideViewerProps {
   sectionId?: string;
   onBack: () => void;
   isDarkMode: boolean;
+  guides?: any[];
 }
 
 export const GuideViewer = ({
   guideId,
   sectionId,
   onBack,
-  isDarkMode
+  isDarkMode,
+  guides
 }: GuideViewerProps) => {
   const [guide, setGuide] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<string | undefined>(sectionId);
   
   useEffect(() => {
     // Load the guide data
-    const guideData = getGuideById(guideId);
+    const guidesSource = guides || allGuides;
+    const guideData = guidesSource.find(guide => guide.id === guideId);
     if (guideData) {
       setGuide(guideData);
       
