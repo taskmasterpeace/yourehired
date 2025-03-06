@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { QRCodeSVG } from 'qrcode.react'
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Define JobDetailsSection component
 export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEditedDetails, handleSaveJobDetails, handleEditJobDetails, isDarkMode }) => {
@@ -554,6 +555,12 @@ export default function CAPTAINGui() {
   const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState({});
   const [isJobDescriptionExpanded, setIsJobDescriptionExpanded] = useState(false);
   
+  // Import/Export state variables
+  const [selectedExportIds, setSelectedExportIds] = useState<number[]>([]);
+  const [importData, setImportData] = useState<Opportunity[]>([]);
+  const [selectedImportIds, setSelectedImportIds] = useState<number[]>([]);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  
   // New state variables for editing job details, contact info, and notes
   const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
   const [isEditingContactInfo, setIsEditingContactInfo] = useState(false);
@@ -726,6 +733,116 @@ export default function CAPTAINGui() {
       }
     });
     updateLastModified(opportunityId);
+  };
+  
+  // Handle file selection for import
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setImportFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const jsonData = JSON.parse(event.target?.result as string);
+        
+        // Validate the imported data structure
+        if (Array.isArray(jsonData) && jsonData.length > 0) {
+          // Basic validation to ensure each item has required fields
+          const validData = jsonData.filter(item => 
+            item && typeof item === 'object' && 
+            'company' in item && 
+            'position' in item && 
+            'jobDescription' in item
+          );
+          
+          // Assign new IDs to avoid conflicts
+          const processedData = validData.map(item => ({
+            ...item,
+            id: Date.now() + Math.floor(Math.random() * 1000) // Ensure unique IDs
+          }));
+          
+          setImportData(processedData);
+          setSelectedImportIds(processedData.map(item => item.id));
+        } else {
+          alert("Invalid import file format. Please select a valid export file.");
+          setImportData([]);
+          setSelectedImportIds([]);
+        }
+      } catch (error) {
+        console.error("Error parsing import file:", error);
+        alert("Error parsing the file. Please make sure it's a valid JSON file.");
+        setImportData([]);
+        setSelectedImportIds([]);
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  // Handle export of selected opportunities
+  const handleExportOpportunities = () => {
+    if (selectedExportIds.length === 0) return;
+    
+    // Filter opportunities based on selection
+    const opportunitiesToExport = opportunities.filter(opp => 
+      selectedExportIds.includes(opp.id)
+    );
+    
+    // Create export data
+    const exportData = JSON.stringify(opportunitiesToExport, null, 2);
+    
+    // Create a blob and download link
+    const blob = new Blob([exportData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link and trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `job-opportunities-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Handle import of selected opportunities
+  const handleImportOpportunities = () => {
+    if (selectedImportIds.length === 0) return;
+    
+    // Filter import data based on selection
+    const opportunitiesToImport = importData.filter(opp => 
+      selectedImportIds.includes(opp.id)
+    );
+    
+    // Add each opportunity to the state
+    opportunitiesToImport.forEach(opp => {
+      // Generate a unique ID for each imported opportunity
+      const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
+      
+      // Create a new opportunity object
+      const newOpp = {
+        ...opp,
+        id: uniqueId
+      };
+      
+      // Add to state using dispatch
+      dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpp });
+      
+      // Update last modified timestamp
+      updateLastModified(uniqueId);
+    });
+    
+    // Reset import state
+    setImportData([]);
+    setSelectedImportIds([]);
+    setImportFile(null);
+    
+    // Show success message
+    alert(`Successfully imported ${opportunitiesToImport.length} opportunities.`);
   };
 
   // Helper function to calculate application streak
@@ -1803,6 +1920,13 @@ export default function CAPTAINGui() {
             <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Coach</TabsTrigger>
             <TabsTrigger value="analytics" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Analytics</TabsTrigger>
             <TabsTrigger value="calendar" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Calendar</TabsTrigger>
+            <TabsTrigger value="settings" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Settings
+            </TabsTrigger>
             <TabsTrigger value="help" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
               <HelpCircle className="h-4 w-4 mr-1" />
               Help
@@ -3681,6 +3805,174 @@ export default function CAPTAINGui() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="settings" className="p-2 sm:p-4 flex-grow overflow-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Settings</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Export Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Export Opportunities</CardTitle>
+                <CardDescription>
+                  Export selected job opportunities to a file
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-2">Select opportunities to export</h3>
+                  <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
+                    {opportunities.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center mb-2">
+                          <Checkbox 
+                            id="select-all-export" 
+                            checked={selectedExportIds.length === opportunities.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedExportIds(opportunities.map(opp => opp.id));
+                              } else {
+                                setSelectedExportIds([]);
+                              }
+                            }}
+                          />
+                          <label htmlFor="select-all-export" className="ml-2 text-sm font-medium">
+                            Select All ({opportunities.length})
+                          </label>
+                        </div>
+                        
+                        {opportunities.map(opp => (
+                          <div key={opp.id} className="flex items-center">
+                            <Checkbox 
+                              id={`export-${opp.id}`} 
+                              checked={selectedExportIds.includes(opp.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedExportIds([...selectedExportIds, opp.id]);
+                                } else {
+                                  setSelectedExportIds(selectedExportIds.filter(id => id !== opp.id));
+                                }
+                              }}
+                            />
+                            <label htmlFor={`export-${opp.id}`} className="ml-2 text-sm">
+                              {opp.company} - {opp.position}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        No opportunities available to export
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleExportOpportunities}
+                    disabled={selectedExportIds.length === 0}
+                  >
+                    Export Selected ({selectedExportIds.length})
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Import Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Import Opportunities</CardTitle>
+                <CardDescription>
+                  Import job opportunities from a file
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">
+                    Select a file to import
+                  </label>
+                  <div className="flex items-center">
+                    <Input
+                      type="file"
+                      accept=".json"
+                      onChange={handleFileChange}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                
+                {importData.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium mb-2">Preview ({importData.length} opportunities)</h3>
+                    <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
+                      <div className="space-y-2">
+                        <div className="flex items-center mb-2">
+                          <Checkbox 
+                            id="select-all-import" 
+                            checked={selectedImportIds.length === importData.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedImportIds(importData.map(opp => opp.id));
+                              } else {
+                                setSelectedImportIds([]);
+                              }
+                            }}
+                          />
+                          <label htmlFor="select-all-import" className="ml-2 text-sm font-medium">
+                            Select All ({importData.length})
+                          </label>
+                        </div>
+                        
+                        {importData.map(opp => {
+                          const isDuplicate = opportunities.some(
+                            existingOpp => existingOpp.company === opp.company && 
+                                          existingOpp.position === opp.position
+                          );
+                          
+                          return (
+                            <div key={opp.id} className="flex items-center">
+                              <Checkbox 
+                                id={`import-${opp.id}`} 
+                                checked={selectedImportIds.includes(opp.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedImportIds([...selectedImportIds, opp.id]);
+                                  } else {
+                                    setSelectedImportIds(selectedImportIds.filter(id => id !== opp.id));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`import-${opp.id}`} className="ml-2 text-sm flex items-center">
+                                {opp.company} - {opp.position}
+                                {isDuplicate && (
+                                  <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-800 border-yellow-200">
+                                    Possible Duplicate
+                                  </Badge>
+                                )}
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleImportOpportunities}
+                    disabled={selectedImportIds.length === 0}
+                  >
+                    Import Selected ({selectedImportIds.length})
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
         
