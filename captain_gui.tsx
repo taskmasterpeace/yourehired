@@ -659,10 +659,9 @@ export default function CAPTAINGui() {
     
     // Prioritize status-specific prompts but ensure variety
     // Return 3 from status and 1 from category for more specificity
-    const selectedStatusPrompts = statusPrompts.sort(() => 0.5 - Math.random()).slice(0, 3);
+    const selectedStatusPrompts = statusPrompts.slice(0, 3);
     const selectedCategoryPrompts = categoryPrompts
       .filter(prompt => !selectedStatusPrompts.includes(prompt))
-      .sort(() => 0.5 - Math.random())
       .slice(0, 1);
       
     return [...selectedStatusPrompts, ...selectedCategoryPrompts];
@@ -936,6 +935,7 @@ export default function CAPTAINGui() {
       // Simulate loading for animation effect
       setTimeout(() => {
         const prompts = getPromptsForStatus(selectedOpportunity.status);
+        console.log("Prompts for status:", selectedOpportunity.status, prompts);
         // Add prompt categories as metadata
         const promptsWithCategories = prompts.map(prompt => {
           // Determine if this is a status-specific or category-general prompt

@@ -129,7 +129,7 @@ export const AIChatSection = ({
             <Collapsible>
               <CollapsibleTrigger className="flex items-center text-sm text-blue-600 hover:text-blue-800">
                 <ChevronRight className="h-4 w-4 mr-1" />
-                <span>Show suggested prompts</span>
+                <span>Show suggested prompts {aiPrompts?.length > 0 ? `(${aiPrompts.length})` : ''}</span>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3">
                 <div className="grid grid-cols-1 gap-2">
