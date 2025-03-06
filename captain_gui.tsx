@@ -952,7 +952,6 @@ export default function CAPTAINGui() {
       // Simulate loading for animation effect
       setTimeout(() => {
         const prompts = getPromptsForStatus(selectedOpportunity.status);
-        console.log("Prompts for status:", selectedOpportunity.status, prompts);
         
         // Ensure we have an array of strings
         const cleanPrompts = prompts.map(p => typeof p === 'string' ? p : '').filter(Boolean);
