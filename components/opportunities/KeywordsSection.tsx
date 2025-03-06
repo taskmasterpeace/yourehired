@@ -414,7 +414,7 @@ export const KeywordsSection = ({
     <div className={`p-4 mb-4 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
-          <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Key Skills & Requirements</h3>
+          <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Skills Gap Analyzer</h3>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -559,15 +559,25 @@ export const KeywordsSection = ({
                                 autoFocus
                               />
                               <div className="flex items-center">
-                                <Label className="text-xs mr-1">Relevance:</Label>
-                                <Slider
-                                  value={[editedKeyword.relevance]}
-                                  min={1}
-                                  max={5}
-                                  step={1}
-                                  className="w-20"
-                                  onValueChange={(value) => setEditedKeyword({...editedKeyword, relevance: value[0]})}
-                                />
+                                <Label className="text-xs mr-1">Importance:</Label>
+                                <select 
+                                  className="text-xs p-1 border rounded"
+                                  value={editedKeyword.relevance}
+                                  onChange={(e) => {
+                                    const value = parseInt(e.target.value);
+                                    setEditedKeyword({
+                                      ...editedKeyword, 
+                                      relevance: value,
+                                      category: value >= 4 ? 'must-have' : value >= 2 ? 'should-have' : 'could-have'
+                                    });
+                                  }}
+                                >
+                                  <option value="5">Must-have (5)</option>
+                                  <option value="4">Must-have (4)</option>
+                                  <option value="3">Should-have (3)</option>
+                                  <option value="2">Should-have (2)</option>
+                                  <option value="1">Could-have (1)</option>
+                                </select>
                                 {renderStars(editedKeyword.relevance)}
                               </div>
                               <Button 
@@ -831,17 +841,26 @@ export const KeywordsSection = ({
                 <span className="text-sm text-gray-500">{newKeyword.relevance}/5</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Slider
-                  id="keyword-relevance"
-                  value={[newKeyword.relevance]}
-                  min={1}
-                  max={5}
-                  step={1}
-                  className="flex-grow"
-                  onValueChange={(value) => setNewKeyword({...newKeyword, relevance: value[0]})}
-                />
+                <select 
+                  className="text-xs p-1 border rounded mr-2"
+                  value={newKeyword.relevance}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    setNewKeyword({
+                      ...newKeyword, 
+                      relevance: value,
+                      category: value >= 4 ? 'must-have' : value >= 2 ? 'should-have' : 'could-have'
+                    });
+                  }}
+                >
+                  <option value="5">Must-have (5)</option>
+                  <option value="4">Must-have (4)</option>
+                  <option value="3">Should-have (3)</option>
+                  <option value="2">Should-have (2)</option>
+                  <option value="1">Could-have (1)</option>
+                </select>
                 <div className="flex">
-                  {renderRelevanceStars(newKeyword.relevance)}
+                  {renderStars(newKeyword.relevance)}
                 </div>
               </div>
               <p className="text-xs text-gray-500">
