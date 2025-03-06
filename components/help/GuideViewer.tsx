@@ -26,7 +26,12 @@ export const GuideViewer = ({
   useEffect(() => {
     // Load the guide data
     const guidesSource = guides || allGuides;
+    console.log("Available guides:", guidesSource);
+    console.log("Looking for guide with ID:", guideId);
+    
     const guideData = guidesSource.find(guide => guide.id === guideId);
+    console.log("Found guide:", guideData);
+    
     if (guideData) {
       setGuide(guideData);
       
@@ -46,7 +51,7 @@ export const GuideViewer = ({
         setActiveSection(guideData.sections[0].id);
       }
     }
-  }, [guideId, sectionId]);
+  }, [guideId, sectionId, guides]);
   
   const navigateToSection = (sectionId: string) => {
     setActiveSection(sectionId);
