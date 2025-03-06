@@ -955,7 +955,7 @@ export default function CAPTAINGui() {
         console.log("Prompts for status:", selectedOpportunity.status, prompts);
         
         // Ensure we have an array of strings
-        const cleanPrompts = prompts.map(p => typeof p === 'string' ? p : p.text || '').filter(Boolean);
+        const cleanPrompts = prompts.map(p => typeof p === 'string' ? p : '').filter(Boolean);
         setAiPrompts(cleanPrompts);
         setIsLoadingPrompts(false);
       }, 300);
