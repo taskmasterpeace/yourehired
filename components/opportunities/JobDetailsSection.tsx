@@ -108,22 +108,28 @@ export const JobDetailsSection = ({
         </div>
       ) : (
         <div className="space-y-2">
-          <div>
-            <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Location</span>
-            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-              {opportunity.location || "Not specified"}
-            </p>
-          </div>
-          <div>
-            <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Salary Range</span>
-            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-              {opportunity.salary || "Not specified"}
-            </p>
-          </div>
-          <div>
-            <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Application URL</span>
-            <p>
-              {opportunity.applicationUrl ? (
+          {opportunity.location && opportunity.location.trim() !== "" && (
+            <div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Location</span>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                {opportunity.location}
+              </p>
+            </div>
+          )}
+          
+          {opportunity.salary && opportunity.salary.trim() !== "" && (
+            <div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Salary Range</span>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                {opportunity.salary}
+              </p>
+            </div>
+          )}
+          
+          {opportunity.applicationUrl && opportunity.applicationUrl.trim() !== "" && (
+            <div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Application URL</span>
+              <p>
                 <a 
                   href={opportunity.applicationUrl} 
                   target="_blank" 
@@ -132,17 +138,27 @@ export const JobDetailsSection = ({
                 >
                   {opportunity.applicationUrl}
                 </a>
-              ) : (
-                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Not specified</span>
-              )}
+              </p>
+            </div>
+          )}
+          
+          {opportunity.source && opportunity.source.trim() !== "" && (
+            <div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Source</span>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                {opportunity.source}
+              </p>
+            </div>
+          )}
+          
+          {(!opportunity.location || opportunity.location.trim() === "") &&
+           (!opportunity.salary || opportunity.salary.trim() === "") &&
+           (!opportunity.applicationUrl || opportunity.applicationUrl.trim() === "") &&
+           (!opportunity.source || opportunity.source.trim() === "") && (
+            <p className={`text-sm italic ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              No job details added yet
             </p>
-          </div>
-          <div>
-            <span className={`text-xs ${isDarkMode ? 'text-gray-400'  : 'text-gray-500'}`}>Source</span>
-            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-              {opportunity.source || "Not specified"}
-            </p>
-          </div>
+          )}
         </div>
       )}
     </div>
