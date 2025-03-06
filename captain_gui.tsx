@@ -611,6 +611,9 @@ export default function CAPTAINGui() {
   // AI prompt states
   const [aiPrompts, setAiPrompts] = useState([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
+  
+  // Timeline period state
+  const [timelinePeriod, setTimelinePeriod] = useState('30days');
 
   const quickChatOptions = [
     "Analyze my resume",
@@ -945,38 +948,88 @@ export default function CAPTAINGui() {
       return acc;
     }, {} as Record<string, number>);
     
-    // Application timeline by actual application date
-    const applicationsByDate = opportunities.reduce((acc, opp) => {
-      if (!opp.appliedDate) return acc;
+    // Get all applications with valid dates and sort them
+    const applicationsWithDates = opportunities
+      .filter(opp => opp.appliedDate)
+      .map(opp => {
+        try {
+          return {
+            id: opp.id,
+            date: new Date(opp.appliedDate)
+          };
+        } catch (e) {
+          return null;
+        }
+      })
+      .filter(app => app !== null)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Generate timeline data for different periods
+    const generateTimelineData = (days) => {
+      const today = new Date();
+      const startDate = new Date();
+      startDate.setDate(today.getDate() - days);
       
-      try {
-        // Format the date to show just the month and day
-        const date = new Date(opp.appliedDate);
-        const dateKey = date.toLocaleDateString('en-US', { 
+      // Create array of dates for the period
+      const datePoints = [];
+      for (let i = 0; i <= days; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        datePoints.push({
+          date: new Date(date),
+          count: 0,
+          totalCount: 0
+        });
+      }
+      
+      // Count applications for each date
+      let runningTotal = 0;
+      datePoints.forEach((point, index) => {
+        // Count applications on this specific date
+        const appsOnDate = applicationsWithDates.filter(app => 
+          app.date.getDate() === point.date.getDate() &&
+          app.date.getMonth() === point.date.getMonth() &&
+          app.date.getFullYear() === point.date.getFullYear()
+        ).length;
+        
+        // Add to running total
+        runningTotal += appsOnDate;
+        
+        // For the first point, count all applications before the start date
+        if (index === 0) {
+          const appsBeforeStart = applicationsWithDates.filter(app => 
+            app.date < point.date
+          ).length;
+          runningTotal += appsBeforeStart;
+        }
+        
+        point.count = appsOnDate;
+        point.totalCount = runningTotal;
+      });
+      
+      // Format dates for display and return
+      return datePoints.map(point => ({
+        date: point.date.toLocaleDateString('en-US', { 
           month: 'short', 
           day: 'numeric'
-        });
-        
-        acc[dateKey] = (acc[dateKey] || 0) + 1;
-        return acc;
-      } catch (e) {
-        return acc;
-      }
-    }, {} as Record<string, number>);
-    
-    // Convert to array format for charts - sort by actual date
-    const applicationTimeline = Object.entries(applicationsByDate)
-      .map(([dateStr, count]) => ({ 
-        date: dateStr, 
-        count 
-      }))
-      .sort((a, b) => {
-        // Parse the dates for proper sorting
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateA.getTime() - dateB.getTime();
-      })
-      .slice(-12); // Show last 12 application dates
+        }),
+        count: point.count,
+        totalCount: point.totalCount
+      }));
+    };
+
+    // Generate data for different time periods
+    const timelineData = {
+      '7days': generateTimelineData(7),
+      '30days': generateTimelineData(30),
+      '90days': generateTimelineData(90),
+      'all': applicationsWithDates.length > 0 ? (() => {
+        // For all-time view, use actual application dates
+        const firstAppDate = applicationsWithDates[0].date;
+        const daysDiff = Math.ceil((new Date() - firstAppDate) / (1000 * 60 * 60 * 24));
+        return generateTimelineData(Math.min(daysDiff, 365)); // Cap at 365 days
+      })() : []
+    };
     
     // Response rate
     const responseCount = opportunities.filter(opp => 
@@ -1278,7 +1331,7 @@ export default function CAPTAINGui() {
     
     return {
       statusCounts,
-      applicationTimeline,
+      applicationTimeline: timelineData,
       responseRate,
       interviewRate,
       offerRate,
@@ -2317,22 +2370,62 @@ export default function CAPTAINGui() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Application Timeline</CardTitle>
-                <CardDescription>Number of applications over time</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Application Timeline</CardTitle>
+                    <CardDescription>Total applications over time</CardDescription>
+                  </div>
+                  <Select defaultValue="30days" onValueChange={(value) => setTimelinePeriod(value)}>
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7days">7 Days</SelectItem>
+                      <SelectItem value="30days">30 Days</SelectItem>
+                      <SelectItem value="90days">90 Days</SelectItem>
+                      <SelectItem value="all">All Time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent className="h-60 sm:h-80">
-                {analytics.applicationTimeline.length > 0 ? (
+                {analytics.applicationTimeline[timelinePeriod || '30days'].length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={analytics.applicationTimeline}
+                    <LineChart
+                      data={analytics.applicationTimeline[timelinePeriod || '30days']}
                       margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 12 }}
+                        interval={timelinePeriod === '90days' ? 6 : timelinePeriod === '30days' ? 2 : 0}
+                      />
                       <YAxis />
-                      <Tooltip />
-                      <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" />
-                    </AreaChart>
+                      <Tooltip 
+                        formatter={(value, name) => [value, name === 'totalCount' ? 'Total Applications' : 'New Applications']}
+                        labelFormatter={(label) => `Date: ${label}`}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="totalCount" 
+                        name="Total Applications"
+                        stroke="#8884d8" 
+                        strokeWidth={2}
+                        dot={{ r: 2 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="count" 
+                        name="New Applications"
+                        stroke="#82ca9d" 
+                        strokeWidth={2}
+                        dot={{ r: 2 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className={`h-full flex items-center justify-center text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
