@@ -630,10 +630,14 @@ export default function CAPTAINGui() {
   ];
 
   const [jobRecommendations, setJobRecommendations] = useState([
-    { id: 1, company: "TechGiant", position: "Senior Frontend Developer", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
-    { id: 2, company: "DataDrive", position: "Machine Learning Engineer", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
-    { id: 3, company: "CloudScale", position: "DevOps Engineer", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
+    { id: 1, company: "TechGiant", position: "Senior Frontend Developer", location: "Remote", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
+    { id: 2, company: "DataDrive", position: "Machine Learning Engineer", location: "New York, NY", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
+    { id: 3, company: "CloudScale", position: "DevOps Engineer", location: "San Francisco, CA", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
+  const [currentRecommendationIndex, setCurrentRecommendationIndex] = useState(0);
+  const [ratedRecommendations, setRatedRecommendations] = useState([]);
+  const [totalRecommendations, setTotalRecommendations] = useState(3); // Initial count based on default recommendations
+  const [recommendationsPreview, setRecommendationsPreview] = useState([]);
   
   // Define selectedOpportunity before any useEffect that uses it
   const selectedOpportunity = opportunities.length > 0 ? opportunities[selectedOpportunityIndex] : undefined;
@@ -782,6 +786,194 @@ export default function CAPTAINGui() {
   };
 
   // Handle export of selected opportunities
+  // CSV parsing and handling functions
+  const handleRecommendationsCSVChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const csvText = event.target?.result as string;
+        const recommendations = parseCSVToRecommendations(csvText);
+        
+        setRecommendationsPreview(recommendations);
+      } catch (error) {
+        console.error("Error parsing CSV file:", error);
+        alert("Error parsing the CSV file. Please check the format.");
+        setRecommendationsPreview([]);
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  const parseCSVToRecommendations = (csvText: string) => {
+    // Split by lines and get header row
+    const lines = csvText.split('\n');
+    const headers = lines[0].split(',').map(header => header.trim());
+    
+    // Map CSV columns to recommendation properties
+    return lines.slice(1).filter(line => line.trim() !== '').map((line, index) => {
+      // Handle quoted fields properly
+      let values = [];
+      let inQuotes = false;
+      let currentValue = '';
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"' && (i === 0 || line[i-1] !== '\\')) {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(currentValue);
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      
+      // Add the last value
+      values.push(currentValue);
+      
+      // Clean up values (remove quotes)
+      values = values.map(val => {
+        if (val.startsWith('"') && val.endsWith('"')) {
+          return val.substring(1, val.length - 1).replace(/""/g, '"');
+        }
+        return val.trim();
+      });
+      
+      // Create object from headers and values
+      const rowData = {};
+      headers.forEach((header, i) => {
+        rowData[header] = values[i] || '';
+      });
+      
+      // Create recommendation object
+      return {
+        id: Date.now() + index,
+        company: rowData['company'] || '',
+        position: rowData['position'] || '',
+        location: rowData['location'] || '',
+        description: rowData['description'] || '',
+        salary: rowData['salary'] || '',
+        url: rowData['url'] || '',
+        source: rowData['source'] || ''
+      };
+    });
+  };
+
+  const handleImportRecommendations = () => {
+    if (recommendationsPreview.length === 0) return;
+    
+    setJobRecommendations(recommendationsPreview);
+    setTotalRecommendations(recommendationsPreview.length);
+    setCurrentRecommendationIndex(0);
+    setRecommendationsPreview([]);
+    
+    // Show success message
+    alert(`Successfully imported ${recommendationsPreview.length} job recommendations.`);
+  };
+
+  const handleRateRecommendation = (rating) => {
+    // Get current recommendation
+    const currentRecommendation = jobRecommendations[currentRecommendationIndex];
+    
+    // Add rating to current recommendation
+    const ratedRecommendation = {
+      ...currentRecommendation,
+      rating,
+      ratedAt: new Date().toISOString()
+    };
+    
+    // Add to rated recommendations
+    setRatedRecommendations([...ratedRecommendations, ratedRecommendation]);
+    
+    // If user is interested, optionally create a new opportunity
+    if (rating === 'interested') {
+      const shouldCreateOpportunity = window.confirm(
+        "Would you like to add this job to your opportunities list?"
+      );
+      
+      if (shouldCreateOpportunity) {
+        const newOpportunity = {
+          id: Date.now(),
+          company: currentRecommendation.company,
+          position: currentRecommendation.position,
+          jobDescription: currentRecommendation.description,
+          status: "Interested",
+          appliedDate: new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', month: 'long', day: 'numeric' 
+          }),
+          location: currentRecommendation.location,
+          salary: currentRecommendation.salary || "",
+          applicationUrl: currentRecommendation.url || "",
+          source: currentRecommendation.source || "",
+          resume: masterResume,
+          notes: "",
+          tags: []
+        };
+        
+        dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpportunity });
+        updateLastModified(newOpportunity.id);
+      }
+    }
+    
+    // Move to next recommendation
+    handleNextRecommendation();
+  };
+
+  const handleNextRecommendation = () => {
+    if (currentRecommendationIndex < jobRecommendations.length - 1) {
+      setCurrentRecommendationIndex(currentRecommendationIndex + 1);
+    } else {
+      // Cycle back to the beginning if we've gone through all
+      setCurrentRecommendationIndex(0);
+    }
+  };
+
+  const handleExportRatedRecommendations = () => {
+    if (ratedRecommendations.length === 0) return;
+    
+    // Create CSV content
+    const headers = ['id', 'company', 'position', 'location', 'description', 'salary', 'url', 'source', 'rating', 'ratedAt'];
+    const csvRows = [headers.join(',')];
+    
+    ratedRecommendations.forEach(rec => {
+      const values = [
+        rec.id,
+        `"${(rec.company || '').replace(/"/g, '""')}"`,
+        `"${(rec.position || '').replace(/"/g, '""')}"`,
+        `"${(rec.location || '').replace(/"/g, '""')}"`,
+        `"${(rec.description || '').replace(/"/g, '""')}"`,
+        `"${(rec.salary || '').replace(/"/g, '""')}"`,
+        `"${(rec.url || '').replace(/"/g, '""')}"`,
+        `"${(rec.source || '').replace(/"/g, '""')}"`,
+        rec.rating,
+        rec.ratedAt
+      ];
+      csvRows.push(values.join(','));
+    });
+    
+    const csvContent = csvRows.join('\n');
+    
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link and trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `job-recommendations-ratings-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleExportOpportunities = () => {
     if (selectedExportIds.length === 0) return;
     
@@ -2298,7 +2490,7 @@ export default function CAPTAINGui() {
           </div>
         </TabsContent>
 
-        <TabsContent value="captain" className="p-2 sm: p-4 flex-grow overflow-auto">
+        <TabsContent value="captain" className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Career Coach</h2>
           </div>
@@ -2357,57 +2549,110 @@ export default function CAPTAINGui() {
             </Card>
             
             <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle>AI Job Recommendations</CardTitle>
-                <CardDescription>
-                  Rate these opportunities
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle>AI Job Recommendations</CardTitle>
+                  <CardDescription>
+                    Rate these opportunities
+                  </CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">
+                    {jobRecommendations.length > 0 ? `${currentRecommendationIndex + 1}/${jobRecommendations.length}` : '0/0'}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleNextRecommendation}
+                    disabled={jobRecommendations.length === 0}
+                  >
+                    Next
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-lg">Senior Frontend Developer</h3>
-                    <p className="text-sm font-medium text-blue-700 mb-2">TechGiant</p>
-                    <div className="max-h-64 overflow-y-auto mb-4">
-                      <p className="text-sm whitespace-pre-wrap">
-                        TechGiant is seeking a Senior Frontend Developer to lead our web application team. 
-                        The ideal candidate will have 5+ years of experience with React, TypeScript, and 
-                        state management libraries. You'll be responsible for architecting scalable 
-                        frontend solutions and mentoring junior developers.
+                {jobRecommendations.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className={`${isDarkMode ? 'bg-blue-900/30 text-blue-100' : 'bg-blue-50'} p-4 rounded-lg`}>
+                      <h3 className="font-semibold text-lg">{jobRecommendations[currentRecommendationIndex].position}</h3>
+                      <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                        {jobRecommendations[currentRecommendationIndex].company}
                       </p>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-2 border-t gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-gray-500 w-full sm:w-auto"
-                      >
-                        Skip
-                      </Button>
+                      <p className={`text-sm mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <span className="font-medium">Location:</span> {jobRecommendations[currentRecommendationIndex].location}
+                      </p>
+                      <div className="max-h-64 overflow-y-auto mb-4">
+                        <p className={`text-sm whitespace-pre-wrap ${isDarkMode ? 'text-gray-300' : ''}`}>
+                          {jobRecommendations[currentRecommendationIndex].description}
+                        </p>
+                      </div>
                       
-                      <div className="flex space-x-2 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-2 border-t gap-2">
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-auto"
+                          className={`text-gray-500 w-full sm:w-auto ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+                          onClick={() => handleRateRecommendation('skipped')}
                         >
-                          <ThumbsDown className="h-5 w-5 mr-1" />
-                          Not Interested
+                          Skip
                         </Button>
                         
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-green-500 border-green-200 hover:bg-green-50 flex-1 sm:flex-auto"
-                        >
-                          <ThumbsUp className="h-5 w-5 mr-1" />
-                          Interested
-                        </Button>
+                        <div className="flex space-x-2 w-full sm:w-auto">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className={`text-red-500 border-red-200 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-red-50'} flex-1 sm:flex-auto`}
+                            onClick={() => handleRateRecommendation('not_interested')}
+                          >
+                            <ThumbsDown className="h-5 w-5 mr-1" />
+                            Not Interested
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className={`text-green-500 border-green-200 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-green-50'} flex-1 sm:flex-auto`}
+                            onClick={() => handleRateRecommendation('interested')}
+                          >
+                            <ThumbsUp className="h-5 w-5 mr-1" />
+                            Interested
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        You've rated {ratedRecommendations.length} of {totalRecommendations} recommendations
+                      </p>
+                      <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5 mt-2`}>
+                        <div 
+                          className="bg-blue-600 h-2.5 rounded-full" 
+                          style={{ width: `${(ratedRecommendations.length / totalRecommendations) * 100}%` }}
+                        ></div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}>No job recommendations available</p>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setActiveTab('settings');
+                        // Wait for tab to change, then select the recommendations tab
+                        setTimeout(() => {
+                          const recommendationsTab = document.querySelector('[value="recommendations"]');
+                          if (recommendationsTab) {
+                            (recommendationsTab as HTMLElement).click();
+                          }
+                        }, 100);
+                      }}
+                    >
+                      Import Recommendations
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -3813,167 +4058,307 @@ export default function CAPTAINGui() {
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Settings</h2>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Export Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Export Opportunities</CardTitle>
-                <CardDescription>
-                  Export selected job opportunities to a file
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium mb-2">Select opportunities to export</h3>
-                  <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
-                    {opportunities.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center mb-2">
-                          <Checkbox 
-                            id="select-all-export" 
-                            checked={selectedExportIds.length === opportunities.length}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedExportIds(opportunities.map(opp => opp.id));
-                              } else {
-                                setSelectedExportIds([]);
-                              }
-                            }}
-                          />
-                          <label htmlFor="select-all-export" className="ml-2 text-sm font-medium">
-                            Select All ({opportunities.length})
-                          </label>
-                        </div>
-                        
-                        {opportunities.map(opp => (
-                          <div key={opp.id} className="flex items-center">
-                            <Checkbox 
-                              id={`export-${opp.id}`} 
-                              checked={selectedExportIds.includes(opp.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedExportIds([...selectedExportIds, opp.id]);
-                                } else {
-                                  setSelectedExportIds(selectedExportIds.filter(id => id !== opp.id));
-                                }
-                              }}
-                            />
-                            <label htmlFor={`export-${opp.id}`} className="ml-2 text-sm">
-                              {opp.company} - {opp.position}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        No opportunities available to export
-                      </p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button 
-                    onClick={handleExportOpportunities}
-                    disabled={selectedExportIds.length === 0}
-                  >
-                    Export Selected ({selectedExportIds.length})
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <Tabs defaultValue="opportunities" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+              <TabsTrigger value="recommendations">Job Recommendations</TabsTrigger>
+              <TabsTrigger value="general">General Settings</TabsTrigger>
+            </TabsList>
             
-            {/* Import Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Import Opportunities</CardTitle>
-                <CardDescription>
-                  Import job opportunities from a file
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    Select a file to import
-                  </label>
-                  <div className="flex items-center">
-                    <Input
-                      type="file"
-                      accept=".json"
-                      onChange={handleFileChange}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                
-                {importData.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium mb-2">Preview ({importData.length} opportunities)</h3>
-                    <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
-                      <div className="space-y-2">
-                        <div className="flex items-center mb-2">
-                          <Checkbox 
-                            id="select-all-import" 
-                            checked={selectedImportIds.length === importData.length}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedImportIds(importData.map(opp => opp.id));
-                              } else {
-                                setSelectedImportIds([]);
-                              }
-                            }}
-                          />
-                          <label htmlFor="select-all-import" className="ml-2 text-sm font-medium">
-                            Select All ({importData.length})
-                          </label>
-                        </div>
-                        
-                        {importData.map(opp => {
-                          const isDuplicate = opportunities.some(
-                            existingOpp => existingOpp.company === opp.company && 
-                                          existingOpp.position === opp.position
-                          );
-                          
-                          return (
-                            <div key={opp.id} className="flex items-center">
+            <TabsContent value="opportunities">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Export Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Export Opportunities</CardTitle>
+                    <CardDescription>
+                      Export selected job opportunities to a file
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium mb-2">Select opportunities to export</h3>
+                      <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
+                        {opportunities.length > 0 ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center mb-2">
                               <Checkbox 
-                                id={`import-${opp.id}`} 
-                                checked={selectedImportIds.includes(opp.id)}
+                                id="select-all-export" 
+                                checked={selectedExportIds.length === opportunities.length}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
-                                    setSelectedImportIds([...selectedImportIds, opp.id]);
+                                    setSelectedExportIds(opportunities.map(opp => opp.id));
                                   } else {
-                                    setSelectedImportIds(selectedImportIds.filter(id => id !== opp.id));
+                                    setSelectedExportIds([]);
                                   }
                                 }}
                               />
-                              <label htmlFor={`import-${opp.id}`} className="ml-2 text-sm flex items-center">
-                                {opp.company} - {opp.position}
-                                {isDuplicate && (
-                                  <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-800 border-yellow-200">
-                                    Possible Duplicate
-                                  </Badge>
-                                )}
+                              <label htmlFor="select-all-export" className="ml-2 text-sm font-medium">
+                                Select All ({opportunities.length})
                               </label>
                             </div>
-                          );
-                        })}
+                            
+                            {opportunities.map(opp => (
+                              <div key={opp.id} className="flex items-center">
+                                <Checkbox 
+                                  id={`export-${opp.id}`} 
+                                  checked={selectedExportIds.includes(opp.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedExportIds([...selectedExportIds, opp.id]);
+                                    } else {
+                                      setSelectedExportIds(selectedExportIds.filter(id => id !== opp.id));
+                                    }
+                                  }}
+                                />
+                                <label htmlFor={`export-${opp.id}`} className="ml-2 text-sm">
+                                  {opp.company} - {opp.position}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 text-center py-4">
+                            No opportunities available to export
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )}
+                    
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleExportOpportunities}
+                        disabled={selectedExportIds.length === 0}
+                      >
+                        Export Selected ({selectedExportIds.length})
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
                 
-                <div className="flex justify-end">
-                  <Button 
-                    onClick={handleImportOpportunities}
-                    disabled={selectedImportIds.length === 0}
-                  >
-                    Import Selected ({selectedImportIds.length})
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                {/* Import Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Import Opportunities</CardTitle>
+                    <CardDescription>
+                      Import job opportunities from a file
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">
+                        Select a file to import
+                      </label>
+                      <div className="flex items-center">
+                        <Input
+                          type="file"
+                          accept=".json"
+                          onChange={handleFileChange}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    {importData.length > 0 && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium mb-2">Preview ({importData.length} opportunities)</h3>
+                        <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
+                          <div className="space-y-2">
+                            <div className="flex items-center mb-2">
+                              <Checkbox 
+                                id="select-all-import" 
+                                checked={selectedImportIds.length === importData.length}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedImportIds(importData.map(opp => opp.id));
+                                  } else {
+                                    setSelectedImportIds([]);
+                                  }
+                                }}
+                              />
+                              <label htmlFor="select-all-import" className="ml-2 text-sm font-medium">
+                                Select All ({importData.length})
+                              </label>
+                            </div>
+                            
+                            {importData.map(opp => {
+                              const isDuplicate = opportunities.some(
+                                existingOpp => existingOpp.company === opp.company && 
+                                              existingOpp.position === opp.position
+                              );
+                              
+                              return (
+                                <div key={opp.id} className="flex items-center">
+                                  <Checkbox 
+                                    id={`import-${opp.id}`} 
+                                    checked={selectedImportIds.includes(opp.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedImportIds([...selectedImportIds, opp.id]);
+                                      } else {
+                                        setSelectedImportIds(selectedImportIds.filter(id => id !== opp.id));
+                                      }
+                                    }}
+                                  />
+                                  <label htmlFor={`import-${opp.id}`} className="ml-2 text-sm flex items-center">
+                                    {opp.company} - {opp.position}
+                                    {isDuplicate && (
+                                      <Badge variant="outline" className="ml-2 text-xs bg-yellow-100 text-yellow-800 border-yellow-200">
+                                        Possible Duplicate
+                                      </Badge>
+                                    )}
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleImportOpportunities}
+                        disabled={selectedImportIds.length === 0}
+                      >
+                        Import Selected ({selectedImportIds.length})
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="recommendations">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Import Job Recommendations</CardTitle>
+                    <CardDescription>
+                      Import job recommendations from a CSV file
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">
+                        Select a CSV file with job recommendations
+                      </label>
+                      <div className="flex items-center">
+                        <Input
+                          type="file"
+                          accept=".csv"
+                          onChange={handleRecommendationsCSVChange}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    {recommendationsPreview.length > 0 && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium mb-2">Preview ({recommendationsPreview.length} recommendations)</h3>
+                        <div className="border rounded-md p-2 max-h-60 overflow-y-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                              <tr>
+                                <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {recommendationsPreview.slice(0, 5).map((job, index) => (
+                                <tr key={index}>
+                                  <td className="px-2 py-1 text-xs">{job.company}</td>
+                                  <td className="px-2 py-1 text-xs">{job.position}</td>
+                                  <td className="px-2 py-1 text-xs">{job.location}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          {recommendationsPreview.length > 5 && (
+                            <p className="text-xs text-gray-500 mt-2 text-center">
+                              And {recommendationsPreview.length - 5} more recommendations...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleImportRecommendations}
+                        disabled={recommendationsPreview.length === 0}
+                      >
+                        Import Recommendations
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Export Rated Recommendations</CardTitle>
+                    <CardDescription>
+                      Export your rated job recommendations
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500">
+                        Export all job recommendations with your ratings (interested, not interested, skipped)
+                      </p>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleExportRatedRecommendations}
+                        disabled={ratedRecommendations.length === 0}
+                      >
+                        Export Ratings
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="general">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Application Settings</CardTitle>
+                  <CardDescription>
+                    Configure general application settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-medium">Dark Mode</h3>
+                        <p className="text-sm text-gray-500">Toggle between light and dark theme</p>
+                      </div>
+                      <Switch
+                        checked={isDarkMode}
+                        onCheckedChange={toggleDarkMode}
+                        id="settings-dark-mode"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-medium">Debug Panel</h3>
+                        <p className="text-sm text-gray-500">Show debug information for developers</p>
+                      </div>
+                      <Switch
+                        checked={showDebugPanel}
+                        onCheckedChange={setShowDebugPanel}
+                        id="settings-debug-panel"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         
         <TabsContent value="help" className="p-2 sm:p-4 flex-grow overflow-auto">
