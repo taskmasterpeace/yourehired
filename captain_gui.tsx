@@ -639,6 +639,20 @@ export default function CAPTAINGui() {
 
   // Helper function to get prompts based on status
   const getPromptsForStatus = (status) => {
+    // Default prompts if status doesn't match any category
+    const defaultPrompts = [
+      "Help me craft a compelling cover letter for this position",
+      "What skills should I highlight in my resume for this role?",
+      "How should I prepare for an interview for this position?",
+      "What questions should I ask the interviewer about this role?"
+    ];
+    
+    // If status is undefined or not in our map, return default prompts
+    if (!status || !promptsByStatus[status]) {
+      console.log("Using default prompts - status not found:", status);
+      return defaultPrompts;
+    }
+    
     // Get the category based on status
     let category = "";
     if (["Bookmarked", "Interested", "Recruiter Contact", "Networking"].includes(status)) {
@@ -664,7 +678,10 @@ export default function CAPTAINGui() {
       .filter(prompt => !selectedStatusPrompts.includes(prompt))
       .slice(0, 1);
       
-    return [...selectedStatusPrompts, ...selectedCategoryPrompts];
+    const result = [...selectedStatusPrompts, ...selectedCategoryPrompts];
+    
+    // If we somehow ended up with no prompts, return the defaults
+    return result.length > 0 ? result : defaultPrompts;
   };
 
   // Helper function for updating last modified timestamp
@@ -936,16 +953,10 @@ export default function CAPTAINGui() {
       setTimeout(() => {
         const prompts = getPromptsForStatus(selectedOpportunity.status);
         console.log("Prompts for status:", selectedOpportunity.status, prompts);
-        // Add prompt categories as metadata
-        const promptsWithCategories = prompts.map(prompt => {
-          // Determine if this is a status-specific or category-general prompt
-          const isStatusPrompt = promptsByStatus[selectedOpportunity.status]?.includes(prompt);
-          return {
-            text: prompt,
-            category: isStatusPrompt ? 'Status-Specific' : 'General Advice'
-          };
-        });
-        setAiPrompts(promptsWithCategories.map(p => p.text));
+        
+        // Ensure we have an array of strings
+        const cleanPrompts = prompts.map(p => typeof p === 'string' ? p : p.text || '').filter(Boolean);
+        setAiPrompts(cleanPrompts);
         setIsLoadingPrompts(false);
       }, 300);
     } else {

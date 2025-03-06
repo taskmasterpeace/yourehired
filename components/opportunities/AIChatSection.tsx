@@ -11,7 +11,7 @@ interface AIChatSectionProps {
   handleSendMessage: () => void;
   currentMessage: string;
   setCurrentMessage: (message: string) => void;
-  aiPrompts: string[];
+  aiPrompts: any[];
   isLoadingPrompts: boolean;
   isDarkMode: boolean;
 }
@@ -104,12 +104,12 @@ export const AIChatSection = ({
                             variant="outline"
                             className="justify-start text-left h-auto py-3 w-full"
                             onClick={() => {
-                              setCurrentMessage(prompt);
+                              setCurrentMessage(typeof prompt === 'string' ? prompt : prompt.text || '');
                               setTimeout(() => handleSendMessage(), 100);
                             }}
                           >
                             <Sparkles className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
-                            <span>{prompt}</span>
+                            <span>{typeof prompt === 'string' ? prompt : prompt.text || 'Suggestion'}</span>
                           </Button>
                         </motion.div>
                       ))
@@ -156,7 +156,7 @@ export const AIChatSection = ({
                             }}
                           >
                             <Sparkles className="h-3 w-3 mr-2 text-blue-500 flex-shrink-0" />
-                            <span>{prompt}</span>
+                            <span>{typeof prompt === 'string' ? prompt : prompt.text || 'Suggestion'}</span>
                           </Button>
                         </motion.div>
                       ))
