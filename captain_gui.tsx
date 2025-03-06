@@ -948,6 +948,9 @@ export default function CAPTAINGui() {
         setAiPrompts(promptsWithCategories.map(p => p.text));
         setIsLoadingPrompts(false);
       }, 300);
+    } else {
+      // Reset prompts if no opportunity is selected
+      setAiPrompts([]);
     }
   }, [selectedOpportunity]);
 

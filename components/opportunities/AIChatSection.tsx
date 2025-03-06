@@ -134,27 +134,31 @@ export const AIChatSection = ({
                       <div key={i} className="h-12 bg-gray-100 animate-pulse rounded-md"></div>
                     ))
                   ) : (
-                    aiPrompts.map((prompt, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: index * 0.05 }}
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="justify-start text-left h-auto py-2 w-full text-sm"
-                          onClick={() => {
-                            setCurrentMessage(prompt);
-                            setTimeout(() => handleSendMessage(), 100);
-                          }}
+                    aiPrompts && aiPrompts.length > 0 ? (
+                      aiPrompts.map((prompt, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: index * 0.05 }}
                         >
-                          <Sparkles className="h-3 w-3 mr-2 text-blue-500 flex-shrink-0" />
-                          <span>{prompt}</span>
-                        </Button>
-                      </motion.div>
-                    ))
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="justify-start text-left h-auto py-2 w-full text-sm"
+                            onClick={() => {
+                              setCurrentMessage(prompt);
+                              setTimeout(() => handleSendMessage(), 100);
+                            }}
+                          >
+                            <Sparkles className="h-3 w-3 mr-2 text-blue-500 flex-shrink-0" />
+                            <span>{prompt}</span>
+                          </Button>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500 p-2">No suggestions available for this status.</div>
+                    )
                   )}
                 </div>
               </CollapsibleContent>
