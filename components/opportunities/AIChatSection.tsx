@@ -92,26 +92,30 @@ export const AIChatSection = ({
                       <div key={i} className="h-16 bg-gray-100 animate-pulse rounded-md"></div>
                     ))
                   ) : (
-                    aiPrompts.map((prompt, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                      >
-                        <Button
-                          variant="outline"
-                          className="justify-start text-left h-auto py-3 w-full"
-                          onClick={() => {
-                            setCurrentMessage(prompt);
-                            setTimeout(() => handleSendMessage(), 100);
-                          }}
+                    aiPrompts && aiPrompts.length > 0 ? (
+                      aiPrompts.map((prompt, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
                         >
-                          <Sparkles className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
-                          <span>{prompt}</span>
-                        </Button>
-                      </motion.div>
-                    ))
+                          <Button
+                            variant="outline"
+                            className="justify-start text-left h-auto py-3 w-full"
+                            onClick={() => {
+                              setCurrentMessage(prompt);
+                              setTimeout(() => handleSendMessage(), 100);
+                            }}
+                          >
+                            <Sparkles className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                            <span>{prompt}</span>
+                          </Button>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500 p-4">No suggestions available for this status.</div>
+                    )
                   )}
                 </div>
               </div>
