@@ -2156,6 +2156,22 @@ export default function CAPTAINGui() {
                   {/* This would be populated with actual chat messages in a real implementation */}
                 </div>
                 
+                <div className="mb-4">
+                  <h3 className="text-lg font-medium mb-2">AI Suggestions</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {quickChatOptions.map((prompt, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className={`text-left ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-blue-50 hover:bg-blue-100'}`}
+                      >
+                        {prompt}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <Textarea
                     placeholder="Ask Captain anything about your job search..."
