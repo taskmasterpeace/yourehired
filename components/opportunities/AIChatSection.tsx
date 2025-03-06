@@ -156,7 +156,7 @@ export const AIChatSection = ({
                             }}
                           >
                             <Sparkles className="h-3 w-3 mr-2 text-blue-500 flex-shrink-0" />
-                            <span>{typeof prompt === 'string' ? prompt : prompt.text || 'Suggestion'}</span>
+                            <span>{prompt}</span>
                           </Button>
                         </motion.div>
                       ))
