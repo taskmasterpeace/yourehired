@@ -945,25 +945,38 @@ export default function CAPTAINGui() {
       return acc;
     }, {} as Record<string, number>);
     
-    // Application timeline (applications per week)
-    const applicationsByWeek = opportunities.reduce((acc, opp) => {
-      const date = new Date(opp.appliedDate);
-      const weekStart = new Date(date);
-      weekStart.setDate(date.getDate() - date.getDay());
-      const weekKey = weekStart.toISOString().split('T')[0];
+    // Application timeline by actual application date
+    const applicationsByDate = opportunities.reduce((acc, opp) => {
+      if (!opp.appliedDate) return acc;
       
-      acc[weekKey] = (acc[weekKey] || 0) + 1;
-      return acc;
+      try {
+        // Format the date to show just the month and day
+        const date = new Date(opp.appliedDate);
+        const dateKey = date.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric'
+        });
+        
+        acc[dateKey] = (acc[dateKey] || 0) + 1;
+        return acc;
+      } catch (e) {
+        return acc;
+      }
     }, {} as Record<string, number>);
     
-    // Convert to array format for charts
-    const applicationTimeline = Object.entries(applicationsByWeek)
-      .map(([date, count]) => ({ 
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
+    // Convert to array format for charts - sort by actual date
+    const applicationTimeline = Object.entries(applicationsByDate)
+      .map(([dateStr, count]) => ({ 
+        date: dateStr, 
         count 
       }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-8); // Last 8 weeks
+      .sort((a, b) => {
+        // Parse the dates for proper sorting
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA.getTime() - dateB.getTime();
+      })
+      .slice(-12); // Show last 12 application dates
     
     // Response rate
     const responseCount = opportunities.filter(opp => 
@@ -2265,7 +2278,7 @@ export default function CAPTAINGui() {
             <Card>
               <CardHeader>
                 <CardTitle>Application Status</CardTitle>
-                <CardDescription>Distribution of your applications by status</CardDescription>
+                <CardDescription>Distribution of your applications by current status</CardDescription>
               </CardHeader>
               <CardContent className="h-60 sm:h-80">
                 {Object.keys(analytics.statusCounts).length > 0 ? (
@@ -2337,18 +2350,38 @@ export default function CAPTAINGui() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
-                <CardTitle>Conversion Funnel</CardTitle>
-                <CardDescription>How your applications progress through the hiring process</CardDescription>
+                <CardTitle>Application Stages</CardTitle>
+                <CardDescription>Distribution of applications across job search stages</CardDescription>
               </CardHeader>
               <CardContent className="h-48 sm:h-64">
                 {analytics.totalApplications > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsBarChart
                       data={[
-                        { name: 'Applied', value: analytics.totalApplications },
-                        { name: 'Response', value: parseInt(analytics.responseRate) * analytics.totalApplications / 100 },
-                        { name: 'Interview', value: parseInt(analytics.interviewRate) * parseInt(analytics.responseRate) * analytics.totalApplications / 10000 },
-                        { name: 'Offer', value: parseInt(analytics.offerRate) * parseInt(analytics.interviewRate) * parseInt(analytics.responseRate) * analytics.totalApplications / 1000000 }
+                        { 
+                          name: 'Initial Contact', 
+                          value: opportunities.filter(opp => 
+                            ['Bookmarked', 'Interested', 'Recruiter Contact', 'Networking'].includes(opp.status)
+                          ).length 
+                        },
+                        { 
+                          name: 'Application', 
+                          value: opportunities.filter(opp => 
+                            ['Preparing Application', 'Applied', 'Application Acknowledged'].includes(opp.status)
+                          ).length 
+                        },
+                        { 
+                          name: 'Interview', 
+                          value: opportunities.filter(opp => 
+                            ['Screening', 'Technical Assessment', 'First Interview', 'Second Interview', 'Final Interview', 'Reference Check'].includes(opp.status)
+                          ).length 
+                        },
+                        { 
+                          name: 'Decision', 
+                          value: opportunities.filter(opp => 
+                            ['Negotiating', 'Offer Received', 'Offer Accepted', 'Offer Declined', 'Rejected', 'Withdrawn', 'Position Filled', 'Position Cancelled'].includes(opp.status)
+                          ).length 
+                        }
                       ]}
                       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                     >
