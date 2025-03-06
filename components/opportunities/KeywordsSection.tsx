@@ -36,6 +36,8 @@ interface Keyword {
   text: string;
   relevance: number; // 1-5 scale
   inResume: boolean;
+  matchScore?: number; // 1-5 scale indicating how well the resume demonstrates this skill
+  category?: 'must-have' | 'should-have' | 'could-have'; // importance category
 }
 
 interface KeywordsSectionProps {
@@ -126,15 +128,82 @@ export const KeywordsSection = ({
         "Communication", "Problem Solving", "Team Player", "Testing"
       ];
       
-      // Create keyword objects with relevance and check if they're in the resume
+      // Assign categories based on relevance
+      const getCategoryFromRelevance = (relevance: number) => {
+        if (relevance >= 4) return 'must-have';
+        if (relevance >= 2) return 'should-have';
+        return 'could-have';
+      };
+      
+      // Calculate match score based on how well the keyword appears in resume
+      const calculateMatchScore = (text: string): number => {
+        if (!opportunity.resume) return 0;
+        
+        const resumeText = opportunity.resume.toLowerCase();
+        const keyword = text.toLowerCase();
+        
+        // Check for exact match
+        if (resumeText.includes(` ${keyword} `) || 
+            resumeText.includes(`${keyword}.`) || 
+            resumeText.includes(`${keyword},`)) {
+          return 5; // Excellent match
+        }
+        
+        // Check for partial matches
+        const partialMatches = resumeText.split(keyword).length - 1;
+        if (partialMatches > 2) return 4; // Good match
+        if (partialMatches > 0) return 3; // Basic match
+        
+        // Check for related terms (simplified example)
+        const relatedTerms = {
+          'react': ['reactjs', 'react.js', 'frontend framework'],
+          'javascript': ['js', 'ecmascript', 'frontend development'],
+          'typescript': ['ts', 'typed javascript'],
+          'node.js': ['nodejs', 'server-side javascript'],
+          // Add more related terms as needed
+        };
+        
+        const related = relatedTerms[keyword.toLowerCase()];
+        if (related && related.some(term => resumeText.includes(term))) {
+          return 2; // Minimal match through related terms
+        }
+        
+        // Check for very loose association
+        const fieldTerms = {
+          'frontend': ['html', 'css', 'web development', 'ui'],
+          'backend': ['server', 'api', 'database'],
+          'devops': ['ci/cd', 'pipeline', 'deployment'],
+          // Add more field associations as needed
+        };
+        
+        for (const [field, terms] of Object.entries(fieldTerms)) {
+          if (keyword.toLowerCase().includes(field) && 
+              terms.some(term => resumeText.includes(term))) {
+            return 1; // Poor match through field association
+          }
+        }
+        
+        return 0; // No match
+      };
+      
+      // Create keyword objects with relevance, category, match score, and check if they're in resume
       const extractedKeywords: Keyword[] = keywordsList
         .sort(() => Math.random() - 0.5)
         .slice(0, 10)
-        .map(text => ({
-          text,
-          relevance: Math.floor(Math.random() * 5) + 1, // Random relevance 1-5
-          inResume: checkIfInResume(text)
-        }));
+        .map(text => {
+          const relevance = Math.floor(Math.random() * 5) + 1; // Random relevance 1-5
+          const inResume = checkIfInResume(text);
+          const matchScore = calculateMatchScore(text);
+          const category = getCategoryFromRelevance(relevance);
+          
+          return {
+            text,
+            relevance,
+            inResume,
+            matchScore,
+            category
+          };
+        });
       
       setKeywords(extractedKeywords);
       updateOpportunity(opportunity.id, { keywords: extractedKeywords });
@@ -283,18 +352,46 @@ export const KeywordsSection = ({
     URL.revokeObjectURL(url);
   };
 
-  // Render stars for relevance rating
-  const renderRelevanceStars = (relevance: number) => {
+  // Render stars for relevance or match rating
+  const renderStars = (rating: number, filled: string = 'text-yellow-500 fill-yellow-500', empty: string = 'text-gray-300') => {
     return (
       <div className="flex">
         {[1, 2, 3, 4, 5].map(i => (
           <Star 
             key={i} 
-            className={`h-3 w-3 ${i <= relevance ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+            className={`h-3 w-3 ${i <= rating ? filled : empty}`} 
           />
         ))}
       </div>
     );
+  };
+  
+  // Get badge color based on category
+  const getCategoryBadgeColor = (category: string) => {
+    switch(category) {
+      case 'must-have':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'should-have':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'could-have':
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+      default:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+  };
+  
+  // Get category label
+  const getCategoryLabel = (category: string) => {
+    switch(category) {
+      case 'must-have':
+        return 'Must-have';
+      case 'should-have':
+        return 'Should-have';
+      case 'could-have':
+        return 'Could-have';
+      default:
+        return category;
+    }
   };
 
   // Extract keywords on first load if none exist
@@ -363,7 +460,7 @@ export const KeywordsSection = ({
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Analyzing...' : 'Extract'}
+            {isLoading ? 'Analyzing...' : 'Extract Requirements'}
           </Button>
         </div>
       </div>
@@ -372,7 +469,7 @@ export const KeywordsSection = ({
       {keywords.length > 0 && (
         <div className="mb-4">
           <div className="flex justify-between items-center mb-1">
-            <Label className="text-sm">Keyword Match</Label>
+            <Label className="text-sm">Skills Match</Label>
             <span className={`text-sm font-medium ${
               keywordMatchPercentage >= 80 ? 'text-green-500' : 
               keywordMatchPercentage >= 60 ? 'text-yellow-500' : 
@@ -410,7 +507,7 @@ export const KeywordsSection = ({
             onCheckedChange={setHighlightInResume}
           />
           <Label htmlFor="highlight-keywords" className="text-sm cursor-pointer">
-            Highlight keywords in resume (Alt+H)
+            Highlight skills in resume (Alt+H)
           </Label>
         </div>
       )}
@@ -431,7 +528,7 @@ export const KeywordsSection = ({
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Keywords by relevance:
+                    Skills by match quality:
                   </p>
                   <Button 
                     variant="ghost" 
@@ -444,13 +541,13 @@ export const KeywordsSection = ({
                   </Button>
                 </div>
                 
-                <div className="space-y-2">
-                  {/* High relevance keywords (4-5) */}
+                <div className="space-y-4">
+                  {/* Strong Matches (4-5 stars) */}
                   <div>
-                    <Label className="text-xs mb-1 block">High Relevance</Label>
+                    <Label className="text-sm font-medium mb-2 block">STRONG MATCHES</Label>
                     <div className="flex flex-wrap gap-2">
                       {keywords
-                        .filter(k => k.relevance >= 4)
+                        .filter(k => (k.matchScore || 0) >= 4)
                         .map((keyword, index) => {
                           const keywordIndex = keywords.findIndex(k => k.text === keyword.text);
                           return editingKeywordIndex === keywordIndex ? (
@@ -471,7 +568,7 @@ export const KeywordsSection = ({
                                   className="w-20"
                                   onValueChange={(value) => setEditedKeyword({...editedKeyword, relevance: value[0]})}
                                 />
-                                {renderRelevanceStars(editedKeyword.relevance)}
+                                {renderStars(editedKeyword.relevance)}
                               </div>
                               <Button 
                                 variant="ghost" 
@@ -486,15 +583,12 @@ export const KeywordsSection = ({
                             <Badge 
                               key={index} 
                               variant="outline"
-                              className={`flex items-center gap-1 ${
-                                keyword.inResume 
-                                  ? 'bg-green-100 text-green-800 border-green-200' 
-                                  : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                              }`}
+                              className={`flex items-center gap-1 ${getCategoryBadgeColor(keyword.category || '')}`}
                             >
                               <div className="flex items-center">
-                                {keyword.text}
-                                <span className="ml-1 text-xs">{renderRelevanceStars(keyword.relevance)}</span>
+                                <span>{keyword.text}</span>
+                                <span className="mx-1 text-xs opacity-70">({getCategoryLabel(keyword.category || '')})</span>
+                                <span className="ml-1 text-xs">{renderStars(keyword.matchScore || 0)}</span>
                               </div>
                               <div className="flex">
                                 <Button
@@ -517,18 +611,18 @@ export const KeywordsSection = ({
                             </Badge>
                           );
                         })}
-                      {keywords.filter(k => k.relevance >= 4).length === 0 && (
-                        <p className="text-xs text-gray-500 italic">No high relevance keywords found</p>
+                      {keywords.filter(k => (k.matchScore || 0) >= 4).length === 0 && (
+                        <p className="text-xs text-gray-500 italic">No strong matches found</p>
                       )}
                     </div>
                   </div>
                   
-                  {/* Medium relevance keywords (2-3) */}
+                  {/* Partial Matches (2-3 stars) */}
                   <div>
-                    <Label className="text-xs mb-1 block">Medium Relevance</Label>
+                    <Label className="text-sm font-medium mb-2 block">PARTIAL MATCHES</Label>
                     <div className="flex flex-wrap gap-2">
                       {keywords
-                        .filter(k => k.relevance >= 2 && k.relevance <= 3)
+                        .filter(k => (k.matchScore || 0) >= 2 && (k.matchScore || 0) <= 3)
                         .map((keyword, index) => {
                           const keywordIndex = keywords.findIndex(k => k.text === keyword.text);
                           return editingKeywordIndex === keywordIndex ? (
@@ -549,7 +643,7 @@ export const KeywordsSection = ({
                                   className="w-20"
                                   onValueChange={(value) => setEditedKeyword({...editedKeyword, relevance: value[0]})}
                                 />
-                                {renderRelevanceStars(editedKeyword.relevance)}
+                                {renderStars(editedKeyword.relevance)}
                               </div>
                               <Button 
                                 variant="ghost" 
@@ -564,15 +658,12 @@ export const KeywordsSection = ({
                             <Badge 
                               key={index} 
                               variant="outline"
-                              className={`flex items-center gap-1 ${
-                                keyword.inResume 
-                                  ? 'bg-green-50 text-green-700 border-green-100' 
-                                  : 'bg-gray-100 text-gray-700 border-gray-200'
-                              }`}
+                              className={`flex items-center gap-1 ${getCategoryBadgeColor(keyword.category || '')}`}
                             >
                               <div className="flex items-center">
-                                {keyword.text}
-                                <span className="ml-1 text-xs">{renderRelevanceStars(keyword.relevance)}</span>
+                                <span>{keyword.text}</span>
+                                <span className="mx-1 text-xs opacity-70">({getCategoryLabel(keyword.category || '')})</span>
+                                <span className="ml-1 text-xs">{renderStars(keyword.matchScore || 0)}</span>
                               </div>
                               <div className="flex">
                                 <Button
@@ -595,18 +686,18 @@ export const KeywordsSection = ({
                             </Badge>
                           );
                         })}
-                      {keywords.filter(k => k.relevance >= 2 && k.relevance <= 3).length === 0 && (
-                        <p className="text-xs text-gray-500 italic">No medium relevance keywords found</p>
+                      {keywords.filter(k => (k.matchScore || 0) >= 2 && (k.matchScore || 0) <= 3).length === 0 && (
+                        <p className="text-xs text-gray-500 italic">No partial matches found</p>
                       )}
                     </div>
                   </div>
                   
-                  {/* Low relevance keywords (1) */}
+                  {/* Missing Skills (0-1 stars) */}
                   <div>
-                    <Label className="text-xs mb-1 block">Low Relevance</Label>
+                    <Label className="text-sm font-medium mb-2 block">MISSING SKILLS</Label>
                     <div className="flex flex-wrap gap-2">
                       {keywords
-                        .filter(k => k.relevance === 1)
+                        .filter(k => (k.matchScore || 0) <= 1)
                         .map((keyword, index) => {
                           const keywordIndex = keywords.findIndex(k => k.text === keyword.text);
                           return editingKeywordIndex === keywordIndex ? (
@@ -627,7 +718,7 @@ export const KeywordsSection = ({
                                   className="w-20"
                                   onValueChange={(value) => setEditedKeyword({...editedKeyword, relevance: value[0]})}
                                 />
-                                {renderRelevanceStars(editedKeyword.relevance)}
+                                {renderStars(editedKeyword.relevance)}
                               </div>
                               <Button 
                                 variant="ghost" 
@@ -642,11 +733,12 @@ export const KeywordsSection = ({
                             <Badge 
                               key={index} 
                               variant="outline"
-                              className="flex items-center gap-1 bg-gray-50 text-gray-600 border-gray-100"
+                              className={`flex items-center gap-1 ${getCategoryBadgeColor(keyword.category || '')}`}
                             >
                               <div className="flex items-center">
-                                {keyword.text}
-                                <span className="ml-1 text-xs">{renderRelevanceStars(keyword.relevance)}</span>
+                                <span>{keyword.text}</span>
+                                <span className="mx-1 text-xs opacity-70">({getCategoryLabel(keyword.category || '')})</span>
+                                <span className="ml-1 text-xs">{renderStars(keyword.matchScore || 0)}</span>
                               </div>
                               <div className="flex">
                                 <Button
@@ -669,8 +761,8 @@ export const KeywordsSection = ({
                             </Badge>
                           );
                         })}
-                      {keywords.filter(k => k.relevance === 1).length === 0 && (
-                        <p className="text-xs text-gray-500 italic">No low relevance keywords found</p>
+                      {keywords.filter(k => (k.matchScore || 0) <= 1).length === 0 && (
+                        <p className="text-xs text-gray-500 italic">No missing skills found</p>
                       )}
                     </div>
                   </div>
@@ -693,10 +785,10 @@ export const KeywordsSection = ({
             <div className="text-center py-6">
               <FileText className={`h-12 w-12 mx-auto mb-2 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                No keywords extracted yet
+                No skills analyzed yet
               </p>
               <p className="text-sm text-gray-500 mb-4">
-                Click "Extract" to analyze the job description and identify key skills
+                Click "Extract Requirements" to analyze the job description and identify required skills
               </p>
               <Button 
                 variant="outline" 
@@ -704,7 +796,7 @@ export const KeywordsSection = ({
                 onClick={() => setShowAddKeywordDialog(true)}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Add Keywords Manually
+                Add Skills Manually
               </Button>
             </div>
           )}
@@ -715,15 +807,15 @@ export const KeywordsSection = ({
       <Dialog open={showAddKeywordDialog} onOpenChange={setShowAddKeywordDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Add New Keyword</DialogTitle>
+            <DialogTitle>Add New Skill</DialogTitle>
             <DialogDescription>
-              Add a keyword or skill from the job description
+              Add a skill or requirement from the job description
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 my-2">
             <div className="space-y-2">
-              <Label htmlFor="keyword-text">Keyword</Label>
+              <Label htmlFor="keyword-text">Skill</Label>
               <Input
                 id="keyword-text"
                 value={newKeyword.text}
@@ -753,14 +845,14 @@ export const KeywordsSection = ({
                 </div>
               </div>
               <p className="text-xs text-gray-500">
-                Higher relevance indicates keywords that are more important for this position
+                Higher relevance indicates skills that are more important for this position
               </p>
             </div>
           </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddKeywordDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddKeyword}>Add Keyword</Button>
+            <Button onClick={handleAddKeyword}>Add Skill</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -769,48 +861,55 @@ export const KeywordsSection = ({
       <Dialog open={Boolean(showHelpDialog)} onOpenChange={(open) => setShowHelpDialog(open ? showHelpDialog : false)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Using Keywords</DialogTitle>
+            <DialogTitle>Using Skills Gap Analyzer</DialogTitle>
             <DialogDescription>
-              Keywords help you optimize your resume for applicant tracking systems (ATS)
+              Identify and close the gaps between job requirements and your resume
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 my-2">
             <div>
-              <h4 className="font-medium mb-1">Understanding Keywords</h4>
+              <h4 className="font-medium mb-1">Understanding the Skills Gap Analyzer</h4>
               <p className="text-sm text-gray-500">
-                Keywords are specific terms, skills, and qualifications that employers look for in candidates. Each keyword has:
+                The Skills Gap Analyzer identifies how well your skills match job requirements. Each skill is categorized by:
               </p>
               <ul className="text-sm text-gray-500 list-disc pl-5 mt-1">
-                <li>A relevance score (1-5 stars)</li>
-                <li>Green highlighting if found in your resume</li>
-                <li>Yellow highlighting if missing from your resume</li>
+                <li><span className="text-green-700 font-medium">Must-have skills</span> - Explicitly required in the job description</li>
+                <li><span className="text-yellow-700 font-medium">Should-have skills</span> - Strongly preferred by the employer</li>
+                <li><span className="text-gray-700 font-medium">Could-have skills</span> - Beneficial but optional</li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-medium mb-1">Automatic Extraction</h4>
+              <h4 className="font-medium mb-1">Match Rating System</h4>
               <p className="text-sm text-gray-500">
-                CAPTAIN uses AI to automatically identify important terms from job descriptions. You can also add keywords manually.
+                Each skill is rated with stars showing how well your resume demonstrates that skill:
               </p>
+              <ul className="text-sm text-gray-500 list-disc pl-5 mt-1">
+                <li><span className="font-medium">5 stars:</span> Excellent match (prominently featured in resume)</li>
+                <li><span className="font-medium">4 stars:</span> Good match (clearly mentioned in resume)</li>
+                <li><span className="font-medium">3 stars:</span> Basic match (mentioned but not emphasized)</li>
+                <li><span className="font-medium">2 stars:</span> Minimal match (implied but not explicit)</li>
+                <li><span className="font-medium">1 star:</span> Poor match (only tangentially related skills)</li>
+                <li><span className="font-medium">No stars:</span> Not found (no evidence in resume)</li>
+              </ul>
             </div>
             
             <div>
-              <h4 className="font-medium mb-1">Optimizing Your Resume</h4>
+              <h4 className="font-medium mb-1">How to Use This Feature</h4>
               <p className="text-sm text-gray-500">
-                Focus on adding high-relevance keywords (4-5 stars) to your resume. Use the "Optimize Resume" button for suggestions.
+                Focus on addressing the "Missing Skills" and "Partial Matches" sections, especially for must-have skills, to improve your application.
               </p>
             </div>
             
             <div>
               <h4 className="font-medium mb-1">Best Practices</h4>
               <ul className="text-sm text-gray-500 list-disc pl-5">
-                <li>Use exact matches from the job description</li>
-                <li>Distribute keywords throughout your resume</li>
-                <li>Include keywords in section headings when possible</li>
-                <li>Use Alt+H to highlight keywords in your resume</li>
-                <li>Aim for a keyword match rate of 80% or higher</li>
-                <li>Balance hard skills and soft skills</li>
+                <li>Prioritize adding must-have skills that are missing from your resume</li>
+                <li>Use exact terminology from the job description</li>
+                <li>Provide specific examples that demonstrate your skills</li>
+                <li>Use the "Optimize Resume" button for tailored suggestions</li>
+                <li>Aim for strong matches on at least 80% of must-have skills</li>
               </ul>
             </div>
           </div>
@@ -839,7 +938,7 @@ export const KeywordsSection = ({
           <DialogHeader>
             <DialogTitle>Resume Optimization</DialogTitle>
             <DialogDescription>
-              Suggestions to improve your keyword match rate
+              Suggestions to close your skills gaps
             </DialogDescription>
           </DialogHeader>
           
@@ -866,7 +965,7 @@ export const KeywordsSection = ({
             />
             
             <div className="mt-4">
-              <h4 className="font-medium mb-2">Optimization Suggestions</h4>
+              <h4 className="font-medium mb-2">Skills Gap Recommendations</h4>
               <ul className="space-y-2">
                 {optimizationSuggestions.map((suggestion, index) => (
                   <li key={index} className="flex items-start">
@@ -901,7 +1000,7 @@ export const KeywordsSection = ({
             
             <div className="mt-2 pt-2 border-t border-gray-200">
               <p className="text-sm text-gray-500">
-                After updating your resume, click "Extract Keywords" again to recalculate your match rate.
+                After updating your resume, click "Extract Requirements" again to recalculate your skills match.
               </p>
             </div>
           </div>
