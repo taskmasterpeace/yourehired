@@ -1278,7 +1278,6 @@ export default function CAPTAINGui() {
     
     return {
       statusCounts,
-      applicationsByWeek,
       applicationTimeline,
       responseRate,
       interviewRate,
