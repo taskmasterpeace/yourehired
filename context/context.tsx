@@ -38,6 +38,10 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Try to load state from localStorage
   const loadState = (): AppState => {
+    if (typeof window === 'undefined') {
+      return initialState;
+    }
+    
     try {
       const savedState = localStorage.getItem('captainAppState');
       if (savedState) {
@@ -53,6 +57,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     try {
       localStorage.setItem('captainAppState', JSON.stringify(state));
     } catch (error) {
