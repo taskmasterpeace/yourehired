@@ -50,8 +50,7 @@ export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEd
               onChange={(e) => setEditedDetails({...editedDetails, location: e.target.value})}
               placeholder="e.g., Remote, New York, NY"
             />
-            </div>
-          </ProtectedContent>
+          </div>
           <div>
             <Label htmlFor="salary">Salary Range</Label>
             <Input
@@ -60,8 +59,7 @@ export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEd
               onChange={(e) => setEditedDetails({...editedDetails, salary: e.target.value})}
               placeholder="e.g., $80,000 - $100,000"
             />
-            </div>
-          </ProtectedContent>
+          </div>
           <div>
             <Label htmlFor="applicationUrl">Application URL</Label>
             <Input
@@ -70,8 +68,7 @@ export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEd
               onChange={(e) => setEditedDetails({...editedDetails, applicationUrl: e.target.value})}
               placeholder="https://..."
             />
-            </div>
-          </ProtectedContent>
+          </div>
           <div>
             <Label htmlFor="source">Source</Label>
             <Input
