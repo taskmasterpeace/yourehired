@@ -2154,6 +2154,9 @@ export default function CAPTAINGui() {
         } else {
           setHelpView({ active: false });
         }
+        } else {
+          setHelpView({ active: false });
+        }
       }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}>
         <TabsList className={`mb-4 p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-t-lg sticky top-0 z-10 flex w-full justify-center`}>
           <div className="flex space-x-1">
