@@ -2154,7 +2154,6 @@ export default function CAPTAINGui() {
         } else {
           setHelpView({ active: false });
         }
-      }} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}>
         } else {
           setHelpView({ active: false });
         }
