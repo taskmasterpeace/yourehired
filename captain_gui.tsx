@@ -2147,38 +2147,34 @@ export default function CAPTAINGui() {
         </div>
       </div>
 
-      <Tabs 
-        value={activeTab} 
-        onValueChange={(value) => {
-          setActiveTab(value);
-          if (value === 'help') {
-            setHelpView({ active: true });
-          } else {
-            setHelpView({ active: false });
-          }
-        }} 
-        className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}
-      >
-        <TabsList className={`mb-4 p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-t-lg sticky top-0 z-10 flex w-full justify-center`}>
-          <div className="flex space-x-1">
-            <TabsTrigger value="opportunities" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Opportunities</TabsTrigger>
-            <TabsTrigger value="resume" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Master Resume</TabsTrigger>
-            <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Coach</TabsTrigger>
-            <TabsTrigger value="analytics" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Analytics</TabsTrigger>
-            <TabsTrigger value="calendar" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Calendar</TabsTrigger>
-            <TabsTrigger value="settings" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Settings
-            </TabsTrigger>
-            <TabsTrigger value="help" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
-              <HelpCircle className="h-4 w-4 mr-1" />
-              Help
-            </TabsTrigger>
-          </div>
-        </TabsList>
+<Tabs value={activeTab} onValueChange={(value) => {
+  setActiveTab(value);
+  if (value === 'help') {
+    setHelpView({ active: true });
+  } else {
+    setHelpView({ active: false });
+  }
+}} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md flex-grow flex flex-col`}>
+  <TabsList className={`mb-4 p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-t-lg sticky top-0 z-10 flex w-full justify-center`}>
+    <div className="flex space-x-1">
+      <TabsTrigger value="opportunities" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Opportunities</TabsTrigger>
+      <TabsTrigger value="resume" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Master Resume</TabsTrigger>
+      <TabsTrigger value="captain" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Coach</TabsTrigger>
+      <TabsTrigger value="analytics" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Analytics</TabsTrigger>
+      <TabsTrigger value="calendar" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>Calendar</TabsTrigger>
+      <TabsTrigger value="settings" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Settings
+      </TabsTrigger>
+      <TabsTrigger value="help" className={`px-3 sm:px-4 py-2 rounded-md data-[state=active]:bg-blue-500 data-[state=active]:text-white ${isDarkMode ? 'text-gray-200 hover:text-white' : ''}`}>
+        <HelpCircle className="h-4 w-4 mr-1" />
+        Help
+      </TabsTrigger>
+    </div>
+  </TabsList>
 
         <TabsContent value="opportunities" className="p-2 sm:p-4 flex-grow overflow-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
