@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { QRCodeSVG } from 'qrcode.react'
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useAuth } from '@/context/auth-context'
+import { AuthModal } from '@/components/auth/AuthModal'
 
 // Define JobDetailsSection component
 export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEditedDetails, handleSaveJobDetails, handleEditJobDetails, isDarkMode }) => {
@@ -48,7 +50,8 @@ export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEd
               onChange={(e) => setEditedDetails({...editedDetails, location: e.target.value})}
               placeholder="e.g., Remote, New York, NY"
             />
-          </div>
+            </div>
+          </ProtectedContent>
           <div>
             <Label htmlFor="salary">Salary Range</Label>
             <Input
@@ -57,7 +60,8 @@ export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEd
               onChange={(e) => setEditedDetails({...editedDetails, salary: e.target.value})}
               placeholder="e.g., $80,000 - $100,000"
             />
-          </div>
+            </div>
+          </ProtectedContent>
           <div>
             <Label htmlFor="applicationUrl">Application URL</Label>
             <Input
@@ -66,7 +70,8 @@ export const JobDetailsSection = ({ opportunity, isEditing, editedDetails, setEd
               onChange={(e) => setEditedDetails({...editedDetails, applicationUrl: e.target.value})}
               placeholder="https://..."
             />
-          </div>
+            </div>
+          </ProtectedContent>
           <div>
             <Label htmlFor="source">Source</Label>
             <Input
@@ -530,9 +535,28 @@ const TAG_COLOR_CLASSES = {
   }
 };
 
+// Protected content wrapper component
+const ProtectedContent = ({ 
+  children, 
+  fallback = <div className="p-4 text-center">Please sign in to access this feature</div> 
+}) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="p-4 text-center">Loading...</div>;
+  }
+  
+  if (!user) {
+    return fallback;
+  }
+  
+  return <>{children}</>;
+};
+
 export default function CAPTAINGui() {
   const { state, dispatch } = useAppState();
   const { opportunities, masterResume, events, chatMessages } = state;
+  const { user, signOut, isLoading: authLoading } = useAuth();
   
   const [isClientSide, setIsClientSide] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date())
@@ -544,6 +568,17 @@ export default function CAPTAINGui() {
   useEffect(() => {
     setIsClientSide(true);
   }, []);
+  
+  // Show welcome message when user logs in
+  useEffect(() => {
+    if (user && !localStorage.getItem('welcomed')) {
+      // Set a flag to avoid showing the welcome message repeatedly
+      localStorage.setItem('welcomed', 'true');
+      
+      // Show welcome message
+      alert(`Welcome, ${user.email}! Your account is now connected.`);
+    }
+  }, [user]);
   const [selectedOpportunityIndex, setSelectedOpportunityIndex] = useState(0)
   const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false)
   const [isEditingJobDescription, setIsEditingJobDescription] = useState(false)
@@ -2036,6 +2071,24 @@ export default function CAPTAINGui() {
               Dark Mode
             </Label>
           </div>
+          
+          {/* Authentication UI */}
+          <div className="ml-auto flex items-center gap-2">
+            {authLoading ? (
+              <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
+            ) : user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm hidden md:inline">{user.email}</span>
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <AuthModal 
+                trigger={<Button variant="outline" size="sm">Sign In</Button>}
+              />
+            )}
+          </div>
         </div>
         <div className="block md:hidden">
           <Sheet>
@@ -2132,9 +2185,21 @@ export default function CAPTAINGui() {
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Job Opportunities</h2>
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add New Opportunity
-                </Button>
+                <ProtectedContent fallback={
+                  <Button 
+                    className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto"
+                    onClick={() => {
+                      // Show auth modal when clicked while not logged in
+                      document.getElementById('auth-modal-trigger')?.click();
+                    }}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Opportunity
+                  </Button>
+                }>
+                  <Button className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Opportunity
+                  </Button>
+                </ProtectedContent>
               </DialogTrigger>
               <DialogContent className="w-[90vw] max-w-3xl">
                 <DialogHeader>
@@ -2330,37 +2395,62 @@ export default function CAPTAINGui() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
-            <OpportunityList
-              opportunities={opportunities}
-              selectedOpportunityIndex={selectedOpportunityIndex}
-              setSelectedOpportunityIndex={setSelectedOpportunityIndex}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              dateFilter={dateFilter}
-              setDateFilter={setDateFilter}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              sortDirection={sortDirection}
-              setSortDirection={setSortDirection}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              lastModifiedTimestamps={lastModifiedTimestamps}
-              isBatchSelectMode={isBatchSelectMode}
-              setIsBatchSelectMode={setIsBatchSelectMode}
-              selectedJobIds={selectedJobIds}
-              toggleJobSelection={toggleJobSelection}
-              handleBatchDelete={handleBatchDelete}
-              isDarkMode={isDarkMode}
-            />
+            <ProtectedContent fallback={
+              <div className="col-span-1 flex flex-col items-center justify-center p-8 border rounded-lg">
+                <Lock className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-xl font-medium mb-2">Sign in to view your opportunities</h3>
+                <p className="text-gray-500 text-center mb-4">
+                  Create an account or sign in to track and manage your job applications
+                </p>
+                <AuthModal 
+                  trigger={<Button>Sign In / Create Account</Button>}
+                />
+              </div>
+            }>
+              <OpportunityList
+                opportunities={opportunities}
+                selectedOpportunityIndex={selectedOpportunityIndex}
+                setSelectedOpportunityIndex={setSelectedOpportunityIndex}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                dateFilter={dateFilter}
+                setDateFilter={setDateFilter}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                lastModifiedTimestamps={lastModifiedTimestamps}
+                isBatchSelectMode={isBatchSelectMode}
+                setIsBatchSelectMode={setIsBatchSelectMode}
+                selectedJobIds={selectedJobIds}
+                toggleJobSelection={toggleJobSelection}
+                handleBatchDelete={handleBatchDelete}
+                isDarkMode={isDarkMode}
+              />
+            </ProtectedContent>
 
             <Card 
               className={`col-span-1 md:col-span-2 flex flex-col order-1 md:order-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
             >
-              {selectedOpportunity ? (
+              {!user && (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center p-8">
+                    <Lock className={`h-16 w-16 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
+                    <h3 className={`text-xl font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Sign in to view details</h3>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2 mb-4`}>Create an account or sign in to see job details</p>
+                    <AuthModal 
+                      trigger={<Button>Sign In / Create Account</Button>}
+                    />
+                  </div>
+                </div>
+              )}
+              {user && selectedOpportunity ? (
                 <OpportunityDetails
                   opportunity={selectedOpportunity}
                   updateOpportunity={updateOpportunity}
@@ -2407,50 +2497,62 @@ export default function CAPTAINGui() {
         </TabsContent>
 
         <TabsContent value="resume" className="p-2 sm:p-4 flex-grow overflow-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-            <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Master Resume</h2>
-            <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <Button variant="outline" onClick={() => {
-                if (window.confirm("Are you sure you want to update all job applications with this master resume? This will overwrite any customized resumes.")) {
-                  // Update all opportunities that aren't frozen
-                  opportunities.forEach(opp => {
-                    dispatch({
-                      type: 'UPDATE_OPPORTUNITY',
-                      payload: {
-                        id: opp.id,
-                        updates: { resume: masterResume }
-                      }
-                    });
-                  });
-                }
-              }} className="w-full sm:w-auto">
-                Sync All Applications
-              </Button>
+          <ProtectedContent fallback={
+            <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
+              <Lock className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium mb-2">Sign in to access your master resume</h3>
+              <p className="text-gray-500 text-center mb-4">
+                Create an account or sign in to manage your resume and apply to jobs
+              </p>
+              <AuthModal 
+                trigger={<Button>Sign In / Create Account</Button>}
+              />
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle>Master Resume</CardTitle>
-                <CardDescription>
-                  This is your master resume that will be used as a template for new job applications
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={masterResume}
-                  onChange={(e) => {
-                    dispatch({
-                      type: 'UPDATE_MASTER_RESUME',
-                      payload: e.target.value
+          }>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+              <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Master Resume</h2>
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <Button variant="outline" onClick={() => {
+                  if (window.confirm("Are you sure you want to update all job applications with this master resume? This will overwrite any customized resumes.")) {
+                    // Update all opportunities that aren't frozen
+                    opportunities.forEach(opp => {
+                      dispatch({
+                        type: 'UPDATE_OPPORTUNITY',
+                        payload: {
+                          id: opp.id,
+                          updates: { resume: masterResume }
+                        }
+                      });
                     });
-                  }}
-                  className="font-mono whitespace-pre-wrap"
-                  rows={20}
-                />
-              </CardContent>
-            </Card>
+                  }
+                }} className="w-full sm:w-auto">
+                  Sync All Applications
+                </Button>
+              </div>
+            </div>
+          
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>Master Resume</CardTitle>
+                  <CardDescription>
+                    This is your master resume that will be used as a template for new job applications
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={masterResume}
+                    onChange={(e) => {
+                      dispatch({
+                        type: 'UPDATE_MASTER_RESUME',
+                        payload: e.target.value
+                      });
+                    }}
+                    className="font-mono whitespace-pre-wrap"
+                    rows={20}
+                  />
+                </CardContent>
+              </Card>
             
             <Card className="col-span-1">
               <CardHeader>
@@ -2496,7 +2598,20 @@ export default function CAPTAINGui() {
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Career Coach</h2>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <ProtectedContent fallback={
+            <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
+              <Lock className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium mb-2">Sign in to access your career coach</h3>
+              <p className="text-gray-500 text-center mb-4">
+                Create an account or sign in to get personalized career advice
+              </p>
+              <AuthModal 
+                trigger={<Button>Sign In / Create Account</Button>}
+              />
+            </div>
+          }>
+          
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="col-span-1 lg:col-span-2 flex flex-col h-[calc(100vh-250px)]">
               <CardHeader>
                 <CardTitle>Chat with Coach</CardTitle>
@@ -2663,6 +2778,19 @@ export default function CAPTAINGui() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Analytics Dashboard</h2>
           </div>
+          
+          <ProtectedContent fallback={
+            <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
+              <Lock className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium mb-2">Sign in to view analytics</h3>
+              <p className="text-gray-500 text-center mb-4">
+                Create an account or sign in to track your job search progress
+              </p>
+              <AuthModal 
+                trigger={<Button>Sign In / Create Account</Button>}
+              />
+            </div>
+          }>
           
           {/* Job Search Level Card */}
           <Card className="col-span-1 sm:col-span-2 lg:col-span-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white mb-6">
@@ -3146,32 +3274,33 @@ export default function CAPTAINGui() {
             </Card>
           </div>
           
-          {/* Job Search Insights Section */}
-          {analytics.jobSearchInsights.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Job Search Insights</CardTitle>
-                <CardDescription>Personalized insights based on your application patterns</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {analytics.jobSearchInsights.map((insight, index) => (
-                    <div key={index} className="p-4 bg-purple-50 rounded-lg">
-                      <div className="flex items-start">
-                        <div className="bg-purple-100 p-2 rounded-full mr-3">
-                          <Lightbulb className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-purple-800">{insight.title}</h4>
-                          <p className="text-sm text-purple-700 mt-1">{insight.description}</p>
+            {/* Job Search Insights Section */}
+            {analytics.jobSearchInsights.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Job Search Insights</CardTitle>
+                  <CardDescription>Personalized insights based on your application patterns</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {analytics.jobSearchInsights.map((insight, index) => (
+                      <div key={index} className="p-4 bg-purple-50 rounded-lg">
+                        <div className="flex items-start">
+                          <div className="bg-purple-100 p-2 rounded-full mr-3">
+                            <Lightbulb className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-purple-800">{insight.title}</h4>
+                            <p className="text-sm text-purple-700 mt-1">{insight.description}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </ProtectedContent>
         </TabsContent>
 
         <TabsContent value="calendar" className="p-2 sm:p-4 flex-grow overflow-auto">
@@ -3179,9 +3308,21 @@ export default function CAPTAINGui() {
             <h2 className="text-xl sm:text-2xl font-semibold text-blue-700">Calendar</h2>
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add Event
-                </Button>
+                <ProtectedContent fallback={
+                  <Button 
+                    className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto"
+                    onClick={() => {
+                      // Show auth modal when clicked while not logged in
+                      document.getElementById('auth-modal-trigger')?.click();
+                    }}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Event
+                  </Button>
+                }>
+                  <Button className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Event
+                  </Button>
+                </ProtectedContent>
               </DialogTrigger>
               <DialogContent className="w-[90vw] max-w-md">
                 <DialogHeader>
@@ -3294,7 +3435,19 @@ export default function CAPTAINGui() {
             </Dialog>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-4 mb-4">
+          <ProtectedContent fallback={
+            <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
+              <Lock className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium mb-2">Sign in to access your calendar</h3>
+              <p className="text-gray-500 text-center mb-4">
+                Create an account or sign in to manage your job search events
+              </p>
+              <AuthModal 
+                trigger={<Button>Sign In / Create Account</Button>}
+              />
+            </div>
+          }>
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4 mb-4">
             <Card className="col-span-1 md:col-span-5 order-2 md:order-1">
               <CardHeader className="pb-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -4536,6 +4689,11 @@ export default function CAPTAINGui() {
           </div>
         </div>
       )}
+      
+      {/* Hidden auth modal trigger for programmatic access */}
+      <div className="hidden">
+        <AuthModal trigger={<button id="auth-modal-trigger">Sign In</button>} />
+      </div>
       
       <footer className={`mt-8 py-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="container mx-auto px-4">
