@@ -2045,7 +2045,6 @@ export default function CAPTAINGui() {
     <div className={`container mx-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'} min-h-screen flex flex-col`}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
-          <div className="flex items-center">
             <img 
               src="/logo.png" 
               alt="You're Hired Logo" 
