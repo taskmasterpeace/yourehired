@@ -556,8 +556,8 @@ export default function CAPTAINGui() {
   const { user, signOut, isLoading: authLoading } = useAuth();
   
   const [isClientSide, setIsClientSide] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [activeTab, setActiveTab] = useState("opportunities")
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [activeTab, setActiveTab] = useState("opportunities");
   const [helpView, setHelpView] = useState<{ active: boolean; guideId?: string; sectionId?: string }>({ active: false });
   
   
@@ -576,13 +576,13 @@ export default function CAPTAINGui() {
       alert(`Welcome, ${user.email}! Your account is now connected.`);
     }
   }, [user]);
-  const [selectedOpportunityIndex, setSelectedOpportunityIndex] = useState(0)
-  const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false)
-  const [isEditingJobDescription, setIsEditingJobDescription] = useState(false)
-  const [editedJobDescription, setEditedJobDescription] = useState("")
-  const [isEditingDate, setIsEditingDate] = useState(false)
-  const [editedDate, setEditedDate] = useState("")
-  const [currentMessage, setCurrentMessage] = useState("")
+  const [selectedOpportunityIndex, setSelectedOpportunityIndex] = useState(0);
+  const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false);
+  const [isEditingJobDescription, setIsEditingJobDescription] = useState(false);
+  const [editedJobDescription, setEditedJobDescription] = useState("");
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editedDate, setEditedDate] = useState("");
+  const [currentMessage, setCurrentMessage] = useState("");
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState({});
