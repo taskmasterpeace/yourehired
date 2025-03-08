@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Opportunity } from '@/context/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Button } from "../../components/ui/button";
+import { Opportunity } from '../../context/types';
 import { FileText } from 'lucide-react';
 import { OpportunityHeader } from './OpportunityHeader';
 import { JobDetailsSection } from './JobDetailsSection';
@@ -13,7 +13,7 @@ import { KeywordsSection } from './KeywordsSection';
 import { ResumeSection } from './ResumeSection';
 import { AIChatSection } from './AIChatSection';
 import { JobDescriptionSection } from './JobDescriptionSection';
-import ApplicationTimeline from '@/app/components/ApplicationTimeline';
+import ApplicationTimeline from '../../app/components/ApplicationTimeline';
 
 interface OpportunityDetailsProps {
   opportunity: Opportunity | undefined;
