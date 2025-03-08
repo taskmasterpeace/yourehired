@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardContent } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Textarea } from "../../components/ui/textarea";
 import { Maximize2, Minimize2 } from 'lucide-react';
-import { Opportunity } from '@/context/types';
+import { Opportunity } from '../../context/types';
 
 interface JobDescriptionSectionProps {
   opportunity: Opportunity;
