@@ -3,6 +3,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { useAuth } from '../../context/auth-context';
+import { useRouter } from 'next/navigation';
 
 export function SignUpForm() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { signUp } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,7 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(email, password);
+      const { error, data } = await signUp(email, password);
       if (error) {
         setError(error.message);
       } else {
@@ -42,6 +44,11 @@ export function SignUpForm() {
         setEmail('');
         setPassword('');
         setConfirmPassword('');
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
       }
     } catch (err) {
       setError('An unexpected error occurred');
