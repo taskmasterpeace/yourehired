@@ -113,7 +113,7 @@ export default function LoginPage() {
               </div>
               
               <Image
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="You're Hired Logo"
                 fill
                 className="object-contain rounded-full"
