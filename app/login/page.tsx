@@ -29,12 +29,12 @@ export default function LoginPage() {
         animate={{ 
           y: [0, -10, 0],
           x: [0, 5, 0],
-          opacity: 1,
+          opacity: 1
         }}
         transition={{
           duration: 6,
           ease: "easeInOut",
-          repeat: Infinity,
+          repeat: Infinity
         }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2">
