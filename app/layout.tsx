@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import '../styles/globals.css'
+import { AuthProvider } from '../context/auth-context'
 
 export const metadata: Metadata = {
   title: "You're Hired! - Job Application Tracker",
@@ -33,7 +34,11 @@ export default function RootLayout({
           }
         `}</style>
       </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }
