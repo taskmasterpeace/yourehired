@@ -22,19 +22,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative">
       {/* Background image with fallback */}
-      {!bgImageError && (
-        <Image
-          src="/login-background.jpg"
-          alt="Background"
-          fill
-          className="object-cover z-0"
-          priority
-          onError={(e) => {
-            console.log("Background image failed to load - using fallback gradient");
-            setBgImageError(true);
-          }}
-        />
-      )}
+      <Image
+        src="/login-background.jpg"
+        alt="Background"
+        fill
+        className="object-cover z-0"
+        priority
+        onError={(e) => {
+          console.log("Background image failed to load - using fallback gradient");
+          setBgImageError(true);
+          // Make the image invisible but keep it in the DOM
+          e.currentTarget.style.display = 'none';
+        }}
+      />
       {/* Fallback background color or semi-transparent overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-800 z-0"></div>
       
