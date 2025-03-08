@@ -8,6 +8,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from '@/context/auth-context'
+// Force reload - nudge Next.js module resolution
 import { AuthModal } from '@/components/auth/AuthModal'
 import { ResumeTab } from '@/components/tabs/ResumeTab'
 import { CaptainTab } from '@/components/tabs/CaptainTab'
