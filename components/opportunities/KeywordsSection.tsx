@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Progress } from "@/components/ui/progress";
-import { Opportunity } from '@/context/types';
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Input } from "../../components/ui/input";
+import { Slider } from "../../components/ui/slider";
+import { Progress } from "../../components/ui/progress";
+import { Opportunity } from '../../context/types';
 import { 
   RefreshCw, 
   Check, 
@@ -27,10 +27,10 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from "../../components/ui/dialog";
+import { Label } from "../../components/ui/label";
+import { Switch } from "../../components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
 
 interface Keyword {
   text: string;
