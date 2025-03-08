@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAuth } from '@/context/auth-context';
-import { AuthModal } from '@/components/auth/AuthModal';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthModal } from '../components/auth/AuthModal';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 
 export default function AuthExample() {
   const { user, isLoading, signOut } = useAuth();
