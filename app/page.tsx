@@ -1,7 +1,7 @@
 "use client"
 
 import CAPTAINGui from "../captain_gui"
-import { AppProvider } from "@/context/context"
+import { AppProvider } from "../src/context/context"
 
 export default function SyntheticV0PageForDeployment() {
   return (
