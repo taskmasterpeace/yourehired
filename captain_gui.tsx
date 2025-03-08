@@ -1,48 +1,48 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "./components/ui/button"
+import { Input } from "./components/ui/input"
+import { Textarea } from "./components/ui/textarea"
 import { QRCodeSVG } from 'qrcode.react'
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useAuth } from '@/context/auth-context'
+import { Label } from "./components/ui/label"
+import { Checkbox } from "./components/ui/checkbox"
+import { useAuth } from './context/auth-context'
 // Force reload - using correct paths for root location
-import { AuthModal } from './src/components/auth/AuthModal'
-import { ResumeTab } from './src/components/tabs/ResumeTab'
-import { CaptainTab } from './src/components/tabs/CaptainTab'
-import { CalendarTab } from './src/components/tabs/CalendarTab'
-import { AnalyticsTab } from './src/components/tabs/AnalyticsTab'
-import { JobDetailsSection, ContactInfoSection, NotesSection } from './src/components/opportunity/OpportunityDetailSections'
-import { SettingsTab } from './src/components/tabs/SettingsTab'
-import { HelpTab } from './src/components/tabs/HelpTab'
-import { OpportunitiesTab } from './src/components/tabs/OpportunitiesTab'
-import { OpportunityDetails } from './src/components/opportunities/OpportunityDetails'
-import { OpportunityList } from './src/components/opportunities/OpportunityList'
-import { useDarkMode } from './src/hooks/useDarkMode'
+import { AuthModal } from './components/auth/AuthModal'
+import { ResumeTab } from './components/tabs/ResumeTab'
+import { CaptainTab } from './components/tabs/CaptainTab'
+import { CalendarTab } from './components/tabs/CalendarTab'
+import { AnalyticsTab } from './components/tabs/AnalyticsTab'
+import { JobDetailsSection, ContactInfoSection, NotesSection } from './components/opportunity/OpportunityDetailSections'
+import { SettingsTab } from './components/tabs/SettingsTab'
+import { HelpTab } from './components/tabs/HelpTab'
+import { OpportunitiesTab } from './components/tabs/OpportunitiesTab'
+import { OpportunityDetails } from './components/opportunities/OpportunityDetails'
+import { OpportunityList } from './components/opportunities/OpportunityList'
+import { useDarkMode } from './hooks/useDarkMode'
 import AddToCalendarButton from './AddToCalendarButton'
 import { generateICalString } from './calendarUtils'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "./components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs"
+import { Calendar } from "./components/ui/calendar"
+import { Badge } from "./components/ui/badge"
+import { ScrollArea } from "./components/ui/scroll-area"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./components/ui/dialog"
+import { Switch } from "./components/ui/switch"
 import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle, Settings } from 'lucide-react'
 import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar as CalendarIcon2 } from 'lucide-react'
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area } from 'recharts'
-import { generateChatResponse, generateSuggestions } from './src/lib/openai'
-import { HelpCenter } from './src/components/help/HelpCenter'
-import { GuideViewer } from './src/components/help/GuideViewer'
-import { allGuides } from './src/components/help/guides'
-import { useAppState } from './src/context/context'
-import { Opportunity } from './src/context/types'
+import { generateChatResponse, generateSuggestions } from './lib/openai'
+import { HelpCenter } from './components/help/HelpCenter'
+import { GuideViewer } from './components/help/GuideViewer'
+import { allGuides } from './components/help/guides'
+import { useAppState } from './context/context'
+import { Opportunity } from './context/types'
 import { format, parseISO, isEqual, isSameDay } from 'date-fns'
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Sheet, SheetContent, SheetTrigger } from "./components/ui/sheet"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui/collapsible"
 import { motion } from "framer-motion" // For animations
 
 
