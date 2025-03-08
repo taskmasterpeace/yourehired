@@ -19,27 +19,43 @@ export default function LoginPage() {
   }, [user, router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center" 
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative" 
          style={{ backgroundImage: 'url(/login-background.jpg)' }}>
+      {/* Fallback background color in case image doesn't load */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-800"></div>
+      
+      {/* Semi-transparent overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+      
+      {/* Version number and developer credit */}
+      <div className="absolute bottom-4 left-4 text-white text-sm opacity-70">
+        Version 0.5
+      </div>
+      
+      <div className="absolute bottom-4 right-4 text-white text-sm opacity-70">
+        Developed by Robert Task Smith
+      </div>
       
       <motion.div 
         className="relative z-10 w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 0 }}
         animate={{ 
           y: [0, -10, 0],
-          x: [0, 5, 0],
-          opacity: 1
+          x: [0, 5, 0]
         }}
         transition={{
           duration: 6,
           ease: "easeInOut",
-          repeat: Infinity
+          repeat: Infinity,
+          repeatType: "loop"
         }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Left panel with branding */}
           <div className="relative bg-blue-600 p-8 flex flex-col items-center justify-center text-white">
+            {/* Fallback background in case the panel needs a placeholder */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600"></div>
+            
             {/* Floating background elements */}
             <motion.div 
               className="absolute top-[10%] left-[15%] w-32 h-32 bg-blue-400 rounded-full opacity-30"
@@ -50,7 +66,8 @@ export default function LoginPage() {
               transition={{ 
                 repeat: Infinity, 
                 duration: 6,
-                ease: "easeInOut" 
+                ease: "easeInOut",
+                repeatType: "loop"
               }}
             />
             <motion.div 
@@ -62,36 +79,54 @@ export default function LoginPage() {
               transition={{ 
                 repeat: Infinity, 
                 duration: 7,
-                ease: "easeInOut" 
+                ease: "easeInOut",
+                repeatType: "loop"
               }}
             />
             
-            {/* 16:9 banner image */}
-            <div className="w-full mb-8" style={{ aspectRatio: '16/9' }}>
-              <div className="relative w-full h-full">
+            {/* 16:9 banner image with fallback */}
+            <div className="relative w-full mb-8" style={{ aspectRatio: '16/9' }}>
+              <div className="relative w-full h-full bg-blue-700 rounded-lg flex items-center justify-center">
+                {/* Fallback content if image doesn't load */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <h2 className="text-2xl font-bold text-white">You're Hired!</h2>
+                </div>
+                
                 <Image
                   src="/banner-image.jpg"
                   alt="You're Hired Banner"
                   fill
                   className="object-cover rounded-lg"
                   priority
+                  onError={(e) => {
+                    // If image fails to load, we already have the fallback visible
+                    console.log("Banner image failed to load");
+                  }}
                 />
               </div>
             </div>
             
-            {/* 1:1 logo (alternative) */}
-            <div className="relative w-32 h-32 mb-6">
+            {/* 1:1 logo with fallback */}
+            <div className="relative w-32 h-32 mb-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-3xl font-bold">YH</span>
+              </div>
+              
               <Image
                 src="/logo.jpg"
                 alt="You're Hired Logo"
                 fill
-                className="object-contain"
+                className="object-contain rounded-full"
                 priority
+                onError={(e) => {
+                  // If image fails to load, we already have the fallback visible
+                  console.log("Logo image failed to load");
+                }}
               />
             </div>
             
-            <h1 className="text-3xl font-bold mb-2 text-center">Hey You're Hired!</h1>
-            <p className="text-center opacity-80">Your personal job search assistant</p>
+            <h1 className="text-3xl font-bold mb-2 text-center relative z-10">Hey You're Hired!</h1>
+            <p className="text-center opacity-80 relative z-10">Your personal job search assistant</p>
           </div>
           
           {/* Right panel with login form */}
