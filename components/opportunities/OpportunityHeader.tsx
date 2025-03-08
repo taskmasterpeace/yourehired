@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Opportunity } from '@/context/types';
+import { CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "../../components/ui/select";
+import { Opportunity } from '../../context/types';
 import { StatusBadge } from './StatusBadge';
 import { Edit } from 'lucide-react';
 
