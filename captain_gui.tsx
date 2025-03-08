@@ -1879,85 +1879,97 @@ export default function CAPTAINGui() {
           </TabsList>
 
           <TabsContent value="opportunities" className="p-2 sm:p-4 flex-grow overflow-auto">
-            <OpportunitiesTab 
-              opportunities={opportunities}
-              selectedOpportunityIndex={selectedOpportunityIndex}
-              setSelectedOpportunityIndex={setSelectedOpportunityIndex}
-              updateOpportunity={updateOpportunity}
-              isDarkMode={isDarkMode}
-              user={user}
-              masterResume={masterResume}
-              dispatch={dispatch}
-            />
+            <ProtectedContent>
+              <OpportunitiesTab 
+                opportunities={opportunities}
+                selectedOpportunityIndex={selectedOpportunityIndex}
+                setSelectedOpportunityIndex={setSelectedOpportunityIndex}
+                updateOpportunity={updateOpportunity}
+                isDarkMode={isDarkMode}
+                user={user}
+                masterResume={masterResume}
+                dispatch={dispatch}
+              />
+            </ProtectedContent>
           </TabsContent>
 
           <TabsContent value="resume" className="p-2 sm:p-4 flex-grow overflow-auto">
-            <ResumeTab 
-              masterResume={masterResume}
-              updateMasterResume={(resume: string) => dispatch({ type: 'UPDATE_MASTER_RESUME', payload: resume })}
-              opportunities={opportunities}
-              dispatch={dispatch}
-              isDarkMode={isDarkMode}
-              user={user}
-            />
+            <ProtectedContent>
+              <ResumeTab 
+                masterResume={masterResume}
+                updateMasterResume={(resume: string) => dispatch({ type: 'UPDATE_MASTER_RESUME', payload: resume })}
+                opportunities={opportunities}
+                dispatch={dispatch}
+                isDarkMode={isDarkMode}
+                user={user}
+              />
+            </ProtectedContent>
           </TabsContent>
 
           <TabsContent value="captain" className="p-2 sm:p-4 flex-grow overflow-auto">
-            <CaptainTab 
-              opportunities={opportunities}
-              jobRecommendations={jobRecommendations}
-              currentRecommendationIndex={currentRecommendationIndex}
-              setCurrentRecommendationIndex={setCurrentRecommendationIndex}
-              ratedRecommendations={ratedRecommendations}
-              setRatedRecommendations={setRatedRecommendations}
-              isDarkMode={isDarkMode}
-              user={user}
-            />
+            <ProtectedContent>
+              <CaptainTab 
+                opportunities={opportunities}
+                jobRecommendations={jobRecommendations}
+                currentRecommendationIndex={currentRecommendationIndex}
+                setCurrentRecommendationIndex={setCurrentRecommendationIndex}
+                ratedRecommendations={ratedRecommendations}
+                setRatedRecommendations={setRatedRecommendations}
+                isDarkMode={isDarkMode}
+                user={user}
+              />
+            </ProtectedContent>
           </TabsContent>
 
           <TabsContent value="analytics" className="p-2 sm:p-4 flex-grow overflow-auto">
-            <AnalyticsTab 
-              analytics={analytics}
-              opportunities={opportunities}
-              isDarkMode={isDarkMode}
-              user={user}
-            />
+            <ProtectedContent>
+              <AnalyticsTab 
+                analytics={analytics}
+                opportunities={opportunities}
+                isDarkMode={isDarkMode}
+                user={user}
+              />
+            </ProtectedContent>
           </TabsContent>
 
           <TabsContent value="calendar" className="p-2 sm:p-4 flex-grow overflow-auto">
-            <CalendarTab 
-              events={events}
-              opportunities={opportunities}
-              date={date}
-              setDate={setDate}
-              eventTypeFilter={eventTypeFilter}
-              setEventTypeFilter={setEventTypeFilter}
-              isDarkMode={isDarkMode}
-              user={user}
-              dispatch={dispatch}
-            />
+            <ProtectedContent>
+              <CalendarTab 
+                events={events}
+                opportunities={opportunities}
+                date={date}
+                setDate={setDate}
+                eventTypeFilter={eventTypeFilter}
+                setEventTypeFilter={setEventTypeFilter}
+                isDarkMode={isDarkMode}
+                user={user}
+                dispatch={dispatch}
+              />
+            </ProtectedContent>
           </TabsContent>
           
           <TabsContent value="settings" className="p-2 sm:p-4 flex-grow overflow-auto">
-            <SettingsTab 
-              opportunities={opportunities}
-              jobRecommendations={jobRecommendations}
-              ratedRecommendations={ratedRecommendations}
-              isDarkMode={isDarkMode}
-              showDebugPanel={showDebugPanel}
-              setShowDebugPanel={setShowDebugPanel}
-              toggleDarkMode={toggleDarkMode}
-              user={user}
-            />
+            <ProtectedContent>
+              <SettingsTab 
+                opportunities={opportunities}
+                jobRecommendations={jobRecommendations}
+                ratedRecommendations={ratedRecommendations}
+                isDarkMode={isDarkMode}
+                showDebugPanel={showDebugPanel}
+                setShowDebugPanel={setShowDebugPanel}
+                toggleDarkMode={toggleDarkMode}
+                user={user}
+              />
+            </ProtectedContent>
           </TabsContent>
           
           <TabsContent value="help" className="p-2 sm:p-4 flex-grow overflow-auto">
             <HelpTab 
               helpView={helpView}
               setHelpView={setHelpView}
-                isDarkMode={isDarkMode}
-                guides={allGuides}
-              />
+              isDarkMode={isDarkMode}
+              guides={allGuides}
+            />
           </TabsContent>
         </Tabs>
 
