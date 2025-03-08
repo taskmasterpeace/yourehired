@@ -19,16 +19,28 @@ export function SignInForm() {
     setIsLoading(true);
 
     try {
+      // Check if signIn function exists (it might not if Supabase isn't initialized)
+      if (!signIn) {
+        setError('Authentication service is not available. Please check console for details.');
+        console.error('Sign in function is not available - Supabase may not be properly initialized');
+        return;
+      }
+
       const { error, data } = await signIn(email, password);
       if (error) {
         setError(error.message);
+        console.error('Sign in error:', error);
       } else if (data) {
         // Successful login, redirect to home page
         router.push('/');
+      } else {
+        // No data and no error is unusual
+        console.warn('Sign in returned neither data nor error');
+        setError('Unable to sign in. Please try again later.');
       }
     } catch (err) {
       setError('An unexpected error occurred');
-      console.error(err);
+      console.error('Unexpected error during sign in:', err);
     } finally {
       setIsLoading(false);
     }
