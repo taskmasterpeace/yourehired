@@ -25,7 +25,7 @@ export default function LoginPage() {
   }, [user, router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative">
+    <div className="min-h-screen flex items-center justify-start pl-16 bg-cover bg-center relative">
       {/* Background image with fallback */}
       <Image
         src="/login-background.jpg"
@@ -46,20 +46,20 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-800 z-0"></div>
       )}
       
-      {/* Semi-transparent overlay - with lower opacity for testing */}
+      {/* Semi-transparent overlay - with reduced blur effect */}
       <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-10"></div>
       
-      {/* Version number and developer credit */}
-      <div className="absolute bottom-4 left-4 text-white text-sm opacity-70">
-        Version 0.5
+      {/* Version number and developer credit - moved above blur layer and made more visible */}
+      <div className="absolute bottom-4 left-4 text-white text-sm font-medium z-20">
+        Version 0.4 - Auth
       </div>
       
-      <div className="absolute bottom-4 right-4 text-white text-sm opacity-70">
+      <div className="absolute bottom-4 right-4 text-white text-sm font-medium z-20">
         Developed by Robert Task Smith
       </div>
       
       <motion.div 
-        className="relative z-20 w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
+        className="relative z-20 w-full max-w-4xl bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-2xl overflow-hidden"
         initial={{ opacity: 1, y: 0 }}
         animate={{ 
           y: [0, -10, 0],
