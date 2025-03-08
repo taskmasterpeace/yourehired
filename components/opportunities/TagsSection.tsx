@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Opportunity } from '@/context/types';
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import { Opportunity } from '../../context/types';
 import { Edit, X, Plus, Pencil, Save, FileDown, HelpCircle, Trash2 } from 'lucide-react';
 import { 
   Dialog,
@@ -12,16 +12,16 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+} from "../../components/ui/dialog";
+import { Label } from "../../components/ui/label";
 import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from "../../components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
 
 // Configuration for tag colors
 const TAG_COLOR_CLASSES = {
