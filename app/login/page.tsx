@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { SignInForm } from '../../components/auth/SignInForm'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
@@ -10,6 +10,7 @@ import { useAuth } from '../../context/auth-context'
 export default function LoginPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const [bgImageError, setBgImageError] = useState(false)
   
   // Redirect if already logged in
   React.useEffect(() => {
@@ -19,13 +20,26 @@ export default function LoginPage() {
   }, [user, router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative" 
-         style={{ backgroundImage: 'url(/login-background.jpg)' }}>
-      {/* Fallback background color in case image doesn't load */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-800"></div>
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative">
+      {/* Background image with fallback */}
+      {!bgImageError && (
+        <Image
+          src="/login-background.jpg"
+          alt="Background"
+          fill
+          className="object-cover z-0"
+          priority
+          onError={(e) => {
+            console.log("Background image failed to load - using fallback gradient");
+            setBgImageError(true);
+          }}
+        />
+      )}
+      {/* Fallback background color or semi-transparent overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-800 z-0"></div>
       
       {/* Semi-transparent overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-10"></div>
       
       {/* Version number and developer credit */}
       <div className="absolute bottom-4 left-4 text-white text-sm opacity-70">
@@ -37,7 +51,7 @@ export default function LoginPage() {
       </div>
       
       <motion.div 
-        className="relative z-10 w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
+        className="relative z-20 w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
         initial={{ opacity: 1, y: 0 }}
         animate={{ 
           y: [0, -10, 0],
@@ -100,7 +114,9 @@ export default function LoginPage() {
                   priority
                   onError={(e) => {
                     // If image fails to load, we already have the fallback visible
-                    console.log("Banner image failed to load");
+                    console.error("Banner image failed to load: /banner-image.jpg");
+                    // Make the fallback more visible
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
               </div>
@@ -120,7 +136,9 @@ export default function LoginPage() {
                 priority
                 onError={(e) => {
                   // If image fails to load, we already have the fallback visible
-                  console.log("Logo image failed to load");
+                  console.error("Logo image failed to load: /logo.png");
+                  // Make the fallback more visible
+                  e.currentTarget.style.display = 'none';
                 }}
               />
             </div>
