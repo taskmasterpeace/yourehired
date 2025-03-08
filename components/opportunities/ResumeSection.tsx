@@ -1,11 +1,11 @@
 import React from 'react';
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardContent, CardTitle } from "../../components/ui/card";
+import { Textarea } from "../../components/ui/textarea";
+import { Switch } from "../../components/ui/switch";
+import { Label } from "../../components/ui/label";
 import { ThumbsUp } from 'lucide-react';
 import { Lock, Unlock } from 'lucide-react';
-import { Opportunity } from '@/context/types';
+import { Opportunity } from '../../context/types';
 
 interface ResumeSectionProps {
   opportunity: Opportunity;
