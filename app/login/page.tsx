@@ -12,6 +12,11 @@ export default function LoginPage() {
   const { user } = useAuth()
   const [bgImageError, setBgImageError] = useState(false)
   
+  // Log image loading attempt
+  React.useEffect(() => {
+    console.log("Attempting to load background image from:", "/login-background.jpg");
+  }, []);
+  
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
@@ -26,7 +31,7 @@ export default function LoginPage() {
         src="/login-background.jpg"
         alt="Background"
         fill
-        className="object-cover z-0"
+        className="object-cover z-5"
         priority
         onError={(e) => {
           console.log("Background image failed to load - using fallback gradient");
@@ -35,11 +40,14 @@ export default function LoginPage() {
           e.currentTarget.style.display = 'none';
         }}
       />
-      {/* Fallback background color or semi-transparent overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-800 z-0"></div>
       
-      {/* Semi-transparent overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-10"></div>
+      {/* Fallback background color - only show when image fails */}
+      {bgImageError && (
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-800 z-0"></div>
+      )}
+      
+      {/* Semi-transparent overlay - with lower opacity for testing */}
+      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-10"></div>
       
       {/* Version number and developer credit */}
       <div className="absolute bottom-4 left-4 text-white text-sm opacity-70">
