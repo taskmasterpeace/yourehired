@@ -4,6 +4,15 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
+// Log environment variables availability (without exposing actual values)
+console.log("Auth context initialization", {
+  supabaseUrlAvailable: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+  supabaseKeyAvailable: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  // Don't log the actual values for security reasons
+  urlPrefix: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 10) + "...",
+  environment: process.env.NODE_ENV
+});
+
 type AuthContextType = {
   user: User | null;
   session: Session | null;
@@ -31,6 +40,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check storage availability
+    try {
+      localStorage.setItem('test', 'test');
+      localStorage.removeItem('test');
+      console.log("localStorage is available");
+    } catch (e) {
+      console.error("localStorage is not available:", e);
+    }
+    
+    // Check if cookies are enabled
+    document.cookie = "testcookie=1; SameSite=Strict; Secure";
+    const cookiesEnabled = document.cookie.indexOf("testcookie=") !== -1;
+    console.log("Cookies enabled:", cookiesEnabled);
+    
     // Check if Supabase is properly initialized
     if (!supabase.auth) {
       console.error('Supabase auth is not available. Authentication will not work.');
@@ -74,20 +97,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    console.log("Sign-in attempt started for:", email);
     try {
+      console.log("Supabase instance check:", {
+        authAvailable: !!supabase.auth,
+        baseUrl: supabase.supabaseUrl
+      });
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
+      console.log("Sign-in response:", { 
+        success: !!data.session, 
+        error: error?.message || null,
+        userId: data.user?.id || null,
+        sessionExpiry: data.session?.expires_at || null
+      });
+      
       if (data.session) {
-        // Force a page refresh after successful authentication
-        // This ensures the app fully recognizes the new auth state
+        console.log("Authentication successful, redirecting...");
         window.location.href = '/';
+      } else if (error) {
+        console.error("Authentication error:", error.message);
       }
       
       return { data: data.session, error };
     } catch (error) {
+      console.error("Sign-in exception:", error);
       return { error: error as Error, data: null };
     }
   };

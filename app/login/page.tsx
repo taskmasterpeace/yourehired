@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../context/auth-context'
+import { AuthTest } from '../../components/auth/AuthTest'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -166,6 +167,10 @@ export default function LoginPage() {
             
             <div className="mt-6 text-center text-gray-600 dark:text-gray-400">
               <p>Don't have an account? <a href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline">Sign up</a></p>
+            </div>
+            
+            <div className="mt-8">
+              <AuthTest />
             </div>
           </div>
         </div>
