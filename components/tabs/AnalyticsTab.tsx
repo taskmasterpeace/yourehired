@@ -10,8 +10,11 @@ import {
 } from 'recharts';
 import { 
   BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, 
-  Award, Flame, Rocket, Users, Building, Home, Lightbulb 
+  Award, Flame, Rocket, Users, Building, Home, Lightbulb, InfoIcon
 } from 'lucide-react';
+import { TooltipHelper } from "../ui/tooltip-helper";
+import { tooltipContent } from "../../lib/tooltipContent";
+import { AchievementRulesPanel } from "../achievements/AchievementRulesPanel";
 
 interface AnalyticsTabProps {
   analytics: any;
@@ -27,6 +30,7 @@ export function AnalyticsTab({
   user
 }: AnalyticsTabProps) {
   const [timelinePeriod, setTimelinePeriod] = useState('30days');
+  const [achievementRulesPanelOpen, setAchievementRulesPanelOpen] = useState(false);
   
   // Convert status counts to chart data
   const statusData = Object.entries(analytics.statusCounts || {}).map(([name, value]) => ({
@@ -46,7 +50,10 @@ export function AnalyticsTab({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Total Applications</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              Total Applications
+              <TooltipHelper content={tooltipContent.totalApplications} />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -63,7 +70,10 @@ export function AnalyticsTab({
         
         <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Response Rate</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              Response Rate
+              <TooltipHelper content={tooltipContent.responseRate} />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -80,7 +90,10 @@ export function AnalyticsTab({
         
         <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Interview Rate</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              Interview Rate
+              <TooltipHelper content={tooltipContent.interviewRate} />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -97,7 +110,10 @@ export function AnalyticsTab({
         
         <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Offer Rate</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              Offer Rate
+              <TooltipHelper content={tooltipContent.offerRate} />
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -117,7 +133,10 @@ export function AnalyticsTab({
       {analytics.jobSearchStats && (
         <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
           <CardHeader>
-            <CardTitle>Job Search Level</CardTitle>
+            <CardTitle className="flex items-center">
+              Job Search Level
+              <TooltipHelper content={tooltipContent.jobSearchLevel} />
+            </CardTitle>
             <CardDescription>
               Your progress in the job search journey
             </CardDescription>
@@ -144,6 +163,13 @@ export function AnalyticsTab({
               </div>
             </div>
           </CardContent>
+          
+          {/* Add the Achievement Rules Panel */}
+          <AchievementRulesPanel 
+            open={achievementRulesPanelOpen} 
+            onOpenChange={setAchievementRulesPanelOpen} 
+            isDarkMode={isDarkMode} 
+          />
         </Card>
       )}
       
@@ -155,7 +181,10 @@ export function AnalyticsTab({
               <CardTitle>Application Analytics</CardTitle>
               <TabsList>
                 <TabsTrigger value="status">Status</TabsTrigger>
-                <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                <TabsTrigger value="timeline" className="flex items-center">
+                  Timeline
+                  <TooltipHelper content={tooltipContent.applicationTimeline} />
+                </TabsTrigger>
                 <TabsTrigger value="insights">Insights</TabsTrigger>
               </TabsList>
             </div>
@@ -252,7 +281,10 @@ export function AnalyticsTab({
                 {analytics.weeklyPatterns && (
                   <Card className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Weekly Activity Patterns</CardTitle>
+                      <CardTitle className="text-base flex items-center">
+                        Weekly Activity Patterns
+                        <TooltipHelper content={tooltipContent.weeklyPatterns} />
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
@@ -277,7 +309,10 @@ export function AnalyticsTab({
                 {analytics.achievements && (
                   <Card className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Current Streak</CardTitle>
+                      <CardTitle className="text-base flex items-center">
+                        Current Streak
+                        <TooltipHelper content={tooltipContent.currentStreak} />
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-3">
@@ -331,7 +366,21 @@ export function AnalyticsTab({
       {analytics.achievements && analytics.achievements.length > 0 && (
         <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
           <CardHeader>
-            <CardTitle>Achievements</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center">
+                Achievements
+                <TooltipHelper content={tooltipContent.achievements} />
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setAchievementRulesPanelOpen(true)}
+                className="flex items-center gap-1"
+              >
+                <InfoIcon className="h-4 w-4" />
+                View Rules
+              </Button>
+            </div>
             <CardDescription>
               Track your job search milestones
             </CardDescription>
@@ -396,7 +445,10 @@ export function AnalyticsTab({
       {analytics.weeklyChallenges && analytics.weeklyChallenges.length > 0 && (
         <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
           <CardHeader>
-            <CardTitle>Weekly Challenges</CardTitle>
+            <CardTitle className="flex items-center">
+              Weekly Challenges
+              <TooltipHelper content={tooltipContent.weeklyChallenges} />
+            </CardTitle>
             <CardDescription>
               Complete these challenges to boost your job search
             </CardDescription>
