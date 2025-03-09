@@ -5,9 +5,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Debug information
-console.log('Environment check:');
+console.log('Supabase initialization:');
 console.log('NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
 console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+console.log('URL value check:', supabaseUrl ? 'Has value' : 'Empty');
+console.log('Key value check:', supabaseAnonKey ? 'Has value' : 'Empty');
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Supabase URL or Anon Key is missing. Please check your environment variables.');
@@ -31,6 +33,11 @@ const createDummyClient = () => {
 };
 
 // Export the client or a dummy if credentials are missing
-export const supabase = supabaseUrl && supabaseAnonKey 
+const client = supabaseUrl && supabaseAnonKey 
   ? createClient(supabaseUrl, supabaseAnonKey)
   : createDummyClient();
+
+console.log('Using real Supabase client:', !!(supabaseUrl && supabaseAnonKey));
+console.log('Client has auth methods:', !!client.auth);
+
+export const supabase = client;

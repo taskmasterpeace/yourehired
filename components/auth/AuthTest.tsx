@@ -13,6 +13,22 @@ export function AuthTest() {
       setResult({ status: 'testing' });
       console.log("Direct auth test starting");
       
+      // Check if we're using the real client
+      const isDummyClient = !supabase.supabaseUrl;
+      console.log("Client check:", {
+        isDummyClient,
+        hasUrl: !!supabase.supabaseUrl,
+        hasAuth: !!supabase.auth
+      });
+      
+      if (isDummyClient) {
+        setResult({ 
+          error: "Using dummy Supabase client. Environment variables are missing.",
+          isDummyClient: true
+        });
+        return;
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
