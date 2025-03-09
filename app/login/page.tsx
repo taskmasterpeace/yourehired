@@ -6,17 +6,12 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../context/auth-context'
-import { AuthTest } from '../../components/auth/AuthTest'
 
 export default function LoginPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [bgImageError, setBgImageError] = useState(false)
   
-  // Log image loading attempt
-  React.useEffect(() => {
-    console.log("Attempting to load background image from:", "/login-background.jpg");
-  }, []);
   
   // Redirect if already logged in
   React.useEffect(() => {
@@ -169,9 +164,7 @@ export default function LoginPage() {
               <p>Don't have an account? <a href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline">Sign up</a></p>
             </div>
             
-            <div className="mt-8">
-              <AuthTest />
-            </div>
+            {/* Auth test component removed */}
           </div>
         </div>
       </motion.div>
