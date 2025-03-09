@@ -6,7 +6,6 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../context/auth-context'
-import { AuthTest } from '../../components/auth/AuthTest'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -61,16 +60,11 @@ export default function LoginPage() {
       
       <motion.div 
         className="relative z-20 w-full max-w-4xl bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-2xl overflow-hidden"
-        initial={{ opacity: 1, y: 0 }}
-        animate={{ 
-          y: [0, -10, 0],
-          x: [0, 5, 0]
-        }}
-        transition={{
-          duration: 6,
-          ease: "easeInOut",
-          repeat: Infinity,
-          repeatType: "loop"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ 
+          duration: 0.7,
+          ease: "easeOut"
         }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2">
@@ -79,7 +73,7 @@ export default function LoginPage() {
             {/* Fallback background in case the panel needs a placeholder */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600"></div>
             
-            {/* Floating background elements */}
+            {/* Floating background elements - keeping these animated for visual interest */}
             <motion.div 
               className="absolute top-[10%] left-[15%] w-32 h-32 bg-blue-400 rounded-full opacity-30"
               animate={{ 
@@ -141,7 +135,7 @@ export default function LoginPage() {
                 src="/logo.png"
                 alt="You're Hired Logo"
                 fill
-                className="object-contain rounded-full"
+                className="object-contain rounded-full z-10"
                 priority
                 onError={(e) => {
                   // If image fails to load, we already have the fallback visible
@@ -167,10 +161,6 @@ export default function LoginPage() {
             
             <div className="mt-6 text-center text-gray-600 dark:text-gray-400">
               <p>Don't have an account? <a href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline">Sign up</a></p>
-            </div>
-            
-            <div className="mt-8">
-              <AuthTest />
             </div>
           </div>
         </div>
