@@ -56,17 +56,9 @@ export default function LoginPage() {
       
       <motion.div 
         className="relative z-20 w-full max-w-4xl bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-2xl overflow-hidden"
-        initial={{ opacity: 1, y: 0 }}
-        animate={{ 
-          y: [0, -10, 0],
-          x: [0, 5, 0]
-        }}
-        transition={{
-          duration: 6,
-          ease: "easeInOut",
-          repeat: Infinity,
-          repeatType: "loop"
-        }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
       >
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Left panel with branding */}
