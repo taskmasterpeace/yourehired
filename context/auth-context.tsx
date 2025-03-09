@@ -79,6 +79,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
       });
+      
+      if (data.session) {
+        // Force a page refresh after successful authentication
+        // This ensures the app fully recognizes the new auth state
+        window.location.href = '/';
+      }
+      
       return { data: data.session, error };
     } catch (error) {
       return { error: error as Error, data: null };
