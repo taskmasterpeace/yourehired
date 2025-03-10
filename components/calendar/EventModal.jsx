@@ -216,6 +216,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
                 <Select 
                   value={eventData.opportunityId || "none"} 
                   onValueChange={(value) => handleChange('opportunityId', value)}
+                  defaultValue="none"
                 >
                   <SelectTrigger id="opportunity" className="flex-1">
                     <SelectValue placeholder="Link to job opportunity (optional)" />
