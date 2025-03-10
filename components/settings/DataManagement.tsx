@@ -609,6 +609,18 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
             </Button>
           )}
           
+          {/* Navigation button after successful import */}
+          {importStatus && statusType === 'success' && onNavigateBack && (
+            <Button 
+              onClick={onNavigateBack}
+              className="mt-3 flex items-center gap-2"
+              variant="primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Return to Dashboard to View Imported Data
+            </Button>
+          )}
+          
           {/* Debug Information Panel */}
           {debugMode && (
             <div className={`mt-4 p-4 rounded-md border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
