@@ -10,7 +10,6 @@ import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
 import { useNotifications } from '../../context/NotificationContext';
 import { useActivity } from '../../context/ActivityContext';
-import EventReminderButton from './EventReminderButton';
 import RecentActivity from '../common/RecentActivity';
 
 // Setup the localizer for react-big-calendar
@@ -73,35 +72,7 @@ const BigCalendarView = ({
   // Use context if available, otherwise use props or defaults
   const notificationSettings = notificationContext?.settings || notificationPreferences || {
     enabled: true,
-    browserNotifications: false,
-    inAppNotifications: true,
-    defaultReminderTime: '30'
-  };
-  
-  const onUpdateNotificationSettings = notificationContext?.updateSettings || onUpdateNotificationPreferences || (() => {});
-  const addEventReminder = notificationContext?.addEventReminder || (() => {});
-  const addTestNotification = notificationContext?.addTestNotification || (() => {});
-  
-  // Handle test notifications with fallback
-  const handleTestNotification = (minutes) => {
-    if (addTestNotification) {
-      addTestNotification(minutes);
-      
-      // Show toast for immediate feedback
-      if (minutes === 0) {
-        toast({
-          title: "Hey! Test Notification *",
-          description: "This is a test notification from Hey You're Hired! v0.41",
-          duration: 5000,
-        });
-      } else {
-        toast({
-          title: "Hey! Test Notification Scheduled *",
-          description: `A notification will appear in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} - Hey You're Hired! v0.41`,
-          duration: 3000,
-        });
-      }
-    }
+    inAppNotifications: true
   };
   
   // Check for upcoming events when the component mounts
@@ -121,9 +92,6 @@ const BigCalendarView = ({
       // Show notifications for upcoming events
       if (upcomingEvents.length > 0 && notificationSettings?.enabled) {
         upcomingEvents.forEach(event => {
-          if (addEventReminder) {
-            addEventReminder(event);
-          }
           toast({
             title: `Hey! Upcoming: ${event.title}`,
             description: `This event is starting soon. - Hey You're Hired! v0.41`,
@@ -134,14 +102,7 @@ const BigCalendarView = ({
     };
     
     checkEvents();
-    
-    // Request notification permission if browser notifications are enabled
-    if (notificationSettings?.browserNotifications && 'Notification' in window) {
-      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        Notification.requestPermission();
-      }
-    }
-  }, [events, notificationSettings, addEventReminder, toast]);
+  }, [events, notificationSettings, toast]);
   
   // Filter events based on selected filters
   const filteredEvents = events.filter(event => {
