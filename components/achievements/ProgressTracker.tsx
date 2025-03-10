@@ -1,7 +1,7 @@
 import React from 'react';
 import { EnhancedProgressBar } from "./EnhancedProgressBar";
 import { Award, ArrowRight, Clock, PieChartIcon } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from '../../components/recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from '../recharts';
 
 interface Achievement {
   id: string;
