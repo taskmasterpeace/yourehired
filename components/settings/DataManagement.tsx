@@ -27,7 +27,6 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
 
     // Reset debug data
     setDebugData({ rawData: null, parsedData: null, error: null });
-    setShowDebugInfo(false);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
