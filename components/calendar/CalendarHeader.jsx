@@ -33,8 +33,8 @@ const CalendarHeader = ({
     <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2">
       <div>
         <CardTitle className="flex items-center">
-          <CalendarIcon className="mr-2 h-5 w-5" />
-          <span>{formatHeaderDate()}</span>
+          <CalendarIcon className="mr-2 h-5 w-5 text-blue-500" />
+          <span className="text-blue-500 font-bold">{formatHeaderDate()} - FIXED</span>
         </CardTitle>
       </div>
       
@@ -45,10 +45,11 @@ const CalendarHeader = ({
             variant={viewMode === 'month' ? 'default' : 'ghost'} 
             size="sm"
             onClick={() => setViewMode('month')}
-            className="rounded-none rounded-l-md"
+            className="rounded-none rounded-l-md bg-green-500 hover:bg-green-600"
             title="Month View"
           >
-            <Grid className="h-4 w-4" />
+            <Grid className="h-4 w-4 text-white" />
+            <span className="ml-1 text-white">Month</span>
           </Button>
           <Button 
             variant={viewMode === 'week' ? 'default' : 'ghost'} 
