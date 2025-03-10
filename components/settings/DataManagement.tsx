@@ -21,6 +21,7 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
     parsedData: any | null;
     error: string | null;
   }>({ rawData: null, parsedData: null, error: null });
+  const [verifyData, setVerifyData] = useState<any[]>([]);
   
   // Function to navigate to home as fallback
   const navigateToHome = () => {
@@ -242,11 +243,12 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
         console.log("Saved job applications to storage");
         
         // Verify the data is there immediately after saving
-        const verifyData = getFromStorage('jobApplications', []);
-        console.log("Verification - data in storage after save:", verifyData.length);
+        const verifiedData = getFromStorage('jobApplications', []);
+        setVerifyData(verifiedData); // Update the state variable
+        console.log("Verification - data in storage after save:", verifiedData.length);
         
         // If verification fails, try an alternative storage approach
-        if (!verifyData || verifyData.length === 0) {
+        if (!verifiedData || verifiedData.length === 0) {
           console.warn("Verification failed - trying alternative storage method");
           
           // Try direct localStorage approach as fallback
