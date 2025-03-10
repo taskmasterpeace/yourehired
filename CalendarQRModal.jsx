@@ -7,8 +7,8 @@ import {
   DialogTitle, 
   DialogDescription,
   DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
 import { CalendarIcon, X, Smartphone, Check, Download } from 'lucide-react';
 
 // We'll use a dynamic import for QRCode to avoid SSR issues
