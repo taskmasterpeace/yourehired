@@ -16,56 +16,95 @@ function Calendar({
   events = [],
   ...props
 }: CalendarProps) {
-  // Function to get events for a specific day
+  // Function to get events for a specific day with better error handling
   const getEventsForDay = (day: Date) => {
     // Add a check to ensure day is a valid Date object
     if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
       return [];
     }
     
+    // Safely filter events
     return events.filter(event => {
-      const eventDate = new Date(event.date || event.startDate);
-      return day.getDate() === eventDate.getDate() && 
-             day.getMonth() === eventDate.getMonth() && 
-             day.getFullYear() === eventDate.getFullYear();
+      try {
+        if (!event || (!event.date && !event.startDate)) return false;
+        
+        const eventDate = new Date(event.date || event.startDate);
+        
+        // Check if eventDate is valid
+        if (!(eventDate instanceof Date) || isNaN(eventDate.getTime())) {
+          return false;
+        }
+        
+        return day.getDate() === eventDate.getDate() && 
+               day.getMonth() === eventDate.getMonth() && 
+               day.getFullYear() === eventDate.getFullYear();
+      } catch (error) {
+        console.error("Error filtering event:", error, event);
+        return false;
+      }
     });
   };
   
-  // Function to get color for event indicator based on status/type
+  // Function to get color for event indicator based on status/type with better error handling
   const getEventColor = (event: any) => {
-    const statusColorMap: Record<string, string> = {
-      preparing: "bg-gray-400",
-      applied: "bg-blue-500",
-      interview: "bg-purple-500",
-      assessment: "bg-yellow-500",
-      negotiating: "bg-orange-500",
-      offer: "bg-green-500",
-      rejected: "bg-red-500",
-      withdrawn: "bg-gray-600"
-    };
+    if (!event) return "bg-gray-300"; // Default color for undefined events
     
-    // Use event type or associated opportunity status
-    const status = event.type || 
-                  (event.opportunity && event.opportunity.status) || 
-                  "applied";
-                  
-    return statusColorMap[status.toLowerCase()] || "bg-blue-500";
+    try {
+      const statusColorMap: Record<string, string> = {
+        preparing: "bg-gray-400",
+        applied: "bg-blue-500",
+        interview: "bg-purple-500",
+        assessment: "bg-yellow-500",
+        negotiating: "bg-orange-500",
+        offer: "bg-green-500",
+        rejected: "bg-red-500",
+        withdrawn: "bg-gray-600"
+      };
+      
+      // Use event type or associated opportunity status
+      let status = "applied"; // Default status
+      
+      if (typeof event.type === "string") {
+        status = event.type.toLowerCase();
+      } else if (event.opportunity && typeof event.opportunity.status === "string") {
+        status = event.opportunity.status.toLowerCase();
+      }
+      
+      return statusColorMap[status] || "bg-blue-500";
+    } catch (error) {
+      console.error("Error determining event color:", error);
+      return "bg-gray-300"; // Fallback color
+    }
   };
-  // Custom day renderer to show event indicators
+  // Custom day renderer to show event indicators with improved error handling
   const renderDay = (day: Date, selectedDay: Date, dayProps: any) => {
+    // Early return if dayProps is missing
+    if (!dayProps) {
+      console.warn("Calendar: dayProps is undefined in renderDay");
+      return <div>{day?.getDate?.() || ""}</div>;
+    }
+
     try {
       // Comprehensive safety check for the day parameter
       if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
-        return <div {...(dayProps || {})}>{dayProps?.children}</div>;
+        return <div {...dayProps}>{dayProps.children}</div>;
       }
       
-      // Safety check for dayProps
-      if (!dayProps) {
-        return <div>{day.getDate()}</div>;
+      // Safely get events for this day
+      let dayEvents = [];
+      try {
+        dayEvents = getEventsForDay(day);
+      } catch (eventError) {
+        console.error("Error getting events for day:", eventError);
+        dayEvents = [];
       }
       
-      const dayEvents = getEventsForDay(day);
       const hasEvents = dayEvents.length > 0;
+      
+      // Generate a safe key prefix
+      const safeKeyPrefix = day instanceof Date && !isNaN(day.getTime()) 
+        ? day.toISOString() 
+        : `fallback-${Math.random()}`;
       
       return (
         <div {...dayProps} className={cn(dayProps.className)}>
@@ -76,12 +115,23 @@ function Calendar({
             
             {hasEvents && (
               <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1">
-                {dayEvents.slice(0, 3).map((event, i) => (
-                  <div 
-                    key={`${day.toISOString()}-event-${i}-${event.id || i}`} 
-                    className={`h-1.5 w-1.5 rounded-full ${getEventColor(event)}`}
-                  />
-                ))}
+                {dayEvents.slice(0, 3).map((event, i) => {
+                  // Safe event color determination
+                  let eventColor;
+                  try {
+                    eventColor = getEventColor(event);
+                  } catch (colorError) {
+                    console.error("Error getting event color:", colorError);
+                    eventColor = "bg-muted-foreground";
+                  }
+                  
+                  return (
+                    <div 
+                      key={`${safeKeyPrefix}-event-${i}-${event?.id || i}`} 
+                      className={`h-1.5 w-1.5 rounded-full ${eventColor}`}
+                    />
+                  );
+                })}
                 {dayEvents.length > 3 && (
                   <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
                 )}

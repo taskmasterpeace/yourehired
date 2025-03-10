@@ -14,27 +14,59 @@ import { CalendarIcon, X, Smartphone, Check, Download } from 'lucide-react';
 // We'll use a dynamic import for QRCode to avoid SSR issues
 const QRCodeComponent = ({ value, size = 200 }) => {
   const [QRCode, setQRCode] = useState(null);
+  const [error, setError] = useState(null);
 
   React.useEffect(() => {
-    import('qrcode.react').then(module => {
-      setQRCode(() => module.QRCodeSVG);
-    });
+    import('qrcode.react')
+      .then(module => {
+        setQRCode(() => module.QRCodeSVG);
+      })
+      .catch(err => {
+        console.error("Failed to load QR code module:", err);
+        setError(err);
+      });
   }, []);
 
-  if (!QRCode) return <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg"></div>;
+  // Handle loading state
+  if (!QRCode && !error) {
+    return <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg"></div>;
+  }
   
-  return <QRCode 
-    value={value}
-    size={size}
-    level="M"
-    includeMargin={true}
-    imageSettings={{
-      src: "/logo-small.png", // Your app logo (optional)
-      height: 24,
-      width: 24,
-      excavate: true
-    }}
-  />;
+  // Handle error state
+  if (error) {
+    return (
+      <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg border border-red-300">
+        <div className="text-center p-4 text-red-500">
+          <p>Failed to load QR code</p>
+          <p className="text-xs mt-2">Please try another method</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Ensure we have a valid value
+  const safeValue = value || 'https://yourehired.app';
+  
+  // Check if logo exists
+  const logoSettings = {
+    src: "/logo-small.png",
+    height: 24,
+    width: 24,
+    excavate: true
+  };
+  
+  return (
+    <QRCode 
+      value={safeValue}
+      size={size}
+      level="M"
+      includeMargin={true}
+      imageSettings={logoSettings}
+      onError={(err) => {
+        console.error("QR Code rendering error:", err);
+      }}
+    />
+  );
 };
 
 const CalendarQRModal = ({ event, isOpen, onClose }) => {

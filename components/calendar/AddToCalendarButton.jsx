@@ -23,17 +23,34 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
     e.preventDefault();
     e.stopPropagation();
     
-    if (!event) return;
-    
-    const calendarData = generateICalString(event);
-    const blob = new Blob([calendarData], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${event.title || 'event'}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      if (!event) {
+        console.warn("No event provided for download");
+        return;
+      }
+      
+      const calendarData = generateICalString(event);
+      if (!calendarData) {
+        console.error("Failed to generate calendar data");
+        return;
+      }
+      
+      const blob = new Blob([calendarData], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${event.title || 'event'}.ics`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+    } catch (error) {
+      console.error("Error downloading calendar file:", error);
+    }
   };
   
   // Handle copy to clipboard
@@ -41,15 +58,47 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
     e.preventDefault();
     e.stopPropagation();
     
-    if (!event) return;
-    
-    const calendarData = generateICalString(event);
-    navigator.clipboard.writeText(calendarData)
-      .then(() => {
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-      })
-      .catch(err => console.error('Failed to copy: ', err));
+    try {
+      if (!event) {
+        console.warn("No event provided for clipboard copy");
+        return;
+      }
+      
+      const calendarData = generateICalString(event);
+      if (!calendarData) {
+        console.error("Failed to generate calendar data for clipboard");
+        return;
+      }
+      
+      navigator.clipboard.writeText(calendarData)
+        .then(() => {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy to clipboard: ', err);
+          // Fallback for browsers that don't support clipboard API
+          try {
+            const textArea = document.createElement('textarea');
+            textArea.value = calendarData;
+            textArea.style.position = 'fixed';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            if (successful) {
+              setIsCopied(true);
+              setTimeout(() => setIsCopied(false), 2000);
+            }
+          } catch (fallbackErr) {
+            console.error('Clipboard fallback failed:', fallbackErr);
+          }
+        });
+    } catch (error) {
+      console.error("Error copying to clipboard:", error);
+    }
   };
   
   if (compact) {
