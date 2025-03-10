@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Alert, AlertDescription } from "../ui/alert";
-import { Download, Upload, RefreshCw, AlertTriangle, Award, MessageSquare } from "lucide-react";
+import { Download, Upload, RefreshCw, AlertTriangle, Award, MessageSquare, Bug } from "lucide-react";
 import { getFromStorage, saveToStorage, clearFromStorage } from "../../lib/storage";
 
 interface DataManagementProps {
@@ -13,10 +13,21 @@ interface DataManagementProps {
 export function DataManagement({ isDarkMode }: DataManagementProps) {
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<'success' | 'error' | null>(null);
+  const [debugMode, setDebugMode] = useState<boolean>(false);
+  const [debugData, setDebugData] = useState<{
+    rawData: string | null;
+    parsedData: any | null;
+    error: string | null;
+  }>({ rawData: null, parsedData: null, error: null });
+  const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Reset debug data
+    setDebugData({ rawData: null, parsedData: null, error: null });
+    setShowDebugInfo(false);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -24,6 +35,11 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
         const result = e.target?.result;
         if (typeof result !== 'string') {
           throw new Error('Failed to read file');
+        }
+        
+        // Store raw data for debugging
+        if (debugMode) {
+          setDebugData(prev => ({ ...prev, rawData: result }));
         }
         
         // Log the raw data for debugging
@@ -62,6 +78,11 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
         
         console.log("Parsed data type:", typeof data);
         console.log("Is array:", Array.isArray(data));
+        
+        // Store parsed data for debugging
+        if (debugMode) {
+          setDebugData(prev => ({ ...prev, parsedData: data }));
+        }
         
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           console.log("Object keys:", Object.keys(data));
@@ -182,6 +203,14 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
         console.error('Import error:', error);
         setImportStatus(`Error importing data: ${error instanceof Error ? error.message : 'Unknown error'}`);
         setStatusType('error');
+        
+        // Store error for debugging
+        if (debugMode) {
+          setDebugData(prev => ({ 
+            ...prev, 
+            error: `Error importing data: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }));
+        }
       }
     };
     
@@ -482,6 +511,29 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           <p className="text-sm text-muted-foreground mb-3">
             Import job applications from a JSON file
           </p>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="debug-mode" className="text-sm font-medium cursor-pointer flex items-center">
+                <Bug className="h-4 w-4 mr-1" />
+                Debug Mode
+              </label>
+              <Switch 
+                id="debug-mode" 
+                checked={debugMode} 
+                onCheckedChange={setDebugMode} 
+              />
+            </div>
+            {debugMode && debugData.rawData && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowDebugInfo(!showDebugInfo)}
+                className="text-xs"
+              >
+                {showDebugInfo ? "Hide" : "Show"} Debug Information
+              </Button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Input
               type="file"
@@ -515,6 +567,44 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
                 {importStatus}
               </AlertDescription>
             </Alert>
+          )}
+          
+          {/* Debug Information Panel */}
+          {debugMode && showDebugInfo && (
+            <div className={`mt-4 p-4 rounded-md border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+              <h4 className="text-sm font-semibold mb-2 flex items-center">
+                <Bug className="h-4 w-4 mr-1" />
+                Debug Information
+              </h4>
+              
+              {/* Raw Data Section */}
+              <div className="mb-3">
+                <h5 className="text-xs font-medium mb-1">Raw Data (first 200 chars):</h5>
+                <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '100px' }}>
+                  {debugData.rawData ? debugData.rawData.substring(0, 200) + "..." : "No data"}
+                </pre>
+              </div>
+              
+              {/* Error Section */}
+              {debugData.error && (
+                <div className="mb-3">
+                  <h5 className="text-xs font-medium mb-1 text-red-500">Error:</h5>
+                  <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-red-900/20 text-red-300' : 'bg-red-50 text-red-600'}`}>
+                    {debugData.error}
+                  </pre>
+                </div>
+              )}
+              
+              {/* Parsed Data Section */}
+              {debugData.parsedData && (
+                <div>
+                  <h5 className="text-xs font-medium mb-1">Parsed Data:</h5>
+                  <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '150px' }}>
+                    {JSON.stringify(debugData.parsedData, null, 2).substring(0, 500) + "..."}
+                  </pre>
+                </div>
+              )}
+            </div>
           )}
         </div>
         
