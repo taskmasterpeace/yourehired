@@ -15,7 +15,7 @@ const EventReminderButton = ({
     browserNotifications: true,
     inAppNotifications: true,
     defaultReminderTime: '30', // minutes before event
-    ...notificationPreferences
+    ...(notificationPreferences || {})
   };
   
   const handleClick = () => {

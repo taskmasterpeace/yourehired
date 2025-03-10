@@ -124,7 +124,7 @@ const NotificationCenter = ({
           </div>
         ) : (
           <ScrollArea className="h-[300px]">
-            {notifications.map((notification) => (
+            {(notifications || []).map((notification) => (
               <div 
                 key={notification.id}
                 className={`p-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}

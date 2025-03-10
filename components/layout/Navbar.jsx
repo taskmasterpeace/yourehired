@@ -4,13 +4,22 @@ import { useNotifications } from '../../context/NotificationContext';
 import NotificationCenter from '../notifications/NotificationCenter';
 
 const Navbar = () => {
+  // Add a fallback in case the context isn't available yet
+  const notificationContext = useNotifications() || {
+    notifications: [],
+    clearAllNotifications: () => {},
+    clearNotification: () => {},
+    markAllAsRead: () => {},
+    markAsRead: () => {}
+  };
+  
   const { 
     notifications, 
     clearAllNotifications, 
     clearNotification, 
     markAllAsRead, 
     markAsRead 
-  } = useNotifications();
+  } = notificationContext;
   
   return (
     <nav className="border-b bg-white">

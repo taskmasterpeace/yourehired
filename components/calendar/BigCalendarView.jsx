@@ -64,31 +64,40 @@ const BigCalendarView = ({
   const [currentEvent, setCurrentEvent] = useState(null);
   const { toast } = useToast();
   
-  // Import the notification context
-  const { 
-    settings: notificationSettings, 
-    updateSettings: onUpdateNotificationSettings,
-    addEventReminder,
-    addTestNotification
-  } = useNotifications();
+  // Import the notification context with fallbacks
+  const notificationContext = useNotifications();
   
-  // Handle test notifications
+  // Use context if available, otherwise use props or defaults
+  const notificationSettings = notificationContext?.settings || notificationPreferences || {
+    enabled: true,
+    browserNotifications: false,
+    inAppNotifications: true,
+    defaultReminderTime: '30'
+  };
+  
+  const onUpdateNotificationSettings = notificationContext?.updateSettings || onUpdateNotificationPreferences || (() => {});
+  const addEventReminder = notificationContext?.addEventReminder || (() => {});
+  const addTestNotification = notificationContext?.addTestNotification || (() => {});
+  
+  // Handle test notifications with fallback
   const handleTestNotification = (minutes) => {
-    addTestNotification(minutes);
-    
-    // Show toast for immediate feedback
-    if (minutes === 0) {
-      toast({
-        title: "Test Notification *",
-        description: "This is a test notification triggered manually",
-        duration: 5000,
-      });
-    } else {
-      toast({
-        title: "Test Notification Scheduled *",
-        description: `A notification will appear in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`,
-        duration: 3000,
-      });
+    if (addTestNotification) {
+      addTestNotification(minutes);
+      
+      // Show toast for immediate feedback
+      if (minutes === 0) {
+        toast({
+          title: "Test Notification *",
+          description: "This is a test notification triggered manually",
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "Test Notification Scheduled *",
+          description: `A notification will appear in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`,
+          duration: 3000,
+        });
+      }
     }
   };
   
@@ -107,9 +116,11 @@ const BigCalendarView = ({
       });
       
       // Show notifications for upcoming events
-      if (upcomingEvents.length > 0 && notificationSettings.enabled) {
+      if (upcomingEvents.length > 0 && notificationSettings?.enabled) {
         upcomingEvents.forEach(event => {
-          addEventReminder(event);
+          if (addEventReminder) {
+            addEventReminder(event);
+          }
           toast({
             title: `Upcoming: ${event.title}`,
             description: `This event is starting soon.`,
@@ -122,12 +133,12 @@ const BigCalendarView = ({
     checkEvents();
     
     // Request notification permission if browser notifications are enabled
-    if (notificationSettings.browserNotifications && 'Notification' in window) {
+    if (notificationSettings?.browserNotifications && 'Notification' in window) {
       if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
       }
     }
-  }, []);
+  }, [events, notificationSettings, addEventReminder, toast]);
   
   // Handle notification preference updates
   const handleUpdateNotificationPreferences = (newPreferences) => {
