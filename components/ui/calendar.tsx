@@ -58,11 +58,14 @@ function Calendar({
         negotiating: "bg-orange-500",
         offer: "bg-green-500",
         rejected: "bg-red-500",
-        withdrawn: "bg-gray-600"
+        withdrawn: "bg-gray-600",
+        deadline: "bg-red-500",
+        followup: "bg-blue-500",
+        general: "bg-gray-400"
       };
       
       // Use event type or associated opportunity status
-      let status = "applied"; // Default status
+      let status = "general"; // Default status
       
       if (typeof event.type === "string") {
         status = event.type.toLowerCase();
@@ -70,7 +73,7 @@ function Calendar({
         status = event.opportunity.status.toLowerCase();
       }
       
-      return statusColorMap[status] || "bg-blue-500";
+      return statusColorMap[status] || "bg-gray-400";
     } catch (error) {
       console.error("Error determining event color:", error);
       return "bg-gray-300"; // Fallback color
@@ -125,10 +128,13 @@ function Calendar({
                     eventColor = "bg-muted-foreground";
                   }
                   
+                  // Ensure we're only using the background color class
+                  const bgColorClass = eventColor.split(' ')[0];
+                  
                   return (
                     <div 
                       key={`${safeKeyPrefix}-event-${i}-${event?.id || i}`} 
-                      className={`h-1.5 w-1.5 rounded-full ${eventColor}`}
+                      className={`h-1.5 w-1.5 rounded-full ${bgColorClass}`}
                     />
                   );
                 })}

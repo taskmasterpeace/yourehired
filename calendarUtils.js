@@ -152,8 +152,11 @@ export const getEventColor = (event) => {
     };
     
     // First check event type
-    if (event.type && typeof event.type === 'string' && typeColorMap[event.type.toLowerCase()]) {
-      return typeColorMap[event.type.toLowerCase()];
+    if (event.type && typeof event.type === 'string') {
+      const type = event.type.toLowerCase();
+      if (typeColorMap[type]) {
+        return typeColorMap[type];
+      }
     }
     
     // Then check associated opportunity status
@@ -161,7 +164,9 @@ export const getEventColor = (event) => {
         event.opportunity.status && 
         typeof event.opportunity.status === 'string') {
       const status = event.opportunity.status.toLowerCase();
-      return typeColorMap[status] || "bg-gray-400 text-white";
+      if (typeColorMap[status]) {
+        return typeColorMap[status];
+      }
     }
     
     return "bg-gray-400 text-white";

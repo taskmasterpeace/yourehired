@@ -40,12 +40,19 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `${event.title || 'event'}.ics`);
-      document.body.appendChild(link);
+      
+      // Append to document only if it's not already there
+      if (!document.body.contains(link)) {
+        document.body.appendChild(link);
+      }
+      
       link.click();
       
       // Clean up
       setTimeout(() => {
-        document.body.removeChild(link);
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
         URL.revokeObjectURL(url);
       }, 100);
     } catch (error) {

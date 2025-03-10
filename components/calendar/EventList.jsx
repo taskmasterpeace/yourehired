@@ -30,6 +30,10 @@ const EventList = ({ date, events, onEventClick, onCreateEvent }) => {
   
   // Get badge variant based on event type
   const getEventBadgeVariant = (eventType) => {
+    if (!eventType || typeof eventType !== 'string') {
+      return 'gray';
+    }
+    
     const typeVariantMap = {
       interview: 'purple',
       deadline: 'red',
@@ -38,7 +42,7 @@ const EventList = ({ date, events, onEventClick, onCreateEvent }) => {
       general: 'gray'
     };
     
-    return typeVariantMap[eventType] || 'gray';
+    return typeVariantMap[eventType.toLowerCase()] || 'gray';
   };
   
   const dayEvents = getEventsForDay();
@@ -85,7 +89,7 @@ const EventList = ({ date, events, onEventClick, onCreateEvent }) => {
                   
                   <div className="flex flex-col items-end space-y-2">
                     <Badge className={`bg-${getEventBadgeVariant(event.type)}-100 text-${getEventBadgeVariant(event.type)}-800`}>
-                      {event.type}
+                      {event.type || 'Event'}
                     </Badge>
                     
                     <AddToCalendarButton event={event} variant="ghost" size="sm" compact={true} />

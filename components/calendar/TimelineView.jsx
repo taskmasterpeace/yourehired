@@ -43,6 +43,10 @@ const TimelineView = ({ events, opportunities, selectedDate, onEventClick }) => 
   
   // Get color based on event type or opportunity status
   const getEventColor = (event) => {
+    if (!event || !event.type) {
+      return 'bg-gray-400';
+    }
+    
     const typeColorMap = {
       interview: 'bg-purple-500',
       deadline: 'bg-red-500',
@@ -51,7 +55,7 @@ const TimelineView = ({ events, opportunities, selectedDate, onEventClick }) => 
       general: 'bg-gray-400'
     };
     
-    return typeColorMap[event.type] || 'bg-gray-400';
+    return typeColorMap[event.type.toLowerCase()] || 'bg-gray-400';
   };
   
   // Check if an event falls on a specific day
