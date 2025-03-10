@@ -131,17 +131,19 @@ const CalendarView = ({
       case 'month':
       default:
         return (
-          <Calendar 
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleDateSelect}
-            events={filteredEvents}
-            className="rounded-md border w-full"
-            onDayClick={(day) => {
-              setSelectedDate(day);
-              // Check if there are events on this day to determine if we should open event list
-            }}
-          />
+          <div className="w-full">
+            <Calendar 
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              events={filteredEvents}
+              className="rounded-md border w-full"
+              onDayClick={(day) => {
+                setSelectedDate(day);
+                // Check if there are events on this day to determine if we should open event list
+              }}
+            />
+          </div>
         );
     }
   };

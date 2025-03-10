@@ -24,6 +24,8 @@ import { format } from 'date-fns';
 import AddToCalendarButton from './AddToCalendarButton';
 
 const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
+  // Add debugging to see what opportunities are available
+  console.log("Available opportunities:", opportunities);
   const [eventData, setEventData] = useState({
     id: '',
     title: '',
@@ -215,7 +217,10 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
                 <Briefcase className="h-4 w-4 mr-2 mt-3 text-gray-400" />
                 <Select 
                   value={eventData.opportunityId || "none"} 
-                  onValueChange={(value) => handleChange('opportunityId', value)}
+                  onValueChange={(value) => {
+                    console.log("Selected opportunity:", value);
+                    handleChange('opportunityId', value);
+                  }}
                   defaultValue="none"
                 >
                   <SelectTrigger id="opportunity" className="flex-1">
@@ -223,11 +228,15 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {opportunities.map(opp => (
-                      <SelectItem key={opp.id} value={opp.id}>
-                        {opp.company} - {opp.position}
-                      </SelectItem>
-                    ))}
+                    {Array.isArray(opportunities) && opportunities.length > 0 ? (
+                      opportunities.map(opp => (
+                        <SelectItem key={opp.id} value={opp.id}>
+                          {opp.company} - {opp.position}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-opps" disabled>No opportunities available</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

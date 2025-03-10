@@ -81,16 +81,19 @@ function Calendar({
   };
   // Custom day renderer to show event indicators with improved error handling
   const renderDay = (day: Date, selectedDay: Date, dayProps: any) => {
+    // Add debugging to see what's happening
+    console.log("Rendering day:", day, dayProps);
+    
     // Early return if dayProps is missing
     if (!dayProps) {
       console.warn("Calendar: dayProps is undefined in renderDay");
-      return <td>{day?.getDate?.() || ""}</td>;
+      return <div>{day?.getDate?.() || ""}</div>;
     }
 
     try {
       // Comprehensive safety check for the day parameter
       if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
-        return <td {...dayProps}>{dayProps.children}</td>;
+        return <div {...dayProps}>{dayProps.children}</div>;
       }
       
       // Safely get events for this day
@@ -110,7 +113,7 @@ function Calendar({
         : `fallback-${Math.random()}`;
       
       return (
-        <td {...dayProps} className={cn(dayProps.className)}>
+        <div {...dayProps} className={cn(dayProps.className)}>
           <div className="relative h-full w-full p-0">
             <div className="h-9 w-9 p-0 font-normal aria-selected:opacity-100 flex items-center justify-center">
               {day.getDate()}
@@ -144,12 +147,12 @@ function Calendar({
               </div>
             )}
           </div>
-        </td>
+        </div>
       );
     } catch (error) {
       // Fallback in case of any unexpected errors
       console.error("Error rendering calendar day:", error);
-      return <td {...(dayProps || {})}>{dayProps?.children || day?.getDate?.() || ""}</td>;
+      return <div {...(dayProps || {})}>{dayProps?.children || day?.getDate?.() || ""}</div>;
     }
   };
   
