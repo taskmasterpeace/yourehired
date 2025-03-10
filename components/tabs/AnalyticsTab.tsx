@@ -13,7 +13,7 @@ import {
 import { 
   BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, 
   Award, Flame, Rocket, Users, Building, Home, Lightbulb, InfoIcon,
-  Zap, Star, Clock, TrendingUp, Calendar
+  Zap, Star, Clock, TrendingUp, Calendar, ChartPie as ChartIcon, Gamepad2 as GamepadIcon
 } from 'lucide-react';
 import { TooltipHelper } from "../ui/tooltip-helper";
 import { tooltipContent } from "../../lib/tooltipContent";
@@ -51,425 +51,222 @@ export function AnalyticsTab({
 
   return (
     <div className="space-y-6">
-      {/* Job Search Level - Made more prominent */}
-      {analytics.jobSearchStats && (
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''} mb-6`}>
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center">
-              Job Search Level
-              <TooltipHelper content={tooltipContent.jobSearchLevel} />
-            </CardTitle>
-            <CardDescription className="text-base">
-              Your progress in the job search journey
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6 mb-4">
-              <div className={`h-24 w-24 rounded-full flex items-center justify-center text-3xl font-bold ${isDarkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-900'}`}>
-                {analytics.jobSearchStats.level || 1}
-              </div>
-              <div className="flex-1">
-                <EnhancedProgressBar 
-                  progress={analytics.jobSearchStats.progress || 0}
-                  total={100}
-                  isDarkMode={isDarkMode}
-                  height="h-3"
-                />
-                <p className="text-lg mt-3">
-                  {analytics.jobSearchStats.totalScore || 0} points • Next level at {analytics.jobSearchStats.nextLevelScore || 100} points
+      {/* Main Analytics Tabs */}
+      <Tabs defaultValue="core" className="w-full">
+        <TabsList className="grid grid-cols-2 mb-6">
+          <TabsTrigger value="core" className="flex items-center gap-2">
+            <ChartIcon className="h-4 w-4" />
+            <span>Core Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="gamification" className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" />
+            <span>Gamification</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* CORE ANALYTICS TAB */}
+        <TabsContent value="core" className="space-y-6">
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center">
+                  Total Applications
+                  <TooltipHelper content={tooltipContent.totalApplications} />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-4xl font-bold">{analytics.totalApplications || 0}</p>
+                  <div className={`p-3 rounded-full ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                    <BarChartIcon className={`h-8 w-8 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+                  </div>
+                </div>
+                <p className="text-base text-muted-foreground mt-2">
+                  {analytics.activeApplications || 0} active applications
                 </p>
-              </div>
-            </div>
-          </CardContent>
-          
-          {/* Add the Achievement Rules Panel */}
-          <AchievementRulesPanel 
-            open={achievementRulesPanelOpen} 
-            onOpenChange={setAchievementRulesPanelOpen} 
-            isDarkMode={isDarkMode} 
-          />
-        </Card>
-      )}
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl flex items-center">
-              Total Applications
-              <TooltipHelper content={tooltipContent.totalApplications} />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <p className="text-4xl font-bold">{analytics.totalApplications || 0}</p>
-              <div className={`p-3 rounded-full ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
-                <BarChartIcon className={`h-8 w-8 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
-              </div>
-            </div>
-            <p className="text-base text-muted-foreground mt-2">
-              {analytics.activeApplications || 0} active applications
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              Response Rate
-              <TooltipHelper content={tooltipContent.responseRate} />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <p className="text-3xl font-bold">{analytics.responseRate || 0}%</p>
-              <div className={`p-2 rounded-full ${isDarkMode ? 'bg-green-900' : 'bg-green-100'}`}>
-                <ActivityIcon className={`h-6 w-6 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Industry avg: 20-30%
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              Interview Rate
-              <TooltipHelper content={tooltipContent.interviewRate} />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <p className="text-3xl font-bold">{analytics.interviewRate || 0}%</p>
-              <div className={`p-2 rounded-full ${isDarkMode ? 'bg-purple-900' : 'bg-purple-100'}`}>
-                <Users className={`h-6 w-6 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} />
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Of responses received
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              Offer Rate
-              <TooltipHelper content={tooltipContent.offerRate} />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <p className="text-3xl font-bold">{analytics.offerRate || 0}%</p>
-              <div className={`p-2 rounded-full ${isDarkMode ? 'bg-amber-900' : 'bg-amber-100'}`}>
-                <Trophy className={`h-6 w-6 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Of interviews conducted
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+            
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  Response Rate
+                  <TooltipHelper content={tooltipContent.responseRate} />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold">{analytics.responseRate || 0}%</p>
+                  <div className={`p-2 rounded-full ${isDarkMode ? 'bg-green-900' : 'bg-green-100'}`}>
+                    <ActivityIcon className={`h-6 w-6 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Industry avg: 20-30%
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  Interview Rate
+                  <TooltipHelper content={tooltipContent.interviewRate} />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold">{analytics.interviewRate || 0}%</p>
+                  <div className={`p-2 rounded-full ${isDarkMode ? 'bg-purple-900' : 'bg-purple-100'}`}>
+                    <Users className={`h-6 w-6 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Of responses received
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  Offer Rate
+                  <TooltipHelper content={tooltipContent.offerRate} />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold">{analytics.offerRate || 0}%</p>
+                  <div className={`p-2 rounded-full ${isDarkMode ? 'bg-amber-900' : 'bg-amber-100'}`}>
+                    <Trophy className={`h-6 w-6 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Of interviews conducted
+                </p>
+              </CardContent>
+            </Card>
+          </div>
       
-      {/* Weekly Challenges - Moved up */}
-      {analytics.weeklyChallenges && analytics.weeklyChallenges.length > 0 && (
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''} mb-6`}>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center">
-              Weekly Challenges
-              <TooltipHelper content={tooltipContent.weeklyChallenges} />
-            </CardTitle>
-            <CardDescription className="text-base">
-              Complete these challenges to boost your job search
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {analytics.weeklyChallenges.map((challenge, index) => (
+          {/* Insights & Applications Needing Attention */}
+          <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center">
+                Insights & Applications Needing Attention
+                <TooltipHelper content={tooltipContent.applicationInsights || "Key insights about your job applications"} />
+              </CardTitle>
+              <CardDescription>
+                Important information about your job search that needs attention
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Oldest application needing attention */}
                 <div 
-                  key={index} 
-                  className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                  className={`p-4 rounded-lg border ${isDarkMode ? 'bg-amber-900/20 border-amber-800' : 'bg-amber-50 border-amber-200'}`}
                 >
-                  <div className="flex flex-col h-full">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className={`p-3 rounded-full ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
-                        <Rocket className={`h-6 w-6 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-lg">{challenge.name}</h4>
-                        <p className="text-sm text-muted-foreground">{challenge.description}</p>
-                      </div>
+                  <div className="flex gap-3">
+                    <div className={`p-3 rounded-full h-fit ${isDarkMode ? 'bg-amber-900' : 'bg-amber-100'}`}>
+                      <Clock className={`h-5 w-5 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
                     </div>
-                    
-                    <div className="mt-auto">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm font-medium">{challenge.progress} / {challenge.target}</span>
-                        <span className="text-sm">Expires: {challenge.expires}</span>
-                      </div>
-                      <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
-                        <div 
-                          className="h-2 rounded-full bg-blue-500" 
-                          style={{ width: `${(challenge.progress / challenge.target) * 100}%` }}
-                        ></div>
-                      </div>
-                      <div className="mt-3 text-sm text-right text-muted-foreground">
-                        Reward: {challenge.reward}
+                    <div>
+                      <h4 className="font-medium text-lg">Oldest Application: Company XYZ</h4>
+                      <p className="text-muted-foreground mt-1">Applied 30 days ago - No response yet</p>
+                      <p className="mt-2">Consider following up or marking as inactive</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Stale applications count */}
+                <div 
+                  className={`p-4 rounded-lg border ${isDarkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}
+                >
+                  <div className="flex gap-3">
+                    <div className={`p-3 rounded-full h-fit ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                      <InfoIcon className={`h-5 w-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-lg">5 Applications Without Activity</h4>
+                      <p className="text-muted-foreground mt-1">No updates for more than 14 days</p>
+                      <div className="mt-3">
+                        <Button variant="outline" size="sm">View Applications</Button>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" size="sm" className="ml-auto">
-              View All Challenges
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-      {/* Achievement and Level Benefits in a grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Achievement Progress Tracker - Enhanced with more content */}
-        {analytics.achievements && analytics.achievements.length > 0 && (
-          <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                Achievement Progress
-                <TooltipHelper content={tooltipContent.achievementProgress || "Track your achievement progress"} />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProgressTracker 
-                achievements={analytics.achievements} 
-                isDarkMode={isDarkMode} 
-                compact={true}
-              />
-            </CardContent>
-          </Card>
-        )}
-        
-        {/* Level Benefits Explainer */}
-        {analytics.jobSearchStats && (
-          <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                Level Benefits
-                <TooltipHelper content={tooltipContent.levelBenefits || "Benefits you unlock at each level"} />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <LevelBenefitsExplainer 
-                currentLevel={analytics.jobSearchStats.level || 1}
-                currentScore={analytics.jobSearchStats.totalScore || 0}
-                nextLevelScore={analytics.jobSearchStats.nextLevelScore || 100}
-                isDarkMode={isDarkMode}
-                compact={true}
-              />
-            </CardContent>
-          </Card>
-        )}
-      </div>
-      
-      {/* Achievement Collection - Enhanced with tabs */}
-      {analytics.achievements && analytics.achievements.length > 0 && (
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''} mt-6`}>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center">
-              Achievements
-              <TooltipHelper content={tooltipContent.achievements || "Collect achievements as you progress in your job search"} />
-            </CardTitle>
-            <CardDescription className="text-base">
-              Unlock achievements to level up your job search
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="milestones">
-              <TabsList className="mb-4">
-                <TabsTrigger value="milestones" className="flex items-center gap-1">
-                  <Trophy className="h-4 w-4" />
-                  <span>Milestones</span>
-                </TabsTrigger>
-                <TabsTrigger value="consistency" className="flex items-center gap-1">
-                  <Zap className="h-4 w-4" />
-                  <span>Consistency</span>
-                </TabsTrigger>
-                <TabsTrigger value="quality" className="flex items-center gap-1">
-                  <Star className="h-4 w-4" />
-                  <span>Quality</span>
-                </TabsTrigger>
-                <TabsTrigger value="mastery" className="flex items-center gap-1">
-                  <Award className="h-4 w-4" />
-                  <span>Mastery</span>
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="milestones">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      // Add rarity if it doesn't exist
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      // Add category if it doesn't exist
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'milestones')} 
-                  isDarkMode={isDarkMode}
-                />
-              </TabsContent>
-              
-              <TabsContent value="consistency">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'consistency') || 
-                    // Add placeholder if empty
-                    [
-                      {
-                        id: 'consistency_placeholder',
-                        name: 'Daily Application Streak',
-                        description: 'Apply to jobs for 7 consecutive days',
-                        category: 'consistency',
-                        points: 25,
-                        unlocked: false,
-                        progress: 3,
-                        total: 7,
-                        rarity: 'uncommon'
-                      }
-                    ]} 
-                  isDarkMode={isDarkMode}
-                />
-              </TabsContent>
-              
-              <TabsContent value="quality">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'quality') || 
-                    // Add placeholder if empty
-                    [
-                      {
-                        id: 'quality_placeholder',
-                        name: 'Interview Converter',
-                        description: 'Receive an interview from 25% of your applications',
-                        category: 'quality',
-                        points: 50,
-                        unlocked: false,
-                        progress: 15,
-                        total: 25,
-                        rarity: 'rare'
-                      }
-                    ]} 
-                  isDarkMode={isDarkMode}
-                />
-              </TabsContent>
-              
-              <TabsContent value="mastery">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'mastery') || 
-                    // Add placeholder if empty
-                    [
-                      {
-                        id: 'mastery_placeholder',
-                        name: 'Job Search Master',
-                        description: 'Reach level 10 in your job search journey',
-                        category: 'mastery',
-                        points: 100,
-                        unlocked: false,
-                        progress: 4,
-                        total: 10,
-                        rarity: 'legendary'
-                      }
-                    ]} 
-                  isDarkMode={isDarkMode}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Main Charts - Moved to bottom */}
-      <Tabs defaultValue="status" className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Application Analytics</CardTitle>
-              <TabsList>
-                <TabsTrigger value="status">Status</TabsTrigger>
-                <TabsTrigger value="timeline" className="flex items-center">
-                  Timeline
-                  <TooltipHelper content={tooltipContent.applicationTimeline} />
-                </TabsTrigger>
-                <TabsTrigger value="insights">Insights</TabsTrigger>
-              </TabsList>
-            </div>
-            <CardDescription>
-              Detailed breakdown of your job application data
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <TabsContent value="status" className="mt-0">
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={statusData}
-                    margin={{
-                      top: 20,
-                      right: 30,
-                      left: 20,
-                      bottom: 60,
-                    }}
+                
+                {/* Activity Patterns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div 
+                    className={`p-4 rounded-lg border ${isDarkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'}`}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45} 
-                      textAnchor="end"
-                      height={70}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="value" name="Applications" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
+                    <div className="flex gap-3">
+                      <div className={`p-3 rounded-full h-fit ${isDarkMode ? 'bg-green-900' : 'bg-green-100'}`}>
+                        <TrendingUp className={`h-5 w-5 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-lg">Most Active Day: Tuesday</h4>
+                        <p className="text-muted-foreground mt-1">You add the most opportunities on this day</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`p-4 rounded-lg border ${isDarkMode ? 'bg-purple-900/20 border-purple-800' : 'bg-purple-50 border-purple-200'}`}
+                  >
+                    <div className="flex gap-3">
+                      <div className={`p-3 rounded-full h-fit ${isDarkMode ? 'bg-purple-900' : 'bg-purple-100'}`}>
+                        <Calendar className={`h-5 w-5 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-lg">Most Applications: Thursday</h4>
+                        <p className="text-muted-foreground mt-1">You submit the most applications on this day</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Job Search Insights */}
+                {analytics.jobSearchInsights && analytics.jobSearchInsights.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="font-medium text-lg mb-3">Personalized Insights</h3>
+                    <div className="space-y-3">
+                      {analytics.jobSearchInsights.map((insight, index) => (
+                        <div 
+                          key={index} 
+                          className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                        >
+                          <div className="flex gap-3">
+                            <div className={`p-3 rounded-full h-fit ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                              <Lightbulb className={`h-5 w-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-lg">{insight.title}</h4>
+                              <p className="text-muted-foreground mt-1">{insight.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </TabsContent>
-            
-            <TabsContent value="timeline" className="mt-0">
-              <div className="mb-4">
+            </CardContent>
+          </Card>
+          {/* Application Timeline */}
+          <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-xl flex items-center">
+                    Application Timeline
+                    <TooltipHelper content={tooltipContent.applicationTimeline || "Visual timeline of your application activity"} />
+                  </CardTitle>
+                  <CardDescription>
+                    Track your application progress over time
+                  </CardDescription>
+                </div>
                 <Select value={timelinePeriod} onValueChange={setTimelinePeriod}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select time period" />
@@ -482,7 +279,8 @@ export function AnalyticsTab({
                   </SelectContent>
                 </Select>
               </div>
-              
+            </CardHeader>
+            <CardContent>
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-3">Application Stage Timeline</h3>
                 <div className="overflow-x-auto pb-4">
@@ -604,164 +402,201 @@ export function AnalyticsTab({
                   </div>
                 </div>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="insights" className="mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Weekly Patterns */}
-                {analytics.weeklyPatterns && (
-                  <Card className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center">
-                        Weekly Activity Patterns
-                        <TooltipHelper content={tooltipContent.weeklyPatterns} />
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span>Most active day:</span>
-                          <Badge variant="outline" className="font-medium">
-                            {analytics.weeklyPatterns.mostActiveDay?.day || 'N/A'} ({analytics.weeklyPatterns.mostActiveDay?.count || 0})
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span>Least active day:</span>
-                          <Badge variant="outline" className="font-medium">
-                            {analytics.weeklyPatterns.leastActiveDay?.day || 'N/A'} ({analytics.weeklyPatterns.leastActiveDay?.count || 0})
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {/* Application Streak */}
-                {analytics.achievements && (
-                  <Card className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center">
-                        Current Streak
-                        <TooltipHelper content={tooltipContent.currentStreak} />
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${isDarkMode ? 'bg-amber-900' : 'bg-amber-100'}`}>
-                          <Flame className={`h-5 w-5 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold">
-                            {analytics.achievements.find(a => a.id === 'application_streak')?.progress || 0} days
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Consecutive application days
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+            </CardContent>
+          </Card>
+      
+          {/* Status Breakdown */}
+          <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center">
+                Application Status Breakdown
+                <TooltipHelper content={tooltipContent.statusBreakdown || "Distribution of your applications by status"} />
+              </CardTitle>
+              <CardDescription>
+                Detailed breakdown of your job application statuses
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={statusData}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: 60,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end"
+                      height={70}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="value" name="Applications" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              
-              {/* Stale Applications */}
-              <div className="mt-4">
-                <h3 className="font-medium mb-2">Applications Needing Attention</h3>
-                <div className="space-y-3">
-                  {/* Oldest application needing attention */}
-                  <div 
-                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-amber-900/20 border-amber-800' : 'bg-amber-50 border-amber-200'}`}
-                  >
-                    <div className="flex gap-3">
-                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-amber-900' : 'bg-amber-100'}`}>
-                        <Clock className={`h-4 w-4 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Oldest Application: Company XYZ</h4>
-                        <p className="text-sm text-muted-foreground mt-1">Applied 30 days ago - No response yet</p>
-                        <p className="text-xs mt-2">Consider following up or marking as inactive</p>
-                      </div>
-                    </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* GAMIFICATION TAB */}
+        <TabsContent value="gamification" className="space-y-6">
+          {/* Job Search Level */}
+          {analytics.jobSearchStats && (
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center">
+                  Job Search Level
+                  <TooltipHelper content={tooltipContent.jobSearchLevel} />
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Your progress in the job search journey
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-6 mb-4">
+                  <div className={`h-24 w-24 rounded-full flex items-center justify-center text-3xl font-bold ${isDarkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-900'}`}>
+                    {analytics.jobSearchStats.level || 1}
                   </div>
-                  
-                  {/* Stale applications count */}
-                  <div 
-                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                  >
-                    <div className="flex gap-3">
-                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
-                        <InfoIcon className={`h-4 w-4 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">5 Applications Without Activity</h4>
-                        <p className="text-sm text-muted-foreground mt-1">No updates for more than 14 days</p>
-                      </div>
-                    </div>
+                  <div className="flex-1">
+                    <EnhancedProgressBar 
+                      progress={analytics.jobSearchStats.progress || 0}
+                      total={100}
+                      isDarkMode={isDarkMode}
+                      height="h-3"
+                    />
+                    <p className="text-lg mt-3">
+                      {analytics.jobSearchStats.totalScore || 0} points • Next level at {analytics.jobSearchStats.nextLevelScore || 100} points
+                    </p>
                   </div>
                 </div>
-              </div>
+              </CardContent>
               
-              {/* Activity Patterns */}
-              <div className="mt-4">
-                <h3 className="font-medium mb-2">Activity Patterns</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div 
-                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                  >
-                    <div className="flex gap-3">
-                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-green-900' : 'bg-green-100'}`}>
-                        <TrendingUp className={`h-4 w-4 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Most Active Day: Tuesday</h4>
-                        <p className="text-sm text-muted-foreground mt-1">You add the most opportunities on this day</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                  >
-                    <div className="flex gap-3">
-                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-purple-900' : 'bg-purple-100'}`}>
-                        <Calendar className={`h-4 w-4 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Most Applications: Thursday</h4>
-                        <p className="text-sm text-muted-foreground mt-1">You submit the most applications on this day</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Job Search Insights */}
-              {analytics.jobSearchInsights && analytics.jobSearchInsights.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="font-medium mb-2">Personalized Insights</h3>
-                  <div className="space-y-3">
-                    {analytics.jobSearchInsights.map((insight, index) => (
-                      <div 
-                        key={index} 
-                        className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                      >
-                        <div className="flex gap-3">
-                          <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
-                            <Lightbulb className={`h-4 w-4 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+              {/* Add the Achievement Rules Panel */}
+              <AchievementRulesPanel 
+                open={achievementRulesPanelOpen} 
+                onOpenChange={setAchievementRulesPanelOpen} 
+                isDarkMode={isDarkMode} 
+              />
+            </Card>
+          )}
+
+          {/* Weekly Challenges */}
+          {analytics.weeklyChallenges && analytics.weeklyChallenges.length > 0 && (
+            <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center">
+                  Weekly Challenges
+                  <TooltipHelper content={tooltipContent.weeklyChallenges} />
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Complete these challenges to boost your job search
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {analytics.weeklyChallenges.map((challenge, index) => (
+                    <div 
+                      key={index} 
+                      className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                    >
+                      <div className="flex flex-col h-full">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className={`p-3 rounded-full ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                            <Rocket className={`h-6 w-6 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
                           </div>
                           <div>
-                            <h4 className="font-medium">{insight.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{insight.description}</p>
+                            <h4 className="font-medium text-lg">{challenge.name}</h4>
+                            <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-auto">
+                          <div className="flex justify-between mb-1">
+                            <span className="text-sm font-medium">{challenge.progress} / {challenge.target}</span>
+                            <span className="text-sm">Expires: {challenge.expires}</span>
+                          </div>
+                          <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
+                            <div 
+                              className="h-2 rounded-full bg-blue-500" 
+                              style={{ width: `${(challenge.progress / challenge.target) * 100}%` }}
+                            ></div>
+                          </div>
+                          <div className="mt-3 text-sm text-right text-muted-foreground">
+                            Reward: {challenge.reward}
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </TabsContent>
-          </CardContent>
-        </Card>
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" size="sm" className="ml-auto">
+                  View All Challenges
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {/* Achievement Progress and Level Benefits */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Achievement Progress Tracker */}
+            {analytics.achievements && analytics.achievements.length > 0 && (
+              <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center">
+                    Achievement Progress
+                    <TooltipHelper content={tooltipContent.achievementProgress || "Track your achievement progress"} />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ProgressTracker 
+                    achievements={analytics.achievements} 
+                    isDarkMode={isDarkMode} 
+                  />
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Level Benefits Explainer */}
+            {analytics.jobSearchStats && (
+              <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center">
+                    Level Benefits
+                    <TooltipHelper content={tooltipContent.levelBenefits || "Benefits you unlock at each level"} />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <LevelBenefitsExplainer 
+                    currentLevel={analytics.jobSearchStats.level || 1}
+                    currentScore={analytics.jobSearchStats.totalScore || 0}
+                    nextLevelScore={analytics.jobSearchStats.nextLevelScore || 100}
+                    isDarkMode={isDarkMode}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Achievement Collection */}
+          {analytics.achievements && analytics.achievements.length > 0 && (
+            <AchievementCollection 
+              achievements={analytics.achievements} 
+              isDarkMode={isDarkMode}
+            />
+          )}
+      
+        </TabsContent>
       </Tabs>
     </div>
   );
