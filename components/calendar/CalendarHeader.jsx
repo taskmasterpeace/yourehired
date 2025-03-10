@@ -2,7 +2,12 @@ import React from 'react';
 import { CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { CalendarIcon, Plus, Grid, List, Clock, Timeline } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Grid } from 'lucide-react';
+import { List } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import { Timeline } from 'lucide-react';
 
 const CalendarHeader = ({ 
   viewMode, 
