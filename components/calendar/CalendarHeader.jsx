@@ -2,7 +2,7 @@ import React from 'react';
 import { CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { CalendarIcon, Plus, LayoutGrid, ListIcon, Clock, Timeline } from 'lucide-react';
+import { CalendarIcon, Plus, Grid, List, Clock, Timeline } from 'lucide-react';
 
 const CalendarHeader = ({ 
   viewMode, 
@@ -43,7 +43,7 @@ const CalendarHeader = ({
             className="rounded-none rounded-l-md"
             title="Month View"
           >
-            <LayoutGrid className="h-4 w-4" />
+            <Grid className="h-4 w-4" />
           </Button>
           <Button 
             variant={viewMode === 'week' ? 'default' : 'ghost'} 
@@ -52,7 +52,7 @@ const CalendarHeader = ({
             className="rounded-none"
             title="Week View"
           >
-            <ListIcon className="h-4 w-4" />
+            <List className="h-4 w-4" />
           </Button>
           <Button 
             variant={viewMode === 'day' ? 'default' : 'ghost'} 
