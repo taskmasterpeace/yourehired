@@ -7,7 +7,7 @@ import EventModal from './EventModal';
 import { Card, CardContent } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
-import useNotificationService from './NotificationService';
+import { useNotifications } from '../../context/NotificationContext';
 import EventReminderButton from './EventReminderButton';
 
 // Setup the localizer for react-big-calendar
@@ -64,18 +64,17 @@ const BigCalendarView = ({
   const [currentEvent, setCurrentEvent] = useState(null);
   const { toast } = useToast();
   
-  // Initialize notification service
-  const {
-    activeNotifications,
-    requestNotificationPermission,
-    checkUpcomingEvents,
-    rescheduleNotifications,
-    testNotification
-  } = useNotificationService(events, notificationPreferences);
+  // Import the notification context
+  const { 
+    settings: notificationSettings, 
+    updateSettings: onUpdateNotificationSettings,
+    addEventReminder,
+    addTestNotification
+  } = useNotifications();
   
   // Handle test notifications
   const handleTestNotification = (minutes) => {
-    testNotification(minutes);
+    addTestNotification(minutes);
     
     // Show toast for immediate feedback
     if (minutes === 0) {

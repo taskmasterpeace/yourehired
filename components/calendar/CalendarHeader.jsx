@@ -101,8 +101,6 @@ const CalendarHeader = ({
         {/* Notification Settings Button */}
         <EventReminderButton
           notificationPreferences={notificationPreferences}
-          onUpdatePreferences={onUpdateNotificationPreferences}
-          onTestNotification={onTestNotification}
           className="mr-2"
         />
         
