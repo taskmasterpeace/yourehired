@@ -24,6 +24,7 @@ export function CalendarTab({
   user,
   dispatch
 }: CalendarTabProps) {
+  // Make sure we're only rendering calendar-related content
   return (
     <div className={`calendar-tab ${isDarkMode ? 'dark-mode' : ''}`}>
       <CalendarView 

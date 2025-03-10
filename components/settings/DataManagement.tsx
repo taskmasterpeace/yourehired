@@ -3,15 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Alert, AlertDescription } from "../ui/alert";
-import { Download, Upload, RefreshCw, AlertTriangle, Award, MessageSquare, Bug } from "lucide-react";
+import { Download, Upload, RefreshCw, AlertTriangle, Award, MessageSquare, Bug, ArrowLeft } from "lucide-react";
 import { getFromStorage, saveToStorage, clearFromStorage } from "../../lib/storage";
 import { Switch } from "../ui/switch";
 
 interface DataManagementProps {
   isDarkMode: boolean;
+  onNavigateBack?: () => void;
 }
 
-export function DataManagement({ isDarkMode }: DataManagementProps) {
+export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementProps) {
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<'success' | 'error' | null>(null);
   const [debugMode, setDebugMode] = useState<boolean>(false);
@@ -210,8 +211,8 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
         setImportStatus(`Successfully imported ${normalizedData.length} job applications`);
         setStatusType('success');
         
-        // Reload the page to see changes
-        setTimeout(() => window.location.reload(), 1500);
+        // Don't reload the page, just show success message
+        // The user can navigate back manually to see their imported data
         
       } catch (error) {
         console.error('Import error:', error);
@@ -274,8 +275,9 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
       
       alert(`${dataType} data has been reset successfully.`);
       
-      // Reload the page to see changes
-      window.location.reload();
+      // Don't reload the page
+      setImportStatus(`${dataType} data has been reset successfully.`);
+      setStatusType('success');
       
     } catch (error) {
       console.error('Reset error:', error);
@@ -506,8 +508,9 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
     
     alert('Mock achievement and analytics data added successfully!');
     
-    // Reload the page to see changes
-    setTimeout(() => window.location.reload(), 500);
+    // Don't reload the page
+    setImportStatus('Mock achievement and analytics data added successfully!');
+    setStatusType('success');
   };
 
   return (
@@ -572,6 +575,18 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
                 {importStatus}
               </AlertDescription>
             </Alert>
+          )}
+          
+          {/* Navigation button after successful import */}
+          {importStatus && statusType === 'success' && onNavigateBack && (
+            <Button 
+              onClick={onNavigateBack}
+              className="mt-3 flex items-center gap-2"
+              variant="outline"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Return to Dashboard
+            </Button>
           )}
           
           {/* Debug Information Panel */}

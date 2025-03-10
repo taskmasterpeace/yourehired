@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
@@ -10,9 +10,10 @@ import { getFromStorage, saveToStorage } from "../../lib/storage";
 interface SettingsScreenProps {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  onNavigateBack?: () => void;
 }
 
-export function SettingsScreen({ isDarkMode, toggleDarkMode }: SettingsScreenProps) {
+export function SettingsScreen({ isDarkMode, toggleDarkMode, onNavigateBack }: SettingsScreenProps) {
   // Load settings from storage with defaults
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => 
     getFromStorage('settings', { notifications: true }).notifications
@@ -116,7 +117,7 @@ export function SettingsScreen({ isDarkMode, toggleDarkMode }: SettingsScreenPro
       </Card>
       
       {/* Data Management Section */}
-      <DataManagement isDarkMode={isDarkMode} />
+      <DataManagement isDarkMode={isDarkMode} onNavigateBack={onNavigateBack} />
       
       {/* Save Button */}
       <div className="flex justify-end">
