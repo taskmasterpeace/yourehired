@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Alert, AlertDescription } from "../ui/alert";
-import { Download, Upload, RefreshCw, AlertTriangle, Award, MessageSquare, Bug, ArrowLeft } from "lucide-react";
+import { Download, Upload, RefreshCw, AlertTriangle, Award, MessageSquare, Bug, ArrowLeft, Loader2 } from "lucide-react";
 import { getFromStorage, saveToStorage, clearFromStorage } from "../../lib/storage";
 import { Switch } from "../ui/switch";
 
@@ -14,8 +14,9 @@ interface DataManagementProps {
 
 export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementProps) {
   const [importStatus, setImportStatus] = useState<string | null>(null);
-  const [statusType, setStatusType] = useState<'success' | 'error' | null>(null);
+  const [statusType, setStatusType] = useState<'success' | 'error' | 'loading' | null>(null);
   const [debugMode, setDebugMode] = useState<boolean>(false);
+  const [isImporting, setIsImporting] = useState<boolean>(false);
   const [debugData, setDebugData] = useState<{
     rawData: string | null;
     parsedData: any | null;
@@ -44,7 +45,8 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
     
     // Show loading status
     setImportStatus('Reading file...');
-    setStatusType('success');
+    setStatusType('loading');
+    setIsImporting(true);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -277,6 +279,7 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
         
         setImportStatus(`Successfully imported ${normalizedData.length} job applications`);
         setStatusType('success');
+        setIsImporting(false);
         
         // Don't reload the page, just show success message
         // The user can navigate back to see their imported data
@@ -285,6 +288,7 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
         console.error('Import error:', error);
         setImportStatus(`Error importing data: ${error instanceof Error ? error.message : 'Unknown error'}`);
         setStatusType('error');
+        setIsImporting(false);
         
         // Store error for debugging
         if (debugMode) {
@@ -629,13 +633,15 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
               accept=".json"
               onChange={handleFileImport}
               className={`max-w-md ${isDarkMode ? 'bg-gray-700 border-gray-600' : ''}`}
+              disabled={isImporting}
             />
             <Button 
               onClick={() => document.getElementById('file-upload')?.click()}
               className="flex items-center gap-2"
+              disabled={isImporting}
             >
               <Upload className="h-4 w-4" />
-              Choose File
+              {isImporting ? 'Importing...' : 'Choose File'}
             </Button>
           </div>
           {importStatus && (
@@ -643,16 +649,21 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
               className={`mt-3 ${
                 statusType === 'error' 
                   ? (isDarkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200') 
+                  : statusType === 'loading'
+                  ? (isDarkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200')
                   : (isDarkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200')
               }`}
             >
               <AlertDescription className={`
                 ${statusType === 'error' 
                   ? (isDarkMode ? 'text-red-300' : 'text-red-600') 
+                  : statusType === 'loading'
+                  ? (isDarkMode ? 'text-blue-300' : 'text-blue-600')
                   : (isDarkMode ? 'text-green-300' : 'text-green-600')
                 }
               `}>
                 {statusType === 'error' && <AlertTriangle className="h-4 w-4 inline mr-2" />}
+                {statusType === 'loading' && <RefreshCw className="h-4 w-4 inline mr-2 animate-spin" />}
                 {importStatus}
               </AlertDescription>
             </Alert>

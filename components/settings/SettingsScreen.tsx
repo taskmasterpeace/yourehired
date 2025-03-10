@@ -4,8 +4,9 @@ import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { DataManagement } from "./DataManagement";
-import { Moon, Sun, Save } from "lucide-react";
+import { Moon, Sun, Save, Check } from "lucide-react";
 import { getFromStorage, saveToStorage } from "../../lib/storage";
+import { toast } from "../ui/use-toast";
 
 interface SettingsScreenProps {
   isDarkMode: boolean;
@@ -21,6 +22,7 @@ export function SettingsScreen({ isDarkMode, toggleDarkMode, onNavigateBack }: S
   const [emailUpdatesEnabled, setEmailUpdatesEnabled] = useState(() => 
     getFromStorage('settings', { emailUpdates: true }).emailUpdates
   );
+  const [isSaving, setIsSaving] = useState(false);
   
   // Load settings on component mount
   useEffect(() => {
@@ -34,6 +36,8 @@ export function SettingsScreen({ isDarkMode, toggleDarkMode, onNavigateBack }: S
   }, []);
   
   const handleSaveSettings = () => {
+    setIsSaving(true);
+    
     // Save settings using our storage utility
     saveToStorage('settings', {
       darkMode: isDarkMode,
@@ -41,7 +45,20 @@ export function SettingsScreen({ isDarkMode, toggleDarkMode, onNavigateBack }: S
       emailUpdates: emailUpdatesEnabled
     });
     
-    alert('Settings saved successfully!');
+    // Use toast instead of alert for a better UX
+    if (typeof toast === 'function') {
+      toast({
+        title: "Settings saved",
+        description: "Your preferences have been updated successfully.",
+      });
+    } else {
+      // Fallback to alert if toast is not available
+      alert('Settings saved successfully!');
+    }
+    
+    setTimeout(() => {
+      setIsSaving(false);
+    }, 1000);
   };
 
   return (
@@ -135,9 +152,22 @@ export function SettingsScreen({ isDarkMode, toggleDarkMode, onNavigateBack }: S
       
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} className="flex items-center gap-2">
-          <Save className="h-4 w-4" />
-          Save Settings
+        <Button 
+          onClick={handleSaveSettings} 
+          className="flex items-center gap-2"
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <Check className="h-4 w-4 animate-pulse" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Settings
+            </>
+          )}
         </Button>
       </div>
     </div>

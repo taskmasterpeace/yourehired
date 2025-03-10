@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 
 // Use dynamic import to avoid SSR issues
 const CalendarView = dynamic(
-  () => import('../calendar/CalendarView').then(mod => mod.CalendarView || mod.default),
+  () => import('../calendar/CalendarView'),
   { ssr: false }
 );
 
