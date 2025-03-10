@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNotifications } from '../context/NotificationContext';
-import { BellIcon, BellAlertIcon } from '@heroicons/react/24/outline';
+import { Bell, BellRing } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const NotificationBell = () => {
@@ -56,13 +56,13 @@ const NotificationBell = () => {
       >
         {unreadCount > 0 ? (
           <>
-            <BellAlertIcon className="h-6 w-6" />
+            <BellRing className="h-6 w-6" />
             <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           </>
         ) : (
-          <BellIcon className="h-6 w-6" />
+          <Bell className="h-6 w-6" />
         )}
       </button>
 
