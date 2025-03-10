@@ -26,6 +26,15 @@ import AddToCalendarButton from './AddToCalendarButton';
 const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
   // Add debugging to see what opportunities are available
   console.log("Available opportunities:", opportunities);
+  
+  // Add additional debugging for opportunities
+  useEffect(() => {
+    if (!Array.isArray(opportunities) || opportunities.length === 0) {
+      console.warn('No opportunities passed to EventModal');
+    } else {
+      console.log(`EventModal received ${opportunities.length} opportunities`);
+    }
+  }, [opportunities]);
   const [eventData, setEventData] = useState({
     id: '',
     title: '',
@@ -228,14 +237,14 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {Array.isArray(opportunities) && opportunities.length > 0 ? (
+                    {Array.isArray(opportunities) && opportunities.length === 0 ? (
+                      <SelectItem value="loading" disabled>Loading opportunities...</SelectItem>
+                    ) : (
                       opportunities.map(opp => (
                         <SelectItem key={opp.id} value={opp.id}>
                           {opp.company} - {opp.position}
                         </SelectItem>
                       ))
-                    ) : (
-                      <SelectItem value="no-opps" disabled>No opportunities available</SelectItem>
                     )}
                   </SelectContent>
                 </Select>

@@ -40,6 +40,11 @@ const CalendarView = ({
     return true;
   });
   
+  // Filter opportunities to exclude archived ones
+  const filteredOpportunities = opportunities.filter(opp => 
+    opp && opp.status !== 'archived'
+  );
+  
   // Handle date selection
   const handleDateSelect = (date) => {
     setSelectedDate(date);
@@ -133,7 +138,7 @@ const CalendarView = ({
         return (
           <div className="w-full">
             <Calendar 
-              mode="single"
+              mode="default"
               selected={selectedDate}
               onSelect={handleDateSelect}
               events={filteredEvents}
@@ -181,7 +186,7 @@ const CalendarView = ({
           setCurrentEvent(null);
         }}
         event={currentEvent}
-        opportunities={opportunities}
+        opportunities={filteredOpportunities}
         onSave={handleSaveEvent}
       />
     </div>
