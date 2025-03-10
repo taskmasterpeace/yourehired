@@ -143,14 +143,6 @@ const BigCalendarView = ({
     }
   }, [events, notificationSettings, addEventReminder, toast]);
   
-  // Use notification settings from context
-  const notificationSettings = notificationContext?.settings || notificationPreferences || {
-    enabled: true,
-    browserNotifications: false,
-    inAppNotifications: true,
-    defaultReminderTime: '30'
-  };
-  
   // Filter events based on selected filters
   const filteredEvents = events.filter(event => {
     // Filter by event type if not 'all'
