@@ -10,7 +10,8 @@ import {
 } from '../recharts';
 import { 
   BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, 
-  Award, Flame, Rocket, Users, Building, Home, Lightbulb, InfoIcon
+  Award, Flame, Rocket, Users, Building, Home, Lightbulb, InfoIcon,
+  Zap, Star
 } from 'lucide-react';
 import { TooltipHelper } from "../ui/tooltip-helper";
 import { tooltipContent } from "../../lib/tooltipContent";

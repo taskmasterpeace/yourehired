@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { EnhancedProgressBar } from "./EnhancedProgressBar";
 import { Award, ArrowRight, Clock } from "lucide-react";
 
@@ -18,9 +17,10 @@ interface Achievement {
 interface ProgressTrackerProps {
   achievements: Achievement[];
   isDarkMode: boolean;
+  compact?: boolean;
 }
 
-export function ProgressTracker({ achievements, isDarkMode }: ProgressTrackerProps) {
+export function ProgressTracker({ achievements, isDarkMode, compact = false }: ProgressTrackerProps) {
   // Filter achievements that are in progress (not unlocked but have some progress)
   const inProgressAchievements = achievements
     .filter(a => !a.unlocked && a.progress > 0)
@@ -62,71 +62,72 @@ export function ProgressTracker({ achievements, isDarkMode }: ProgressTrackerPro
 
   return (
     <div className="space-y-6">
-        {/* In Progress Section */}
-        {inProgressAchievements.length > 0 && (
-          <div>
-            <h3 className="text-lg font-medium mb-3">Almost There</h3>
-            <div className="space-y-4">
-              {inProgressAchievements.map(achievement => (
-                <div key={achievement.id} className="space-y-2">
-                  <div className="flex justify-between items-center">
+      {/* In Progress Section */}
+      {inProgressAchievements.length > 0 && (
+        <div>
+          <h3 className="text-lg font-medium mb-3">Almost There</h3>
+          <div className="space-y-4">
+            {inProgressAchievements.map(achievement => (
+              <div key={achievement.id} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Award className={`h-5 w-5 ${getRarityColor(achievement.rarity)}`} />
+                    <span className="font-medium">{achievement.name}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{achievement.points} pts</span>
+                </div>
+                
+                <EnhancedProgressBar 
+                  progress={achievement.progress}
+                  total={achievement.total}
+                  isDarkMode={isDarkMode}
+                />
+                
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                  <span>{achievement.description}</span>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{getEstimatedTimeToComplete(achievement)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Up Next Section */}
+      {upNextAchievements.length > 0 && (
+        <div>
+          <h3 className="text-lg font-medium mb-3">Up Next</h3>
+          <div className="space-y-3">
+            {upNextAchievements.map(achievement => (
+              <div 
+                key={achievement.id} 
+                className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
+                    <Award className={`h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  </div>
+                  <div>
                     <div className="flex items-center gap-2">
-                      <Award className={`h-5 w-5 ${getRarityColor(achievement.rarity)}`} />
-                      <span className="font-medium">{achievement.name}</span>
+                      <h4 className="font-medium">{achievement.name}</h4>
+                      <span className="text-xs text-muted-foreground">{achievement.points} pts</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">{achievement.points} pts</span>
-                  </div>
-                  
-                  <EnhancedProgressBar 
-                    progress={achievement.progress}
-                    total={achievement.total}
-                    isDarkMode={isDarkMode}
-                  />
-                  
-                  <div className="flex justify-between items-center text-xs text-muted-foreground">
-                    <span>{achievement.description}</span>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{getEstimatedTimeToComplete(achievement)}</span>
+                    <p className="text-xs text-muted-foreground mt-1">{achievement.description}</p>
+                    <div className="flex items-center gap-1 mt-2 text-xs">
+                      <ArrowRight className="h-3 w-3" />
+                      <span>Requires: {achievement.total} {achievement.total === 1 ? 'action' : 'actions'}</span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
-        
-        {/* Up Next Section */}
-        {upNextAchievements.length > 0 && (
-          <div>
-            <h3 className="text-lg font-medium mb-3">Up Next</h3>
-            <div className="space-y-3">
-              {upNextAchievements.map(achievement => (
-                <div 
-                  key={achievement.id} 
-                  className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
-                      <Award className={`h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{achievement.name}</h4>
-                        <span className="text-xs text-muted-foreground">{achievement.points} pts</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{achievement.description}</p>
-                      <div className="flex items-center gap-1 mt-2 text-xs">
-                        <ArrowRight className="h-3 w-3" />
-                        <span>Requires: {achievement.total} {achievement.total === 1 ? 'action' : 'actions'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        </div>
+      )}
+      
       {/* Mini Timeline Visualization */}
       <div>
         <h3 className="text-lg font-medium mb-3">Achievement Timeline</h3>
@@ -188,5 +189,6 @@ export function ProgressTracker({ achievements, isDarkMode }: ProgressTrackerPro
           ))}
         </div>
       </div>
+    </div>
   );
 }
