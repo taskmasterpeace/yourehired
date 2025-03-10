@@ -54,9 +54,11 @@ const NotificationBell = ({ variant = "default" }) => {
       case "sidebar":
         return "relative p-2 text-gray-300 hover:text-white focus:outline-none transition-colors duration-200";
       case "prominent":
-        return "relative p-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full focus:outline-none transition-all duration-200 shadow-sm hover:shadow";
+        // Make this style more eye-catching
+        return "relative p-3 bg-blue-500 text-white hover:bg-blue-600 rounded-full focus:outline-none transition-all duration-200 shadow-md hover:shadow-lg";
       default:
-        return "relative p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white focus:outline-none transition-colors duration-200";
+        // Make the default style more visible too
+        return "relative p-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full focus:outline-none transition-colors duration-200";
     }
   };
 
@@ -69,16 +71,16 @@ const NotificationBell = ({ variant = "default" }) => {
         title={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
       >
         {!settings.enabled ? (
-          <BellOff className="h-6 w-6" />
+          <BellOff className="h-7 w-7" />
         ) : unreadCount > 0 ? (
           <>
-            <BellRing className="h-6 w-6 animate-pulse" />
-            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+            <BellRing className="h-7 w-7 animate-pulse" />
+            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full animate-bounce">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           </>
         ) : (
-          <Bell className="h-6 w-6" />
+          <Bell className="h-7 w-7" />
         )}
       </button>
 
