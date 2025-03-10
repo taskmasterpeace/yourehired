@@ -18,6 +18,11 @@ function Calendar({
 }: CalendarProps) {
   // Function to get events for a specific day
   const getEventsForDay = (day: Date) => {
+    // Add a check to ensure day is a valid Date object
+    if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
+      return [];
+    }
+    
     return events.filter(event => {
       const eventDate = new Date(event.date || event.startDate);
       return day.getDate() === eventDate.getDate() && 
@@ -48,6 +53,11 @@ function Calendar({
   };
   // Custom day renderer to show event indicators
   const renderDay = (day: Date, selectedDay: Date, dayProps: any) => {
+    // Add a safety check for the day parameter
+    if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
+      return <div {...dayProps}>{dayProps.children}</div>;
+    }
+    
     const dayEvents = getEventsForDay(day);
     const hasEvents = dayEvents.length > 0;
     
