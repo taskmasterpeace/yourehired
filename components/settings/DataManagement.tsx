@@ -30,16 +30,50 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
         console.log("Raw imported data:", result.substring(0, 200) + "...");
         
         let data;
-        try {
-          data = JSON.parse(result);
-          console.log("Parsed data type:", typeof data);
-          console.log("Is array:", Array.isArray(data));
-          if (data && typeof data === 'object' && !Array.isArray(data)) {
-            console.log("Object keys:", Object.keys(data));
+        let rawText = result.trim();
+        
+        // Check if the file starts with an object instead of an array
+        // and try to fix it by wrapping in array brackets
+        if (rawText.startsWith('{') && !rawText.startsWith('[{')) {
+          console.log("Detected object format instead of array, attempting to fix...");
+          try {
+            // Wrap the content in array brackets
+            data = JSON.parse('[' + rawText + ']');
+            console.log("Successfully converted object to array");
+          } catch (wrapError) {
+            console.error("Failed to parse as wrapped array:", wrapError);
+            // Fall back to regular parsing
+            try {
+              data = JSON.parse(rawText);
+            } catch (parseError) {
+              console.error("JSON parse error:", parseError);
+              throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+            }
           }
-        } catch (parseError) {
-          console.error("JSON parse error:", parseError);
-          throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+        } else {
+          // Regular parsing for properly formatted JSON
+          try {
+            data = JSON.parse(rawText);
+          } catch (parseError) {
+            console.error("JSON parse error:", parseError);
+            throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+          }
+        }
+        
+        console.log("Parsed data type:", typeof data);
+        console.log("Is array:", Array.isArray(data));
+        
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          console.log("Object keys:", Object.keys(data));
+          // Check if it's the legacy format with jobApplications property
+          if (data.jobApplications && Array.isArray(data.jobApplications)) {
+            console.log("Found legacy format with jobApplications property");
+            data = data.jobApplications;
+          } else {
+            // If it's a single object, convert to array
+            console.log("Converting single object to array");
+            data = [data];
+          }
         }
         
         // Validate and normalize the data structure
@@ -47,10 +81,8 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           throw new Error('No data found in the imported file.');
         }
         
-        // Convert to array if it's not already
-        const jobsArray = Array.isArray(data) ? data : 
-                         (data.jobApplications && Array.isArray(data.jobApplications)) ? data.jobApplications : 
-                         [data];
+        // Ensure we're working with an array
+        const jobsArray = Array.isArray(data) ? data : [data];
         
         if (jobsArray.length === 0) {
           throw new Error('No job applications found in the imported file.');
