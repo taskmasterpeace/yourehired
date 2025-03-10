@@ -18,7 +18,8 @@ const CalendarHeader = ({
   selectedDate,
   onCreateEvent,
   notificationPreferences,
-  onUpdateNotificationPreferences
+  onUpdateNotificationPreferences,
+  onTestNotification
 }) => {
   // Format the selected date based on view mode
   const formatHeaderDate = () => {
@@ -101,6 +102,7 @@ const CalendarHeader = ({
         <EventReminderButton
           notificationPreferences={notificationPreferences}
           onUpdatePreferences={onUpdateNotificationPreferences}
+          onTestNotification={onTestNotification}
           className="mr-2"
         />
         

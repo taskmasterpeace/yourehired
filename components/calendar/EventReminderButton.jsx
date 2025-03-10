@@ -6,6 +6,7 @@ import NotificationPreferences from './NotificationPreferences';
 const EventReminderButton = ({ 
   notificationPreferences, 
   onUpdatePreferences,
+  onTestNotification,
   className = ""
 }) => {
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
@@ -53,6 +54,7 @@ const EventReminderButton = ({
         onClose={() => setIsPreferencesOpen(false)}
         preferences={preferences}
         onSave={handleSavePreferences}
+        onTestNotification={onTestNotification}
       />
     </>
   );

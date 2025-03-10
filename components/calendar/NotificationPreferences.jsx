@@ -19,7 +19,7 @@ import {
 import { Bell, BellOff, Clock, Info } from 'lucide-react';
 import { useToast } from "../ui/use-toast";
 
-const NotificationPreferences = ({ isOpen, onClose, preferences, onSave }) => {
+const NotificationPreferences = ({ isOpen, onClose, preferences, onSave, onTestNotification }) => {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
     enabled: true,
@@ -28,6 +28,21 @@ const NotificationPreferences = ({ isOpen, onClose, preferences, onSave }) => {
     defaultReminderTime: '30', // minutes before event
     emailNotifications: false,
   });
+  
+  // Admin controls state
+  const [showAdminControls, setShowAdminControls] = useState(false);
+  
+  // Handle test notification
+  const handleTestNotification = (minutes) => {
+    if (onTestNotification) {
+      onTestNotification(minutes);
+      toast({
+        title: "Test Notification *",
+        description: `A test notification will appear in ${minutes === 0 ? 'a few seconds' : `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`}.`,
+        duration: 3000,
+      });
+    }
+  };
 
   // Initialize form with user preferences
   useEffect(() => {
@@ -251,13 +266,66 @@ const NotificationPreferences = ({ isOpen, onClose, preferences, onSave }) => {
             )}
           </div>
           
-          <DialogFooter>
+          {/* Admin Testing Controls */}
+          {showAdminControls && (
+            <div className="mt-4 p-3 border border-dashed border-amber-300 rounded-md bg-amber-50">
+              <div className="flex items-center mb-2">
+                <Info className="h-4 w-4 mr-2 text-amber-500" />
+                <Label className="text-base font-medium text-amber-700">Admin Testing Controls *</Label>
+              </div>
+              <p className="text-sm text-amber-600 mb-3">
+                Test notification system with different timing options
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleTestNotification(0)}
+                  className="bg-white"
+                >
+                  Test Now *
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleTestNotification(1)}
+                  className="bg-white"
+                >
+                  Test in 1 min *
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleTestNotification(5)}
+                  className="bg-white"
+                >
+                  Test in 5 min *
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="relative">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit">
               Save Preferences
             </Button>
+            
+            {/* Admin toggle button */}
+            <div className="absolute bottom-2 right-2">
+              <button
+                type="button"
+                className="text-xs text-gray-400 hover:text-gray-600"
+                onClick={() => setShowAdminControls(!showAdminControls)}
+              >
+                {showAdminControls ? "Hide Admin *" : "*"}
+              </button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

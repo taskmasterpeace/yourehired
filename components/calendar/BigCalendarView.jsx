@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
@@ -69,8 +69,29 @@ const BigCalendarView = ({
     activeNotifications,
     requestNotificationPermission,
     checkUpcomingEvents,
-    rescheduleNotifications
+    rescheduleNotifications,
+    testNotification
   } = useNotificationService(events, notificationPreferences);
+  
+  // Handle test notifications
+  const handleTestNotification = (minutes) => {
+    testNotification(minutes);
+    
+    // Show toast for immediate feedback
+    if (minutes === 0) {
+      toast({
+        title: "Test Notification *",
+        description: "This is a test notification triggered manually",
+        duration: 5000,
+      });
+    } else {
+      toast({
+        title: "Test Notification Scheduled *",
+        description: `A notification will appear in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`,
+        duration: 3000,
+      });
+    }
+  };
   
   // Check for upcoming events when the component mounts
   useEffect(() => {
@@ -121,20 +142,54 @@ const BigCalendarView = ({
   // Format events for react-big-calendar
   const formattedEvents = filteredEvents.map(event => {
     try {
+      // Debug the event to see what's wrong
+      console.log("Processing event for calendar:", event);
+      
       // Ensure we have valid dates
-      const startDate = event.startDate instanceof Date 
-        ? event.startDate 
-        : new Date(event.startDate || event.date || new Date());
+      let startDate;
+      if (event.startDate instanceof Date) {
+        startDate = event.startDate;
+      } else if (event.startDate) {
+        startDate = new Date(event.startDate);
+      } else if (event.date) {
+        startDate = new Date(event.date);
+      } else {
+        console.error("Event has no valid date:", event);
+        return null;
+      }
       
-      const endDate = event.endDate instanceof Date
-        ? event.endDate
-        : new Date(event.endDate || new Date(startDate.getTime() + 60 * 60 * 1000));
+      // Validate the date
+      if (isNaN(startDate.getTime())) {
+        console.error("Invalid start date for event:", event);
+        return null;
+      }
       
-      // Log for debugging
-      console.log("Formatting event:", event.title, startDate, endDate);
+      // Ensure we have a valid end date
+      let endDate;
+      if (event.endDate instanceof Date) {
+        endDate = event.endDate;
+      } else if (event.endDate) {
+        endDate = new Date(event.endDate);
+      } else {
+        // Default to 1 hour after start
+        endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      }
+      
+      // Validate the end date
+      if (isNaN(endDate.getTime())) {
+        endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      }
+      
+      // Log the formatted event for debugging
+      console.log("Formatted event:", {
+        id: event.id,
+        title: event.title,
+        start: startDate,
+        end: endDate
+      });
       
       return {
-        id: event.id,
+        id: event.id || `temp-${Date.now()}-${Math.random()}`,
         title: event.title || "Untitled Event",
         start: startDate,
         end: endDate,
@@ -230,6 +285,7 @@ const BigCalendarView = ({
             onCreateEvent={() => handleSelectSlot({ start: selectedDate })}
             notificationPreferences={notificationPreferences}
             onUpdateNotificationPreferences={handleUpdateNotificationPreferences}
+            onTestNotification={handleTestNotification}
           />
           
           <div className="p-4" style={{ height: '70vh' }}>
@@ -250,6 +306,23 @@ const BigCalendarView = ({
               views={['month', 'week', 'day', 'agenda']}
               popup
               tooltipAccessor={(event) => event.title}
+              components={{
+                agenda: {
+                  event: ({ event }) => (
+                    <div className="p-1 cursor-pointer hover:bg-gray-100 rounded" onClick={() => handleSelectEvent(event)}>
+                      <div className="font-medium">{event.title}</div>
+                      <div className="text-xs text-gray-500">
+                        {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
+                      </div>
+                      {event.resource.location && (
+                        <div className="text-xs text-gray-500">
+                          Location: {event.resource.location}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+              }}
             />
           </div>
         </CardContent>

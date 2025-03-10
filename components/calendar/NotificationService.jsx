@@ -44,6 +44,8 @@ const useNotificationService = (events = [], notificationPreferences = {}) => {
           notification.close();
           // You could add navigation to the event details here
         };
+        
+        return notification;
       } catch (error) {
         console.error("Error showing browser notification:", error);
       }
@@ -194,11 +196,39 @@ const useNotificationService = (events = [], notificationPreferences = {}) => {
     });
   }, [events, preferences]);
   
+  // Admin testing function (marked with *)
+  const testNotification = useCallback((minutes = 0) => {
+    const testEvent = {
+      id: `test-notification-${Date.now()}`,
+      title: 'Test Notification *',
+      description: 'This is a test notification triggered manually',
+      startDate: new Date(Date.now() + minutes * 60 * 1000),
+      location: 'Test Location'
+    };
+    
+    if (minutes === 0) {
+      showBrowserNotification(testEvent);
+      showInAppNotification(testEvent);
+    } else {
+      const timerId = setTimeout(() => {
+        showBrowserNotification(testEvent);
+        showInAppNotification(testEvent);
+      }, minutes * 60 * 1000);
+      
+      notificationTimers.current[testEvent.id] = timerId;
+      
+      console.log(`Test notification scheduled for ${minutes} minutes from now *`);
+    }
+    
+    return testEvent;
+  }, [showBrowserNotification, showInAppNotification]);
+  
   return {
     activeNotifications,
     requestNotificationPermission,
     checkUpcomingEvents,
-    rescheduleNotifications: scheduleNotifications
+    rescheduleNotifications: scheduleNotifications,
+    testNotification // Admin function
   };
 };
 
