@@ -75,7 +75,7 @@ const CalendarHeader = ({
             className="rounded-none rounded-r-md"
             title="Timeline View"
           >
-            <Timeline className="h-4 w-4" />
+            Timeline
           </Button>
         </div>
         
