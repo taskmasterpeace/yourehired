@@ -5,11 +5,13 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../../styles/calendar-dark-mode.css';
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
 import { useNotifications } from '../../context/NotificationContext';
+import { useActivity } from '../../context/ActivityContext';
 import EventReminderButton from './EventReminderButton';
+import RecentActivity from '../common/RecentActivity';
 
 // Setup the localizer for react-big-calendar
 const locales = {
@@ -141,16 +143,12 @@ const BigCalendarView = ({
     }
   }, [events, notificationSettings, addEventReminder, toast]);
   
-  // Handle notification preference updates
-  const handleUpdateNotificationPreferences = (newPreferences) => {
-    if (onUpdateNotificationPreferences) {
-      onUpdateNotificationPreferences(newPreferences);
-      
-      // Reschedule notifications with new preferences
-      setTimeout(() => {
-        rescheduleNotifications();
-      }, 500);
-    }
+  // Use notification settings from context
+  const notificationSettings = notificationContext?.settings || notificationPreferences || {
+    enabled: true,
+    browserNotifications: false,
+    inAppNotifications: true,
+    defaultReminderTime: '30'
   };
   
   // Filter events based on selected filters
@@ -247,6 +245,10 @@ const BigCalendarView = ({
     setIsEventModalOpen(true);
   };
   
+  // Get activity context
+  const { addActivity, getAllActivities } = useActivity();
+  const allActivities = getAllActivities();
+  
   // Handle saving an event (create or update)
   const handleSaveEvent = (eventData) => {
     const isNewEvent = !eventData.id;
@@ -262,6 +264,18 @@ const BigCalendarView = ({
     } else {
       console.warn("No dispatch function provided to BigCalendarView");
     }
+    
+    // Record the activity
+    addActivity({
+      type: isNewEvent ? 'event_created' : 'event_updated',
+      description: `${isNewEvent ? 'Created' : 'Updated'} event: ${eventData.title}`,
+      opportunityId: eventData.opportunityId || null,
+      opportunityName: eventData.opportunity?.company 
+        ? `${eventData.opportunity.company} - ${eventData.opportunity.position}` 
+        : null,
+      eventId: eventData.id,
+      user: user // Assuming you have the user object from props
+    });
     
     // Show toast notification
     toast({
@@ -311,9 +325,7 @@ const BigCalendarView = ({
             setEventTypeFilter={setEventTypeFilter}
             selectedDate={selectedDate}
             onCreateEvent={() => handleSelectSlot({ start: selectedDate })}
-            notificationPreferences={notificationPreferences}
-            onUpdateNotificationPreferences={handleUpdateNotificationPreferences}
-            onTestNotification={handleTestNotification}
+            notificationPreferences={notificationSettings}
           />
           
           <div className="p-4" style={{ height: '70vh' }}>
@@ -357,6 +369,19 @@ const BigCalendarView = ({
       </Card>
       
       <ColorLegend />
+      
+      <Card className="dark:bg-gray-800 dark:border-gray-700 mt-4">
+        <CardHeader>
+          <CardTitle className="text-lg">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RecentActivity 
+            activities={allActivities} 
+            limit={5} 
+            showOpportunityInfo={true} 
+          />
+        </CardContent>
+      </Card>
       
       <EventModal 
         isOpen={isEventModalOpen}
