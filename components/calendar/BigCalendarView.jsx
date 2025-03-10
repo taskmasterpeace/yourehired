@@ -92,6 +92,12 @@ const BigCalendarView = ({
       // Show notifications for upcoming events
       if (upcomingEvents.length > 0 && notificationSettings?.enabled) {
         upcomingEvents.forEach(event => {
+          // Add to notification system
+          if (notificationContext?.addEventReminder) {
+            notificationContext.addEventReminder(event);
+          }
+          
+          // Also show toast for immediate feedback
           toast({
             title: `Hey! Upcoming: ${event.title}`,
             description: `This event is starting soon. - Hey You're Hired! v0.41`,
@@ -102,7 +108,13 @@ const BigCalendarView = ({
     };
     
     checkEvents();
-  }, [events, notificationSettings, toast]);
+    
+    // Set up interval to check for upcoming events every minute
+    const intervalId = setInterval(checkEvents, 60000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [events, notificationSettings, toast, notificationContext]);
   
   // Filter events based on selected filters
   const filteredEvents = events.filter(event => {

@@ -2,15 +2,17 @@ import React from 'react';
 import { Button } from "../ui/button";
 import { Bell, BellOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useNotifications } from '../../context/NotificationContext';
 
 const EventReminderButton = ({ 
   notificationPreferences, 
   className = ""
 }) => {
   const router = useRouter();
+  const { settings } = useNotifications();
   
-  // Default preferences if none provided
-  const preferences = {
+  // Use context settings if available, otherwise use props or defaults
+  const preferences = settings || {
     enabled: true,
     browserNotifications: true,
     inAppNotifications: true,
