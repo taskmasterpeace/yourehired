@@ -26,15 +26,42 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           throw new Error('Failed to read file');
         }
         
-        const data = JSON.parse(result);
+        // Log the raw data for debugging
+        console.log("Raw imported data:", result.substring(0, 200) + "...");
         
-        // Validate the data structure
-        if (!Array.isArray(data)) {
-          throw new Error('Invalid data format. Expected an array of job applications.');
+        let data;
+        try {
+          data = JSON.parse(result);
+          console.log("Parsed data type:", typeof data);
+          console.log("Is array:", Array.isArray(data));
+          if (data && typeof data === 'object' && !Array.isArray(data)) {
+            console.log("Object keys:", Object.keys(data));
+          }
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
         }
         
+        // Validate and normalize the data structure
+        if (!data) {
+          throw new Error('No data found in the imported file.');
+        }
+        
+        // Convert to array if it's not already
+        const jobsArray = Array.isArray(data) ? data : 
+                         (data.jobApplications && Array.isArray(data.jobApplications)) ? data.jobApplications : 
+                         [data];
+        
+        if (jobsArray.length === 0) {
+          throw new Error('No job applications found in the imported file.');
+        }
+        
+        console.log("Processing job applications:", jobsArray.length);
+        
         // Process and normalize each job application
-        const normalizedData = data.map(job => {
+        const normalizedData = jobsArray.map((job, index) => {
+          console.log(`Processing job ${index}:`, job.company || job.position || "Unknown");
+          
           // Handle legacy format where position and company might be swapped
           let normalizedJob = { ...job };
           
@@ -47,12 +74,17 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           }
           
           // Handle case where position and company might be swapped or missing
-          if (!normalizedJob.position && normalizedJob.company && 
-              typeof normalizedJob.company === 'string' && 
-              normalizedJob.company.length < 100) {
-            // If position is missing but company looks like a position title
-            normalizedJob.position = normalizedJob.company;
-            normalizedJob.company = "Unknown Company";
+          if (!normalizedJob.position) {
+            if (normalizedJob.title) {
+              // Use title field if available
+              normalizedJob.position = normalizedJob.title;
+            } else if (normalizedJob.company && 
+                typeof normalizedJob.company === 'string' && 
+                normalizedJob.company.length < 100) {
+              // If position is missing but company looks like a position title
+              normalizedJob.position = normalizedJob.company;
+              normalizedJob.company = "Unknown Company";
+            }
           }
           
           // Ensure all required fields have at least empty values
@@ -67,7 +99,7 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           normalizedJob.salary = normalizedJob.salary || "";
           normalizedJob.applicationUrl = normalizedJob.applicationUrl || "";
           normalizedJob.source = normalizedJob.source || "";
-          normalizedJob.tags = normalizedJob.tags || [];
+          normalizedJob.tags = Array.isArray(normalizedJob.tags) ? normalizedJob.tags : [];
           normalizedJob.recruiterName = normalizedJob.recruiterName || "";
           normalizedJob.recruiterEmail = normalizedJob.recruiterEmail || "";
           normalizedJob.recruiterPhone = normalizedJob.recruiterPhone || "";
@@ -102,6 +134,8 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           
           return normalizedJob;
         });
+        
+        console.log("Normalized data:", normalizedData.length, "applications");
         
         // Store the normalized data
         saveToStorage('jobApplications', normalizedData);
