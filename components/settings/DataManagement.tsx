@@ -167,7 +167,30 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
           normalizedJob.company = normalizedJob.company || "Unknown Company";
           normalizedJob.position = normalizedJob.position || "Unknown Position";
           normalizedJob.status = normalizedJob.status || "Bookmarked";
-          normalizedJob.appliedDate = normalizedJob.appliedDate || new Date().toISOString().slice(0, 10);
+          
+          // Handle date format conversion
+          if (normalizedJob.appliedDate) {
+            // Check if the date is already in ISO format
+            if (!/^\d{4}-\d{2}-\d{2}/.test(normalizedJob.appliedDate)) {
+              try {
+                // Try to parse the date string
+                const parsedDate = new Date(normalizedJob.appliedDate);
+                if (!isNaN(parsedDate.getTime())) {
+                  // Convert to ISO format YYYY-MM-DD
+                  normalizedJob.appliedDate = parsedDate.toISOString().slice(0, 10);
+                } else {
+                  // If parsing fails, use current date
+                  normalizedJob.appliedDate = new Date().toISOString().slice(0, 10);
+                }
+              } catch (e) {
+                // If any error occurs, use current date
+                normalizedJob.appliedDate = new Date().toISOString().slice(0, 10);
+              }
+            }
+          } else {
+            // If no date provided, use current date
+            normalizedJob.appliedDate = new Date().toISOString().slice(0, 10);
+          }
           normalizedJob.jobDescription = normalizedJob.jobDescription || "";
           normalizedJob.resume = normalizedJob.resume || "";
           normalizedJob.notes = normalizedJob.notes || "";
@@ -221,6 +244,37 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
         // Verify the data is there immediately after saving
         const verifyData = getFromStorage('jobApplications', []);
         console.log("Verification - data in storage after save:", verifyData.length);
+        
+        // If verification fails, try an alternative storage approach
+        if (!verifyData || verifyData.length === 0) {
+          console.warn("Verification failed - trying alternative storage method");
+          
+          // Try direct localStorage approach as fallback
+          try {
+            localStorage.setItem('jobApplications', JSON.stringify(normalizedData));
+            console.log("Used direct localStorage method");
+            
+            // Verify again
+            const secondVerify = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+            console.log("Second verification:", secondVerify.length);
+          } catch (storageError) {
+            console.error("Storage error:", storageError);
+          }
+        }
+        
+        // Force a refresh of the application data
+        const forceDataRefresh = () => {
+          // This will trigger any components using the job applications data to refresh
+          const event = new CustomEvent('jobApplicationsUpdated', { 
+            detail: { count: normalizedData.length } 
+          });
+          window.dispatchEvent(event);
+          
+          console.log("Dispatched data refresh event");
+        };
+        
+        // Call the refresh function
+        forceDataRefresh();
         
         setImportStatus(`Successfully imported ${normalizedData.length} job applications`);
         setStatusType('success');
@@ -610,6 +664,10 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
             <Button 
               onClick={() => {
                 console.log("Return to Dashboard button clicked");
+                // Force a final verification before navigation
+                const finalCheck = getFromStorage('jobApplications', []);
+                console.log("Final verification before navigation:", finalCheck.length);
+                
                 if (onNavigateBack) {
                   onNavigateBack();
                 } else {
@@ -621,6 +679,9 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
             >
               <ArrowLeft className="h-4 w-4" />
               Return to Dashboard to View Imported Data
+              {verifyData && verifyData.length > 0 ? 
+                ` (${verifyData.length} applications)` : 
+                " (Refresh page if data doesn't appear)"}
             </Button>
           )}
           
