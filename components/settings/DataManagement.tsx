@@ -33,17 +33,80 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           throw new Error('Invalid data format. Expected an array of job applications.');
         }
         
-        // Process each job application
-        for (const job of data) {
-          if (!job.company || !job.position) {
-            throw new Error('Invalid job data. Each job must have a company and position.');
+        // Process and normalize each job application
+        const normalizedData = data.map(job => {
+          // Handle legacy format where position and company might be swapped
+          let normalizedJob = { ...job };
+          
+          // Ensure required fields exist
+          if (!normalizedJob.id) {
+            normalizedJob.id = String(Date.now() + Math.floor(Math.random() * 1000));
+          } else if (typeof normalizedJob.id === 'number') {
+            // Convert numeric IDs to strings for consistency
+            normalizedJob.id = String(normalizedJob.id);
           }
-        }
+          
+          // Handle case where position and company might be swapped or missing
+          if (!normalizedJob.position && normalizedJob.company && 
+              typeof normalizedJob.company === 'string' && 
+              normalizedJob.company.length < 100) {
+            // If position is missing but company looks like a position title
+            normalizedJob.position = normalizedJob.company;
+            normalizedJob.company = "Unknown Company";
+          }
+          
+          // Ensure all required fields have at least empty values
+          normalizedJob.company = normalizedJob.company || "Unknown Company";
+          normalizedJob.position = normalizedJob.position || "Unknown Position";
+          normalizedJob.status = normalizedJob.status || "Bookmarked";
+          normalizedJob.appliedDate = normalizedJob.appliedDate || new Date().toISOString().slice(0, 10);
+          normalizedJob.jobDescription = normalizedJob.jobDescription || "";
+          normalizedJob.resume = normalizedJob.resume || "";
+          normalizedJob.notes = normalizedJob.notes || "";
+          normalizedJob.location = normalizedJob.location || "";
+          normalizedJob.salary = normalizedJob.salary || "";
+          normalizedJob.applicationUrl = normalizedJob.applicationUrl || "";
+          normalizedJob.source = normalizedJob.source || "";
+          normalizedJob.tags = normalizedJob.tags || [];
+          normalizedJob.recruiterName = normalizedJob.recruiterName || "";
+          normalizedJob.recruiterEmail = normalizedJob.recruiterEmail || "";
+          normalizedJob.recruiterPhone = normalizedJob.recruiterPhone || "";
+          
+          // Normalize keywords if they exist
+          if (normalizedJob.keywords) {
+            // Ensure keywords have the correct structure
+            normalizedJob.keywords = Array.isArray(normalizedJob.keywords) ? 
+              normalizedJob.keywords.map(keyword => {
+                if (typeof keyword === 'string') {
+                  // Convert string keywords to proper format
+                  return {
+                    text: keyword,
+                    relevance: 3,
+                    inResume: false,
+                    matchScore: 0,
+                    category: "should-have"
+                  };
+                }
+                return {
+                  text: keyword.text || "",
+                  relevance: keyword.relevance || 3,
+                  inResume: keyword.inResume || false,
+                  matchScore: keyword.matchScore || 0,
+                  category: keyword.category || "should-have"
+                };
+              }) : [];
+          } else {
+            // Create empty keywords array if missing
+            normalizedJob.keywords = [];
+          }
+          
+          return normalizedJob;
+        });
         
-        // Store the data using our storage utility
-        saveToStorage('jobApplications', data);
+        // Store the normalized data
+        saveToStorage('jobApplications', normalizedData);
         
-        setImportStatus(`Successfully imported ${data.length} job applications`);
+        setImportStatus(`Successfully imported ${normalizedData.length} job applications`);
         setStatusType('success');
         
         // Reload the page to see changes
