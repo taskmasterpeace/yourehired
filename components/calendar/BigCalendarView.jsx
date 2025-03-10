@@ -21,6 +21,32 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+// Color legend component for event types
+const ColorLegend = () => {
+  const eventTypes = [
+    { type: 'interview', label: 'Interview', color: 'bg-purple-500' },
+    { type: 'deadline', label: 'Deadline', color: 'bg-red-500' },
+    { type: 'followup', label: 'Follow-up', color: 'bg-blue-500' },
+    { type: 'assessment', label: 'Assessment', color: 'bg-yellow-500' },
+    { type: 'general', label: 'General', color: 'bg-gray-400' },
+    { type: 'offer', label: 'Offer', color: 'bg-green-500' },
+    { type: 'rejected', label: 'Rejected', color: 'bg-red-500' },
+    { type: 'withdrawn', label: 'Withdrawn', color: 'bg-gray-600' },
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-3 mt-4 p-3 bg-white rounded-md border">
+      <div className="text-sm font-medium mr-2">Event Types:</div>
+      {eventTypes.map(item => (
+        <div key={item.type} className="flex items-center">
+          <div className={`w-3 h-3 rounded-full ${item.color} mr-1`}></div>
+          <span className="text-sm">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const BigCalendarView = ({ 
   events = [], 
   opportunities = [], 
@@ -50,18 +76,32 @@ const BigCalendarView = ({
   
   // Format events for react-big-calendar
   const formattedEvents = filteredEvents.map(event => {
-    const startDate = new Date(event.startDate || event.date || new Date());
-    const endDate = new Date(event.endDate || new Date(startDate.getTime() + 60 * 60 * 1000));
-    
-    return {
-      id: event.id,
-      title: event.title,
-      start: startDate,
-      end: endDate,
-      allDay: false,
-      resource: event // Store the original event data
-    };
-  });
+    try {
+      // Ensure we have valid dates
+      const startDate = event.startDate instanceof Date 
+        ? event.startDate 
+        : new Date(event.startDate || event.date || new Date());
+      
+      const endDate = event.endDate instanceof Date
+        ? event.endDate
+        : new Date(event.endDate || new Date(startDate.getTime() + 60 * 60 * 1000));
+      
+      // Log for debugging
+      console.log("Formatting event:", event.title, startDate, endDate);
+      
+      return {
+        id: event.id,
+        title: event.title || "Untitled Event",
+        start: startDate,
+        end: endDate,
+        allDay: false,
+        resource: event // Store the original event data
+      };
+    } catch (error) {
+      console.error("Error formatting event:", error, event);
+      return null;
+    }
+  }).filter(Boolean); // Remove any null events
   
   // Handle event selection
   const handleSelectEvent = (event) => {
@@ -84,11 +124,17 @@ const BigCalendarView = ({
   const handleSaveEvent = (eventData) => {
     const isNewEvent = !eventData.id;
     
+    console.log("Saving event:", eventData);
+    
     // Here you would dispatch to your state management
-    // dispatch({ 
-    //   type: isNewEvent ? 'ADD_EVENT' : 'UPDATE_EVENT', 
-    //   payload: eventData 
-    // });
+    if (dispatch) {
+      dispatch({ 
+        type: isNewEvent ? 'ADD_EVENT' : 'UPDATE_EVENT', 
+        payload: eventData 
+      });
+    } else {
+      console.warn("No dispatch function provided to BigCalendarView");
+    }
     
     // Show toast notification
     toast({
@@ -162,6 +208,8 @@ const BigCalendarView = ({
           </div>
         </CardContent>
       </Card>
+      
+      <ColorLegend />
       
       <EventModal 
         isOpen={isEventModalOpen}

@@ -150,11 +150,12 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
                       {eventData.date ? format(eventData.date, 'PPP') : 'Select date'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={eventData.date}
-                      onSelect={(date) => handleChange('date', date)}
+                      onSelect={(date) => handleChange('date', date || new Date())}
+                      initialFocus
                     />
                   </PopoverContent>
                 </Popover>
