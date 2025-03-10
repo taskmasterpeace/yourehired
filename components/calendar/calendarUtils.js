@@ -66,9 +66,49 @@ END:VCALENDAR`;
 };
 
 /**
+ * Calculates the reminder time for an event
+ * @param {Object} event - The event object
+ * @param {Object} defaultPreferences - Default notification preferences
+ * @returns {Date|null} The date when the reminder should be shown, or null if reminders are disabled
+ */
+export const calculateReminderTime = (event, defaultPreferences = {}) => {
+  try {
+    // Check if event has reminder settings
+    if (!event || (!event.startDate && !event.date)) {
+      return null;
+    }
+    
+    // Check if reminders are enabled for this event
+    const eventReminder = event.reminder || {};
+    if (eventReminder.enabled === false) {
+      return null;
+    }
+    
+    // Get the event start time
+    const eventStartTime = new Date(event.startDate || event.date);
+    
+    // Get reminder time (from event or default preferences)
+    const reminderMinutes = parseInt(
+      eventReminder.time || 
+      defaultPreferences.defaultReminderTime || 
+      '30', 
+      10
+    );
+    
+    // Calculate reminder time
+    const reminderTime = new Date(eventStartTime.getTime() - (reminderMinutes * 60 * 1000));
+    
+    return reminderTime;
+  } catch (error) {
+    console.error("Error calculating reminder time:", error);
+    return null;
+  }
+};
+
+/**
  * Gets the appropriate color for an event based on its type or associated opportunity
  * @param {Object} event - The event object
- * @returns {string} CSS color class
+ * @returns {string}  CSS color class
  */
 export const getEventColor = (event) => {
   const typeColorMap = {

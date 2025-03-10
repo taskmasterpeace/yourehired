@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import EventReminderSettings from './EventReminderSettings';
 import { 
   Dialog, 
   DialogContent, 
@@ -44,7 +45,11 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
     type: 'general',
     location: '',
     description: '',
-    opportunityId: ''
+    opportunityId: '',
+    reminder: {
+      enabled: true,
+      time: '30' // minutes before event
+    }
   });
   
   // Initialize form with event data when editing
@@ -261,6 +266,15 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
                 onChange={(e) => handleChange('description', e.target.value)}
                 placeholder="Add details about this event"
                 rows={3}
+              />
+            </div>
+            
+            {/* Reminder Settings */}
+            <div className="grid gap-2 mt-2">
+              <Label className="text-base">Reminder</Label>
+              <EventReminderSettings 
+                reminders={eventData.reminder}
+                onChange={(reminderSettings) => handleChange('reminder', reminderSettings)}
               />
             </div>
           </div>

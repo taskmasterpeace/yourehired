@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -7,6 +7,8 @@ import EventModal from './EventModal';
 import { Card, CardContent } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
+import useNotificationService from './NotificationService';
+import EventReminderButton from './EventReminderButton';
 
 // Setup the localizer for react-big-calendar
 const locales = {
@@ -51,7 +53,9 @@ const BigCalendarView = ({
   events = [], 
   opportunities = [], 
   user,
-  dispatch
+  dispatch,
+  notificationPreferences = {},
+  onUpdateNotificationPreferences
 }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('month'); // month, week, day, agenda
@@ -59,6 +63,46 @@ const BigCalendarView = ({
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState(null);
   const { toast } = useToast();
+  
+  // Initialize notification service
+  const {
+    activeNotifications,
+    requestNotificationPermission,
+    checkUpcomingEvents,
+    rescheduleNotifications
+  } = useNotificationService(events, notificationPreferences);
+  
+  // Check for upcoming events when the component mounts
+  useEffect(() => {
+    const upcomingEvents = checkUpcomingEvents();
+    if (upcomingEvents.length > 0 && notificationPreferences.enabled) {
+      // Show notifications for events that are coming up soon
+      upcomingEvents.forEach(event => {
+        toast({
+          title: `Upcoming: ${event.title}`,
+          description: `This event is starting soon.`,
+          duration: 5000,
+        });
+      });
+    }
+    
+    // Request notification permission if browser notifications are enabled
+    if (notificationPreferences.browserNotifications) {
+      requestNotificationPermission();
+    }
+  }, []);
+  
+  // Handle notification preference updates
+  const handleUpdateNotificationPreferences = (newPreferences) => {
+    if (onUpdateNotificationPreferences) {
+      onUpdateNotificationPreferences(newPreferences);
+      
+      // Reschedule notifications with new preferences
+      setTimeout(() => {
+        rescheduleNotifications();
+      }, 500);
+    }
+  };
   
   // Filter events based on selected filters
   const filteredEvents = events.filter(event => {
@@ -184,6 +228,8 @@ const BigCalendarView = ({
             setEventTypeFilter={setEventTypeFilter}
             selectedDate={selectedDate}
             onCreateEvent={() => handleSelectSlot({ start: selectedDate })}
+            notificationPreferences={notificationPreferences}
+            onUpdateNotificationPreferences={handleUpdateNotificationPreferences}
           />
           
           <div className="p-4" style={{ height: '70vh' }}>
