@@ -1,6 +1,7 @@
 import React from 'react';
 import { EnhancedProgressBar } from "./EnhancedProgressBar";
-import { Award, ArrowRight, Clock } from "lucide-react";
+import { Award, ArrowRight, Clock, PieChartIcon } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from '../recharts';
 
 interface Achievement {
   id: string;
@@ -59,9 +60,142 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
       default: return isDarkMode ? 'text-gray-300' : 'text-gray-600';
     }
   };
+  
+  // Prepare data for achievement status pie chart
+  const prepareChartData = (achievements) => {
+    // Group achievements by category and status
+    const statusGroups = {
+      completed: achievements.filter(a => a.unlocked).length,
+      inProgress: achievements.filter(a => !a.unlocked && a.progress > 0).length,
+      notStarted: achievements.filter(a => !a.unlocked && a.progress === 0).length
+    };
+    
+    // Convert to array format for pie chart
+    return [
+      { name: 'Completed', value: statusGroups.completed, color: '#10b981' },
+      { name: 'In Progress', value: statusGroups.inProgress, color: '#3b82f6' },
+      { name: 'Not Started', value: statusGroups.notStarted, color: '#6b7280' }
+    ];
+  };
+
+  // Prepare data for achievement category distribution
+  const prepareCategoryData = (achievements) => {
+    // Count achievements by category
+    const categoryCount = achievements.reduce((acc, achievement) => {
+      const category = achievement.category || 'uncategorized';
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+    
+    // Convert to array format for pie chart with predefined colors
+    const categoryColors = {
+      milestones: '#8884d8',
+      consistency: '#00C49F',
+      quality: '#FFBB28',
+      mastery: '#FF8042',
+      uncategorized: '#6b7280'
+    };
+    
+    return Object.entries(categoryCount).map(([name, value]) => ({
+      name,
+      value,
+      color: categoryColors[name] || '#6b7280'
+    }));
+  };
 
   return (
     <div className="space-y-6">
+      {/* Add the charts section at the top */}
+      <div className="flex flex-col md:flex-row gap-4 mb-2">
+        <div className={`p-4 rounded-lg border flex-1 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-medium">Achievement Progress</h3>
+            <PieChartIcon className={`h-5 w-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+          </div>
+          
+          <div className="h-[180px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={prepareChartData(achievements)}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={compact ? 40 : 50}
+                  outerRadius={compact ? 60 : 70}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {prepareChartData(achievements).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value, name) => [`${value} achievements`, name]}
+                  contentStyle={{ 
+                    backgroundColor: isDarkMode ? '#374151' : '#fff',
+                    borderColor: isDarkMode ? '#4B5563' : '#E5E7EB',
+                    borderRadius: '0.375rem'
+                  }}
+                />
+                <Legend 
+                  layout="vertical" 
+                  verticalAlign="middle" 
+                  align="right"
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          
+          <div className="mt-2 text-center text-sm text-muted-foreground">
+            {Math.round((achievements.filter(a => a.unlocked).length / achievements.length) * 100)}% of achievements completed
+          </div>
+        </div>
+        
+        {!compact && (
+          <div className={`p-4 rounded-lg border flex-1 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-medium">Achievement Categories</h3>
+              <PieChartIcon className={`h-5 w-5 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} />
+            </div>
+            
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={prepareCategoryData(achievements)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {prepareCategoryData(achievements).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value, name) => [`${value} achievements`, name]}
+                    contentStyle={{ 
+                      backgroundColor: isDarkMode ? '#374151' : '#fff',
+                      borderColor: isDarkMode ? '#4B5563' : '#E5E7EB',
+                      borderRadius: '0.375rem'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="mt-2 text-center text-sm text-muted-foreground">
+              Distribution of achievement types
+            </div>
+          </div>
+        )}
+      </div>
+      
       {/* In Progress Section */}
       {inProgressAchievements.length > 0 && (
         <div>
