@@ -90,14 +90,14 @@ const BigCalendarView = ({
       // Show toast for immediate feedback
       if (minutes === 0) {
         toast({
-          title: "Test Notification *",
-          description: "This is a test notification triggered manually",
+          title: "Hey! Test Notification *",
+          description: "This is a test notification from Hey You're Hired! v0.41",
           duration: 5000,
         });
       } else {
         toast({
-          title: "Test Notification Scheduled *",
-          description: `A notification will appear in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`,
+          title: "Hey! Test Notification Scheduled *",
+          description: `A notification will appear in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} - Hey You're Hired! v0.41`,
           duration: 3000,
         });
       }
@@ -125,8 +125,8 @@ const BigCalendarView = ({
             addEventReminder(event);
           }
           toast({
-            title: `Upcoming: ${event.title}`,
-            description: `This event is starting soon.`,
+            title: `Hey! Upcoming: ${event.title}`,
+            description: `This event is starting soon. - Hey You're Hired! v0.41`,
             duration: 5000,
           });
         });
@@ -275,8 +275,8 @@ const BigCalendarView = ({
     
     // Show toast notification
     toast({
-      title: isNewEvent ? "Event Created" : "Event Updated",
-      description: `${eventData.title} has been ${isNewEvent ? 'added to' : 'updated in'} your calendar.`,
+      title: isNewEvent ? "Hey! Event Created" : "Hey! Event Updated",
+      description: `${eventData.title} has been ${isNewEvent ? 'added to' : 'updated in'} your calendar. - Hey You're Hired! v0.41`,
       duration: 3000,
     });
     
@@ -368,7 +368,7 @@ const BigCalendarView = ({
       
       <Card className="dark:bg-gray-800 dark:border-gray-700 mt-4">
         <CardHeader>
-          <CardTitle className="text-lg">Recent Activity</CardTitle>
+          <CardTitle className="text-lg">Hey! Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <RecentActivity 

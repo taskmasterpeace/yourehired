@@ -28,7 +28,8 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/">
-                <img className="h-8 w-auto" src="/logo.png" alt="You're Hired" />
+                <img className="h-8 w-auto" src="/logo.png" alt="Hey You're Hired!" />
+                <span className="ml-2 font-bold text-blue-600">Hey You're Hired!</span>
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

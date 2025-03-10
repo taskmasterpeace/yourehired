@@ -164,6 +164,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           
           {/* QR Code */}
           <div className="qr-container p-4 bg-white rounded-lg shadow-sm">
+            <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
             <QRCodeComponent value={calendarData} />
           </div>
           

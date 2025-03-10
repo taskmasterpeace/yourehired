@@ -95,7 +95,7 @@ export const generateICalString = (event) => {
     // Generate the iCalendar string
     return `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//You're Hired!//Job Application Tracker//EN
+PRODID:-//Hey You're Hired!//Job Application Tracker v0.41//EN
 BEGIN:VEVENT
 UID:${uniqueId}@yourehired.app
 DTSTAMP:${formatICalDate(new Date())}
@@ -116,7 +116,7 @@ END:VCALENDAR`;
     // Return a minimal valid iCal as fallback
     return `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//You're Hired!//Job Application Tracker//EN
+PRODID:-//Hey You're Hired!//Job Application Tracker v0.41//EN
 BEGIN:VEVENT
 UID:${Date.now()}@yourehired.app
 DTSTAMP:${formatICalDate(new Date())}

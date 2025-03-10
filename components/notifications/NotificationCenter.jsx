@@ -85,7 +85,7 @@ const NotificationCenter = ({
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 dark:bg-gray-800 dark:border-gray-700" align="end">
         <div className="flex items-center justify-between p-4 dark:border-gray-700">
-          <h3 className="font-medium dark:text-gray-200">Notifications</h3>
+          <h3 className="font-medium dark:text-gray-200">Hey! Notifications</h3>
           <div className="flex space-x-1">
             {unreadCount > 0 && (
               <Button 

@@ -90,8 +90,8 @@ const NotificationPreferences = ({ isOpen, onClose, preferences, onSave, onTestN
         });
         
         // Show a test notification
-        new Notification("Notification Test", {
-          body: "Event reminders are now enabled!",
+        new Notification("Hey! Notification Test", {
+          body: "Event reminders are now enabled! - Hey You're Hired! v0.41",
           icon: "/logo-small.png"
         });
         
@@ -140,7 +140,7 @@ const NotificationPreferences = ({ isOpen, onClose, preferences, onSave, onTestN
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Bell className="mr-2 h-5 w-5" />
-              Notification Preferences
+              Hey! Notification Preferences
             </DialogTitle>
           </DialogHeader>
           
