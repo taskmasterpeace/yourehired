@@ -53,37 +53,48 @@ function Calendar({
   };
   // Custom day renderer to show event indicators
   const renderDay = (day: Date, selectedDay: Date, dayProps: any) => {
-    // Add a safety check for the day parameter
-    if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
-      return <div {...dayProps}>{dayProps.children}</div>;
-    }
-    
-    const dayEvents = getEventsForDay(day);
-    const hasEvents = dayEvents.length > 0;
-    
-    return (
-      <div {...dayProps}>
-        <div className="relative h-full w-full p-0">
-          <div className="h-9 w-9 p-0 font-normal aria-selected:opacity-100">
-            {day.getDate()}
-          </div>
-          
-          {hasEvents && (
-            <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1">
-              {dayEvents.slice(0, 3).map((event, i) => (
-                <div 
-                  key={i} 
-                  className={`h-1.5 w-1.5 rounded-full ${getEventColor(event)}`}
-                />
-              ))}
-              {dayEvents.length > 3 && (
-                <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-              )}
+    try {
+      // Comprehensive safety check for the day parameter
+      if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
+        return <div {...(dayProps || {})}>{dayProps?.children}</div>;
+      }
+      
+      // Safety check for dayProps
+      if (!dayProps) {
+        return <div>{day.getDate()}</div>;
+      }
+      
+      const dayEvents = getEventsForDay(day);
+      const hasEvents = dayEvents.length > 0;
+      
+      return (
+        <div {...dayProps} className={cn(dayProps.className)}>
+          <div className="relative h-full w-full p-0">
+            <div className="h-9 w-9 p-0 font-normal aria-selected:opacity-100">
+              {day.getDate()}
             </div>
-          )}
+            
+            {hasEvents && (
+              <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1">
+                {dayEvents.slice(0, 3).map((event, i) => (
+                  <div 
+                    key={`${day.toISOString()}-event-${i}-${event.id || i}`} 
+                    className={`h-1.5 w-1.5 rounded-full ${getEventColor(event)}`}
+                  />
+                ))}
+                {dayEvents.length > 3 && (
+                  <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    );
+      );
+    } catch (error) {
+      // Fallback in case of any unexpected errors
+      console.error("Error rendering calendar day:", error);
+      return <div {...(dayProps || {})}>{dayProps?.children || day?.getDate?.() || ""}</div>;
+    }
   };
   
   return (
