@@ -237,8 +237,12 @@ const BigCalendarView = ({
     setIsEventModalOpen(true);
   };
   
-  // Get activity context
-  const { addActivity, getAllActivities } = useActivity();
+  // Get activity context with fallbacks
+  const activityContext = useActivity() || {};
+  const addActivity = activityContext.addActivity || ((activityData) => {
+    console.warn("Activity context not available, activity logging disabled", activityData);
+  });
+  const getAllActivities = activityContext.getAllActivities || (() => []);
   const allActivities = getAllActivities();
   
   // Handle saving an event (create or update)
