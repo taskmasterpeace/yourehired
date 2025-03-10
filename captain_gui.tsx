@@ -1812,13 +1812,13 @@ export default function CAPTAINGui() {
           <div className="flex items-center gap-4">
             <img 
               src="/logo.png" 
-              alt="You're Hired Logo" 
+              alt="Hey, You're Hired! Logo" 
               className="h-10 w-10 mr-2" 
               style={{ 
                 filter: isDarkMode ? 'brightness(0) invert(1)' : 'none' 
               }} 
             />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">You're Hired!</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">Hey, You're Hired!</h1>
           </div>
           <div className="hidden sm:flex items-center">
             <Switch
@@ -2133,7 +2133,7 @@ export default function CAPTAINGui() {
         <footer className={`mt-8 py-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="container mx-auto px-4">
             <div className="flex flex-col sm:flex-row justify-between items-center">
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3 sm:mb-0`}>© 2025 You're Hired!</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3 sm:mb-0`}>© 2025 Hey, You're Hired!</p>
               
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">

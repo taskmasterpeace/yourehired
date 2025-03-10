@@ -77,7 +77,7 @@ export const NotificationProvider = ({ children }) => {
     // Show browser notification if enabled
     if (settings.browserNotifications && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification(`Hey You're Hired!: ${notification.title}`, {
+        new Notification(`Hey, You're Hired!: ${notification.title}`, {
           body: notification.message,
           icon: '/logo-small.png'
         });
