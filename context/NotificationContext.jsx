@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 const NotificationContext = createContext();
@@ -153,8 +153,14 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [addNotification]);
   
+  // Get unread notifications count
+  const unreadCount = useMemo(() => {
+    return notifications.filter(notification => !notification.read).length;
+  }, [notifications]);
+  
   const value = {
     notifications,
+    unreadCount,
     settings,
     addNotification,
     clearAllNotifications,
