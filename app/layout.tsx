@@ -3,7 +3,7 @@ import '../styles/globals.css'
 import { AuthWrapper } from '../components/AuthWrapper'
 
 export const metadata: Metadata = {
-  title: "You're Hired! - Job Application Tracker",
+  title: "Hey You're Hired! v.041",
   description: 'AI-powered job application tracking and career management tool',
   generator: 'v0.dev',
 }
