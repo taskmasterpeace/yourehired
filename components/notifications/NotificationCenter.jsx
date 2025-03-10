@@ -83,9 +83,9 @@ const NotificationCenter = ({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-4">
-          <h3 className="font-medium">Notifications</h3>
+      <PopoverContent className="w-80 p-0 dark:bg-gray-800 dark:border-gray-700" align="end">
+        <div className="flex items-center justify-between p-4 dark:border-gray-700">
+          <h3 className="font-medium dark:text-gray-200">Notifications</h3>
           <div className="flex space-x-1">
             {unreadCount > 0 && (
               <Button 
@@ -116,10 +116,10 @@ const NotificationCenter = ({
           </div>
         </div>
         
-        <Separator />
+        <Separator className="dark:bg-gray-700" />
         
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-sm text-gray-500">
+          <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
             No notifications
           </div>
         ) : (
@@ -127,7 +127,7 @@ const NotificationCenter = ({
             {(notifications || []).map((notification) => (
               <div 
                 key={notification.id}
-                className={`p-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}
+                className={`p-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-700 ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/30' : 'dark:bg-gray-800'}`}
                 onClick={() => handleNavigateToEvent(notification)}
               >
                 <div className="flex justify-between items-start">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '../../styles/calendar-dark-mode.css';
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
 import { Card, CardContent } from "../ui/card";
@@ -37,12 +38,12 @@ const ColorLegend = () => {
   ];
 
   return (
-    <div className="flex flex-wrap gap-3 mt-4 p-3 bg-white rounded-md border">
-      <div className="text-sm font-medium mr-2">Event Types:</div>
+    <div className="flex flex-wrap gap-3 mt-4 p-3 bg-white dark:bg-gray-800 rounded-md border dark:border-gray-700">
+      <div className="text-sm font-medium mr-2 dark:text-gray-200">Event Types:</div>
       {eventTypes.map(item => (
         <div key={item.type} className="flex items-center">
           <div className={`w-3 h-3 rounded-full ${item.color} mr-1`}></div>
-          <span className="text-sm">{item.label}</span>
+          <span className="text-sm dark:text-gray-300">{item.label}</span>
         </div>
       ))}
     </div>
@@ -301,7 +302,7 @@ const BigCalendarView = ({
   
   return (
     <div className="grid grid-cols-1 gap-4">
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardContent className="p-0">
           <CalendarHeader 
             viewMode={viewMode}
