@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import { CalendarIcon, Download, Copy, QrCode } from 'lucide-react';
 import CalendarQRModal from './CalendarQRModal.jsx';
 import { generateICalString } from './calendarUtils.js';
@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 
 const AddToCalendarButton = ({ event, variant = "default", size = "default", compact = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
