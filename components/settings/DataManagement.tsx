@@ -41,6 +41,7 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
         // Store raw data for debugging
         if (debugMode) {
           setDebugData(prev => ({ ...prev, rawData: result }));
+          setShowDebugInfo(true); // Automatically show debug info when data is loaded
         }
         
         // Log the raw data for debugging
@@ -577,7 +578,7 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           )}
           
           {/* Debug Information Panel */}
-          {debugMode && showDebugInfo && (
+          {debugMode && (
             <div className={`mt-4 p-4 rounded-md border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
               <h4 className="text-sm font-semibold mb-2 flex items-center">
                 <Bug className="h-4 w-4 mr-1" />
@@ -586,9 +587,9 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
               
               {/* Raw Data Section */}
               <div className="mb-3">
-                <h5 className="text-xs font-medium mb-1">Raw Data (first 200 chars):</h5>
-                <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '100px' }}>
-                  {debugData.rawData ? debugData.rawData.substring(0, 200) + "..." : "No data"}
+                <h5 className="text-xs font-medium mb-1">Raw Data (first 500 chars):</h5>
+                <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '150px' }}>
+                  {debugData.rawData ? debugData.rawData.substring(0, 500) + "..." : "No data available. Try importing a file with Debug Mode enabled."}
                 </pre>
               </div>
               
@@ -603,14 +604,14 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
               )}
               
               {/* Parsed Data Section */}
-              {debugData.parsedData && (
-                <div>
-                  <h5 className="text-xs font-medium mb-1">Parsed Data:</h5>
-                  <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '150px' }}>
-                    {JSON.stringify(debugData.parsedData, null, 2).substring(0, 500) + "..."}
-                  </pre>
-                </div>
-              )}
+              <div>
+                <h5 className="text-xs font-medium mb-1">Parsed Data (if available):</h5>
+                <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '150px' }}>
+                  {debugData.parsedData 
+                    ? JSON.stringify(debugData.parsedData, null, 2).substring(0, 500) + "..." 
+                    : "No parsed data available."}
+                </pre>
+              </div>
             </div>
           )}
         </div>
