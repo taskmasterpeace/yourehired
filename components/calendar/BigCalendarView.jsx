@@ -282,7 +282,6 @@ const BigCalendarView = ({
             setEventTypeFilter={setEventTypeFilter}
             selectedDate={selectedDate}
             onCreateEvent={() => handleSelectSlot({ start: selectedDate })}
-            notificationPreferences={notificationSettings}
           />
           
           <div className="p-4" style={{ height: '70vh' }}>

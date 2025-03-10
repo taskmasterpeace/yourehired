@@ -1,5 +1,4 @@
 import React from 'react';
-import EventReminderButton from './EventReminderButton';
 import { CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -16,8 +15,7 @@ const CalendarHeader = ({
   eventTypeFilter, 
   setEventTypeFilter,
   selectedDate,
-  onCreateEvent,
-  notificationPreferences
+  onCreateEvent
 }) => {
   // Format the selected date based on view mode
   const formatHeaderDate = () => {
@@ -95,12 +93,6 @@ const CalendarHeader = ({
             <SelectItem value="assessment">Assessments</SelectItem>
           </SelectContent>
         </Select>
-        
-        {/* Notification Settings Button - just a link to settings page */}
-        <EventReminderButton
-          notificationPreferences={notificationPreferences}
-          className="mr-2"
-        />
         
         {/* Create Event Button */}
         <Button onClick={onCreateEvent} size="sm">
