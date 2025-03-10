@@ -61,20 +61,18 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
     }
   };
   
-  // Prepare data for achievement status pie chart
+  // Prepare data for application status pie chart
   const prepareChartData = (achievements) => {
-    // Group achievements by category and status
-    const statusGroups = {
-      completed: achievements.filter(a => a.unlocked).length,
-      inProgress: achievements.filter(a => !a.unlocked && a.progress > 0).length,
-      notStarted: achievements.filter(a => !a.unlocked && a.progress === 0).length
-    };
+    // This should use the actual application status data
+    // In a real implementation, this would come from the analytics.statusCounts
     
-    // Convert to array format for pie chart
+    // Sample data structure - this should be replaced with actual data
     return [
-      { name: 'Completed', value: statusGroups.completed, color: '#10b981' },
-      { name: 'In Progress', value: statusGroups.inProgress, color: '#3b82f6' },
-      { name: 'Not Started', value: statusGroups.notStarted, color: '#6b7280' }
+      { name: 'Bookmarked', value: 5, color: '#9333ea' },
+      { name: 'Applied', value: 12, color: '#22c55e' },
+      { name: 'Interviewing', value: 3, color: '#f97316' },
+      { name: 'Rejected', value: 7, color: '#64748b' },
+      { name: 'Offer', value: 1, color: '#6366f1' }
     ];
   };
 
@@ -109,7 +107,7 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
       <div className="flex flex-col md:flex-row gap-4 mb-2">
         <div className={`p-4 rounded-lg border flex-1 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-medium">Achievement Progress</h3>
+            <h3 className="text-lg font-medium">Application Status</h3>
             <PieChartIcon className={`h-5 w-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
           </div>
           
@@ -148,7 +146,7 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
           </div>
           
           <div className="mt-2 text-center text-sm text-muted-foreground">
-            {Math.round((achievements.filter(a => a.unlocked).length / achievements.length) * 100)}% of achievements completed
+            Distribution of your application statuses
           </div>
         </div>
         

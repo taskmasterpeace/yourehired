@@ -11,7 +11,7 @@ import {
 import { 
   BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, 
   Award, Flame, Rocket, Users, Building, Home, Lightbulb, InfoIcon,
-  Zap, Star
+  Zap, Star, Clock, TrendingUp, Calendar
 } from 'lucide-react';
 import { TooltipHelper } from "../ui/tooltip-helper";
 import { tooltipContent } from "../../lib/tooltipContent";
@@ -550,6 +550,58 @@ export function AnalyticsTab({
                 }}
                 isDarkMode={isDarkMode}
               />
+              
+              {/* Application Activity Timeline */}
+              <div className="mt-6">
+                <h3 className="text-lg font-medium mb-3">Application Activity Timeline</h3>
+                <div className="overflow-x-auto">
+                  <div className="min-w-[600px]">
+                    <div className="relative pt-2 pb-10">
+                      <div className={`absolute left-0 top-0 bottom-0 w-0.5 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}></div>
+                      
+                      {/* Recent activity items */}
+                      <div className="relative pl-6 mb-4">
+                        <div className={`absolute left-0 w-2.5 h-2.5 rounded-full bg-green-500`} style={{ top: '50%', transform: 'translateY(-50%)' }}></div>
+                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'}`}>
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">Applied to Senior Developer at TechCorp</span>
+                              <p className="text-sm text-muted-foreground mt-1">You customized your resume for this role</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground">Today</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="relative pl-6 mb-4">
+                        <div className={`absolute left-0 w-2.5 h-2.5 rounded-full bg-blue-500`} style={{ top: '50%', transform: 'translateY(-50%)' }}></div>
+                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">Received response from InnovateTech</span>
+                              <p className="text-sm text-muted-foreground mt-1">They've scheduled a screening call</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground">Yesterday</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="relative pl-6 mb-4">
+                        <div className={`absolute left-0 w-2.5 h-2.5 rounded-full bg-purple-500`} style={{ top: '50%', transform: 'translateY(-50%)' }}></div>
+                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-purple-900/20 border-purple-800' : 'bg-purple-50 border-purple-200'}`}>
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">Completed technical assessment for DevSolutions</span>
+                              <p className="text-sm text-muted-foreground mt-1">Waiting for feedback</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground">3 days ago</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
             
             <TabsContent value="insights" className="mt-0">
@@ -608,6 +660,77 @@ export function AnalyticsTab({
                     </CardContent>
                   </Card>
                 )}
+              </div>
+              
+              {/* Stale Applications */}
+              <div className="mt-4">
+                <h3 className="font-medium mb-2">Applications Needing Attention</h3>
+                <div className="space-y-3">
+                  {/* Oldest application needing attention */}
+                  <div 
+                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-amber-900/20 border-amber-800' : 'bg-amber-50 border-amber-200'}`}
+                  >
+                    <div className="flex gap-3">
+                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-amber-900' : 'bg-amber-100'}`}>
+                        <Clock className={`h-4 w-4 ${isDarkMode ? 'text-amber-300' : 'text-amber-600'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Oldest Application: Company XYZ</h4>
+                        <p className="text-sm text-muted-foreground mt-1">Applied 30 days ago - No response yet</p>
+                        <p className="text-xs mt-2">Consider following up or marking as inactive</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Stale applications count */}
+                  <div 
+                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                  >
+                    <div className="flex gap-3">
+                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                        <InfoIcon className={`h-4 w-4 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">5 Applications Without Activity</h4>
+                        <p className="text-sm text-muted-foreground mt-1">No updates for more than 14 days</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Activity Patterns */}
+              <div className="mt-4">
+                <h3 className="font-medium mb-2">Activity Patterns</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div 
+                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                  >
+                    <div className="flex gap-3">
+                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-green-900' : 'bg-green-100'}`}>
+                        <TrendingUp className={`h-4 w-4 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Most Active Day: Tuesday</h4>
+                        <p className="text-sm text-muted-foreground mt-1">You add the most opportunities on this day</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                  >
+                    <div className="flex gap-3">
+                      <div className={`p-2 rounded-full h-fit ${isDarkMode ? 'bg-purple-900' : 'bg-purple-100'}`}>
+                        <Calendar className={`h-4 w-4 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Most Applications: Thursday</h4>
+                        <p className="text-sm text-muted-foreground mt-1">You submit the most applications on this day</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* Job Search Insights */}
