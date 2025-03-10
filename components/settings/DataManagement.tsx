@@ -23,10 +23,18 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setImportStatus('No file selected');
+      setStatusType('error');
+      return;
+    }
 
     // Reset debug data
     setDebugData({ rawData: null, parsedData: null, error: null });
+    
+    // Show loading status
+    setImportStatus('Reading file...');
+    setStatusType('success');
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -532,13 +540,14 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           </div>
           <div className="flex items-center gap-2">
             <Input
+              id="file-upload"
               type="file"
               accept=".json"
               onChange={handleFileImport}
               className={`max-w-md ${isDarkMode ? 'bg-gray-700 border-gray-600' : ''}`}
             />
             <Button 
-              onClick={() => document.querySelector('input[type="file"]')?.click()}
+              onClick={() => document.getElementById('file-upload')?.click()}
               className="flex items-center gap-2"
             >
               <Upload className="h-4 w-4" />
