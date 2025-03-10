@@ -4,8 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line
-} from 'recharts';
+  PieChart, Pie, Cell, LineChart, Line, COLORS
+} from '../recharts';
 import { Award, Users, TrendingUp, Calendar } from "lucide-react";
 
 interface GamificationAnalyticsProps {
@@ -40,8 +40,7 @@ export function GamificationAnalytics({
 }: GamificationAnalyticsProps) {
   const [timeRange, setTimeRange] = useState('30days');
   
-  // Colors for charts
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  // Using imported COLORS from recharts.tsx
   
   return (
     <div className="space-y-6">
