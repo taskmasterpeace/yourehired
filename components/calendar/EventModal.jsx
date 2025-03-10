@@ -57,10 +57,18 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
   
   // Handle form input changes
   const handleChange = (field, value) => {
-    setEventData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    // If the field is opportunityId and the value is "none", set it to an empty string
+    if (field === 'opportunityId' && value === 'none') {
+      setEventData(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    } else {
+      setEventData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
   
   // Handle form submission
@@ -206,14 +214,14 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave }) => {
               <div className="flex">
                 <Briefcase className="h-4 w-4 mr-2 mt-3 text-gray-400" />
                 <Select 
-                  value={eventData.opportunityId} 
+                  value={eventData.opportunityId || "none"} 
                   onValueChange={(value) => handleChange('opportunityId', value)}
                 >
                   <SelectTrigger id="opportunity" className="flex-1">
                     <SelectValue placeholder="Link to job opportunity (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {opportunities.map(opp => (
                       <SelectItem key={opp.id} value={opp.id}>
                         {opp.company} - {opp.position}
