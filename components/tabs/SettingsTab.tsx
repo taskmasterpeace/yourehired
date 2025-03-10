@@ -4,6 +4,9 @@ import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { Checkbox } from "../ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface SettingsTabProps {
   opportunities: any[];
@@ -27,6 +30,14 @@ export function SettingsTab({
   user
 }: SettingsTabProps) {
   const [importStatus, setImportStatus] = useState('');
+  const [importOptions, setImportOptions] = useState({
+    applications: true,
+    achievements: false,
+    analytics: false
+  });
+  const [importData, setImportData] = useState(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [importStep, setImportStep] = useState('select'); // 'select', 'confirm', 'complete'
 
   // Import handler
   const handleFileImport = (event) => {
@@ -38,25 +49,52 @@ export function SettingsTab({
       try {
         const data = JSON.parse(e.target.result as string);
         
-        // Validate the data structure
-        if (!Array.isArray(data)) {
-          throw new Error('Invalid data format. Expected an array of job applications.');
+        // Basic validation
+        if (typeof data !== 'object') {
+          throw new Error('Invalid data format. Expected a JSON object with application data.');
         }
         
-        // Process each job application
-        for (const job of data) {
-          if (!job.company || !job.position) {
-            throw new Error('Invalid job data. Each job must have a company and position.');
+        // Check for required data structures based on selected options
+        if (importOptions.applications && (!data.applications || !Array.isArray(data.applications))) {
+          throw new Error('Invalid applications data format. Expected an array of job applications.');
+        }
+        
+        if (importOptions.achievements && (!data.achievements || !Array.isArray(data.achievements))) {
+          throw new Error('Invalid achievements data format.');
+        }
+        
+        if (importOptions.analytics && (!data.analytics || typeof data.analytics !== 'object')) {
+          throw new Error('Invalid analytics data format.');
+        }
+        
+        // Check for potential duplicates
+        let duplicateWarning = null;
+        
+        if (importOptions.applications) {
+          const existingApps = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+          const newApps = data.applications || [];
+          
+          // Check for potential duplicates by company and position
+          const potentialDuplicates = newApps.filter(newApp => 
+            existingApps.some(existingApp => 
+              existingApp.company === newApp.company && 
+              existingApp.position === newApp.position
+            )
+          );
+          
+          if (potentialDuplicates.length > 0) {
+            duplicateWarning = {
+              type: 'applications',
+              count: potentialDuplicates.length,
+              examples: potentialDuplicates.slice(0, 2).map(app => `${app.company} - ${app.position}`)
+            };
           }
         }
         
-        // Store the data in your application state/storage
-        localStorage.setItem('jobApplications', JSON.stringify(data));
-        
-        setImportStatus(`Successfully imported ${data.length} job applications`);
-        
-        // Reload the page to see changes
-        setTimeout(() => window.location.reload(), 1500);
+        // Store the parsed data and any warnings
+        setImportData(data);
+        setDuplicateWarning(duplicateWarning);
+        setImportStep('confirm');
         
       } catch (error) {
         console.error('Import error:', error);
@@ -67,18 +105,95 @@ export function SettingsTab({
     reader.readAsText(file);
   };
 
-  // Export handler
+  // Handle the actual import after confirmation
+  const handleConfirmImport = (strategy = 'merge') => {
+    try {
+      if (!importData) return;
+      
+      // Import applications if selected
+      if (importOptions.applications && importData.applications) {
+        const existingApps = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+        let newApps = [];
+        
+        if (strategy === 'replace') {
+          // Replace all existing data
+          newApps = importData.applications;
+        } else if (strategy === 'merge') {
+          // Merge, avoiding duplicates by company and position
+          const existingKeys = new Set(existingApps.map(app => `${app.company}-${app.position}`));
+          
+          newApps = [
+            ...existingApps,
+            ...importData.applications.filter(app => 
+              !existingKeys.has(`${app.company}-${app.position}`)
+            )
+          ];
+        }
+        
+        localStorage.setItem('jobApplications', JSON.stringify(newApps));
+      }
+      
+      // Import achievements if selected
+      if (importOptions.achievements && importData.achievements) {
+        localStorage.setItem('achievements', JSON.stringify(importData.achievements));
+        
+        if (importData.userLevel) {
+          localStorage.setItem('userLevel', JSON.stringify(importData.userLevel));
+        }
+      }
+      
+      // Import analytics if selected
+      if (importOptions.analytics && importData.analytics) {
+        localStorage.setItem('analytics', JSON.stringify(importData.analytics));
+      }
+      
+      setImportStatus(`Successfully imported data`);
+      setImportStep('complete');
+      
+      // Reload the page after a short delay
+      setTimeout(() => window.location.reload(), 1500);
+      
+    } catch (error) {
+      console.error('Import confirmation error:', error);
+      setImportStatus(`Error importing data: ${error.message}`);
+    }
+  };
+
+  // Cancel import
+  const cancelImport = () => {
+    setImportData(null);
+    setDuplicateWarning(null);
+    setImportStep('select');
+    setImportStatus('');
+  };
+
+  // Export handler - enhanced version
   const handleExportData = () => {
     try {
-      // Get job applications from your storage
-      const jobApplications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+      const exportData = {};
+      
+      // Get job applications if selected
+      if (importOptions.applications) {
+        exportData.applications = JSON.parse(localStorage.getItem('jobApplications') || '[]');
+      }
+      
+      // Get achievements if selected
+      if (importOptions.achievements) {
+        exportData.achievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+        exportData.userLevel = JSON.parse(localStorage.getItem('userLevel') || 'null');
+      }
+      
+      // Get analytics if selected
+      if (importOptions.analytics) {
+        exportData.analytics = JSON.parse(localStorage.getItem('analytics') || 'null');
+      }
       
       // Create a downloadable file
-      const dataStr = JSON.stringify(jobApplications, null, 2);
+      const dataStr = JSON.stringify(exportData, null, 2);
       const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
       
       // Create download link and trigger download
-      const exportFileDefaultName = `job-applications-${new Date().toISOString().slice(0, 10)}.json`;
+      const exportFileDefaultName = `captain-app-data-${new Date().toISOString().slice(0, 10)}.json`;
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);
       linkElement.setAttribute('download', exportFileDefaultName);
@@ -261,17 +376,127 @@ export function SettingsTab({
           <div>
             <h3 className="text-lg font-medium mb-2">Import Data</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              Import job applications from a JSON file
+              Import your data from a JSON file
             </p>
-            <div className="flex items-center gap-2">
-              <Input
-                type="file"
-                accept=".json"
-                onChange={handleFileImport}
-                className="max-w-md"
-              />
-            </div>
-            {importStatus && (
+            
+            {importStep === 'select' && (
+              <>
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="import-applications" 
+                      checked={importOptions.applications}
+                      onCheckedChange={(checked) => 
+                        setImportOptions({...importOptions, applications: !!checked})
+                      }
+                    />
+                    <label
+                      htmlFor="import-applications"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Job Applications
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="import-achievements" 
+                      checked={importOptions.achievements}
+                      onCheckedChange={(checked) => 
+                        setImportOptions({...importOptions, achievements: !!checked})
+                      }
+                    />
+                    <label
+                      htmlFor="import-achievements"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Achievements & Level Progress
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="import-analytics" 
+                      checked={importOptions.analytics}
+                      onCheckedChange={(checked) => 
+                        setImportOptions({...importOptions, analytics: !!checked})
+                      }
+                    />
+                    <label
+                      htmlFor="import-analytics"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Analytics Data
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileImport}
+                    className="max-w-md"
+                  />
+                </div>
+              </>
+            )}
+            
+            {importStep === 'confirm' && (
+              <div className="space-y-4">
+                <div className="p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                  <h4 className="font-medium mb-2">Ready to import:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    {importOptions.applications && importData.applications && (
+                      <li>{importData.applications.length} job applications</li>
+                    )}
+                    {importOptions.achievements && importData.achievements && (
+                      <li>{importData.achievements.length} achievements</li>
+                    )}
+                    {importOptions.analytics && importData.analytics && (
+                      <li>Analytics data</li>
+                    )}
+                  </ul>
+                </div>
+                
+                {duplicateWarning && (
+                  <Alert variant="warning" className="bg-amber-50 text-amber-800 dark:bg-amber-900 dark:text-amber-100 border-amber-200 dark:border-amber-800">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Potential Duplicates Detected</AlertTitle>
+                    <AlertDescription>
+                      Found {duplicateWarning.count} potential duplicate {duplicateWarning.type}
+                      {duplicateWarning.examples && duplicateWarning.examples.length > 0 && (
+                        <>
+                          <br />
+                          <span className="text-xs">Examples: {duplicateWarning.examples.join(', ')}</span>
+                        </>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="flex gap-2">
+                  <Button onClick={() => handleConfirmImport('merge')}>
+                    Merge (Skip Duplicates)
+                  </Button>
+                  <Button onClick={() => handleConfirmImport('replace')} variant="outline">
+                    Replace All
+                  </Button>
+                  <Button onClick={cancelImport} variant="ghost">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {importStep === 'complete' && (
+              <div className="p-4 border rounded-md bg-green-50 dark:bg-green-900 text-green-800 dark:text-green-100">
+                <p>Import completed successfully!</p>
+                <p className="text-sm mt-1">The page will reload momentarily...</p>
+              </div>
+            )}
+            
+            {importStatus && importStep !== 'complete' && (
               <p className={`mt-2 text-sm ${importStatus.includes('Error') ? 'text-red-500' : 'text-green-500'}`}>
                 {importStatus}
               </p>
@@ -282,8 +507,59 @@ export function SettingsTab({
           <div className="pt-4 border-t">
             <h3 className="text-lg font-medium mb-2">Export Data</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              Export your job applications as a JSON file
+              Export your data as a JSON file
             </p>
+            
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="export-applications" 
+                  checked={importOptions.applications}
+                  onCheckedChange={(checked) => 
+                    setImportOptions({...importOptions, applications: !!checked})
+                  }
+                />
+                <label
+                  htmlFor="export-applications"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Job Applications
+                </label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="export-achievements" 
+                  checked={importOptions.achievements}
+                  onCheckedChange={(checked) => 
+                    setImportOptions({...importOptions, achievements: !!checked})
+                  }
+                />
+                <label
+                  htmlFor="export-achievements"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Achievements & Level Progress
+                </label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="export-analytics" 
+                  checked={importOptions.analytics}
+                  onCheckedChange={(checked) => 
+                    setImportOptions({...importOptions, analytics: !!checked})
+                  }
+                />
+                <label
+                  htmlFor="export-analytics"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Analytics Data
+                </label>
+              </div>
+            </div>
+            
             <Button onClick={handleExportData}>
               Export to JSON
             </Button>
