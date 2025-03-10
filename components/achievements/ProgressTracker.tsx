@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { EnhancedProgressBar } from "./EnhancedProgressBar";
 import { Award, ArrowRight, Clock, PieChartIcon } from "lucide-react";
