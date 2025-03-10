@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useNotifications } from '../../context/NotificationContext';
 import NotificationCenter from '../notifications/NotificationCenter';
+import NotificationBell from '../NotificationBell'; // Add this import
 
 const Navbar = () => {
   // Add a fallback in case the context isn't available yet
@@ -47,6 +48,9 @@ const Navbar = () => {
             </div>
           </div>
           <div className="flex items-center">
+            {/* Add NotificationBell here */}
+            <NotificationBell />
+            
             {/* Notification Center */}
             <NotificationCenter 
               notifications={notifications}

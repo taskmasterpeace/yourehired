@@ -8,7 +8,6 @@ import { Grid } from 'lucide-react';
 import { List } from 'lucide-react';
 import { Clock } from 'lucide-react';
 import { Timeline } from 'lucide-react';
-import NotificationBell from '../NotificationBell';
 
 const CalendarHeader = ({ 
   viewMode, 
@@ -40,7 +39,6 @@ const CalendarHeader = ({
       </div>
       
       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-2 sm:mt-0 items-center">
-        <NotificationBell />
         {/* View Mode Selector */}
         <div className="flex rounded-md border">
           <Button 

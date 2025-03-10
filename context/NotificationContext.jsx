@@ -24,12 +24,36 @@ export const NotificationProvider = ({ children }) => {
     try {
       const savedNotifications = localStorage.getItem('notifications');
       if (savedNotifications) {
-        setNotifications(JSON.parse(savedNotifications));
+        try {
+          // Add extra validation to ensure it's valid JSON
+          const parsed = JSON.parse(savedNotifications);
+          if (Array.isArray(parsed)) {
+            setNotifications(parsed);
+          } else {
+            console.error('Invalid notifications format in localStorage, resetting');
+            localStorage.removeItem('notifications');
+          }
+        } catch (parseError) {
+          console.error('Error parsing notifications from localStorage:', parseError);
+          localStorage.removeItem('notifications');
+        }
       }
       
       const savedSettings = localStorage.getItem('notificationSettings');
       if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
+        try {
+          // Add extra validation to ensure it's valid JSON
+          const parsed = JSON.parse(savedSettings);
+          if (parsed && typeof parsed === 'object') {
+            setSettings(parsed);
+          } else {
+            console.error('Invalid notification settings format in localStorage, resetting');
+            localStorage.removeItem('notificationSettings');
+          }
+        } catch (parseError) {
+          console.error('Error parsing notification settings from localStorage:', parseError);
+          localStorage.removeItem('notificationSettings');
+        }
       }
     } catch (error) {
       console.error('Error loading notifications from localStorage:', error);

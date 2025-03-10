@@ -6,11 +6,11 @@ import { formatDistanceToNow } from 'date-fns';
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { 
-    notifications, 
-    markAllAsRead, 
-    markAsRead, 
-    clearNotification 
-  } = useNotifications();
+    notifications = [], // Add default empty array
+    markAllAsRead = () => {}, // Add default empty function
+    markAsRead = () => {}, 
+    clearNotification = () => {} 
+  } = useNotifications() || {}; // Add fallback for context
   const dropdownRef = useRef(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
