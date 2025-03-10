@@ -56,11 +56,53 @@ export function AchievementCollection({
     }
   });
   
-  // Group achievements by category
+  // Group achievements by category and add placeholders if empty
   const milestones = sortedAchievements.filter(a => a.category === 'milestones');
+  
   const consistency = sortedAchievements.filter(a => a.category === 'consistency');
+  if (consistency.length === 0) {
+    consistency.push({
+      id: 'consistency_placeholder',
+      name: 'Daily Application Streak',
+      description: 'Apply to jobs for 7 consecutive days',
+      category: 'consistency' as any,
+      points: 25,
+      unlocked: false,
+      progress: 3,
+      total: 7,
+      rarity: 'uncommon' as any
+    });
+  }
+  
   const quality = sortedAchievements.filter(a => a.category === 'quality');
+  if (quality.length === 0) {
+    quality.push({
+      id: 'quality_placeholder',
+      name: 'Interview Converter',
+      description: 'Receive an interview from 25% of your applications',
+      category: 'quality' as any,
+      points: 50,
+      unlocked: false,
+      progress: 15,
+      total: 25,
+      rarity: 'rare' as any
+    });
+  }
+  
   const mastery = sortedAchievements.filter(a => a.category === 'mastery');
+  if (mastery.length === 0) {
+    mastery.push({
+      id: 'mastery_placeholder',
+      name: 'Job Search Master',
+      description: 'Reach level 10 in your job search journey',
+      category: 'mastery' as any,
+      points: 100,
+      unlocked: false,
+      progress: 4,
+      total: 10,
+      rarity: 'legendary' as any
+    });
+  }
   
   // Calculate completion percentages for each category
   const calculateCompletionPercentage = (achievements: Achievement[]) => {

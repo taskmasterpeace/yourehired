@@ -170,9 +170,66 @@ export function AnalyticsTab({
         </Card>
       </div>
       
+      {/* Weekly Challenges - Moved up */}
+      {analytics.weeklyChallenges && analytics.weeklyChallenges.length > 0 && (
+        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''} mb-6`}>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center">
+              Weekly Challenges
+              <TooltipHelper content={tooltipContent.weeklyChallenges} />
+            </CardTitle>
+            <CardDescription className="text-base">
+              Complete these challenges to boost your job search
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {analytics.weeklyChallenges.map((challenge, index) => (
+                <div 
+                  key={index} 
+                  className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                >
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className={`p-3 rounded-full ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                        <Rocket className={`h-6 w-6 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-lg">{challenge.name}</h4>
+                        <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-auto">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">{challenge.progress} / {challenge.target}</span>
+                        <span className="text-sm">Expires: {challenge.expires}</span>
+                      </div>
+                      <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
+                        <div 
+                          className="h-2 rounded-full bg-blue-500" 
+                          style={{ width: `${(challenge.progress / challenge.target) * 100}%` }}
+                        ></div>
+                      </div>
+                      <div className="mt-3 text-sm text-right text-muted-foreground">
+                        Reward: {challenge.reward}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" size="sm" className="ml-auto">
+              View All Challenges
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
       {/* Achievement and Level Benefits in a grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Achievement Progress Tracker */}
+        {/* Achievement Progress Tracker - Enhanced with more content */}
         {analytics.achievements && analytics.achievements.length > 0 && (
           <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
             <CardHeader className="pb-2">
@@ -213,7 +270,152 @@ export function AnalyticsTab({
         )}
       </div>
       
-      {/* Main Charts */}
+      {/* Achievement Collection - Enhanced with tabs */}
+      {analytics.achievements && analytics.achievements.length > 0 && (
+        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''} mt-6`}>
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center">
+              Achievements
+              <TooltipHelper content={tooltipContent.achievements || "Collect achievements as you progress in your job search"} />
+            </CardTitle>
+            <CardDescription className="text-base">
+              Unlock achievements to level up your job search
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="milestones">
+              <TabsList className="mb-4">
+                <TabsTrigger value="milestones" className="flex items-center gap-1">
+                  <Trophy className="h-4 w-4" />
+                  <span>Milestones</span>
+                </TabsTrigger>
+                <TabsTrigger value="consistency" className="flex items-center gap-1">
+                  <Zap className="h-4 w-4" />
+                  <span>Consistency</span>
+                </TabsTrigger>
+                <TabsTrigger value="quality" className="flex items-center gap-1">
+                  <Star className="h-4 w-4" />
+                  <span>Quality</span>
+                </TabsTrigger>
+                <TabsTrigger value="mastery" className="flex items-center gap-1">
+                  <Award className="h-4 w-4" />
+                  <span>Mastery</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="milestones">
+                <AchievementCollection 
+                  achievements={analytics.achievements
+                    .map(achievement => ({
+                      ...achievement,
+                      // Add rarity if it doesn't exist
+                      rarity: achievement.rarity || 
+                        (achievement.points >= 75 ? 'legendary' : 
+                         achievement.points >= 50 ? 'rare' : 
+                         achievement.points >= 25 ? 'uncommon' : 'common'),
+                      // Add category if it doesn't exist
+                      category: achievement.category || 'milestones'
+                    }))
+                    .filter(a => a.category === 'milestones')} 
+                  isDarkMode={isDarkMode}
+                />
+              </TabsContent>
+              
+              <TabsContent value="consistency">
+                <AchievementCollection 
+                  achievements={analytics.achievements
+                    .map(achievement => ({
+                      ...achievement,
+                      rarity: achievement.rarity || 
+                        (achievement.points >= 75 ? 'legendary' : 
+                         achievement.points >= 50 ? 'rare' : 
+                         achievement.points >= 25 ? 'uncommon' : 'common'),
+                      category: achievement.category || 'milestones'
+                    }))
+                    .filter(a => a.category === 'consistency') || 
+                    // Add placeholder if empty
+                    [
+                      {
+                        id: 'consistency_placeholder',
+                        name: 'Daily Application Streak',
+                        description: 'Apply to jobs for 7 consecutive days',
+                        category: 'consistency',
+                        points: 25,
+                        unlocked: false,
+                        progress: 3,
+                        total: 7,
+                        rarity: 'uncommon'
+                      }
+                    ]} 
+                  isDarkMode={isDarkMode}
+                />
+              </TabsContent>
+              
+              <TabsContent value="quality">
+                <AchievementCollection 
+                  achievements={analytics.achievements
+                    .map(achievement => ({
+                      ...achievement,
+                      rarity: achievement.rarity || 
+                        (achievement.points >= 75 ? 'legendary' : 
+                         achievement.points >= 50 ? 'rare' : 
+                         achievement.points >= 25 ? 'uncommon' : 'common'),
+                      category: achievement.category || 'milestones'
+                    }))
+                    .filter(a => a.category === 'quality') || 
+                    // Add placeholder if empty
+                    [
+                      {
+                        id: 'quality_placeholder',
+                        name: 'Interview Converter',
+                        description: 'Receive an interview from 25% of your applications',
+                        category: 'quality',
+                        points: 50,
+                        unlocked: false,
+                        progress: 15,
+                        total: 25,
+                        rarity: 'rare'
+                      }
+                    ]} 
+                  isDarkMode={isDarkMode}
+                />
+              </TabsContent>
+              
+              <TabsContent value="mastery">
+                <AchievementCollection 
+                  achievements={analytics.achievements
+                    .map(achievement => ({
+                      ...achievement,
+                      rarity: achievement.rarity || 
+                        (achievement.points >= 75 ? 'legendary' : 
+                         achievement.points >= 50 ? 'rare' : 
+                         achievement.points >= 25 ? 'uncommon' : 'common'),
+                      category: achievement.category || 'milestones'
+                    }))
+                    .filter(a => a.category === 'mastery') || 
+                    // Add placeholder if empty
+                    [
+                      {
+                        id: 'mastery_placeholder',
+                        name: 'Job Search Master',
+                        description: 'Reach level 10 in your job search journey',
+                        category: 'mastery',
+                        points: 100,
+                        unlocked: false,
+                        progress: 4,
+                        total: 10,
+                        rarity: 'legendary'
+                      }
+                    ]} 
+                  isDarkMode={isDarkMode}
+                />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Main Charts - Moved to bottom */}
       <Tabs defaultValue="status" className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
         <Card>
           <CardHeader>
@@ -435,159 +637,6 @@ export function AnalyticsTab({
           </CardContent>
         </Card>
       </Tabs>
-      
-      {/* Achievement Collection - Enhanced with tabs */}
-      {analytics.achievements && analytics.achievements.length > 0 && (
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''} mt-6`}>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center">
-              Achievements
-              <TooltipHelper content={tooltipContent.achievements || "Collect achievements as you progress in your job search"} />
-            </CardTitle>
-            <CardDescription className="text-base">
-              Unlock achievements to level up your job search
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="milestones">
-              <TabsList className="mb-4">
-                <TabsTrigger value="milestones">Milestones</TabsTrigger>
-                <TabsTrigger value="consistency">Consistency</TabsTrigger>
-                <TabsTrigger value="quality">Quality</TabsTrigger>
-                <TabsTrigger value="mastery">Mastery</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="milestones">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      // Add rarity if it doesn't exist
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      // Add category if it doesn't exist
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'milestones')} 
-                  isDarkMode={isDarkMode}
-                  largeIcons={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="consistency">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'consistency')} 
-                  isDarkMode={isDarkMode}
-                  largeIcons={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="quality">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'quality')} 
-                  isDarkMode={isDarkMode}
-                  largeIcons={true}
-                />
-              </TabsContent>
-              
-              <TabsContent value="mastery">
-                <AchievementCollection 
-                  achievements={analytics.achievements
-                    .map(achievement => ({
-                      ...achievement,
-                      rarity: achievement.rarity || 
-                        (achievement.points >= 75 ? 'legendary' : 
-                         achievement.points >= 50 ? 'rare' : 
-                         achievement.points >= 25 ? 'uncommon' : 'common'),
-                      category: achievement.category || 'milestones'
-                    }))
-                    .filter(a => a.category === 'mastery')} 
-                  isDarkMode={isDarkMode}
-                  largeIcons={true}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Weekly Challenges - Moved up and enhanced */}
-      {analytics.weeklyChallenges && analytics.weeklyChallenges.length > 0 && (
-        <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''} mb-6`}>
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center">
-              Weekly Challenges
-              <TooltipHelper content={tooltipContent.weeklyChallenges} />
-            </CardTitle>
-            <CardDescription className="text-base">
-              Complete these challenges to boost your job search
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {analytics.weeklyChallenges.map((challenge, index) => (
-                <div 
-                  key={index} 
-                  className={`p-4 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                >
-                  <div className="flex flex-col h-full">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className={`p-3 rounded-full ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
-                        <Rocket className={`h-6 w-6 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-lg">{challenge.name}</h4>
-                        <p className="text-sm text-muted-foreground">{challenge.description}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-auto">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm font-medium">{challenge.progress} / {challenge.target}</span>
-                        <span className="text-sm">Expires: {challenge.expires}</span>
-                      </div>
-                      <div className={`w-full h-2 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
-                        <div 
-                          className="h-2 rounded-full bg-blue-500" 
-                          style={{ width: `${(challenge.progress / challenge.target) * 100}%` }}
-                        ></div>
-                      </div>
-                      <div className="mt-3 text-sm text-right text-muted-foreground">
-                        Reward: {challenge.reward}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" size="sm" className="ml-auto">
-              View All Challenges
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
     </div>
   );
 }
