@@ -20,7 +20,6 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
     parsedData: any | null;
     error: string | null;
   }>({ rawData: null, parsedData: null, error: null });
-  const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -38,50 +37,50 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           throw new Error('Failed to read file');
         }
         
+        let rawText = result.trim();
+        
         // Store raw data for debugging
         if (debugMode) {
-          setDebugData(prev => ({ ...prev, rawData: result }));
-          setShowDebugInfo(true); // Automatically show debug info when data is loaded
+          setDebugData(prev => ({ ...prev, rawData: rawText }));
         }
         
         // Log the raw data for debugging
-        console.log("Raw imported data:", result.substring(0, 200) + "...");
+        console.log("Raw imported data:", rawText.substring(0, 200) + "...");
         
         let data;
-        let rawText = result.trim();
         
-        // Check if the file starts with an object instead of an array
-        // and try to fix it by wrapping in array brackets
-        if (rawText.startsWith('{') && !rawText.startsWith('[{')) {
-          console.log("Detected object format instead of array, attempting to fix...");
-          try {
-            // Wrap the content in array brackets
-            data = JSON.parse('[' + rawText + ']');
-            console.log("Successfully converted object to array");
-          } catch (wrapError) {
-            console.error("Failed to parse as wrapped array:", wrapError);
-            // Fall back to regular parsing
-            try {
-              data = JSON.parse(rawText);
-            } catch (parseError) {
-              console.error("JSON parse error:", parseError);
-              throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
-            }
+        try {
+          // First attempt: standard JSON parse
+          data = JSON.parse(rawText);
+          
+          // Store parsed data for debugging
+          if (debugMode) {
+            setDebugData(prev => ({ ...prev, parsedData: data }));
           }
-        } else {
-          // Regular parsing for properly formatted JSON
-          try {
-            data = JSON.parse(rawText);
-          } catch (parseError) {
-            console.error("JSON parse error:", parseError);
-            if (debugMode) {
-              setDebugData(prev => ({ 
-                ...prev, 
-                error: `Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
-              }));
+          
+          // Handle different formats
+          if (data && typeof data === 'object') {
+            // If it's an object with jobApplications property (legacy format)
+            if (data.jobApplications && Array.isArray(data.jobApplications)) {
+              console.log("Found legacy format with jobApplications property");
+              data = data.jobApplications;
+            } 
+            // If it's not an array, but a single object, convert to array
+            else if (!Array.isArray(data)) {
+              console.log("Converting single object to array");
+              data = [data];
             }
-            throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+            // If it's already an array, use as is
           }
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          if (debugMode) {
+            setDebugData(prev => ({ 
+              ...prev, 
+              error: `Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
+            }));
+          }
+          throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
         }
         
         console.log("Parsed data type:", typeof data);
@@ -531,16 +530,6 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
                 onCheckedChange={setDebugMode} 
               />
             </div>
-            {debugMode && debugData.rawData && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowDebugInfo(!showDebugInfo)}
-                className="text-xs"
-              >
-                {showDebugInfo ? "Hide" : "Show"} Debug Information
-              </Button>
-            )}
           </div>
           <div className="flex items-center gap-2">
             <Input
@@ -578,7 +567,7 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           )}
           
           {/* Debug Information Panel */}
-          {debugMode && showDebugInfo && (
+          {debugMode && (
             <div className={`mt-4 p-4 rounded-md border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
               <h4 className="text-sm font-semibold mb-2 flex items-center">
                 <Bug className="h-4 w-4 mr-1" />
@@ -608,7 +597,7 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
                 <h5 className="text-xs font-medium mb-1">Parsed Data Structure:</h5>
                 <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '150px' }}>
                   {debugData.parsedData 
-                    ? `Type: ${typeof debugData.parsedData}\nIs Array: ${Array.isArray(debugData.parsedData)}\nKeys: ${Object.keys(debugData.parsedData).join(', ')}\n\nSample: ${JSON.stringify(debugData.parsedData, null, 2).substring(0, 300)}...` 
+                    ? `Type: ${typeof debugData.parsedData}\nIs Array: ${Array.isArray(debugData.parsedData)}\nLength: ${Array.isArray(debugData.parsedData) ? debugData.parsedData.length : 'N/A'}\n\nSample: ${JSON.stringify(debugData.parsedData, null, 2).substring(0, 300)}...` 
                     : "No parsed data available."}
                 </pre>
               </div>
