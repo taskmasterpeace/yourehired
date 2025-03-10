@@ -94,21 +94,38 @@ const BigCalendarView = ({
   
   // Check for upcoming events when the component mounts
   useEffect(() => {
-    const upcomingEvents = checkUpcomingEvents();
-    if (upcomingEvents.length > 0 && notificationPreferences.enabled) {
-      // Show notifications for events that are coming up soon
-      upcomingEvents.forEach(event => {
-        toast({
-          title: `Upcoming: ${event.title}`,
-          description: `This event is starting soon.`,
-          duration: 5000,
-        });
+    // Use the notification context to check for upcoming events
+    const checkEvents = () => {
+      // Find events that are starting soon
+      const now = new Date();
+      const upcomingEvents = events.filter(event => {
+        const eventStart = new Date(event.startDate || event.date);
+        const diffMs = eventStart - now;
+        const diffMins = Math.floor(diffMs / 60000);
+        // Events starting in the next 30 minutes
+        return diffMins > 0 && diffMins <= 30;
       });
-    }
+      
+      // Show notifications for upcoming events
+      if (upcomingEvents.length > 0 && notificationSettings.enabled) {
+        upcomingEvents.forEach(event => {
+          addEventReminder(event);
+          toast({
+            title: `Upcoming: ${event.title}`,
+            description: `This event is starting soon.`,
+            duration: 5000,
+          });
+        });
+      }
+    };
+    
+    checkEvents();
     
     // Request notification permission if browser notifications are enabled
-    if (notificationPreferences.browserNotifications) {
-      requestNotificationPermission();
+    if (notificationSettings.browserNotifications && 'Notification' in window) {
+      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
     }
   }, []);
   
