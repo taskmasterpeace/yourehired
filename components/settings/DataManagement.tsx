@@ -21,6 +21,14 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
     parsedData: any | null;
     error: string | null;
   }>({ rawData: null, parsedData: null, error: null });
+  
+  // Function to navigate to home as fallback
+  const navigateToHome = () => {
+    console.log("Fallback navigation to home");
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
+  };
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -598,21 +606,16 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
           )}
           
           {/* Navigation button after successful import */}
-          {importStatus && statusType === 'success' && onNavigateBack && (
+          {importStatus && statusType === 'success' && (
             <Button 
-              onClick={onNavigateBack}
-              className="mt-3 flex items-center gap-2"
-              variant="primary"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Return to Dashboard to View Imported Data
-            </Button>
-          )}
-          
-          {/* Navigation button after successful import */}
-          {importStatus && statusType === 'success' && onNavigateBack && (
-            <Button 
-              onClick={onNavigateBack}
+              onClick={() => {
+                console.log("Return to Dashboard button clicked");
+                if (onNavigateBack) {
+                  onNavigateBack();
+                } else {
+                  navigateToHome();
+                }
+              }}
               className="mt-3 flex items-center gap-2"
               variant="primary"
             >

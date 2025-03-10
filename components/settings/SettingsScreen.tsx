@@ -120,9 +120,15 @@ export function SettingsScreen({ isDarkMode, toggleDarkMode, onNavigateBack }: S
       <DataManagement 
         isDarkMode={isDarkMode} 
         onNavigateBack={() => {
-          console.log("Navigating back to dashboard from settings");
+          console.log("Navigation function called from DataManagement");
           if (onNavigateBack) {
             onNavigateBack();
+          } else {
+            console.error("onNavigateBack is not defined in SettingsScreen");
+            // Fallback navigation if possible
+            if (typeof window !== 'undefined') {
+              window.location.href = '/'; // Navigate to home as fallback
+            }
           }
         }} 
       />
