@@ -64,3 +64,36 @@ END:VALARM
 END:VEVENT
 END:VCALENDAR`;
 };
+
+/**
+ * Gets the appropriate color for an event based on its type or associated opportunity
+ * @param {Object} event - The event object
+ * @returns {string} CSS color class
+ */
+export const getEventColor = (event) => {
+  const typeColorMap = {
+    preparing: "bg-gray-400 text-white",
+    applied: "bg-blue-500 text-white",
+    interview: "bg-purple-500 text-white",
+    assessment: "bg-yellow-500 text-white",
+    negotiating: "bg-orange-500 text-white",
+    offer: "bg-green-500 text-white",
+    rejected: "bg-red-500 text-white",
+    withdrawn: "bg-gray-600 text-white",
+    deadline: "bg-red-500 text-white",
+    followup: "bg-blue-500 text-white",
+    general: "bg-gray-400 text-white"
+  };
+  
+  // First check event type
+  if (event.type && typeColorMap[event.type.toLowerCase()]) {
+    return typeColorMap[event.type.toLowerCase()];
+  }
+  
+  // Then check associated opportunity status
+  if (event.opportunity && event.opportunity.status) {
+    return typeColorMap[event.opportunity.status.toLowerCase()] || "bg-gray-400 text-white";
+  }
+  
+  return "bg-gray-400 text-white";
+};

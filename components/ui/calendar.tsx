@@ -7,14 +7,75 @@ import { DayPicker } from "react-day-picker"
 import { cn } from "../../lib/utils"
 import { buttonVariants } from "../ui/button"
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+export type CalendarProps = React.ComponentProps<typeof DayPicker> & { events?: any[] }
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  events = [],
   ...props
 }: CalendarProps) {
+  // Function to get events for a specific day
+  const getEventsForDay = (day: Date) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.date || event.startDate);
+      return day.getDate() === eventDate.getDate() && 
+             day.getMonth() === eventDate.getMonth() && 
+             day.getFullYear() === eventDate.getFullYear();
+    });
+  };
+  
+  // Function to get color for event indicator based on status/type
+  const getEventColor = (event: any) => {
+    const statusColorMap: Record<string, string> = {
+      preparing: "bg-gray-400",
+      applied: "bg-blue-500",
+      interview: "bg-purple-500",
+      assessment: "bg-yellow-500",
+      negotiating: "bg-orange-500",
+      offer: "bg-green-500",
+      rejected: "bg-red-500",
+      withdrawn: "bg-gray-600"
+    };
+    
+    // Use event type or associated opportunity status
+    const status = event.type || 
+                  (event.opportunity && event.opportunity.status) || 
+                  "applied";
+                  
+    return statusColorMap[status.toLowerCase()] || "bg-blue-500";
+  };
+  // Custom day renderer to show event indicators
+  const renderDay = (day: Date, selectedDay: Date, dayProps: any) => {
+    const dayEvents = getEventsForDay(day);
+    const hasEvents = dayEvents.length > 0;
+    
+    return (
+      <div {...dayProps}>
+        <div className="relative h-full w-full p-0">
+          <div className="h-9 w-9 p-0 font-normal aria-selected:opacity-100">
+            {day.getDate()}
+          </div>
+          
+          {hasEvents && (
+            <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1">
+              {dayEvents.slice(0, 3).map((event, i) => (
+                <div 
+                  key={i} 
+                  className={`h-1.5 w-1.5 rounded-full ${getEventColor(event)}`}
+                />
+              ))}
+              {dayEvents.length > 3 && (
+                <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -56,6 +117,7 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        Day: renderDay
       }}
       {...props}
     />
