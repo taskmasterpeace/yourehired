@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import { generateICalString } from './calendarUtils.js';
 import { 
   Dialog, 
@@ -11,6 +10,32 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, X, Smartphone, Check, Download } from 'lucide-react';
+
+// We'll use a dynamic import for QRCode to avoid SSR issues
+const QRCodeComponent = ({ value, size = 200 }) => {
+  const [QRCode, setQRCode] = useState(null);
+
+  React.useEffect(() => {
+    import('qrcode.react').then(module => {
+      setQRCode(() => module.QRCodeSVG);
+    });
+  }, []);
+
+  if (!QRCode) return <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg"></div>;
+  
+  return <QRCode 
+    value={value}
+    size={size}
+    level="M"
+    includeMargin={true}
+    imageSettings={{
+      src: "/logo-small.png", // Your app logo (optional)
+      height: 24,
+      width: 24,
+      excavate: true
+    }}
+  />;
+};
 
 const CalendarQRModal = ({ event, isOpen, onClose }) => {
   const [feedbackGiven, setFeedbackGiven] = useState(false);
@@ -91,18 +116,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           
           {/* QR Code */}
           <div className="qr-container p-4 bg-white rounded-lg shadow-sm">
-            <QRCodeSVG 
-              value={calendarData}
-              size={200}
-              level="M" // Medium error correction
-              includeMargin={true}
-              imageSettings={{
-                src: "/logo-small.png", // Your app logo (optional)
-                height: 24,
-                width: 24,
-                excavate: true
-              }}
-            />
+            <QRCodeComponent value={calendarData} />
           </div>
           
           {/* Alternative options */}

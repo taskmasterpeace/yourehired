@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar } from "../ui/calendar";
+"use client"
+
+import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
+
+// Use dynamic import for Calendar to avoid SSR issues
+const Calendar = dynamic(
+  () => import("../ui/calendar").then((mod) => mod.Calendar),
+  { ssr: false }
+);
 import CalendarHeader from './CalendarHeader';
 import EventList from './EventList';
 import TimelineView from './TimelineView';

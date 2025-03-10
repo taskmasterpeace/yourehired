@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import CalendarView from '../calendar/CalendarView';
+"use client"
+
+import React from 'react';
+import dynamic from 'next/dynamic';
+
+// Use dynamic import to avoid SSR issues
+const CalendarView = dynamic(
+  () => import('../calendar/CalendarView'),
+  { ssr: false }
+);
 
 interface CalendarTabProps {
   events: any[];
