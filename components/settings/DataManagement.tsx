@@ -5,6 +5,7 @@ import { Input } from "../ui/input";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Download, Upload, RefreshCw, AlertTriangle, Award, MessageSquare, Bug } from "lucide-react";
 import { getFromStorage, saveToStorage, clearFromStorage } from "../../lib/storage";
+import { Switch } from "../ui/switch";
 
 interface DataManagementProps {
   isDarkMode: boolean;
@@ -72,6 +73,12 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
             data = JSON.parse(rawText);
           } catch (parseError) {
             console.error("JSON parse error:", parseError);
+            if (debugMode) {
+              setDebugData(prev => ({ 
+                ...prev, 
+                error: `Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
+              }));
+            }
             throw new Error(`Failed to parse JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
           }
         }
