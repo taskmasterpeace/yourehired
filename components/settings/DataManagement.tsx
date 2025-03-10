@@ -578,7 +578,7 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
           )}
           
           {/* Debug Information Panel */}
-          {debugMode && (
+          {debugMode && showDebugInfo && (
             <div className={`mt-4 p-4 rounded-md border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
               <h4 className="text-sm font-semibold mb-2 flex items-center">
                 <Bug className="h-4 w-4 mr-1" />
@@ -605,10 +605,10 @@ export function DataManagement({ isDarkMode }: DataManagementProps) {
               
               {/* Parsed Data Section */}
               <div>
-                <h5 className="text-xs font-medium mb-1">Parsed Data (if available):</h5>
+                <h5 className="text-xs font-medium mb-1">Parsed Data Structure:</h5>
                 <pre className={`text-xs p-2 rounded overflow-x-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`} style={{ maxHeight: '150px' }}>
                   {debugData.parsedData 
-                    ? JSON.stringify(debugData.parsedData, null, 2).substring(0, 500) + "..." 
+                    ? `Type: ${typeof debugData.parsedData}\nIs Array: ${Array.isArray(debugData.parsedData)}\nKeys: ${Object.keys(debugData.parsedData).join(', ')}\n\nSample: ${JSON.stringify(debugData.parsedData, null, 2).substring(0, 300)}...` 
                     : "No parsed data available."}
                 </pre>
               </div>
