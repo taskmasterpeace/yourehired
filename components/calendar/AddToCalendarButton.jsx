@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import { CalendarIcon, Download, Copy, QrCode } from 'lucide-react';
 import { generateICalString } from './calendarUtils.js';
 import {
@@ -7,10 +7,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 
-// We'll use dynamic import for the modal to avoid SSR issues
-const CalendarQRModal = React.lazy(() => import('./CalendarQRModal.jsx'));
+import CalendarQRModal from './CalendarQRModal.jsx';
 
 const AddToCalendarButton = ({ event, variant = "default", size = "default", compact = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,15 +82,11 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
           </DropdownMenuContent>
         </DropdownMenu>
         
-        {isModalOpen && (
-          <React.Suspense fallback={<div>Loading...</div>}>
-            <CalendarQRModal 
-              event={event}
-              isOpen={isModalOpen}
-              onClose={closeModal}
-            />
-          </React.Suspense>
-        )}
+        <CalendarQRModal 
+          event={event}
+          isOpen={isModalOpen}
+          onClose={closeModal}
+        />
       </>
     );
   }
@@ -108,15 +103,11 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
         Add to Calendar
       </Button>
       
-      {isModalOpen && (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <CalendarQRModal 
-            event={event}
-            isOpen={isModalOpen}
-            onClose={closeModal}
-          />
-        </React.Suspense>
-      )}
+      <CalendarQRModal 
+        event={event}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </>
   );
 };
