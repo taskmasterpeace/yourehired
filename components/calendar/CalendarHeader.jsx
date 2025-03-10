@@ -23,7 +23,7 @@ const CalendarHeader = ({
       month: { month: 'long', year: 'numeric' },
       week: { month: 'short', day: 'numeric', year: 'numeric' },
       day: { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' },
-      timeline: { month: 'long', year: 'numeric' }
+      agenda: { month: 'long', year: 'numeric' }
     };
     
     return selectedDate.toLocaleDateString('en-US', options[viewMode]);
@@ -34,7 +34,7 @@ const CalendarHeader = ({
       <div>
         <CardTitle className="flex items-center">
           <CalendarIcon className="mr-2 h-5 w-5 text-blue-500" />
-          <span className="text-blue-500 font-bold">{formatHeaderDate()} - FIXED</span>
+          <span className="text-blue-500 font-bold">{formatHeaderDate()}</span>
         </CardTitle>
       </div>
       
@@ -70,11 +70,11 @@ const CalendarHeader = ({
             <Clock className="h-4 w-4" />
           </Button>
           <Button 
-            variant={viewMode === 'timeline' ? 'default' : 'ghost'} 
+            variant={viewMode === 'agenda' ? 'default' : 'ghost'} 
             size="sm"
-            onClick={() => setViewMode('timeline')}
+            onClick={() => setViewMode('agenda')}
             className="rounded-none rounded-r-md"
-            title="Timeline View"
+            title="Agenda View"
           >
             Timeline
           </Button>
