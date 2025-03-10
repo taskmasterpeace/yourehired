@@ -206,13 +206,19 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
         console.log("Normalized data:", normalizedData.length, "applications");
         
         // Store the normalized data
+        console.log("About to save job applications:", normalizedData.length);
         saveToStorage('jobApplications', normalizedData);
+        console.log("Saved job applications to storage");
+        
+        // Verify the data is there immediately after saving
+        const verifyData = getFromStorage('jobApplications', []);
+        console.log("Verification - data in storage after save:", verifyData.length);
         
         setImportStatus(`Successfully imported ${normalizedData.length} job applications`);
         setStatusType('success');
         
         // Don't reload the page, just show success message
-        // The user can navigate back manually to see their imported data
+        // The user can navigate back to see their imported data
         
       } catch (error) {
         console.error('Import error:', error);
@@ -516,10 +522,24 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
   return (
     <Card className={`mb-6 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
       <CardHeader>
-        <CardTitle>Data Management</CardTitle>
-        <CardDescription>
-          Import or export your job application data
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Data Management</CardTitle>
+            <CardDescription>
+              Import or export your job application data
+            </CardDescription>
+          </div>
+          {onNavigateBack && (
+            <Button 
+              onClick={onNavigateBack}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Import Section */}
@@ -582,10 +602,10 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
             <Button 
               onClick={onNavigateBack}
               className="mt-3 flex items-center gap-2"
-              variant="outline"
+              variant="primary"
             >
               <ArrowLeft className="h-4 w-4" />
-              Return to Dashboard
+              Return to Dashboard to View Imported Data
             </Button>
           )}
           

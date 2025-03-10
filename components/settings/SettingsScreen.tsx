@@ -117,7 +117,15 @@ export function SettingsScreen({ isDarkMode, toggleDarkMode, onNavigateBack }: S
       </Card>
       
       {/* Data Management Section */}
-      <DataManagement isDarkMode={isDarkMode} onNavigateBack={onNavigateBack} />
+      <DataManagement 
+        isDarkMode={isDarkMode} 
+        onNavigateBack={() => {
+          console.log("Navigating back to dashboard from settings");
+          if (onNavigateBack) {
+            onNavigateBack();
+          }
+        }} 
+      />
       
       {/* Save Button */}
       <div className="flex justify-end">
