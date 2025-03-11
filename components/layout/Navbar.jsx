@@ -4,6 +4,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import NotificationBell from '../notifications/NotificationBell';
 import NotificationCenter from '../notifications/NotificationCenter';
+import TestNotificationButton from '../notifications/TestNotificationButton';
 
 const Navbar = () => {
   // Add a fallback in case the context isn't available yet
@@ -49,6 +50,7 @@ const Navbar = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <TestNotificationButton />
             <Popover>
               <PopoverTrigger asChild>
                 <div>
