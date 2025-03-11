@@ -52,6 +52,9 @@ const NotificationCenter = ({
     router.push('/settings?tab=notifications');
   };
   
+  // Calculate unread count
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
   return (
     <div className="w-80">
         <div className="flex items-center justify-between p-4 dark:border-gray-700">
