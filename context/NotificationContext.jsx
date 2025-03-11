@@ -226,6 +226,13 @@ export const NotificationProvider = ({ children }) => {
     addBackupReminder
   };
   
+  // Debug log
+  console.log('NotificationContext value:', {
+    notificationsCount: notifications.length,
+    unreadCount,
+    hasAddTestNotification: !!addTestNotification
+  });
+  
   return (
     <NotificationContext.Provider value={value}>
       {children}
