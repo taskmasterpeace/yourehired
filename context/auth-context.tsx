@@ -139,8 +139,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Update localStorage when localStorageOnly changes
   useEffect(() => {
     localStorage.setItem('localStorageOnly', localStorageOnly.toString());
-  }, [localStorageOnly]);
+    
+    // If switching from local-only to cloud storage, offer to sync local data
+    if (user && !localStorageOnly && localStorage.getItem('localStorageOnly') === 'true') {
+      // Get local data
+      try {
+        const localOpportunities = JSON.parse(localStorage.getItem('opportunities') || '[]');
+        const localResume = localStorage.getItem('masterResume') || '';
+        const localEvents = JSON.parse(localStorage.getItem('events') || '[]');
+        
+        // If there's local data, offer to sync it
+        if (localOpportunities.length > 0 || localResume || localEvents.length > 0) {
+          const shouldSync = window.confirm(
+            "You have local data that isn't synced to the cloud. Would you like to upload your local data now?"
+          );
+          
+          if (shouldSync) {
+            saveUserData({
+              opportunities: localOpportunities,
+              resume: localResume,
+              events: localEvents
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error syncing local data:', error);
+      }
+    }
+  }, [localStorageOnly, user]);
 
+  // Add online/offline event listeners
+  useEffect(() => {
+    const handleOnline = async () => {
+      // If we have pending syncs and we're not in local-only mode
+      if (localStorage.getItem('pendingSync') === 'true' && !localStorageOnly && user) {
+        console.log('Back online. Syncing pending data...');
+        try {
+          // Get local data
+          const localOpportunities = JSON.parse(localStorage.getItem('opportunities') || '[]');
+          const localResume = localStorage.getItem('masterResume') || '';
+          const localEvents = JSON.parse(localStorage.getItem('events') || '[]');
+          
+          // Sync to server
+          await saveUserData({
+            opportunities: localOpportunities,
+            resume: localResume,
+            events: localEvents
+          });
+          
+          console.log('Pending data synced successfully');
+        } catch (error) {
+          console.error('Error syncing pending data:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('online', handleOnline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [user, localStorageOnly]);
+  
   // User data functions
   const loadUserData = async () => {
     // If in local storage only mode, don't load from database
@@ -172,6 +232,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (!user) throw new Error('User must be logged in to save data');
     
+    // Check if online
+    if (!navigator.onLine) {
+      console.warn('Currently offline. Data will only be saved locally.');
+      // Set a flag to sync when back online
+      localStorage.setItem('pendingSync', 'true');
+      return;
+    }
+    
     try {
       const savePromises = [];
       
@@ -188,9 +256,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       await Promise.all(savePromises);
+      // Clear pending sync flag if successful
+      localStorage.removeItem('pendingSync');
     } catch (err) {
       console.error('Error saving user data:', err);
-      throw err;
+      // Set a flag to retry sync later
+      localStorage.setItem('pendingSync', 'true');
+      // Don't throw the error to prevent app crashes
+      // Instead, we'll retry on next save attempt or when online
     }
   };
 

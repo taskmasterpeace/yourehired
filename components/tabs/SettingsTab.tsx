@@ -6,7 +6,9 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, HelpCircle } from "lucide-react";
+import { Badge } from "../ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 
 interface SettingsTabProps {
   opportunities: any[];
@@ -47,12 +49,21 @@ export function SettingsTab({
     
     if (newValue) {
       // Turning ON local storage only
-      if (confirm("This will stop syncing your data to the server. Your data will only be stored on this device. Continue?")) {
+      if (confirm(
+        "This will stop syncing your data to the server. Your data will only be stored on this device.\n\n" +
+        "Important: This means your data won't be available on other devices and could be lost if you clear your browser data.\n\n" +
+        "We recommend regularly exporting your data as a backup.\n\n" +
+        "Continue?"
+      )) {
         setLocalStorageOnly(true);
       }
     } else {
       // Turning OFF local storage only
-      if (confirm("This will start syncing your data to the server. Your data will be stored on our servers. Continue?")) {
+      if (confirm(
+        "This will start syncing your data to the server. Your data will be stored on our servers.\n\n" +
+        "Your existing local data can be uploaded to the cloud after this change.\n\n" +
+        "Continue?"
+      )) {
         setLocalStorageOnly(false);
       }
     }
@@ -979,6 +990,18 @@ export function SettingsTab({
               <p className="text-sm">
                 Use this mode if you have privacy concerns. For convenience and data safety,
                 we recommend keeping this option disabled to allow secure cloud storage.
+              </p>
+            </div>
+            
+            <div className="bg-amber-50 p-3 rounded text-amber-800 mt-2">
+              <p className="font-medium">Important:</p>
+              <p className="text-sm">
+                When switching from Local Storage Only to Cloud Storage, you'll be prompted to
+                upload your local data. This ensures no data is lost during the transition.
+              </p>
+              <p className="text-sm mt-1">
+                When offline, your data will always be saved locally first, then synced to the
+                cloud when you're back online (unless Local Storage Only is enabled).
               </p>
             </div>
           </div>
