@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, Check, Trash2, Settings, Save, AlertTriangle } from 'lucide-react';
+import React from 'react';
+import { Check, Trash2, Settings, Save, AlertTriangle } from 'lucide-react';
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
-import { Badge } from "../ui/badge";
 import { ScrollArea } from "../ui/scroll-area";
-import { useToast } from "../ui/use-toast";
 import { useRouter } from 'next/navigation';
 
 const NotificationCenter = ({ 
@@ -14,15 +12,7 @@ const NotificationCenter = ({
   onMarkAllRead, 
   onMarkOneRead 
 }) => {
-  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
-  const { toast } = useToast();
-  
-  // Calculate unread count whenever notifications change
-  useEffect(() => {
-    const count = notifications.filter(notification => !notification.read).length;
-    setUnreadCount(count);
-  }, [notifications]);
   
   // Format the notification time
   const formatNotificationTime = (timestamp) => {
@@ -63,25 +53,7 @@ const NotificationCenter = ({
   };
   
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative"
-          aria-label="Notifications"
-        >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-red-500 text-white text-xs"
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 dark:bg-gray-800 dark:border-gray-700" align="end">
+    <div className="w-80">
         <div className="flex items-center justify-between p-4 dark:border-gray-700">
           <h3 className="font-medium dark:text-gray-200">Hey! Notifications</h3>
           <div className="flex space-x-1">
@@ -187,8 +159,7 @@ const NotificationCenter = ({
             ))}
           </ScrollArea>
         )}
-      </PopoverContent>
-    </Popover>
+    </div>
   );
 };
 

@@ -1,8 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { useNotifications } from '../../context/NotificationContext';
-import NotificationCenter from '../notifications/NotificationCenter';
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import NotificationBell from '../notifications/NotificationBell';
+import NotificationCenter from '../notifications/NotificationCenter';
 
 const Navbar = () => {
   // Add a fallback in case the context isn't available yet
@@ -48,14 +49,22 @@ const Navbar = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            {/* NotificationCenter already has its own Popover implementation */}
-            <NotificationCenter 
-              notifications={notifications}
-              onClearAll={clearAllNotifications}
-              onClearOne={clearNotification}
-              onMarkAllRead={markAllAsRead}
-              onMarkOneRead={markAsRead}
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <div>
+                  <NotificationBell />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="p-0" align="end">
+                <NotificationCenter 
+                  notifications={notifications}
+                  onClearAll={clearAllNotifications}
+                  onClearOne={clearNotification}
+                  onMarkAllRead={markAllAsRead}
+                  onMarkOneRead={markAsRead}
+                />
+              </PopoverContent>
+            </Popover>
             
             {/* User menu and other icons */}
           </div>
