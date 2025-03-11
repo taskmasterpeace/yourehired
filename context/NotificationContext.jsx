@@ -3,7 +3,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 const NotificationContext = createContext();
 
-export const useNotifications = () => useContext(NotificationContext);
+export const useNotifications = () => {
+  const context = useContext(NotificationContext);
+  // Return undefined instead of throwing an error
+  return context;
+};
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);

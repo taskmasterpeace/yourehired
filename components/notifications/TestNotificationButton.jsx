@@ -3,20 +3,18 @@ import { Button } from "../ui/button";
 import { useNotifications } from '../../context/NotificationContext';
 
 const TestNotificationButton = () => {
-  const { addTestNotification } = useNotifications();
+  const notificationContext = useNotifications();
   
-  // Add console log to debug
-  console.log('TestNotificationButton rendered, addTestNotification:', !!addTestNotification);
+  // Add a fallback if the context is not available
+  const addTestNotification = notificationContext?.addTestNotification || (() => {
+    console.warn('addTestNotification not available');
+  });
   
   return (
     <Button 
       onClick={() => {
         console.log('Test notification button clicked');
-        if (addTestNotification) {
-          addTestNotification();
-        } else {
-          console.error('addTestNotification function is not available');
-        }
+        addTestNotification();
       }}
       variant="outline"
       size="sm"
