@@ -5,7 +5,8 @@ import { Badge } from "../ui/badge";
 import { useNotifications } from '../../context/NotificationContext';
 
 const NotificationBell = ({ variant = 'default' }) => {
-  const { unreadCount } = useNotifications();
+  const notificationContext = useNotifications();
+  const unreadCount = notificationContext ? notificationContext.unreadCount : 0;
   
   return (
     <Button 

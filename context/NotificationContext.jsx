@@ -21,6 +21,8 @@ export const NotificationProvider = ({ children }) => {
   
   // Load notifications and settings from localStorage on mount
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     try {
       const savedNotifications = localStorage.getItem('notifications');
       if (savedNotifications) {
@@ -62,6 +64,8 @@ export const NotificationProvider = ({ children }) => {
   
   // Save notifications to localStorage when they change
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     try {
       localStorage.setItem('notifications', JSON.stringify(notifications));
     } catch (error) {
@@ -71,6 +75,8 @@ export const NotificationProvider = ({ children }) => {
   
   // Save settings to localStorage when they change
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     try {
       localStorage.setItem('notificationSettings', JSON.stringify(settings));
     } catch (error) {

@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [localStorageOnly, setLocalStorageOnly] = useState<boolean>(
-    localStorage.getItem('localStorageOnly') === 'true' || false
+    typeof window !== 'undefined' && localStorage.getItem('localStorageOnly') === 'true' || false
   );
 
   useEffect(() => {
@@ -138,6 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Update localStorage when localStorageOnly changes
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     localStorage.setItem('localStorageOnly', localStorageOnly.toString());
     
     // If switching from local-only to cloud storage, offer to sync local data
@@ -170,6 +172,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Add online/offline event listeners
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleOnline = async () => {
       // If we have pending syncs and we're not in local-only mode
       if (localStorage.getItem('pendingSync') === 'true' && !localStorageOnly && user) {
