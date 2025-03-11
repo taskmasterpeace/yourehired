@@ -9,7 +9,7 @@ import {
   Settings,
   BarChart
 } from 'lucide-react';
-import NotificationBell from '../NotificationBell';
+import NotificationBell from '../notifications/NotificationBell';
 
 const Sidebar = () => {
   return (
