@@ -3,6 +3,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { 
+  getUserOpportunities, 
+  saveUserOpportunities,
+  getUserResume,
+  saveUserResume,
+  getUserEvents,
+  saveUserEvents
+} from '../lib/userDataService';
 
 type AuthContextType = {
   user: User | null;
@@ -21,6 +29,16 @@ type AuthContextType = {
     error: Error | null;
     data: {} | null;
   }>;
+  loadUserData: () => Promise<{
+    opportunities: any[];
+    resume: string;
+    events: any[];
+  }>;
+  saveUserData: (data: {
+    opportunities?: any[];
+    resume?: string;
+    events?: any[];
+  }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,6 +131,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // User data functions
+  const loadUserData = async () => {
+    if (!user) return { opportunities: [], resume: '', events: [] };
+    
+    try {
+      const [opportunities, resume, events] = await Promise.all([
+        getUserOpportunities(user.id),
+        getUserResume(user.id),
+        getUserEvents(user.id)
+      ]);
+      
+      return { opportunities, resume, events };
+    } catch (err) {
+      console.error('Error loading user data:', err);
+      throw err;
+    }
+  };
+
+  const saveUserData = async ({ opportunities, resume, events }) => {
+    if (!user) throw new Error('User must be logged in to save data');
+    
+    try {
+      const savePromises = [];
+      
+      if (opportunities) {
+        savePromises.push(saveUserOpportunities(user.id, opportunities));
+      }
+      
+      if (resume) {
+        savePromises.push(saveUserResume(user.id, resume));
+      }
+      
+      if (events) {
+        savePromises.push(saveUserEvents(user.id, events));
+      }
+      
+      await Promise.all(savePromises);
+    } catch (err) {
+      console.error('Error saving user data:', err);
+      throw err;
+    }
+  };
+
   const value = {
     user,
     session,
@@ -121,6 +182,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     resetPassword,
+    loadUserData,
+    saveUserData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -317,9 +317,58 @@ const ProtectedContent = ({
 export default function CAPTAINGui() {
   const { state, dispatch } = useAppState();
   const { opportunities, masterResume, events, chatMessages } = state;
-  const { user, signOut, isLoading: authLoading } = useAuth();
+  const { user, signOut, isLoading: authLoading, loadUserData, saveUserData } = useAuth();
   
   const [isClientSide, setIsClientSide] = useState(false);
+  
+  // Load user data when user logs in
+  useEffect(() => {
+    async function fetchUserData() {
+      if (user) {
+        try {
+          const userData = await loadUserData();
+          
+          // Update app state with user data
+          if (userData.opportunities && userData.opportunities.length > 0) {
+            dispatch({ type: 'SET_OPPORTUNITIES', payload: userData.opportunities });
+          }
+          
+          if (userData.resume) {
+            dispatch({ type: 'UPDATE_MASTER_RESUME', payload: userData.resume });
+          }
+          
+          if (userData.events && userData.events.length > 0) {
+            dispatch({ type: 'SET_EVENTS', payload: userData.events });
+          }
+        } catch (error) {
+          console.error('Error loading user data:', error);
+        }
+      }
+    }
+    
+    fetchUserData();
+  }, [user]);
+  
+  // Save user data when it changes
+  useEffect(() => {
+    async function persistUserData() {
+      if (user) {
+        try {
+          await saveUserData({
+            opportunities,
+            resume: masterResume,
+            events
+          });
+        } catch (error) {
+          console.error('Error saving user data:', error);
+        }
+      }
+    }
+    
+    // Debounce to avoid too many saves
+    const timeoutId = setTimeout(persistUserData, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [opportunities, masterResume, events, user]);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState("opportunities");
   const [helpView, setHelpView] = useState<{ active: boolean; guideId?: string; sectionId?: string }>({ active: false });
