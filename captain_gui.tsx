@@ -317,7 +317,8 @@ const ProtectedContent = ({
 export default function CAPTAINGui() {
   const { state, dispatch } = useAppState();
   const { opportunities, masterResume, events, chatMessages } = state;
-  const { user, signOut, isLoading: authLoading, loadUserData, saveUserData } = useAuth();
+  const { user, signOut, isLoading: authLoading, loadUserData, saveUserData, localStorageOnly, setLocalStorageOnly } = useAuth();
+  const [showStorageOptionsDialog, setShowStorageOptionsDialog] = useState(false);
   
   const [isClientSide, setIsClientSide] = useState(false);
   
@@ -387,6 +388,12 @@ export default function CAPTAINGui() {
       
       // Show welcome message
       alert(`Welcome, ${user.email}! Your account is now connected.`);
+    }
+    
+    // Show storage options explanation for first-time users
+    if (user && !localStorage.getItem('storageOptionsExplained')) {
+      setShowStorageOptionsDialog(true);
+      localStorage.setItem('storageOptionsExplained', 'true');
     }
   }, [user]);
   const [selectedOpportunityIndex, setSelectedOpportunityIndex] = useState(0);
@@ -1869,6 +1876,14 @@ export default function CAPTAINGui() {
             />
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">Hey, You're Hired!</h1>
           </div>
+          
+          {/* Local storage indicator */}
+          {localStorageOnly && (
+            <div className="hidden md:flex bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium items-center">
+              <Lock className="h-3 w-3 mr-1" />
+              Local Storage Only
+            </div>
+          )}
           <div className="hidden sm:flex items-center">
             <Switch
               checked={isDarkMode}
@@ -2010,6 +2025,8 @@ export default function CAPTAINGui() {
                 setShowDebugPanel={setShowDebugPanel}
                 toggleDarkMode={toggleDarkMode}
                 user={user}
+                localStorageOnly={localStorageOnly}
+                setLocalStorageOnly={setLocalStorageOnly}
               />
             </ProtectedContent>
           </TabsContent>
@@ -2031,6 +2048,55 @@ export default function CAPTAINGui() {
           </Button>
         )}
         
+        {/* Storage Options Dialog */}
+        <Dialog open={showStorageOptionsDialog} onOpenChange={setShowStorageOptionsDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Data Storage Options</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>
+                Hey You're Hired! offers two ways to store your job application data:
+              </p>
+              
+              <div className="space-y-3">
+                <div className="p-3 border rounded-md">
+                  <h3 className="font-medium">Cloud Storage (Default)</h3>
+                  <p className="text-sm text-gray-600">
+                    Your data is securely stored on our servers and available on any device when you log in.
+                  </p>
+                  <div className="text-sm text-green-600 mt-1">
+                    ✓ Access from anywhere<br />
+                    ✓ Data backup<br />
+                    ✓ Device synchronization
+                  </div>
+                </div>
+                
+                <div className="p-3 border rounded-md">
+                  <h3 className="font-medium">Local Storage Only</h3>
+                  <p className="text-sm text-gray-600">
+                    Your data stays only on this device and is never sent to our servers.
+                  </p>
+                  <div className="text-sm text-blue-600 mt-1">
+                    ✓ Enhanced privacy<br />
+                    ✓ Works offline<br />
+                    ✓ No server storage
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-sm">
+                You can change this setting anytime in the Privacy Settings section.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setShowStorageOptionsDialog(false)}>
+                Got it
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Debug panel */}
         {showDebugPanel && (
           <div className={`fixed bottom-0 right-0 w-full md:w-1/2 lg:w-1/3 z-50 ${isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-800'} border-t border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} shadow-lg`}>
@@ -2100,6 +2166,13 @@ export default function CAPTAINGui() {
                           current: currentRecommendationIndex,
                           rated: ratedRecommendations.length
                         }, null, 2)}
+                      </pre>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium">Storage Mode</h4>
+                      <pre className={`text-xs p-1 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        {localStorageOnly ? 'Local Storage Only' : 'Cloud + Local Storage'}
                       </pre>
                     </div>
                   </div>

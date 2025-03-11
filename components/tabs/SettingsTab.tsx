@@ -17,6 +17,8 @@ interface SettingsTabProps {
   setShowDebugPanel: (show: boolean) => void;
   toggleDarkMode: (checked: boolean) => void;
   user: any;
+  localStorageOnly: boolean;
+  setLocalStorageOnly: (value: boolean) => void;
 }
 
 export function SettingsTab({
@@ -27,7 +29,9 @@ export function SettingsTab({
   showDebugPanel,
   setShowDebugPanel,
   toggleDarkMode,
-  user
+  user,
+  localStorageOnly,
+  setLocalStorageOnly
 }: SettingsTabProps) {
   const [importStatus, setImportStatus] = useState('');
   const [importOptions, setImportOptions] = useState({
@@ -35,6 +39,24 @@ export function SettingsTab({
     achievements: false,
     analytics: false
   });
+  const [showStorageInfoDialog, setShowStorageInfoDialog] = useState(false);
+  
+  // Handle the toggle with confirmation
+  const handleLocalStorageToggle = (newValue: boolean) => {
+    if (newValue === localStorageOnly) return;
+    
+    if (newValue) {
+      // Turning ON local storage only
+      if (confirm("This will stop syncing your data to the server. Your data will only be stored on this device. Continue?")) {
+        setLocalStorageOnly(true);
+      }
+    } else {
+      // Turning OFF local storage only
+      if (confirm("This will start syncing your data to the server. Your data will be stored on our servers. Continue?")) {
+        setLocalStorageOnly(false);
+      }
+    }
+  };
   const [importData, setImportData] = useState(null);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [importStep, setImportStep] = useState('select'); // 'select', 'confirm', 'complete'
@@ -830,7 +852,14 @@ export function SettingsTab({
       {/* Privacy Settings Card */}
       <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
         <CardHeader>
-          <CardTitle>Privacy Settings</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            Privacy Settings
+            {localStorageOnly && (
+              <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-200">
+                Local Only Mode
+              </Badge>
+            )}
+          </CardTitle>
           <CardDescription>
             Control your data and privacy preferences
           </CardDescription>
@@ -851,22 +880,115 @@ export function SettingsTab({
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="local-storage-only">Local Storage Only</Label>
-                <p className="text-sm text-gray-500">
-                  Keep all data on your device only
-                </p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center">
+                    <Label htmlFor="local-storage-only">Local Storage Only</Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0 ml-1"
+                      onClick={() => setShowStorageInfoDialog(true)}
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Keep all data on your device only
+                  </p>
+                </div>
+                <Switch
+                  id="local-storage-only"
+                  checked={localStorageOnly}
+                  onCheckedChange={handleLocalStorageToggle}
+                />
               </div>
-              <Switch
-                id="local-storage-only"
-                checked={true} // Replace with actual state
-                onCheckedChange={() => {}} // Add handler
-              />
+              
+              {localStorageOnly && (
+                <Alert className="mt-2 bg-yellow-50 border-yellow-100 text-yellow-800">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Local Storage Only Mode Active</AlertTitle>
+                  <AlertDescription>
+                    Your data is only stored on this device and is not being synced to our servers.
+                    This data may be lost if you clear your browser data or switch devices.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+            
+            {/* Data Export/Import Section */}
+            <div className="pt-4 border-t mt-4">
+              <h3 className="text-sm font-medium mb-2">Data Portability</h3>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">
+                  Export your data for backup or to use on another device
+                </p>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleExportData}
+                  >
+                    Export Data
+                  </Button>
+                  <Input
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileImport}
+                    className="max-w-xs"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
+      
+      {/* Storage Info Dialog */}
+      <Dialog open={showStorageInfoDialog} onOpenChange={setShowStorageInfoDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>About Local Storage Only Mode</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>
+              When <strong>Local Storage Only</strong> mode is enabled:
+            </p>
+            
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                Your data is stored only on your current device using browser storage
+              </li>
+              <li>
+                No data is sent to or stored on our servers
+              </li>
+              <li>
+                Your data will not sync between different devices or browsers
+              </li>
+              <li>
+                If you clear your browser data, your job application data will be lost
+              </li>
+              <li>
+                You should regularly export your data as a backup
+              </li>
+            </ul>
+            
+            <div className="bg-blue-50 p-3 rounded text-blue-800">
+              <p className="font-medium">Recommendation:</p>
+              <p className="text-sm">
+                Use this mode if you have privacy concerns. For convenience and data safety,
+                we recommend keeping this option disabled to allow secure cloud storage.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowStorageInfoDialog(false)}>
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Developer Options Card */}
       <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>

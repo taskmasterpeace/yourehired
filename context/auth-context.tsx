@@ -16,6 +16,8 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  localStorageOnly: boolean;
+  setLocalStorageOnly: (value: boolean) => void;
   signIn: (email: string, password: string) => Promise<{
     error: Error | null;
     data?: Session | null;
@@ -47,6 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [localStorageOnly, setLocalStorageOnly] = useState<boolean>(
+    localStorage.getItem('localStorageOnly') === 'true' || false
+  );
 
   useEffect(() => {
     // Check if Supabase is properly initialized
@@ -131,8 +136,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Update localStorage when localStorageOnly changes
+  useEffect(() => {
+    localStorage.setItem('localStorageOnly', localStorageOnly.toString());
+  }, [localStorageOnly]);
+
   // User data functions
   const loadUserData = async () => {
+    // If in local storage only mode, don't load from database
+    if (localStorageOnly) {
+      return { opportunities: [], resume: '', events: [] };
+    }
+    
     if (!user) return { opportunities: [], resume: '', events: [] };
     
     try {
@@ -150,6 +165,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const saveUserData = async ({ opportunities, resume, events }) => {
+    // If in local storage only mode, don't save to database
+    if (localStorageOnly) {
+      return; // Just return as data is already saved to localStorage by the state management
+    }
+    
     if (!user) throw new Error('User must be logged in to save data');
     
     try {
@@ -178,6 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     isLoading,
+    localStorageOnly,
+    setLocalStorageOnly,
     signIn,
     signUp,
     signOut,
