@@ -177,6 +177,35 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [addNotification]);
   
+  // Add backup reminder notification
+  const addBackupReminder = useCallback((dataStats = {}) => {
+    if (!settings.enabled) return null;
+    
+    const { daysSinceBackup = 7, newEntries = 10, totalSize = '5MB' } = dataStats;
+    
+    let title = 'Time to Back Up Your Data';
+    let message = 'It\'s been a while since your last backup.';
+    
+    if (daysSinceBackup > 30) {
+      title = 'Backup Overdue!';
+      message = `It's been ${daysSinceBackup} days since your last backup.`;
+    } else if (newEntries > 20) {
+      title = 'New Data Needs Backup';
+      message = `You've added ${newEntries} new entries since your last backup.`;
+    } else if (totalSize && totalSize.includes('MB') && parseInt(totalSize) > 10) {
+      title = 'Large Data Volume';
+      message = `Your data (${totalSize}) should be backed up soon.`;
+    }
+    
+    return addNotification({
+      type: 'backup_reminder',
+      title,
+      message,
+      eventId: null,
+      actionUrl: '/settings?tab=backup'
+    });
+  }, [settings, addNotification]);
+  
   // Get unread notifications count
   const unreadCount = useMemo(() => {
     return notifications.filter(notification => !notification.read).length;
@@ -193,7 +222,8 @@ export const NotificationProvider = ({ children }) => {
     markAsRead,
     updateSettings,
     addEventReminder,
-    addTestNotification
+    addTestNotification,
+    addBackupReminder
   };
   
   return (

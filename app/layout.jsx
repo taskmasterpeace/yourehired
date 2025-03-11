@@ -1,6 +1,7 @@
 import { NotificationProvider } from '../context/NotificationContext';
 import { ActivityProvider } from '../context/ActivityContext';
 import { AuthProvider } from '../context/auth-context';
+import { BackupReminderProvider } from '../context/BackupReminderContext';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
 
@@ -15,8 +16,9 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <NotificationProvider>
             <ActivityProvider>
-              {/* Your other providers */}
-              <div className="flex h-screen overflow-hidden">
+              <BackupReminderProvider>
+                {/* Your other providers */}
+                <div className="flex h-screen overflow-hidden">
                 <Sidebar />
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <Navbar />
@@ -25,7 +27,8 @@ export default function RootLayout({ children }) {
                     <p>© 2025 Hey You're Hired! v0.41 - Your Job Application Tracker</p>
                   </footer>
                 </div>
-              </div>
+                </div>
+              </BackupReminderProvider>
             </ActivityProvider>
           </NotificationProvider>
         </AuthProvider>

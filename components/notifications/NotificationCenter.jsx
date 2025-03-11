@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Check, Trash2, Settings } from 'lucide-react';
+import { Bell, Check, Trash2, Settings, Save, AlertTriangle } from 'lucide-react';
 import { Button } from "../ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../ui/popover";
 import { Separator } from "../ui/separator";
 import { Badge } from "../ui/badge";
 import { ScrollArea } from "../ui/scroll-area";
@@ -46,16 +41,19 @@ const NotificationCenter = ({
     return date.toLocaleDateString();
   };
   
-  // Handle navigation to event
+  // Handle navigation to event or action
   const handleNavigateToEvent = (notification) => {
+    // Mark as read first
+    if (!notification.read && onMarkOneRead) {
+      onMarkOneRead(notification.id);
+    }
+    
     if (notification.eventId) {
-      // Mark as read first
-      if (!notification.read && onMarkOneRead) {
-        onMarkOneRead(notification.id);
-      }
-      
-      // Navigate to the event (you'll need to implement this based on your routing)
+      // Navigate to the event
       router.push(`/calendar?event=${notification.eventId}`);
+    } else if (notification.actionUrl) {
+      // Navigate to the action URL (like backup settings)
+      router.push(notification.actionUrl);
     }
   };
   
@@ -131,13 +129,25 @@ const NotificationCenter = ({
                 onClick={() => handleNavigateToEvent(notification)}
               >
                 <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className={`text-sm ${!notification.read ? 'font-medium' : ''}`}>
-                      {notification.title}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {notification.message}
-                    </p>
+                  <div className="flex-1 flex">
+                    {notification.type === 'backup_reminder' && (
+                      <div className="mr-2 mt-0.5">
+                        <Save className="h-4 w-4 text-amber-500" />
+                      </div>
+                    )}
+                    {notification.type === 'system' && (
+                      <div className="mr-2 mt-0.5">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      </div>
+                    )}
+                    <div>
+                      <p className={`text-sm ${!notification.read ? 'font-medium' : ''}`}>
+                        {notification.title}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {notification.message}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-xs text-gray-500">
