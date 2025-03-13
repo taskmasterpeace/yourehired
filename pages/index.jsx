@@ -1,12 +1,10 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import CAPTAINGui from "../captain_gui";
+import { AppProvider } from "../context/context";
 
 export default function Home() {
-  const router = useRouter();
-  
-  useEffect(() => {
-    router.push('/dashboard');
-  }, [router]);
-  
-  return <div>Redirecting to dashboard...</div>;
+  return (
+    <AppProvider>
+      <CAPTAINGui />
+    </AppProvider>
+  );
 }
