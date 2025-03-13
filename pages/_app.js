@@ -1,3 +1,4 @@
+import '../globals.css';
 import { NotificationProvider } from '../context/NotificationContext';
 import { ActivityProvider } from '../context/ActivityContext';
 import { AuthProvider } from '../context/auth-context';
