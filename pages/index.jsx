@@ -1,3 +1,4 @@
+import React from 'react';
 import CAPTAINGui from "../captain_gui";
 import { AppProvider } from "../context/context";
 

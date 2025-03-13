@@ -1,5 +1,10 @@
 import React from 'react';
-import TestNotificationButton from '../components/notifications/TestNotificationButton';
+import dynamic from 'next/dynamic';
+
+const TestNotificationButton = dynamic(
+  () => import('../components/notifications/TestNotificationButton'),
+  { ssr: false }
+);
 
 export default function Dashboard() {
   return (

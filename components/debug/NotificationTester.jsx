@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
@@ -7,7 +7,11 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Separator } from '../ui/separator';
 import { Switch } from '../ui/switch';
-import { checkBackupNeeded, calculateLocalStorageSize, getNewEntriesCount } from '../../utils/backupReminders';
+
+// These will be imported dynamically on the client side
+let checkBackupNeeded;
+let calculateLocalStorageSize;
+let getNewEntriesCount;
 
 const NotificationTester = () => {
   const { 
@@ -23,6 +27,18 @@ const NotificationTester = () => {
   const [notificationDelay, setNotificationDelay] = useState(0);
   const [backupDays, setBackupDays] = useState(14);
   const [newEntries, setNewEntries] = useState(15);
+  
+  // Import client-side only utilities
+  useEffect(() => {
+    const importUtils = async () => {
+      const utils = await import('../../utils/backupReminders');
+      checkBackupNeeded = utils.checkBackupNeeded;
+      calculateLocalStorageSize = utils.calculateLocalStorageSize;
+      getNewEntriesCount = utils.getNewEntriesCount;
+    };
+    
+    importUtils();
+  }, []);
   
   const handleAddTestNotification = () => {
     addTestNotification(parseInt(notificationDelay));
