@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { Button } from "./components/ui/button"
 import { Input } from "./components/ui/input"
 import { Textarea } from "./components/ui/textarea"
@@ -11,7 +12,7 @@ import { useAuth } from './context/auth-context'
 import { useNotifications } from './context/NotificationContext'
 import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover"
 import NotificationBell from './components/notifications/NotificationBell'
-import NotificationCenter from './components/notifications/NotificationCenter'
+const NotificationCenter = dynamic(() => import('./components/notifications/NotificationCenter'), { ssr: false })
 // Force reload - using correct paths for root location
 import { AuthModal } from './components/auth/AuthModal'
 import { ResumeTab } from './components/tabs/ResumeTab'
