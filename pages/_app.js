@@ -6,7 +6,6 @@ import { ActivityProvider } from '../context/ActivityContext';
 import { AuthProvider } from '../context/auth-context';
 import { BackupReminderProvider } from '../context/BackupReminderContext';
 import { Toaster } from '../components/ui/toaster';
-import Sidebar from '../components/layout/Sidebar'; // Add the sidebar back
 
 function MyApp({ Component, pageProps }) {
   return (
@@ -14,8 +13,7 @@ function MyApp({ Component, pageProps }) {
       <NotificationProvider>
         <ActivityProvider>
           <BackupReminderProvider>
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar /> {/* This is the important sidebar with all navigation links */}
+            <div className="flex flex-col h-screen overflow-hidden">
               <div className="flex-1 flex flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-6">
                   <Component {...pageProps} />
