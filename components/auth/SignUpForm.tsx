@@ -4,6 +4,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { useAuth } from '../../context/auth-context';
 import { useRouter } from 'next/navigation';
+import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 
 export function SignUpForm() {
   const [email, setEmail] = useState('');
@@ -29,6 +30,17 @@ export function SignUpForm() {
     // Validate password strength
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
+      return;
+    }
+    
+    // Enhanced password validation
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /[0-9]/.test(password);
+    const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+    
+    if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
+      setError('Password must include uppercase, lowercase, and numbers');
       return;
     }
     
@@ -97,6 +109,7 @@ export function SignUpForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <PasswordStrengthIndicator password={password} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm-password">Confirm Password</Label>
