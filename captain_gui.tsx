@@ -1869,7 +1869,7 @@ export default function CAPTAINGui() {
             <img 
               src="/logo.png" 
               alt="Hey, You're Hired! Logo" 
-              className="h-24 w-24 mr-2" 
+              className="h-24 w-24 mr-2 self-end" 
             />
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 self-end">Hey, You're Hired!</h1>
           </div>
@@ -1881,17 +1881,7 @@ export default function CAPTAINGui() {
               Local Storage Only
             </div>
           )}
-          <div className="hidden sm:flex items-center">
-            <Switch
-              checked={isDarkMode}
-              onCheckedChange={toggleDarkMode}
-              id="dark-mode"
-            />
-            <Label htmlFor="dark-mode" className="ml-2 text-sm font-medium">
-              Dark Mode
-            </Label>
-          </div>
-          
+  
           {/* Authentication UI */}
           <div className="ml-auto flex items-center gap-2">
             {authLoading ? (
