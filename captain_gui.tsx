@@ -9,9 +9,8 @@ import { Label } from "./components/ui/label"
 import { Checkbox } from "./components/ui/checkbox"
 import { useAuth } from './context/auth-context'
 import { useNotifications } from './context/NotificationContext'
-import NotificationBell from './components/notifications/NotificationBell'
-import NotificationCenter from './components/notifications/NotificationCenter'
 import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover"
+import NavigationWithNotifications from './components/layout/NavigationWithNotifications'
 // Force reload - using correct paths for root location
 import { AuthModal } from './components/auth/AuthModal'
 import { ResumeTab } from './components/tabs/ResumeTab'
@@ -1869,63 +1868,7 @@ export default function CAPTAINGui() {
   return isClientSide ? (
     <div className="min-h-screen flex flex-col">
       <div className={`container mx-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'} flex-grow flex flex-col`}>
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4 items-end">
-            <img 
-              src="/logo.png" 
-              alt="Hey, You're Hired! Logo" 
-              className="h-24 w-24 mr-2" 
-            />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">Hey, You're Hired!</h1>
-          </div>
-          
-          {/* Local storage indicator */}
-          {localStorageOnly && (
-            <div className="hidden md:flex bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium items-center">
-              <Lock className="h-3 w-3 mr-1" />
-              Local Storage Only
-            </div>
-          )}
-
-          {/* Add NotificationBell here */}
-          <div className="flex items-center gap-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <div>
-                  <NotificationBell />
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="p-0" align="end">
-                <NotificationCenter 
-                  notifications={notificationContext?.notifications || []}
-                  onClearAll={notificationContext?.clearAllNotifications}
-                  onClearOne={notificationContext?.clearNotification}
-                  onMarkAllRead={notificationContext?.markAllAsRead}
-                  onMarkOneRead={notificationContext?.markAsRead}
-                  isDarkMode={isDarkMode}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-  
-          {/* Authentication UI */}
-          <div className="ml-auto flex items-center gap-2">
-            {authLoading ? (
-              <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-            ) : user ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm hidden md:inline">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={signOut}>
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <AuthModal 
-                trigger={<Button variant="outline" size="sm">Sign In</Button>}
-              />
-            )}
-          </div>
-        </div>
+        <NavigationWithNotifications />
 
         <Tabs 
           value={activeTab} 
