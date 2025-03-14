@@ -1216,3 +1216,153 @@ export default function LandingPage() {
     </div>
   )
 }
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import FeaturesSection from "@/components/features-section"
+import HowItWorksSection from "@/components/how-it-works-section"
+import PricingSection from "@/components/pricing-section"
+import TestimonialsSection from "@/components/testimonials-section"
+
+export default function LandingPage() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Hero Section */}
+      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <div className="container mx-auto px-4 py-16 md:py-24">
+          <nav className="flex justify-between items-center mb-16">
+            <div className="flex items-center">
+              <img src="/logo.png" alt="Hey, You're Hired! Logo" className="h-12 w-12 mr-2" />
+              <span className="text-xl font-bold">Hey, You're Hired!</span>
+            </div>
+            <div className="space-x-4">
+              <Link href="/login" className="text-white hover:text-blue-200">
+                Log in
+              </Link>
+              <Button asChild className="bg-white text-blue-600 hover:bg-blue-100">
+                <Link href="/login?tab=signup">Sign up</Link>
+              </Button>
+            </div>
+          </nav>
+          
+          <div className="flex flex-col md:flex-row items-center">
+            <div className="md:w-1/2 mb-8 md:mb-0">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+                Your Job Search, <span className="text-blue-300">Organized</span>
+              </h1>
+              <p className="text-xl mb-8 max-w-lg">
+                Track applications, optimize your resume, and prepare for interviews with our AI-powered job search assistant.
+              </p>
+              <div className="space-x-4">
+                <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-blue-100">
+                  <Link href="/login?tab=signup">Get Started</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-blue-700">
+                  <a href="#features">Learn More</a>
+                </Button>
+              </div>
+            </div>
+            <div className="md:w-1/2">
+              <img 
+                src="/hero-image.png" 
+                alt="Job search dashboard" 
+                className="rounded-lg shadow-xl"
+                onError={(e) => {
+                  e.currentTarget.src = "https://placehold.co/600x400/blue/white?text=Hey,+You're+Hired!";
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Stats Section */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div>
+              <p className="text-4xl font-bold text-blue-600">85%</p>
+              <p className="text-gray-600">of users report better organization</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-blue-600">2x</p>
+              <p className="text-gray-600">more interview invitations</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-blue-600">30%</p>
+              <p className="text-gray-600">faster time to job offer</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <FeaturesSection />
+
+      {/* How It Works Section */}
+      <HowItWorksSection />
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
+      {/* Pricing Section */}
+      <PricingSection />
+
+      {/* CTA Section */}
+      <section className="py-16 bg-blue-600 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to transform your job search?</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">
+            Join thousands of job seekers who have streamlined their job search process and landed their dream jobs.
+          </p>
+          <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-blue-100">
+            <Link href="/login?tab=signup">Get Started for Free</Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 bg-gray-800 text-gray-300">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center mb-4">
+                <img src="/logo.png" alt="Hey, You're Hired! Logo" className="h-8 w-8 mr-2" />
+                <span className="text-lg font-bold text-white">Hey, You're Hired!</span>
+              </div>
+              <p className="text-sm">
+                Your AI-powered job search assistant that helps you land your dream job faster.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-white">Product</h3>
+              <ul className="space-y-2">
+                <li><a href="#features" className="hover:text-white">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-white">How It Works</a></li>
+                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-white">Company</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="hover:text-white">About Us</a></li>
+                <li><a href="#" className="hover:text-white">Blog</a></li>
+                <li><a href="#" className="hover:text-white">Careers</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-white">Legal</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-white">Cookie Policy</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center">
+            <p>&copy; 2025 Hey, You're Hired! All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}

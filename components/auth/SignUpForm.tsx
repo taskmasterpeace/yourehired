@@ -47,7 +47,7 @@ export function SignUpForm() {
         
         // Redirect to login page after a short delay
         setTimeout(() => {
-          router.push('/login');
+          router.push('/login?signup=success');
         }, 2000);
       }
     } catch (err) {

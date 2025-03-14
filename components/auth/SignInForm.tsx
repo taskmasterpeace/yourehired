@@ -31,8 +31,10 @@ export function SignInForm() {
         setError(error.message);
         console.error('Sign in error:', error);
       } else if (data) {
-        // Successful login, redirect to home page
+        // Successful login, redirect to main application
         router.push('/');
+        // Show success message
+        console.log('Successfully signed in!');
       } else {
         // No data and no error is unusual
         console.warn('Sign in returned neither data nor error');

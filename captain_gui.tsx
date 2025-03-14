@@ -389,6 +389,16 @@ export default function CAPTAINGui() {
     setIsClientSide(true);
   }, []);
   
+  // Redirect to landing page if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user && typeof window !== 'undefined') {
+      // Check if we're not on the login page already
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/';
+      }
+    }
+  }, [user, authLoading]);
+
   // Show welcome message when user logs in
   useEffect(() => {
     if (user && !localStorage.getItem('welcomed')) {
