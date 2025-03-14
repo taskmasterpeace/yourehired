@@ -8,6 +8,7 @@ const TestNotificationButton = () => {
   // Add a fallback if the context is not available
   const addTestNotification = notificationContext?.addTestNotification || (() => {
     console.warn('addTestNotification not available');
+    return null;
   });
   
   return (

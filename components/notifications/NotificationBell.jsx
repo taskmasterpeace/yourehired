@@ -5,8 +5,9 @@ import { Badge } from "../ui/badge";
 import { useNotifications } from '../../context/NotificationContext';
 
 const NotificationBell = ({ variant = 'default' }) => {
+  // Get notification context with fallback for SSR or when context is not available
   const notificationContext = useNotifications();
-  const unreadCount = notificationContext ? notificationContext.unreadCount : 0;
+  const unreadCount = notificationContext?.unreadCount || 0;
   
   return (
     <Button 

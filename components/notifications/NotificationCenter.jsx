@@ -3,7 +3,7 @@ import { Check, Trash2, Settings, Save, AlertTriangle } from 'lucide-react';
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { ScrollArea } from "../ui/scroll-area";
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router'; // Changed from next/navigation for Pages Router
 
 const NotificationCenter = ({ 
   notifications = [], 
