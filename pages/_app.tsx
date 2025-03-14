@@ -1,4 +1,4 @@
-import '@/styles/globals.css';
+import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import { AuthProvider } from '@/context/auth-context';
 import { NotificationsProvider } from '@/context/NotificationContext';
@@ -16,5 +16,22 @@ export default function App({ Component, pageProps }: AppProps) {
         </AppStateProvider>
       </AuthProvider>
     </ThemeProvider>
+  );
+}
+import '../styles/globals.css';
+import type { AppProps } from 'next/app';
+import { AuthProvider } from '../context/auth-context';
+import { NotificationProvider } from '../context/NotificationContext';
+import { AppStateProvider } from '../context/context';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <AuthProvider>
+      <NotificationProvider>
+        <AppStateProvider>
+          <Component {...pageProps} />
+        </AppStateProvider>
+      </NotificationProvider>
+    </AuthProvider>
   );
 }
