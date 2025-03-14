@@ -1865,13 +1865,13 @@ export default function CAPTAINGui() {
     <div className="min-h-screen flex flex-col">
       <div className={`container mx-auto p-2 sm:p-4 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'} flex-grow flex flex-col`}>
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 items-end">
             <img 
               src="/logo.png" 
               alt="Hey, You're Hired! Logo" 
-              className="h-24 w-24 mr-2 self-end" 
+              className="h-24 w-24 mr-2" 
             />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 self-end">Hey, You're Hired!</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">Hey, You're Hired!</h1>
           </div>
           
           {/* Local storage indicator */}
