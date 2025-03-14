@@ -1869,7 +1869,7 @@ export default function CAPTAINGui() {
             <img 
               src="/logo.png" 
               alt="Hey, You're Hired! Logo" 
-              className="h-16 w-16 mr-2" 
+              className="h-24 w-24 mr-2" 
             />
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 self-end">Hey, You're Hired!</h1>
           </div>
