@@ -1,4 +1,6 @@
 import '../globals.css';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '../styles/calendar-dark-mode.css';
 import { NotificationProvider } from '../context/NotificationContext';
 import { ActivityProvider } from '../context/ActivityContext';
 import { AuthProvider } from '../context/auth-context';
