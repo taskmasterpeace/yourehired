@@ -1869,10 +1869,7 @@ export default function CAPTAINGui() {
             <img 
               src="/logo.png" 
               alt="Hey, You're Hired! Logo" 
-              className="h-10 w-10 mr-2" 
-              style={{ 
-                filter: isDarkMode ? 'brightness(0) invert(1)' : 'none' 
-              }} 
+              className="h-20 w-20 mr-2" 
             />
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">Hey, You're Hired!</h1>
           </div>
