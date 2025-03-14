@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, isToday, isSameDay } from 'date-fns';
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -9,6 +9,7 @@ import { getEventColor } from './calendarUtils';
 import { useNotifications } from '../../context/NotificationContext';
 import { useActivity } from '../../context/ActivityContext';
 import RecentActivity from '../common/RecentActivity';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 // Setup the localizer for react-big-calendar
 const locales = {
@@ -49,6 +50,18 @@ const ColorLegend = () => {
   );
 };
 
+// Custom event component for mobile
+const MobileEventComponent = ({ event, onClick }) => {
+  return (
+    <div 
+      className="text-xs p-1 overflow-hidden text-ellipsis whitespace-nowrap"
+      onClick={onClick}
+    >
+      {event.title}
+    </div>
+  );
+};
+
 const BigCalendarView = ({ 
   events = [], 
   opportunities = [], 
@@ -57,12 +70,58 @@ const BigCalendarView = ({
   notificationPreferences = {},
   onUpdateNotificationPreferences
 }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState('month'); // month, week, day, agenda
-  const [eventTypeFilter, setEventTypeFilter] = useState('all');
+  // Check if we're on mobile
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  // Load saved view preferences from localStorage
+  const loadSavedPreferences = () => {
+    try {
+      const savedView = localStorage.getItem('calendarViewMode');
+      const savedFilter = localStorage.getItem('calendarEventFilter');
+      const savedDateStr = localStorage.getItem('calendarSelectedDate');
+      
+      return {
+        viewMode: savedView || (isMobile ? 'agenda' : 'month'),
+        eventTypeFilter: savedFilter || 'all',
+        selectedDate: savedDateStr ? new Date(savedDateStr) : new Date()
+      };
+    } catch (error) {
+      console.error("Error loading calendar preferences:", error);
+      return {
+        viewMode: isMobile ? 'agenda' : 'month',
+        eventTypeFilter: 'all',
+        selectedDate: new Date()
+      };
+    }
+  };
+  
+  const { viewMode: initialView, eventTypeFilter: initialFilter, selectedDate: initialDate } = loadSavedPreferences();
+  
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [viewMode, setViewMode] = useState(initialView);
+  const [eventTypeFilter, setEventTypeFilter] = useState(initialFilter);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { toast } = useToast();
+  
+  // Save preferences when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('calendarViewMode', viewMode);
+      localStorage.setItem('calendarEventFilter', eventTypeFilter);
+      localStorage.setItem('calendarSelectedDate', selectedDate.toISOString());
+    } catch (error) {
+      console.error("Error saving calendar preferences:", error);
+    }
+  }, [viewMode, eventTypeFilter, selectedDate]);
+  
+  // Adjust view for mobile devices
+  useEffect(() => {
+    if (isMobile && (viewMode === 'month' || viewMode === 'week')) {
+      setViewMode('agenda');
+    }
+  }, [isMobile]);
   
   // Import the notification context with fallbacks
   const notificationContext = useNotifications();
@@ -131,9 +190,6 @@ const BigCalendarView = ({
   // Format events for react-big-calendar
   const formattedEvents = filteredEvents.map(event => {
     try {
-      // Debug the event to see what's wrong
-      console.log("Processing event for calendar:", event);
-      
       // Ensure we have valid dates
       let startDate;
       if (event.startDate instanceof Date) {
@@ -168,14 +224,6 @@ const BigCalendarView = ({
       if (isNaN(endDate.getTime())) {
         endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
       }
-      
-      // Log the formatted event for debugging
-      console.log("Formatted event:", {
-        id: event.id,
-        title: event.title,
-        start: startDate,
-        end: endDate
-      });
       
       return {
         id: event.id || `temp-${Date.now()}-${Math.random()}`,
@@ -220,8 +268,6 @@ const BigCalendarView = ({
   const handleSaveEvent = (eventData) => {
     const isNewEvent = !eventData.id;
     
-    console.log("Saving event:", eventData);
-    
     // Here you would dispatch to your state management
     if (dispatch) {
       dispatch({ 
@@ -255,6 +301,35 @@ const BigCalendarView = ({
     setCurrentEvent(null);
   };
   
+  // Handle deleting an event
+  const handleDeleteEvent = (eventId) => {
+    if (dispatch) {
+      dispatch({
+        type: 'DELETE_EVENT',
+        payload: { id: eventId }
+      });
+      
+      // Record the activity
+      addActivity({
+        type: 'event_deleted',
+        description: `Deleted event`,
+        user: user
+      });
+      
+      // Show toast notification
+      toast({
+        title: "Hey! Event Deleted",
+        description: "The event has been removed from your calendar.",
+        duration: 3000,
+      });
+    }
+  };
+  
+  // Handle date navigation
+  const handleNavigate = useCallback((date) => {
+    setSelectedDate(date);
+  }, []);
+  
   // Custom event styling
   const eventStyleGetter = (event) => {
     const backgroundColor = getEventColor(event.resource).split(' ')[0].replace('bg-', '');
@@ -276,10 +351,33 @@ const BigCalendarView = ({
         backgroundColor: colorMap[backgroundColor] || '#9ca3af',
         borderRadius: '4px',
         color: 'white',
-        border: 'none'
+        border: 'none',
+        fontSize: isMobile ? '0.75rem' : 'inherit',
+        padding: isMobile ? '2px' : 'inherit',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
       }
     };
   };
+  
+  // Custom day cell wrapper for highlighting today
+  const dayPropGetter = (date) => {
+    if (isToday(date)) {
+      return {
+        style: {
+          backgroundColor: 'rgba(59, 130, 246, 0.05)',
+          borderTop: '2px solid #3b82f6'
+        }
+      };
+    }
+    return {};
+  };
+  
+  // Determine available views based on screen size
+  const availableViews = isMobile 
+    ? { agenda: true, day: true }
+    : { month: true, week: true, day: true, agenda: true };
   
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -292,9 +390,10 @@ const BigCalendarView = ({
             setEventTypeFilter={setEventTypeFilter}
             selectedDate={selectedDate}
             onCreateEvent={() => handleSelectSlot({ start: selectedDate })}
+            onNavigate={handleNavigate}
           />
           
-          <div className="p-4" style={{ height: '70vh' }}>
+          <div className="p-2 sm:p-4" style={{ height: isMobile ? '60vh' : '70vh' }}>
             <Calendar
               localizer={localizer}
               events={formattedEvents}
@@ -304,14 +403,25 @@ const BigCalendarView = ({
               view={viewMode}
               onView={(view) => setViewMode(view)}
               date={selectedDate}
-              onNavigate={(date) => setSelectedDate(date)}
+              onNavigate={handleNavigate}
               selectable
               onSelectEvent={handleSelectEvent}
               onSelectSlot={handleSelectSlot}
               eventPropGetter={eventStyleGetter}
-              views={['month', 'week', 'day', 'agenda']}
+              dayPropGetter={dayPropGetter}
+              views={availableViews}
               popup
               tooltipAccessor={(event) => event.title}
+              messages={{
+                showMore: (total) => `+${total} more`,
+                next: "Next",
+                previous: "Back",
+                today: "Today",
+                month: "Month",
+                week: "Week",
+                day: "Day",
+                agenda: "Agenda"
+              }}
               components={{
                 agenda: {
                   event: ({ event }) => (
@@ -327,14 +437,27 @@ const BigCalendarView = ({
                       )}
                     </div>
                   )
-                }
+                },
+                event: isMobile ? (props) => (
+                  <MobileEventComponent 
+                    event={props.event} 
+                    onClick={() => handleSelectEvent(props.event)}
+                  />
+                ) : undefined
               }}
+              // Mobile-specific props
+              {...(isMobile ? {
+                step: 30,
+                timeslots: 2,
+                length: 30,
+                drilldownView: "day"
+              } : {})}
             />
           </div>
         </CardContent>
       </Card>
       
-      <ColorLegend />
+      {!isMobile && <ColorLegend />}
       
       <Card className="dark:bg-gray-800 dark:border-gray-700 mt-4">
         <CardHeader>
@@ -343,7 +466,7 @@ const BigCalendarView = ({
         <CardContent>
           <RecentActivity 
             activities={allActivities} 
-            limit={5} 
+            limit={isMobile ? 3 : 5} 
             showOpportunityInfo={true} 
           />
         </CardContent>
@@ -358,6 +481,7 @@ const BigCalendarView = ({
         event={currentEvent}
         opportunities={filteredOpportunities}
         onSave={handleSaveEvent}
+        onDelete={handleDeleteEvent}
       />
     </div>
   );
