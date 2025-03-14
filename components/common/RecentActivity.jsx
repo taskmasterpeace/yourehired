@@ -55,7 +55,10 @@ const RecentActivity = ({ activities = [], limit = 5, showOpportunityInfo = fals
             
             {showOpportunityInfo && activity.opportunityId && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {activity.opportunityName || `Opportunity #${activity.opportunityId}`}
+                {activity.opportunityName || 
+                 (activity.opportunity ? 
+                  `${activity.opportunity.company} - ${activity.opportunity.position}` : 
+                  `Opportunity #${activity.opportunityId}`)}
               </p>
             )}
             
