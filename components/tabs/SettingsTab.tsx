@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircle, CheckCircle, HelpCircle } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import TestNotificationButton from '../notifications/TestNotificationButton';
 
 interface SettingsTabProps {
   opportunities: any[];
@@ -815,6 +816,17 @@ export function SettingsTab({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Test Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="test-notifications">Test Notifications</Label>
+                <p className="text-sm text-gray-500">
+                  Send a test notification to verify functionality
+                </p>
+              </div>
+              <TestNotificationButton />
+            </div>
+            
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="notification-sounds">Notification Sounds</Label>

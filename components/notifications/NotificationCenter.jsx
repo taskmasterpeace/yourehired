@@ -58,9 +58,10 @@ const NotificationCenter = ({
       </div>
       
       {notifications.length === 0 ? (
-        <div className="p-4 text-center text-gray-500">
-          <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" />
-          <p>No notifications</p>
+        <div className="p-6 text-center">
+          <Bell className="h-10 w-10 mx-auto mb-3 text-gray-300 dark:text-gray-600 opacity-50" />
+          <p className="text-gray-600 dark:text-gray-300 font-medium">No notifications</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">You're all caught up!</p>
         </div>
       ) : (
         <ScrollArea className="max-h-[70vh] overflow-auto">
