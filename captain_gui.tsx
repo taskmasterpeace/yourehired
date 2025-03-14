@@ -12,7 +12,10 @@ import { useAuth } from './context/auth-context'
 import { useNotifications } from './context/NotificationContext'
 import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover"
 import NotificationBell from './components/notifications/NotificationBell'
-const NotificationCenter = dynamic(() => import('./components/notifications/NotificationCenter'), { ssr: false })
+const NotificationCenter = dynamic(() => 
+  import('./components/notifications/NotificationCenter').then(mod => mod.default), 
+  { ssr: false }
+)
 // Force reload - using correct paths for root location
 import { AuthModal } from './components/auth/AuthModal'
 import { ResumeTab } from './components/tabs/ResumeTab'

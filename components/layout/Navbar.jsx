@@ -4,7 +4,10 @@ import dynamic from 'next/dynamic';
 import { useNotifications } from '../../context/NotificationContext';
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import NotificationBell from '../notifications/NotificationBell';
-const NotificationCenter = dynamic(() => import('../notifications/NotificationCenter'), { ssr: false });
+const NotificationCenter = dynamic(() => 
+  import('../notifications/NotificationCenter').then(mod => mod.default), 
+  { ssr: false }
+);
 import TestNotificationButton from '../notifications/TestNotificationButton';
 
 const Navbar = () => {

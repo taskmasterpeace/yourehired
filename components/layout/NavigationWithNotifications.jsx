@@ -3,7 +3,10 @@ import dynamic from 'next/dynamic';
 import { useNotifications } from '../../context/NotificationContext';
 import NotificationBell from '../notifications/NotificationBell';
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-const NotificationCenter = dynamic(() => import('../notifications/NotificationCenter'), { ssr: false });
+const NotificationCenter = dynamic(() => 
+  import('../notifications/NotificationCenter').then(mod => mod.default), 
+  { ssr: false }
+);
 import { useAuth } from '../../context/auth-context';
 import { Button } from "../ui/button";
 import { AuthModal } from '../auth/AuthModal';
