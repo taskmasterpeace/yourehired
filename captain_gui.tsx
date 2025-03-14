@@ -1919,7 +1919,14 @@ export default function CAPTAINGui() {
             ) : user ? (
               <div className="flex items-center gap-2">
                 <span className="text-sm hidden md:inline">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={signOut}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={async () => {
+                    await signOut();
+                    window.location.href = '/login'; // Redirect to login page after sign out
+                  }}
+                >
                   Sign Out
                 </Button>
               </div>
