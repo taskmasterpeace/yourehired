@@ -59,6 +59,10 @@ const QRCodeComponent = ({ value, size = 200 }) => {
   // Ensure we have a valid value
   const safeValue = value || 'https://yourehired.app';
   
+  // Debug the QR code value
+  console.log("QR Code value length:", safeValue.length);
+  console.log("QR Code value type:", typeof safeValue);
+  
   // Check if logo exists
   const logoSettings = {
     src: "/logo-small.png",
@@ -82,6 +86,10 @@ const QRCodeComponent = ({ value, size = 200 }) => {
 };
 
 const CalendarQRModal = ({ event, isOpen, onClose }) => {
+  // Add debug logging
+  console.log("CalendarQRModal received event:", event);
+  console.log("Modal open state:", isOpen);
+  
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [feedbackType, setFeedbackType] = useState(null); // 'success', 'error', or null
   const [isCopied, setIsCopied] = useState(false);
@@ -91,6 +99,14 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
   
   // Generate the iCalendar data
   const calendarData = event ? generateICalString(event) : '';
+  
+  // Debug the calendar data
+  useEffect(() => {
+    if (isOpen) {
+      console.log("Calendar data generated:", calendarData ? "Data available" : "No data");
+      console.log("Event data:", event);
+    }
+  }, [isOpen, calendarData, event]);
   
   // Reset feedback when modal opens
   useEffect(() => {
@@ -288,7 +304,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           
           <TabsContent value="qrcode" className="w-full flex flex-col items-center">
             {/* QR Code */}
-            <div className="qr-container p-4 bg-white rounded-lg shadow-sm">
+            <div className="qr-container p-4 bg-white rounded-lg shadow-sm border-2 border-blue-200">
               <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
               <QRCodeComponent value={calendarData} />
             </div>

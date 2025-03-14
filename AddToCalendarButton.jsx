@@ -14,7 +14,13 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   
-  const openModal = () => setIsModalOpen(true);
+  const openModal = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsModalOpen(true);
+  };
   const closeModal = () => setIsModalOpen(false);
   
   // Handle direct download of .ics file
@@ -122,11 +128,7 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              openModal();
-            }}>
+            <DropdownMenuItem onClick={openModal}>
               <QrCode className="w-4 h-4 mr-2" />
               <span>QR Code</span>
             </DropdownMenuItem>
@@ -163,11 +165,7 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
       <Button 
         variant={variant} 
         size={size} 
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          openModal();
-        }}
+        onClick={openModal}
         className="add-to-calendar-btn"
       >
         <CalendarIcon className="w-4 h-4 mr-2" />
