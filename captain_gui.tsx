@@ -10,7 +10,8 @@ import { Checkbox } from "./components/ui/checkbox"
 import { useAuth } from './context/auth-context'
 import { useNotifications } from './context/NotificationContext'
 import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover"
-import NavigationWithNotifications from './components/layout/NavigationWithNotifications'
+import NotificationBell from './components/notifications/NotificationBell'
+import NotificationCenter from './components/notifications/NotificationCenter'
 // Force reload - using correct paths for root location
 import { AuthModal } from './components/auth/AuthModal'
 import { ResumeTab } from './components/tabs/ResumeTab'
