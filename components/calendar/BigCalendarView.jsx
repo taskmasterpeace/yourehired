@@ -315,13 +315,13 @@ const BigCalendarView = ({
               components={{
                 agenda: {
                   event: ({ event }) => (
-                    <div className="p-1 cursor-pointer hover:bg-gray-100 rounded" onClick={() => handleSelectEvent(event)}>
-                      <div className="font-medium">{event.title}</div>
-                      <div className="text-xs text-gray-500">
+                    <div className="p-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => handleSelectEvent(event)}>
+                      <div className="font-medium dark:text-white">{event.title}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-300">
                         {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
                       </div>
                       {event.resource.location && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-300">
                           Location: {event.resource.location}
                         </div>
                       )}
