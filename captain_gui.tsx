@@ -8,6 +8,10 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Label } from "./components/ui/label"
 import { Checkbox } from "./components/ui/checkbox"
 import { useAuth } from './context/auth-context'
+import { useNotifications } from './context/NotificationContext'
+import NotificationBell from './components/notifications/NotificationBell'
+import NotificationCenter from './components/notifications/NotificationCenter'
+import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover"
 // Force reload - using correct paths for root location
 import { AuthModal } from './components/auth/AuthModal'
 import { ResumeTab } from './components/tabs/ResumeTab'
@@ -318,6 +322,7 @@ export default function CAPTAINGui() {
   const { state, dispatch } = useAppState();
   const { opportunities, masterResume, events, chatMessages } = state;
   const { user, signOut, isLoading: authLoading, loadUserData, saveUserData, localStorageOnly, setLocalStorageOnly } = useAuth();
+  const notificationContext = useNotifications();
   const [showStorageOptionsDialog, setShowStorageOptionsDialog] = useState(false);
   
   const [isClientSide, setIsClientSide] = useState(false);
@@ -1881,6 +1886,27 @@ export default function CAPTAINGui() {
               Local Storage Only
             </div>
           )}
+
+          {/* Add NotificationBell here */}
+          <div className="flex items-center gap-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <div>
+                  <NotificationBell />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="p-0" align="end">
+                <NotificationCenter 
+                  notifications={notificationContext?.notifications || []}
+                  onClearAll={notificationContext?.clearAllNotifications}
+                  onClearOne={notificationContext?.clearNotification}
+                  onMarkAllRead={notificationContext?.markAllAsRead}
+                  onMarkOneRead={notificationContext?.markAsRead}
+                  isDarkMode={isDarkMode}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
   
           {/* Authentication UI */}
           <div className="ml-auto flex items-center gap-2">

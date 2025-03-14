@@ -167,3 +167,100 @@ const NotificationCenter = ({
 };
 
 export default NotificationCenter;
+import React from 'react';
+import { X, Check, Trash2 } from 'lucide-react';
+import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
+import { formatDistanceToNow } from 'date-fns';
+
+const NotificationCenter = ({ 
+  notifications = [], 
+  onClearAll, 
+  onClearOne, 
+  onMarkAllRead, 
+  onMarkOneRead,
+  isDarkMode
+}) => {
+  if (!notifications || !Array.isArray(notifications)) {
+    notifications = [];
+  }
+
+  return (
+    <div className={`w-80 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-md shadow-lg overflow-hidden`}>
+      <div className="p-3 border-b flex justify-between items-center">
+        <h3 className="font-medium">Notifications</h3>
+        <div className="flex gap-1">
+          {notifications.length > 0 && (
+            <>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onMarkAllRead}
+                title="Mark all as read"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClearAll}
+                title="Clear all"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      
+      <ScrollArea className="h-[300px]">
+        {notifications.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            No notifications
+          </div>
+        ) : (
+          <div>
+            {notifications.map(notification => (
+              <div 
+                key={notification.id} 
+                className={`p-3 border-b ${notification.read ? 'opacity-70' : 'bg-blue-50 dark:bg-blue-900/20'} hover:bg-gray-50 dark:hover:bg-gray-700/50`}
+              >
+                <div className="flex justify-between">
+                  <h4 className="font-medium text-sm">{notification.title}</h4>
+                  <div className="flex gap-1">
+                    {!notification.read && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-5 w-5 p-0" 
+                        onClick={() => onMarkOneRead(notification.id)}
+                        title="Mark as read"
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-5 w-5 p-0" 
+                      onClick={() => onClearOne(notification.id)}
+                      title="Remove"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs mt-1">{notification.message}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+    </div>
+  );
+};
+
+export default NotificationCenter;
