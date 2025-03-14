@@ -1869,9 +1869,9 @@ export default function CAPTAINGui() {
             <img 
               src="/logo.png" 
               alt="Hey, You're Hired! Logo" 
-              className="h-28 w-28 mr-2" 
+              className="h-16 w-16 mr-2" 
             />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">Hey, You're Hired!</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 self-end">Hey, You're Hired!</h1>
           </div>
           
           {/* Local storage indicator */}
@@ -1887,7 +1887,7 @@ export default function CAPTAINGui() {
               onCheckedChange={toggleDarkMode}
               id="dark-mode"
             />
-            <Label htmlFor="dark-mode" className="ml-2 text-sm">
+            <Label htmlFor="dark-mode" className="ml-2 text-sm font-medium">
               Dark Mode
             </Label>
           </div>
