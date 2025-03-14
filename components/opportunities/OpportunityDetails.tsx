@@ -13,7 +13,7 @@ import { KeywordsSection } from './KeywordsSection';
 import { ResumeSection } from './ResumeSection';
 import { AIChatSection } from './AIChatSection';
 import { JobDescriptionSection } from './JobDescriptionSection';
-import ApplicationTimeline from '../../app/components/ApplicationTimeline';
+import ApplicationTimeline from './ApplicationTimeline';
 
 interface OpportunityDetailsProps {
   opportunity: Opportunity | undefined;
