@@ -20,15 +20,22 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     if (!router.isReady || isLoading) return
 
-    const redirectPath = (user ? '/app' : '/landing') || '/landing'
-
+    // Ensure redirectPath is always a valid string with a fallback
+    let redirectPath = '/landing' // Default fallback
+    
+    if (user) {
+      redirectPath = '/app'
+    }
+    
     console.log('Routing check:', {
       currentPath: router.pathname,
       redirectPath,
+      user: !!user,
       isValid: SAFE_PATHS.includes(router.pathname)
     })
 
-    if (!SAFE_PATHS.includes(router.pathname) || router.pathname !== redirectPath) {
+    // Only redirect if needed and path is valid
+    if (redirectPath && (!SAFE_PATHS.includes(router.pathname) || router.pathname !== redirectPath)) {
       console.log('Executing redirect to:', redirectPath)
       router.push(redirectPath)
         .then(() => console.log('Redirect success'))
