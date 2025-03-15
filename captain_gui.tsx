@@ -29,7 +29,7 @@ import { OpportunitiesTab } from './components/tabs/OpportunitiesTab'
 // import { JobDetailsSection, ContactInfoSection, NotesSection } from './components/opportunity/OpportunityDetailSections'
 import { OpportunityDetails } from './components/opportunities/OpportunityDetails'
 import { OpportunityList } from './components/opportunities/OpportunityList'
-import { useDarkMode } from './hooks/useDarkMode'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import AddToCalendarButton from './AddToCalendarButton'
 import { generateICalString } from './calendarUtils'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "./components/ui/select"
