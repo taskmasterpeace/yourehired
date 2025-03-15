@@ -1,47 +1,38 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
-import { AuthProvider, useAuth } from '../context/auth-context'
-import { useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { useAuth } from '../context/auth-context'
+import { useEffect } from 'react'
 
-function AppWrapper({ Component, pageProps }: AppProps) {
-  return (
-    <AuthProvider>
-      <AppContent Component={Component} pageProps={pageProps} />
-    </AuthProvider>
-  )
-}
+const SAFE_PATHS = ['/landing', '/login', '/signup', '/app']
 
-function AppContent({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const { user, isLoading } = useAuth()
-  const validPaths = ['/app', '/landing', '/login', '/signup']
+  
+  // Force redirectPath to always be a valid string
+  const redirectPath = (user ? '/app' : '/landing') || '/landing'
 
   useEffect(() => {
-    if (!isLoading) {
-      const currentPath = router.pathname
-      const isAuthorizedPath = validPaths.includes(currentPath)
-      const redirectPath = user ? '/app' : '/landing'
+    if (!router.isReady || isLoading) return
 
-      // Only redirect if current path is invalid or doesn't match auth state
-      if (!isAuthorizedPath || currentPath !== redirectPath) {
-        router.push(redirectPath).catch((error) => {
-          console.error('Routing error:', error)
-          router.push('/landing') // Fallback redirect
-        })
-      }
+    console.log('Routing check:', {
+      currentPath: router.pathname,
+      redirectPath,
+      isValid: SAFE_PATHS.includes(router.pathname)
+    })
+
+    if (!SAFE_PATHS.includes(router.pathname) || router.pathname !== redirectPath) {
+      console.log('Executing redirect to:', redirectPath)
+      router.push(redirectPath)
+        .then(() => console.log('Redirect success'))
+        .catch(err => console.error('Redirect failed:', err))
     }
-  }, [user, isLoading, router, validPaths])
+  }, [user, isLoading, router, router.isReady, redirectPath])
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-      </div>
-    )
+    return <div className="p-4 text-center">Initializing application...</div>
   }
 
   return <Component {...pageProps} />
 }
-
-export default AppWrapper
