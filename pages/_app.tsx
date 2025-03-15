@@ -10,11 +10,17 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const { user, isLoading } = useAuth()
   
-  // Force redirectPath to always be a valid string
-  const redirectPath = (user ? '/app' : '/landing') || '/landing'
+  console.log('App render state:', {
+    user: user?.email,
+    isLoading,
+    path: router.pathname,
+    isReady: router.isReady
+  })
 
   useEffect(() => {
     if (!router.isReady || isLoading) return
+
+    const redirectPath = (user ? '/app' : '/landing') || '/landing'
 
     console.log('Routing check:', {
       currentPath: router.pathname,
@@ -28,10 +34,10 @@ export default function App({ Component, pageProps }: AppProps) {
         .then(() => console.log('Redirect success'))
         .catch(err => console.error('Redirect failed:', err))
     }
-  }, [user, isLoading, router, router.isReady, redirectPath])
+  }, [user, isLoading, router, router.isReady])
 
   if (isLoading) {
-    return <div className="p-4 text-center">Initializing application...</div>
+    return <div className="p-4 text-center">Initializing application security...</div>
   }
 
   return <Component {...pageProps} />
