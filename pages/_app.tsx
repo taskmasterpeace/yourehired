@@ -1,12 +1,13 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import { useRouter } from 'next/router'
-import { useAuth } from '../context/auth-context'
+import { AuthProvider, useAuth } from '../context/auth-context'
 import { useEffect } from 'react'
 
-const SAFE_PATHS = ['/', '/login', '/signup', '/app', '/dashboard']
+const SAFE_PATHS = ['/', '/landing', '/login', '/signup', '/app', '/dashboard']
 
-export default function App({ Component, pageProps }: AppProps) {
+// Inner component that uses auth
+function AppContent({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const { user, isLoading } = useAuth()
   
@@ -21,11 +22,7 @@ export default function App({ Component, pageProps }: AppProps) {
     if (!router.isReady || isLoading) return
 
     // Ensure redirectPath is always a valid string with a fallback
-    let redirectPath = '/' // Default fallback
-    
-    if (user) {
-      redirectPath = '/app'
-    }
+    let redirectPath = user ? '/app' : '/landing'
     
     console.log('Routing check:', {
       currentPath: router.pathname,
@@ -34,8 +31,8 @@ export default function App({ Component, pageProps }: AppProps) {
       isValid: SAFE_PATHS.includes(router.pathname)
     })
 
-    // Only redirect if needed and path is valid
-    if (redirectPath && (!SAFE_PATHS.includes(router.pathname) || router.pathname !== redirectPath)) {
+    // Handle root path and invalid paths
+    if (router.pathname === '/' || !SAFE_PATHS.includes(router.pathname)) {
       console.log('Executing redirect to:', redirectPath)
       router.push(redirectPath)
         .then(() => console.log('Redirect success'))
@@ -48,4 +45,13 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return <Component {...pageProps} />
+}
+
+// Outer component that provides auth
+export default function App(props: AppProps) {
+  return (
+    <AuthProvider>
+      <AppContent {...props} />
+    </AuthProvider>
+  )
 }
