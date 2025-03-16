@@ -22,6 +22,10 @@ type AuthContextType = {
     error: Error | null;
     data?: Session | null;
   }>;
+  signInWithGoogle: () => Promise<{
+    error: Error | null;
+    data?: Session | null;
+  }>;
   signUp: (email: string, password: string) => Promise<{
     error: Error | null;
     data?: Session | null;
@@ -101,6 +105,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+      });
+      
+      return { data: data.session, error };
+    } catch (error) {
+      return { error: error as Error, data: null };
+    }
+  };
+
+  // Add Google Sign In function
+  const signInWithGoogle = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/app`,
+        },
       });
       
       return { data: data.session, error };
@@ -278,6 +298,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorageOnly,
     setLocalStorageOnly,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     resetPassword,
