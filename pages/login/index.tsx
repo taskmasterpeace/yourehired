@@ -1,15 +1,20 @@
-import { useAuth } from '../../context/auth-context'
-import { useRouter } from 'next/router'
+import { useAuth } from '../../context/auth-context';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 export default function LoginPage() {
-  const { login } = useAuth()
-  const router = useRouter()
+  const { signIn } = useAuth(); // Use signIn instead of login
+  const router = useRouter();
 
-  const handleLogin = () => {
-    // Temporary login for testing
-    login({ email: 'test@example.com' })
-    router.push('/app')
-  }
+  const handleLogin = async () => {
+    try {
+      // Use the correct function from auth context
+      await signIn('test@example.com', 'password');
+      router.push('/app');
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
@@ -21,5 +26,5 @@ export default function LoginPage() {
         Temporary Login
       </button>
     </div>
-  )
+  );
 }

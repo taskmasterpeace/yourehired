@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { AuthProvider, useAuth } from '../context/auth-context'
 import { useEffect } from 'react'
 
-const SAFE_PATHS = ['/', '/landing', '/login', '/signup', '/app', '/dashboard']
+const SAFE_PATHS = ['/', '/landing', '/login', '/signup', '/app', '/dashboard', '/index']
 
 // Inner component that uses auth
 function AppContent({ Component, pageProps }: AppProps) {
