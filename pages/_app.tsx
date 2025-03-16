@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { useAuth } from '../context/auth-context'
 import { useEffect } from 'react'
 
-const SAFE_PATHS = ['/landing', '/login', '/signup', '/app']
+const SAFE_PATHS = ['/', '/login', '/signup', '/app', '/dashboard']
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
@@ -21,7 +21,7 @@ export default function App({ Component, pageProps }: AppProps) {
     if (!router.isReady || isLoading) return
 
     // Ensure redirectPath is always a valid string with a fallback
-    let redirectPath = '/landing' // Default fallback
+    let redirectPath = '/' // Default fallback
     
     if (user) {
       redirectPath = '/app'
