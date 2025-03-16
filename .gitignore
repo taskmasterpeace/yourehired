@@ -27,3 +27,7 @@ yarn-error.log*
 next-env.d.ts
 .aider*
 .env
+
+# Prevent recreation of empty files
+/pages/app.tsx
+/pages/index.jsx
