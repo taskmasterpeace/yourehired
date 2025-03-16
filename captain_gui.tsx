@@ -394,7 +394,7 @@ export default function CAPTAINGui() {
     if (!authLoading && !user && typeof window !== 'undefined') {
       // Check if we're not on the login page already
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/';
+        window.location.href = '/landing';
       }
     }
   }, [user, authLoading]);

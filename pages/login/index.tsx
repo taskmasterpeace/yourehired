@@ -25,6 +25,11 @@ export default function LoginPage() {
       console.error('Google login error:', error);
     }
   };
+  
+  // Redirect to landing page
+  React.useEffect(() => {
+    router.push('/landing');
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 flex flex-col items-center justify-center">

@@ -33,7 +33,7 @@ export function SignInForm() {
         console.error('Sign in error:', error);
       } else if (data) {
         // Successful login, redirect to main application
-        router.push('/');
+        router.push('/app');
         // Show success message
         console.log('Successfully signed in!');
       } else {
