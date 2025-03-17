@@ -311,12 +311,12 @@ const BigCalendarView = ({
     return {};
   };
   
-  // Define the actual view components to use
+  // Define the available views
   const calendarViews = {
-    month: Views.MONTH,
-    week: Views.WEEK,
-    day: Views.DAY,
-    agenda: Views.AGENDA
+    month: true,
+    week: true,
+    day: true,
+    agenda: true
   };
   
   return (
