@@ -122,13 +122,18 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
               variant={variant} 
               size={size} 
               className="add-to-calendar-btn"
+              type="button"
             >
               <CalendarIcon className="w-4 h-4 mr-2" />
               Add to Calendar
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={openModal}>
+            <DropdownMenuItem onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openModal();
+            }}>
               <QrCode className="w-4 h-4 mr-2" />
               <span>QR Code</span>
             </DropdownMenuItem>
@@ -167,6 +172,7 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
         size={size} 
         onClick={openModal}
         className="add-to-calendar-btn"
+        type="button"
       >
         <CalendarIcon className="w-4 h-4 mr-2" />
         Add to Calendar

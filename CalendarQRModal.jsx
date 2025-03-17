@@ -13,29 +13,23 @@ import { CalendarIcon, X, Smartphone, Check, Download } from 'lucide-react';
 
 // We'll use a dynamic import for QRCode to avoid SSR issues
 const QRCodeComponent = ({ value, size = 200 }) => {
-  const [QRCode, setQRCode] = useState(null);
+  const [QRCodeComponent, setQRCodeComponent] = useState(null);
   const [error, setError] = useState(null);
 
   React.useEffect(() => {
-    // Use a try-catch block to handle any errors during import
-    try {
-      import('qrcode.react')
-        .then(module => {
-          console.log("QR code module loaded:", module);
-          setQRCode(() => module.QRCodeSVG || module.default || module.QRCode);
-        })
-        .catch(err => {
-          console.error("Failed to load QR code module:", err);
-          setError(err);
-        });
-    } catch (err) {
-      console.error("Error in QR code import:", err);
-      setError(err);
-    }
+    // Import the QR code component dynamically
+    import('qrcode.react')
+      .then(module => {
+        setQRCodeComponent(module.QRCodeSVG || module.default);
+      })
+      .catch(err => {
+        console.error("Failed to load QR code module:", err);
+        setError(err);
+      });
   }, []);
 
   // Handle loading state
-  if (!QRCode && !error) {
+  if (!QRCodeComponent && !error) {
     return (
       <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
         <span className="text-gray-500">Loading QR code...</span>
@@ -55,29 +49,17 @@ const QRCodeComponent = ({ value, size = 200 }) => {
     );
   }
   
-  // Ensure we have a valid value and it's not too long
+  // Ensure we have a valid value
   const safeValue = value || 'https://yourehired.app';
-  console.log("Rendering QR code with value length:", safeValue.length);
   
-  // If QRCode is available, render it
-  if (QRCode) {
-    return (
-      <div className="bg-white p-4 rounded-lg">
-        <QRCode 
-          value={safeValue}
-          size={size}
-          level="M"
-          includeMargin={true}
-          renderAs="svg"
-        />
-      </div>
-    );
-  }
-  
-  // Fallback if something unexpected happens
   return (
-    <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg">
-      <span className="text-gray-500">QR code unavailable</span>
+    <div className="bg-white p-4 rounded-lg">
+      <QRCodeComponent 
+        value={safeValue}
+        size={size}
+        level="M"
+        includeMargin={true}
+      />
     </div>
   );
 };
@@ -178,7 +160,9 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           {/* QR Code */}
           <div className="qr-container p-4 bg-white rounded-lg shadow-sm">
             <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
-            <QRCodeComponent value={calendarData} />
+            <div className="bg-white">
+              <QRCodeComponent value={calendarData} />
+            </div>
           </div>
           
           {/* Alternative options */}
