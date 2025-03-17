@@ -22,7 +22,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-2">
-            <Briefcase className="h-6 w-6 text-primary" />
+            <img src="/logo.png" alt="Logo" className="h-8 w-8" />
             <span className="text-xl font-bold">Hey, You're Hired!</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
@@ -235,11 +235,14 @@ export default function LandingPage() {
                 </TabsContent>
                 <TabsContent value="resume" className="mt-6">
                   <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                    <img
-                      src="/feature-tracking.png"
-                      alt="AI resume feedback interface"
-                      className="w-full object-cover"
-                    />
+                    <div className="relative">
+                      <img
+                        src="/feature-tracking.png"
+                        alt="AI resume feedback interface"
+                        className="w-full object-cover brightness-90 contrast-125"
+                      />
+                      <div className="absolute top-0 left-0 w-full h-full bg-blue-500/10"></div>
+                    </div>
                     <div className="p-6">
                       <h3 className="text-xl font-bold">AI Resume Assistant</h3>
                       <p className="mt-2 text-muted-foreground">
@@ -251,11 +254,14 @@ export default function LandingPage() {
                 </TabsContent>
                 <TabsContent value="interview" className="mt-6">
                   <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                    <img
-                      src="/feature-tracking.png"
-                      alt="Interview preparation interface"
-                      className="w-full object-cover"
-                    />
+                    <div className="relative">
+                      <img
+                        src="/feature-tracking.png"
+                        alt="Interview preparation interface"
+                        className="w-full object-cover brightness-110 sepia-[0.2]"
+                      />
+                      <div className="absolute top-0 left-0 w-full h-full bg-purple-500/10"></div>
+                    </div>
                     <div className="p-6">
                       <h3 className="text-xl font-bold">Interview Coach</h3>
                       <p className="mt-2 text-muted-foreground">
@@ -267,11 +273,14 @@ export default function LandingPage() {
                 </TabsContent>
                 <TabsContent value="analytics" className="mt-6">
                   <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                    <img
-                      src="/feature-tracking.png"
-                      alt="Job search analytics dashboard"
-                      className="w-full object-cover"
-                    />
+                    <div className="relative">
+                      <img
+                        src="/feature-tracking.png"
+                        alt="Job search analytics dashboard"
+                        className="w-full object-cover grayscale-[30%] hue-rotate-15"
+                      />
+                      <div className="absolute top-0 left-0 w-full h-full bg-green-500/10"></div>
+                    </div>
                     <div className="p-6">
                       <h3 className="text-xl font-bold">Progress Analytics</h3>
                       <p className="mt-2 text-muted-foreground">
@@ -357,9 +366,11 @@ export default function LandingPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="font-semibold text-primary">A</span>
-                    </div>
+                    <img 
+                      src="/testimonial-avatar-1.png" 
+                      alt="Alex" 
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
                     <div>
                       <CardTitle>Alex</CardTitle>
                       <CardDescription>Recent Graduate</CardDescription>
@@ -376,9 +387,11 @@ export default function LandingPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="font-semibold text-primary">M</span>
-                    </div>
+                    <img 
+                      src="/testimonial-avatar-2.png" 
+                      alt="Maya" 
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
                     <div>
                       <CardTitle>Maya</CardTitle>
                       <CardDescription>Career Changer</CardDescription>
@@ -395,9 +408,11 @@ export default function LandingPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="font-semibold text-primary">J</span>
-                    </div>
+                    <img 
+                      src="/testimonial-avatar-3.png" 
+                      alt="James" 
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
                     <div>
                       <CardTitle>James</CardTitle>
                       <CardDescription>Tech Professional</CardDescription>
