@@ -2,6 +2,7 @@ import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import { useRouter } from 'next/router'
 import { AuthProvider, useAuth } from '../context/auth-context'
+import { AppProvider } from '../context/context'
 import { useEffect } from 'react'
 
 const SAFE_PATHS = ['/', '/landing', '/login', '/signup', '/app', '/dashboard', '/index']
@@ -53,7 +54,9 @@ function AppContent({ Component, pageProps }: AppProps) {
 export default function App(props: AppProps) {
   return (
     <AuthProvider>
-      <AppContent {...props} />
+      <AppProvider>
+        <AppContent {...props} />
+      </AppProvider>
     </AuthProvider>
   )
 }
