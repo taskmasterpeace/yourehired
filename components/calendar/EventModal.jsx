@@ -490,7 +490,16 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     </Tooltip>
                   </TooltipProvider>
                   
-                  <div onClick={(e) => e.stopPropagation()}>
+                  <div 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
                     <AddToCalendarButton 
                       event={{
                         title: eventData.title,
@@ -510,7 +519,16 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               {/* Add to calendar button for new events */}
               {!eventData.id && (
                 <div className="w-full sm:w-auto">
-                  <div onClick={(e) => e.stopPropagation()}>
+                  <div 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
                     <AddToCalendarButton 
                       event={{
                         title: eventData.title,
