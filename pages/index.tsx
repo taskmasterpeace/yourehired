@@ -59,14 +59,10 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto lg:ml-auto flex justify-center">
               <div className="relative">
-                <Image
+                <img
                   src="/feature-tracking.png"
                   alt="Application Dashboard Preview"
-                  width={550}
-                  height={413}
-                  className="rounded-lg shadow-xl"
-                  priority
-                  unoptimized
+                  className="rounded-lg shadow-xl w-[550px] h-auto"
                 />
                 <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex items-center gap-2">
                   <div className="bg-green-500 rounded-full h-3 w-3"></div>
