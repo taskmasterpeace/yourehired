@@ -370,7 +370,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     <SelectTrigger id="type">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 border dark:border-gray-700">
                       <SelectItem value="interview">Interview</SelectItem>
                       <SelectItem value="deadline">Deadline</SelectItem>
                       <SelectItem value="followup">Follow-up</SelectItem>
@@ -410,7 +410,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     <SelectTrigger id="opportunity" className="flex-1">
                       <SelectValue placeholder="Link to job opportunity (optional)" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 border dark:border-gray-700">
                       <SelectItem value="none">None</SelectItem>
                       {Array.isArray(opportunities) && opportunities.length === 0 ? (
                         <SelectItem value="loading" disabled>Loading opportunities...</SelectItem>

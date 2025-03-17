@@ -132,7 +132,7 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
               Add to Calendar
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="bg-white dark:bg-gray-800 border dark:border-gray-700">
             <DropdownMenuItem onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
