@@ -411,8 +411,8 @@ const BigCalendarView = ({
                 drilldownView: "day"
               } : {})}
             />
-              />
-            )}
+            />
+          )}
           </div>
         </CardContent>
       </Card>
