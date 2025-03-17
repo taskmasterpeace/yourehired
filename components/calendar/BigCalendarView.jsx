@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, isToday, isSameDay } from 'date-fns';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
-import { useNotifications } from '../../context/NotificationContext';
-import { useActivity } from '../../context/ActivityContext';
-import RecentActivity from '../common/RecentActivity';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 // Setup the localizer for react-big-calendar
@@ -70,8 +67,23 @@ const BigCalendarView = ({
   notificationPreferences = {},
   onUpdateNotificationPreferences
 }) => {
-  // Check if we're on mobile
+  // Check if we're on mobile using the existing hook
   const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  // Debug events
+  useEffect(() => {
+    console.log('Calendar events:', events);
+    
+    // Check for any invalid dates
+    const invalidEvents = events.filter(event => {
+      const startDate = new Date(event.startDate || event.date);
+      return isNaN(startDate.getTime());
+    });
+    
+    if (invalidEvents.length > 0) {
+      console.error('Found invalid event dates:', invalidEvents);
+    }
+  }, [events]);
   
   // Load saved view preferences from localStorage
   const loadSavedPreferences = () => {
@@ -121,57 +133,8 @@ const BigCalendarView = ({
     if (isMobile && (viewMode === 'month' || viewMode === 'week')) {
       setViewMode('agenda');
     }
-  }, [isMobile]);
+  }, [isMobile, viewMode]);
   
-  // Import the notification context with fallbacks
-  const notificationContext = useNotifications();
-  
-  // Use context if available, otherwise use props or defaults
-  const notificationSettings = notificationContext?.settings || notificationPreferences || {
-    enabled: true,
-    inAppNotifications: true
-  };
-  
-  // Check for upcoming events when the component mounts
-  useEffect(() => {
-    // Use the notification context to check for upcoming events
-    const checkEvents = () => {
-      // Find events that are starting soon
-      const now = new Date();
-      const upcomingEvents = events.filter(event => {
-        const eventStart = new Date(event.startDate || event.date);
-        const diffMs = eventStart - now;
-        const diffMins = Math.floor(diffMs / 60000);
-        // Events starting in the next 30 minutes
-        return diffMins > 0 && diffMins <= 30;
-      });
-      
-      // Show notifications for upcoming events
-      if (upcomingEvents.length > 0 && notificationSettings?.enabled) {
-        upcomingEvents.forEach(event => {
-          // Add to notification system
-          if (notificationContext?.addEventReminder) {
-            notificationContext.addEventReminder(event);
-          }
-          
-          // Also show toast for immediate feedback
-          toast({
-            title: `Hey! Upcoming: ${event.title}`,
-            description: `This event is starting soon. - Hey You're Hired! v0.41`,
-            duration: 5000,
-          });
-        });
-      }
-    };
-    
-    checkEvents();
-    
-    // Set up interval to check for upcoming events every minute
-    const intervalId = setInterval(checkEvents, 60000);
-    
-    // Clean up interval on unmount
-    return () => clearInterval(intervalId);
-  }, [events, notificationSettings, toast, notificationContext]);
   
   // Filter events based on selected filters
   const filteredEvents = events.filter(event => {
@@ -256,14 +219,6 @@ const BigCalendarView = ({
     setIsEventModalOpen(true);
   };
   
-  // Get activity context with fallbacks
-  const activityContext = useActivity() || {};
-  const addActivity = activityContext.addActivity || ((activityData) => {
-    console.warn("Activity context not available, activity logging disabled", activityData);
-  });
-  const getAllActivities = activityContext.getAllActivities || (() => []);
-  const allActivities = getAllActivities();
-  
   // Handle saving an event (create or update)
   const handleSaveEvent = (eventData) => {
     const isNewEvent = !eventData.id;
@@ -278,22 +233,10 @@ const BigCalendarView = ({
       console.warn("No dispatch function provided to BigCalendarView");
     }
     
-    // Record the activity
-    addActivity({
-      type: isNewEvent ? 'event_created' : 'event_updated',
-      description: `${isNewEvent ? 'Created' : 'Updated'} event: ${eventData.title}`,
-      opportunityId: eventData.opportunityId || null,
-      opportunityName: eventData.opportunity?.company 
-        ? `${eventData.opportunity.company} - ${eventData.opportunity.position}` 
-        : null,
-      eventId: eventData.id,
-      user: user // Assuming you have the user object from props
-    });
-    
     // Show toast notification
     toast({
       title: isNewEvent ? "Hey! Event Created" : "Hey! Event Updated",
-      description: `${eventData.title} has been ${isNewEvent ? 'added to' : 'updated in'} your calendar. - Hey You're Hired! v0.41`,
+      description: `${eventData.title} has been ${isNewEvent ? 'added to' : 'updated in'} your calendar.`,
       duration: 3000,
     });
     
@@ -307,13 +250,6 @@ const BigCalendarView = ({
       dispatch({
         type: 'DELETE_EVENT',
         payload: { id: eventId }
-      });
-      
-      // Record the activity
-      addActivity({
-        type: 'event_deleted',
-        description: `Deleted event`,
-        user: user
       });
       
       // Show toast notification
@@ -332,7 +268,8 @@ const BigCalendarView = ({
   
   // Custom event styling
   const eventStyleGetter = (event) => {
-    const backgroundColor = getEventColor(event.resource).split(' ')[0].replace('bg-', '');
+    const colorClass = getEventColor(event.resource);
+    const backgroundColor = colorClass.split(' ')[0].replace('bg-', '');
     
     // Map Tailwind color classes to actual color values
     const colorMap = {
@@ -379,6 +316,14 @@ const BigCalendarView = ({
     ? { agenda: true, day: true }
     : { month: true, week: true, day: true, agenda: true };
   
+  // Determine available views based on screen size
+  const availableViews = isMobile 
+    ? { agenda: true, day: true }
+    : { month: true, week: true, day: true, agenda: true };
+  
+  // Try a simplified calendar first if there are issues
+  const useSimplifiedCalendar = false; // Set to true for debugging
+  
   return (
     <div className="grid grid-cols-1 gap-4">
       <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -394,7 +339,20 @@ const BigCalendarView = ({
           />
           
           <div className="p-2 sm:p-4" style={{ height: isMobile ? '60vh' : '70vh' }}>
-            <Calendar
+            {useSimplifiedCalendar ? (
+              // Simplified calendar for debugging
+              <Calendar
+                localizer={localizer}
+                events={formattedEvents}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: '100%' }}
+                defaultView="month"
+                defaultDate={new Date()}
+              />
+            ) : (
+              // Full-featured calendar
+              <Calendar
               localizer={localizer}
               events={formattedEvents}
               startAccessor="start"
@@ -453,24 +411,13 @@ const BigCalendarView = ({
                 drilldownView: "day"
               } : {})}
             />
+              />
+            )}
           </div>
         </CardContent>
       </Card>
       
       {!isMobile && <ColorLegend />}
-      
-      <Card className="dark:bg-gray-800 dark:border-gray-700 mt-4">
-        <CardHeader>
-          <CardTitle className="text-lg">Hey! Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RecentActivity 
-            activities={allActivities} 
-            limit={isMobile ? 3 : 5} 
-            showOpportunityInfo={true} 
-          />
-        </CardContent>
-      </Card>
       
       <EventModal 
         isOpen={isEventModalOpen}
