@@ -316,11 +316,6 @@ const BigCalendarView = ({
     ? { agenda: true, day: true }
     : { month: true, week: true, day: true, agenda: true };
   
-  // Determine available views based on screen size
-  const availableViews = isMobile 
-    ? { agenda: true, day: true }
-    : { month: true, week: true, day: true, agenda: true };
-  
   // Try a simplified calendar first if there are issues
   const useSimplifiedCalendar = false; // Set to true for debugging
   
@@ -353,65 +348,64 @@ const BigCalendarView = ({
             ) : (
               // Full-featured calendar
               <Calendar
-              localizer={localizer}
-              events={formattedEvents}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: '100%' }}
-              view={viewMode}
-              onView={(view) => setViewMode(view)}
-              date={selectedDate}
-              onNavigate={handleNavigate}
-              selectable
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              eventPropGetter={eventStyleGetter}
-              dayPropGetter={dayPropGetter}
-              views={availableViews}
-              popup
-              tooltipAccessor={(event) => event.title}
-              messages={{
-                showMore: (total) => `+${total} more`,
-                next: "Next",
-                previous: "Back",
-                today: "Today",
-                month: "Month",
-                week: "Week",
-                day: "Day",
-                agenda: "Agenda"
-              }}
-              components={{
-                agenda: {
-                  event: ({ event }) => (
-                    <div className="p-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => handleSelectEvent(event)}>
-                      <div className="font-medium dark:text-white">{event.title}</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-200">
-                        {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
-                      </div>
-                      {event.resource.location && (
+                localizer={localizer}
+                events={formattedEvents}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: '100%' }}
+                view={viewMode}
+                onView={(view) => setViewMode(view)}
+                date={selectedDate}
+                onNavigate={handleNavigate}
+                selectable
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                eventPropGetter={eventStyleGetter}
+                dayPropGetter={dayPropGetter}
+                views={availableViews}
+                popup
+                tooltipAccessor={(event) => event.title}
+                messages={{
+                  showMore: (total) => `+${total} more`,
+                  next: "Next",
+                  previous: "Back",
+                  today: "Today",
+                  month: "Month",
+                  week: "Week",
+                  day: "Day",
+                  agenda: "Agenda"
+                }}
+                components={{
+                  agenda: {
+                    event: ({ event }) => (
+                      <div className="p-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => handleSelectEvent(event)}>
+                        <div className="font-medium dark:text-white">{event.title}</div>
                         <div className="text-xs text-gray-600 dark:text-gray-200">
-                          Location: {event.resource.location}
+                          {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
                         </div>
-                      )}
-                    </div>
-                  )
-                },
-                event: isMobile ? (props) => (
-                  <MobileEventComponent 
-                    event={props.event} 
-                    onClick={() => handleSelectEvent(props.event)}
-                  />
-                ) : undefined
-              }}
-              // Mobile-specific props
-              {...(isMobile ? {
-                step: 30,
-                timeslots: 2,
-                length: 30,
-                drilldownView: "day"
-              } : {})}
-            />
-            />
+                        {event.resource.location && (
+                          <div className="text-xs text-gray-600 dark:text-gray-200">
+                            Location: {event.resource.location}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  },
+                  event: isMobile ? (props) => (
+                    <MobileEventComponent 
+                      event={props.event} 
+                      onClick={() => handleSelectEvent(props.event)}
+                    />
+                  ) : undefined
+                }}
+                // Mobile-specific props
+                {...(isMobile ? {
+                  step: 30,
+                  timeslots: 2,
+                  length: 30,
+                  drilldownView: "day"
+                } : {})}
+              />
           )}
           </div>
         </CardContent>
