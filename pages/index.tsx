@@ -7,12 +7,15 @@ import HowItWorksSection from "@/components/how-it-works-section"
 import PricingSection from "@/components/pricing-section"
 import TestimonialsSection from "@/components/testimonials-section"
 import { useAuth } from "@/context/auth-context"
-import { useEffect } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/router"
+import { AuthModal } from "@/components/auth/AuthModal"
 
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const authTriggerRef = useRef(null);
   
   // If user is already logged in, redirect to the main application
   useEffect(() => {
@@ -20,6 +23,13 @@ export default function LandingPage() {
       router.push('/app');
     }
   }, [user, isLoading, router]);
+  
+  // Check for showAuth parameter to open auth modal
+  useEffect(() => {
+    if (router.query.showAuth === 'true' && authTriggerRef.current) {
+      authTriggerRef.current.click();
+    }
+  }, [router.query]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -128,6 +138,14 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Hidden auth modal trigger */}
+      <div className="hidden">
+        <AuthModal 
+          trigger={<button ref={authTriggerRef}>Sign In</button>}
+          defaultTab="sign-in"
+        />
+      </div>
+      
       {/* Footer */}
       <footer className="py-6 md:py-12 border-t">
         <div className="container px-4 md:px-6">
