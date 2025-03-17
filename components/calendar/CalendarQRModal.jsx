@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { generateICalString } from './calendarUtils.js';
 import { 
   Dialog, 
@@ -23,39 +24,8 @@ import {
 import { Progress } from "../ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
-// We'll use a dynamic import for QRCode to avoid SSR issues
+// Simple QR code component with direct import
 const QRCodeComponent = ({ value, size = 200 }) => {
-  const [QRCode, setQRCode] = useState(null);
-  const [error, setError] = useState(null);
-
-  React.useEffect(() => {
-    import('qrcode.react')
-      .then(module => {
-        setQRCode(() => module.QRCodeSVG);
-      })
-      .catch(err => {
-        console.error("Failed to load QR code module:", err);
-        setError(err);
-      });
-  }, []);
-
-  // Handle loading state
-  if (!QRCode && !error) {
-    return <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg"></div>;
-  }
-  
-  // Handle error state
-  if (error) {
-    return (
-      <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg border border-red-300">
-        <div className="text-center p-4 text-red-500">
-          <p>Failed to load QR code</p>
-          <p className="text-xs mt-2">Please try another method</p>
-        </div>
-      </div>
-    );
-  }
-  
   // Ensure we have a valid value
   const safeValue = value || 'https://yourehired.app';
   
@@ -72,16 +42,15 @@ const QRCodeComponent = ({ value, size = 200 }) => {
   };
   
   return (
-    <QRCode 
-      value={safeValue}
-      size={size}
-      level="M"
-      includeMargin={true}
-      imageSettings={logoSettings}
-      onError={(err) => {
-        console.error("QR Code rendering error:", err);
-      }}
-    />
+    <div className="bg-white rounded-lg">
+      <QRCodeSVG 
+        value={safeValue}
+        size={size}
+        level="M"
+        includeMargin={true}
+        imageSettings={logoSettings}
+      />
+    </div>
   );
 };
 

@@ -123,6 +123,10 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
               size={size} 
               className="add-to-calendar-btn"
               type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
             >
               <CalendarIcon className="w-4 h-4 mr-2" />
               Add to Calendar
@@ -170,7 +174,11 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
       <Button 
         variant={variant} 
         size={size} 
-        onClick={openModal}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openModal();
+        }}
         className="add-to-calendar-btn"
         type="button"
       >

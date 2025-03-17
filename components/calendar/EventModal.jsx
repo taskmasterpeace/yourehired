@@ -490,35 +490,39 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     </Tooltip>
                   </TooltipProvider>
                   
-                  <AddToCalendarButton 
-                    event={{
-                      title: eventData.title,
-                      startDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.startTime}`),
-                      endDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.endTime}`),
-                      description: eventData.description,
-                      location: eventData.location
-                    }}
-                    variant="outline"
-                    size="sm"
-                    compact={true}
-                  />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <AddToCalendarButton 
+                      event={{
+                        title: eventData.title,
+                        startDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.startTime}`),
+                        endDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.endTime}`),
+                        description: eventData.description,
+                        location: eventData.location
+                      }}
+                      variant="outline"
+                      size="sm"
+                      compact={true}
+                    />
+                  </div>
                 </div>
               )}
               
               {/* Add to calendar button for new events */}
               {!eventData.id && (
                 <div className="w-full sm:w-auto">
-                  <AddToCalendarButton 
-                    event={{
-                      title: eventData.title,
-                      startDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.startTime}`),
-                      endDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.endTime}`),
-                      description: eventData.description,
-                      location: eventData.location
-                    }}
-                    variant="outline"
-                    size="sm"
-                  />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <AddToCalendarButton 
+                      event={{
+                        title: eventData.title,
+                        startDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.startTime}`),
+                        endDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.endTime}`),
+                        description: eventData.description,
+                        location: eventData.location
+                      }}
+                      variant="outline"
+                      size="sm"
+                    />
+                  </div>
                 </div>
               )}
               
