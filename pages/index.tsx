@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import FeaturesSection from "@/components/features-section"
 import HowItWorksSection from "@/components/how-it-works-section"
@@ -58,13 +59,12 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto lg:ml-auto flex justify-center">
               <div className="relative">
-                <img
-                  src="/dashboard-preview.png"
+                <Image
+                  src="/feature-tracking.png"
                   alt="Application Dashboard Preview"
                   width={550}
                   height={413}
                   className="rounded-lg shadow-xl"
-                  style={{ objectFit: "cover" }}
                 />
                 <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex items-center gap-2">
                   <div className="bg-green-500 rounded-full h-3 w-3"></div>
@@ -111,7 +111,70 @@ export default function LandingPage() {
       <HowItWorksSection />
 
       {/* Testimonials Section */}
-      <TestimonialsSection />
+      <section className="py-12 md:py-24 bg-gray-50 dark:bg-gray-800">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                What our users say
+              </h2>
+              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Join thousands of job seekers who have transformed their job search experience.
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-3">
+            <div className="flex flex-col items-center space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+              <Image 
+                src="/testimonial-avatar-1.png" 
+                alt="Testimonial Avatar" 
+                width={80} 
+                height={80} 
+                className="rounded-full"
+              />
+              <div className="space-y-2 text-center">
+                <h3 className="font-bold">Sarah Johnson</h3>
+                <p className="text-sm text-muted-foreground">Software Engineer</p>
+                <p className="text-sm">
+                  "This platform helped me organize my job search and land interviews at top tech companies. The AI resume feedback was a game-changer!"
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+              <Image 
+                src="/testimonial-avatar-2.png" 
+                alt="Testimonial Avatar" 
+                width={80} 
+                height={80} 
+                className="rounded-full"
+              />
+              <div className="space-y-2 text-center">
+                <h3 className="font-bold">Michael Chen</h3>
+                <p className="text-sm text-muted-foreground">Marketing Specialist</p>
+                <p className="text-sm">
+                  "I was able to track all my applications in one place and never missed a follow-up. Landed my dream job in just 3 weeks!"
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+              <Image 
+                src="/testimonial-avatar-3.png" 
+                alt="Testimonial Avatar" 
+                width={80} 
+                height={80} 
+                className="rounded-full"
+              />
+              <div className="space-y-2 text-center">
+                <h3 className="font-bold">Jessica Williams</h3>
+                <p className="text-sm text-muted-foreground">Product Manager</p>
+                <p className="text-sm">
+                  "The interview preparation tools gave me confidence and helped me negotiate a 20% higher salary than I initially expected."
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Pricing Section */}
       <PricingSection />
