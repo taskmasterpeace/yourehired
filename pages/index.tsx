@@ -65,6 +65,8 @@ export default function LandingPage() {
                   width={550}
                   height={413}
                   className="rounded-lg shadow-xl"
+                  priority
+                  unoptimized
                 />
                 <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex items-center gap-2">
                   <div className="bg-green-500 rounded-full h-3 w-3"></div>
@@ -131,6 +133,7 @@ export default function LandingPage() {
                 width={80} 
                 height={80} 
                 className="rounded-full"
+                unoptimized
               />
               <div className="space-y-2 text-center">
                 <h3 className="font-bold">Sarah Johnson</h3>
@@ -147,6 +150,7 @@ export default function LandingPage() {
                 width={80} 
                 height={80} 
                 className="rounded-full"
+                unoptimized
               />
               <div className="space-y-2 text-center">
                 <h3 className="font-bold">Michael Chen</h3>
@@ -163,6 +167,7 @@ export default function LandingPage() {
                 width={80} 
                 height={80} 
                 className="rounded-full"
+                unoptimized
               />
               <div className="space-y-2 text-center">
                 <h3 className="font-bold">Jessica Williams</h3>
