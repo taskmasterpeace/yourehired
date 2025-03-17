@@ -87,10 +87,8 @@ export default function LandingPage() {
               </div>
               <div className="relative flex items-center justify-center">
                 <div className="relative w-full overflow-hidden rounded-lg border bg-background shadow-xl">
-                  <Image
+                  <img
                     src="/placeholder.svg"
-                    width={800}
-                    height={600}
                     alt="Application dashboard showing job tracking board"
                     className="aspect-video w-full object-cover"
                   />

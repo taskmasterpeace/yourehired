@@ -65,11 +65,10 @@ export default function LoginPage() {
         {/* Header */}
         <header className="container mx-auto p-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
-            <Image 
+            <img 
               src="/logo.png" 
               alt="Hey, You're Hired! Logo" 
-              width={40} 
-              height={40} 
+              className="w-10 h-10"
             />
             <span className="text-xl font-bold text-white">Hey, You're Hired!</span>
           </Link>
@@ -85,11 +84,10 @@ export default function LoginPage() {
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
             <div className="flex justify-center">
-              <Image 
+              <img 
                 src="/logo.png" 
                 alt="Hey, You're Hired! Logo" 
-                width={80} 
-                height={80} 
+                className="w-20 h-20"
               />
             </div>
             
@@ -110,11 +108,10 @@ export default function LoginPage() {
                 className="w-full flex items-center justify-center gap-2"
                 variant="outline"
               >
-                <Image 
+                <img 
                   src="/google-logo.png" 
                   alt="Google" 
-                  width={20} 
-                  height={20} 
+                  className="w-5 h-5"
                 />
                 Sign in with Google
               </Button>

@@ -127,13 +127,10 @@ export default function LandingPage() {
           </div>
           <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-3">
             <div className="flex flex-col items-center space-y-4 rounded-lg border bg-background p-6 shadow-sm">
-              <Image 
+              <img 
                 src="/testimonial-avatar-1.png" 
                 alt="Testimonial Avatar" 
-                width={80} 
-                height={80} 
-                className="rounded-full"
-                unoptimized
+                className="rounded-full w-20 h-20"
               />
               <div className="space-y-2 text-center">
                 <h3 className="font-bold">Sarah Johnson</h3>
@@ -144,13 +141,10 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex flex-col items-center space-y-4 rounded-lg border bg-background p-6 shadow-sm">
-              <Image 
+              <img 
                 src="/testimonial-avatar-2.png" 
                 alt="Testimonial Avatar" 
-                width={80} 
-                height={80} 
-                className="rounded-full"
-                unoptimized
+                className="rounded-full w-20 h-20"
               />
               <div className="space-y-2 text-center">
                 <h3 className="font-bold">Michael Chen</h3>
@@ -161,13 +155,10 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex flex-col items-center space-y-4 rounded-lg border bg-background p-6 shadow-sm">
-              <Image 
+              <img 
                 src="/testimonial-avatar-3.png" 
                 alt="Testimonial Avatar" 
-                width={80} 
-                height={80} 
-                className="rounded-full"
-                unoptimized
+                className="rounded-full w-20 h-20"
               />
               <div className="space-y-2 text-center">
                 <h3 className="font-bold">Jessica Williams</h3>
