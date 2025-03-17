@@ -45,10 +45,15 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithGoogle();
+      const { error } = await signInWithGoogle();
+      if (error) {
+        console.error('Google login error:', error);
+        setError(error.message || 'Failed to sign in with Google');
+      }
       // No need to redirect as OAuth will handle it
     } catch (error) {
       console.error('Google login error:', error);
+      setError('An unexpected error occurred during Google sign-in');
     }
   };
 
