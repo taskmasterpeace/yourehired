@@ -17,19 +17,30 @@ const QRCodeComponent = ({ value, size = 200 }) => {
   const [error, setError] = useState(null);
 
   React.useEffect(() => {
-    import('qrcode.react')
-      .then(module => {
-        setQRCode(() => module.QRCodeSVG);
-      })
-      .catch(err => {
-        console.error("Failed to load QR code module:", err);
-        setError(err);
-      });
+    // Use a try-catch block to handle any errors during import
+    try {
+      import('qrcode.react')
+        .then(module => {
+          console.log("QR code module loaded:", module);
+          setQRCode(() => module.QRCodeSVG || module.default || module.QRCode);
+        })
+        .catch(err => {
+          console.error("Failed to load QR code module:", err);
+          setError(err);
+        });
+    } catch (err) {
+      console.error("Error in QR code import:", err);
+      setError(err);
+    }
   }, []);
 
   // Handle loading state
   if (!QRCode && !error) {
-    return <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg"></div>;
+    return (
+      <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <span className="text-gray-500">Loading QR code...</span>
+      </div>
+    );
   }
   
   // Handle error state
@@ -44,28 +55,30 @@ const QRCodeComponent = ({ value, size = 200 }) => {
     );
   }
   
-  // Ensure we have a valid value
+  // Ensure we have a valid value and it's not too long
   const safeValue = value || 'https://yourehired.app';
+  console.log("Rendering QR code with value length:", safeValue.length);
   
-  // Check if logo exists
-  const logoSettings = {
-    src: "/logo-small.png",
-    height: 24,
-    width: 24,
-    excavate: true
-  };
+  // If QRCode is available, render it
+  if (QRCode) {
+    return (
+      <div className="bg-white p-4 rounded-lg">
+        <QRCode 
+          value={safeValue}
+          size={size}
+          level="M"
+          includeMargin={true}
+          renderAs="svg"
+        />
+      </div>
+    );
+  }
   
+  // Fallback if something unexpected happens
   return (
-    <QRCode 
-      value={safeValue}
-      size={size}
-      level="M"
-      includeMargin={true}
-      imageSettings={logoSettings}
-      onError={(err) => {
-        console.error("QR Code rendering error:", err);
-      }}
-    />
+    <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg">
+      <span className="text-gray-500">QR code unavailable</span>
+    </div>
   );
 };
 

@@ -275,7 +275,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[550px] dark:bg-gray-800 dark:text-gray-200">
+        <DialogContent className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-200 border shadow-lg">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>

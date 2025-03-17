@@ -304,7 +304,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           
           <TabsContent value="qrcode" className="w-full flex flex-col items-center">
             {/* QR Code */}
-            <div className="qr-container p-4 bg-white rounded-lg shadow-sm border-2 border-blue-200">
+            <div className="qr-container p-4 bg-white rounded-lg shadow-sm border-2 border-blue-200 flex flex-col items-center">
               <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
               <QRCodeComponent value={calendarData} />
             </div>
