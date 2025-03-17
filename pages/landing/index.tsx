@@ -88,7 +88,7 @@ export default function LandingPage() {
               <div className="relative flex items-center justify-center">
                 <div className="relative w-full overflow-hidden rounded-lg border bg-background shadow-xl">
                   <img
-                    src="/placeholder.svg"
+                    src="/feature-tracking.png"
                     alt="Application dashboard showing job tracking board"
                     className="aspect-video w-full object-cover"
                   />
@@ -219,10 +219,8 @@ export default function LandingPage() {
                 </TabsList>
                 <TabsContent value="dashboard" className="mt-6">
                   <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                    <Image
-                      src="/placeholder.svg"
-                      width={1200}
-                      height={600}
+                    <img
+                      src="/feature-tracking.png"
                       alt="Application tracking dashboard"
                       className="w-full object-cover"
                     />
@@ -237,10 +235,8 @@ export default function LandingPage() {
                 </TabsContent>
                 <TabsContent value="resume" className="mt-6">
                   <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                    <Image
-                      src="/placeholder.svg"
-                      width={1200}
-                      height={600}
+                    <img
+                      src="/feature-tracking.png"
                       alt="AI resume feedback interface"
                       className="w-full object-cover"
                     />
@@ -255,10 +251,8 @@ export default function LandingPage() {
                 </TabsContent>
                 <TabsContent value="interview" className="mt-6">
                   <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                    <Image
-                      src="/placeholder.svg"
-                      width={1200}
-                      height={600}
+                    <img
+                      src="/feature-tracking.png"
                       alt="Interview preparation interface"
                       className="w-full object-cover"
                     />
@@ -273,10 +267,8 @@ export default function LandingPage() {
                 </TabsContent>
                 <TabsContent value="analytics" className="mt-6">
                   <div className="overflow-hidden rounded-lg border bg-background shadow-lg">
-                    <Image
-                      src="/placeholder.svg"
-                      width={1200}
-                      height={600}
+                    <img
+                      src="/feature-tracking.png"
                       alt="Job search analytics dashboard"
                       className="w-full object-cover"
                     />
