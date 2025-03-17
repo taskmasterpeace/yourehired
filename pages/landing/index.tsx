@@ -40,16 +40,12 @@ export default function LandingPage() {
             </Link>
           </nav>
           <div className="flex items-center gap-4">
-            {/* Use AuthModal for login */}
-            <AuthModal 
-              trigger={<Button variant="link" className="text-sm font-medium">Log in</Button>}
-              defaultTab="sign-in"
-            />
-            {/* Use AuthModal for signup */}
-            <AuthModal 
-              trigger={<Button>Get Started</Button>}
-              defaultTab="sign-up"
-            />
+            <Link href="/login">
+              <Button variant="link" className="text-sm font-medium">Log in</Button>
+            </Link>
+            <Link href="/login">
+              <Button>Get Started</Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -71,10 +67,9 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <AuthModal 
-                    trigger={<Button size="lg">Start Your Job Search Journey</Button>}
-                    defaultTab="sign-up"
-                  />
+                  <Link href="/login">
+                    <Button size="lg">Start Your Job Search Journey</Button>
+                  </Link>
                   <Button variant="outline" size="lg" asChild>
                     <Link href="#demo">Try the Resume Analyzer</Link>
                   </Button>
@@ -345,14 +340,11 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex justify-center">
-              <AuthModal 
-                trigger={
-                  <Button size="lg">
-                    Start Your Job Search <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
-                }
-                defaultTab="sign-up"
-              />
+              <Link href="/login">
+                <Button size="lg">
+                  Start Your Job Search <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -475,10 +467,9 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <AuthModal 
-                    trigger={<Button className="w-full" variant="outline">Get Started</Button>}
-                    defaultTab="sign-up"
-                  />
+                  <Link href="/login" className="w-full">
+                    <Button className="w-full" variant="outline">Get Started</Button>
+                  </Link>
                 </CardFooter>
               </Card>
               <Card className="border-primary">
@@ -523,10 +514,9 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <AuthModal 
-                    trigger={<Button className="w-full">Start 14-day Free Trial</Button>}
-                    defaultTab="sign-up"
-                  />
+                  <Link href="/login" className="w-full">
+                    <Button className="w-full">Start 14-day Free Trial</Button>
+                  </Link>
                 </CardFooter>
               </Card>
             </div>
@@ -551,10 +541,9 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <AuthModal 
-                  trigger={<Button size="lg">Start Your Free Trial</Button>}
-                  defaultTab="sign-up"
-                />
+                <Link href="/login">
+                  <Button size="lg">Start Your Free Trial</Button>
+                </Link>
                 <Button variant="outline" size="lg" asChild>
                   <Link href="#demo">See How It Works</Link>
                 </Button>

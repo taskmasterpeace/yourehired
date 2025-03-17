@@ -2,18 +2,32 @@ import { useAuth } from '../../context/auth-context';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button } from '../../components/ui/button';
-import { AuthModal } from '../../components/auth/AuthModal';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { useState } from 'react';
+import React from 'react';
 
 export default function LoginPage() {
   const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    
     try {
-      await signIn('test@example.com', 'password');
+      await signIn(email, password);
       router.push('/app');
     } catch (error) {
+      setError('Invalid email or password');
       console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -25,19 +39,29 @@ export default function LoginPage() {
       console.error('Google login error:', error);
     }
   };
-  
-  // Redirect to landing page
-  React.useEffect(() => {
-    router.push('/landing');
-  }, [router]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 flex flex-col items-center justify-center">
+      {/* Back to landing page link */}
+      <div className="absolute top-4 left-4">
+        <Link href="/landing">
+          <Button variant="outline" size="sm">
+            ← Back to Home
+          </Button>
+        </Link>
+      </div>
+      
       <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-xl shadow-md">
         <div className="text-center">
           <h1 className="text-3xl font-bold dark:text-white">Welcome Back</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">Sign in to your account</p>
         </div>
+        
+        {error && (
+          <div className="p-3 bg-red-100 border border-red-200 text-red-800 rounded-md text-sm">
+            {error}
+          </div>
+        )}
         
         <div className="space-y-4">
           <Button 
@@ -61,30 +85,50 @@ export default function LoginPage() {
               <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or</span>
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or sign in with email</span>
             </div>
           </div>
           
-          <AuthModal 
-            trigger={
-              <Button className="w-full">
-                Sign in with Email
-              </Button>
-            }
-            defaultTab="sign-in"
-          />
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </form>
           
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{" "}
-              <AuthModal 
-                trigger={
-                  <Button variant="link" className="p-0 h-auto">
-                    Sign up
-                  </Button>
-                }
-                defaultTab="sign-up"
-              />
+              <Link href="/signup" className="text-blue-600 hover:underline">
+                Sign up
+              </Link>
             </p>
           </div>
         </div>

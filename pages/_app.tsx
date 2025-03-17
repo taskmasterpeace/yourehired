@@ -32,7 +32,9 @@ function AppContent({ Component, pageProps }: AppProps) {
     })
 
     // Handle root path and invalid paths
-    if (router.pathname === '/' || !SAFE_PATHS.includes(router.pathname)) {
+    // Don't redirect from login page even if user is not authenticated
+    if ((router.pathname === '/' || !SAFE_PATHS.includes(router.pathname)) && 
+        router.pathname !== '/login') {
       console.log('Executing redirect to:', redirectPath)
       router.push(redirectPath)
         .then(() => console.log('Redirect success'))
