@@ -8,10 +8,6 @@ import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 
-// Import the calendar styles
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import '../../styles/calendar.css';
-
 // Setup the localizer for react-big-calendar
 const locales = {
   'en-US': require('date-fns/locale/en-US')
