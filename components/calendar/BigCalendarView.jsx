@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+
+// Import the calendar styles
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '../../styles/calendar.css';
 
 // Setup the localizer for react-big-calendar
 const locales = {
@@ -193,7 +197,7 @@ const BigCalendarView = ({
         title: event.title || "Untitled Event",
         start: startDate,
         end: endDate,
-        allDay: false,
+        allDay: event.allDay || false,
         resource: event // Store the original event data
       };
     } catch (error) {
@@ -311,13 +315,13 @@ const BigCalendarView = ({
     return {};
   };
   
-  // Determine available views based on screen size
-  const availableViews = isMobile 
-    ? { agenda: true, day: true }
-    : { month: true, week: true, day: true, agenda: true };
-  
-  // Try a simplified calendar first if there are issues
-  const useSimplifiedCalendar = false; // Set to true for debugging
+  // Define the actual view components to use
+  const calendarViews = {
+    month: Views.MONTH,
+    week: Views.WEEK,
+    day: Views.DAY,
+    agenda: Views.AGENDA
+  };
   
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -334,35 +338,22 @@ const BigCalendarView = ({
           />
           
           <div className="p-2 sm:p-4" style={{ height: isMobile ? '60vh' : '70vh' }}>
-            {useSimplifiedCalendar ? (
-              // Simplified calendar for debugging
-              <Calendar
-                localizer={localizer}
-                events={formattedEvents}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: '100%' }}
-                defaultView="month"
-                defaultDate={new Date()}
-              />
-            ) : (
-              // Full-featured calendar
-              <Calendar
-                localizer={localizer}
-                events={formattedEvents}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: '100%' }}
-                view={viewMode}
-                onView={(view) => setViewMode(view)}
-                date={selectedDate}
-                onNavigate={handleNavigate}
-                selectable
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
-                eventPropGetter={eventStyleGetter}
-                dayPropGetter={dayPropGetter}
-                views={availableViews}
+            <Calendar
+              localizer={localizer}
+              events={formattedEvents}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              view={viewMode}
+              views={calendarViews}
+              onView={(view) => setViewMode(view)}
+              date={selectedDate}
+              onNavigate={handleNavigate}
+              selectable
+              onSelectEvent={handleSelectEvent}
+              onSelectSlot={handleSelectSlot}
+              eventPropGetter={eventStyleGetter}
+              dayPropGetter={dayPropGetter}
                 popup
                 tooltipAccessor={(event) => event.title}
                 messages={{
@@ -406,7 +397,6 @@ const BigCalendarView = ({
                   drilldownView: "day"
                 } : {})}
               />
-          )}
           </div>
         </CardContent>
       </Card>

@@ -1,0 +1,40 @@
+/* styles/calendar.css */
+@import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+/* Fix for week view columns */
+.rbc-time-view .rbc-time-header-content {
+  min-width: 100%;
+}
+
+.rbc-time-view .rbc-time-header-content .rbc-header {
+  min-width: 0;
+}
+
+.rbc-time-view .rbc-day-slot {
+  min-width: 0;
+}
+
+/* Fix for month view */
+.rbc-month-view .rbc-month-row {
+  min-height: 100px;
+}
+
+.rbc-month-view .rbc-date-cell {
+  min-height: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .rbc-toolbar-label {
+    margin: 8px 0;
+  }
+  
+  .rbc-btn-group {
+    margin-bottom: 8px;
+  }
+}
