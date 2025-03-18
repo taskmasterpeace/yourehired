@@ -277,7 +277,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[550px] bg-green-200 dark:bg-green-800 dark:text-gray-200 border shadow-lg backdrop-blur-none">
+        <DialogContent className="sm:max-w-[550px] dark:text-gray-200 border shadow-lg backdrop-blur-none">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
@@ -461,7 +461,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     variant="destructive" 
                     size="sm"
                     onClick={() => setIsDeleteDialogOpen(true)}
-                    className="flex items-center"
+                    className="flex items-center bg-red-600 hover:bg-red-700 text-white font-medium"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Event
