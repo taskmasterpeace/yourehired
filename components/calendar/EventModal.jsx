@@ -10,7 +10,6 @@ import {
 } from "../ui/dialog";
 
 // See LessonsLearned.md for implementation insights
-console.log("LOADING COMPONENT: EventModal.jsx - VERSION 3 - " + new Date().toISOString());
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -107,18 +106,6 @@ const EVENT_TEMPLATES = [
 ];
 
 const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDelete }) => {
-  // Add debugging to see what opportunities are available
-  console.log("Available opportunities:", opportunities);
-  
-  // Add additional debugging for opportunities
-  useEffect(() => {
-    if (!Array.isArray(opportunities) || opportunities.length === 0) {
-      console.warn('No opportunities passed to EventModal');
-    } else {
-      console.log(`EventModal received ${opportunities.length} opportunities`);
-    }
-  }, [opportunities]);
-
   const [eventData, setEventData] = useState({
     id: '',
     title: '',
@@ -279,20 +266,8 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent 
-          className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border shadow-lg"
-          style={{ 
-            backgroundColor: 'white', 
-            color: 'black',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-            backdropFilter: 'none',
-            maxWidth: '550px',
-            width: '100%'
-          }}
+          className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg"
         >
-          <div className="bg-red-500 text-white p-4 mb-4 rounded-lg font-bold text-center">
-            THIS IS A TEST - VERSION 3
-          </div>
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
@@ -469,7 +444,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             
             <DialogFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
               {/* Action buttons for existing events */}
-              {eventData.id && (
+              {eventData.id && eventData.id !== '' && (
                 <div className="flex space-x-2 w-full sm:w-auto justify-start">
                   <Button 
                     type="button" 
