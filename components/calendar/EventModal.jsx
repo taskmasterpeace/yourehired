@@ -277,7 +277,18 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border shadow-lg backdrop-blur-none">
+        <DialogContent 
+          className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border shadow-lg"
+          style={{ 
+            backgroundColor: 'white', 
+            color: 'black',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'none',
+            maxWidth: '550px',
+            width: '100%'
+          }}
+        >
           <div className="bg-red-500 text-white p-4 mb-4 rounded-lg font-bold text-center">
             THIS IS A TEST - VERSION 3
           </div>
@@ -342,24 +353,24 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 
                 <div className="grid gap-2">
                   <Label>Time</Label>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-center" style={{ gap: '8px' }}>
+                    <div style={{ width: '45%' }}>
                       <Input 
                         type="time"
                         value={eventData.startTime}
                         onChange={(e) => handleChange('startTime', e.target.value)}
                         required
-                        className="w-full"
+                        style={{ width: '100%' }}
                       />
                     </div>
-                    <span className="px-1 flex-shrink-0">to</span>
-                    <div className="flex-1 min-w-0">
+                    <span style={{ flexShrink: 0 }}>to</span>
+                    <div style={{ width: '45%' }}>
                       <Input 
                         type="time"
                         value={eventData.endTime}
                         onChange={(e) => handleChange('endTime', e.target.value)}
                         required
-                        className="w-full"
+                        style={{ width: '100%' }}
                       />
                     </div>
                   </div>

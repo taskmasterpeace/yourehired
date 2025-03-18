@@ -220,7 +220,18 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg">
+      <DialogContent 
+        className="sm:max-w-md bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg"
+        style={{ 
+          backgroundColor: 'white', 
+          color: 'black',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          backdropFilter: 'none',
+          maxWidth: '450px',
+          width: '100%'
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Add to Calendar</span>
@@ -267,10 +278,34 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           
           <TabsContent value="qrcode" className="w-full flex flex-col items-center">
             {/* QR Code */}
-            <div className="qr-container p-4 bg-white rounded-lg shadow-sm border-2 border-blue-200 flex flex-col items-center">
-              <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
+            <div style={{ 
+              padding: '16px', 
+              backgroundColor: 'white', 
+              borderRadius: '8px', 
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
+              border: '2px solid #bfdbfe', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              width: '100%',
+              maxWidth: '300px'
+            }}>
+              <div style={{ 
+                marginBottom: '8px', 
+                fontSize: '12px', 
+                color: '#6b7280', 
+                textAlign: 'center' 
+              }}>
+                Hey You're Hired! v0.41
+              </div>
+              
               {calendarData ? (
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  padding: '16px', 
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb'
+                }}>
                   <QRCodeSVG 
                     value={calendarData}
                     size={200}
@@ -280,8 +315,18 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
                   />
                 </div>
               ) : (
-                <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center" style={{width: 200, height: 200}}>
-                  <span className="text-gray-500 text-center">No calendar data available</span>
+                <div style={{ 
+                  width: '200px', 
+                  height: '200px', 
+                  backgroundColor: '#f3f4f6', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  borderRadius: '8px' 
+                }}>
+                  <span style={{ color: '#6b7280', textAlign: 'center' }}>
+                    No calendar data available
+                  </span>
                 </div>
               )}
             </div>
