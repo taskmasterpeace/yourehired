@@ -30,8 +30,8 @@ import { OpportunitiesTab } from './components/tabs/OpportunitiesTab'
 import { OpportunityDetails } from './components/opportunities/OpportunityDetails'
 import { OpportunityList } from './components/opportunities/OpportunityList'
 import { useDarkMode } from '@/hooks/useDarkMode'
-import AddToCalendarButton from './AddToCalendarButton'
-import { generateICalString } from './calendarUtils'
+import AddToCalendarButton from './components/calendar/AddToCalendarButton'
+import { generateICalString } from './components/calendar/calendarUtils'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "./components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs"
