@@ -82,11 +82,31 @@ export const OpportunityDetails = ({
       
       <CardContent className="flex-grow overflow-hidden">
         <Tabs defaultValue="details" className="h-full flex flex-col">
-          <TabsList className="mb-2 overflow-x-auto flex-nowrap">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="description">Job Description</TabsTrigger>
-            <TabsTrigger value="resume">Resume</TabsTrigger>
-            <TabsTrigger value="chat">AI Assistant</TabsTrigger>
+          <TabsList className="mb-2 overflow-x-auto flex-nowrap gap-1 p-1 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <TabsTrigger 
+              value="details" 
+              className="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm"
+            >
+              Details
+            </TabsTrigger>
+            <TabsTrigger 
+              value="description" 
+              className="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm"
+            >
+              Job Description
+            </TabsTrigger>
+            <TabsTrigger 
+              value="resume" 
+              className="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm"
+            >
+              Resume
+            </TabsTrigger>
+            <TabsTrigger 
+              value="chat" 
+              className="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm"
+            >
+              AI Assistant
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="details" className="flex-grow overflow-auto">
