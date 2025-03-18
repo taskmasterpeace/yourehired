@@ -117,21 +117,38 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
               variant={variant} 
               size={size} 
               className="add-to-calendar-btn"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
             >
               <CalendarIcon className="w-4 h-4 mr-2" />
               Add to Calendar
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={openModal}>
+            <DropdownMenuItem onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openModal();
+            }}>
               <QrCode className="w-4 h-4 mr-2" />
               <span>QR Code</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDownload}>
+            <DropdownMenuItem onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload(e);
+            }}>
               <Download className="w-4 h-4 mr-2" />
               <span>Download .ics</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleCopy}>
+            <DropdownMenuItem onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleCopy(e);
+            }}>
               <Copy className="w-4 h-4 mr-2" />
               <span>{isCopied ? 'Copied!' : 'Copy iCal'}</span>
             </DropdownMenuItem>
@@ -152,8 +169,13 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
       <Button 
         variant={variant} 
         size={size} 
-        onClick={openModal}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openModal();
+        }}
         className="add-to-calendar-btn"
+        type="button"
       >
         <CalendarIcon className="w-4 h-4 mr-2" />
         Add to Calendar
