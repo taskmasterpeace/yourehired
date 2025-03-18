@@ -275,11 +275,24 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
             {/* QR Code */}
             <div className="qr-container p-4 bg-white rounded-lg shadow-sm border-2 border-blue-200 flex flex-col items-center">
               <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
-              <QRCodeComponent value={calendarData} />
+              {calendarData ? (
+                <div className="bg-white p-4 rounded-lg">
+                  <QRCodeSVG 
+                    value={calendarData}
+                    size={200}
+                    level="M"
+                    includeMargin={true}
+                  />
+                </div>
+              ) : (
+                <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center" style={{width: 200, height: 200}}>
+                  <span className="text-gray-500 text-center">No calendar data available</span>
+                </div>
+              )}
             </div>
             
             {/* Scanning progress indicator */}
-            {!feedbackGiven && (
+            {!feedbackGiven && calendarData && (
               <div className="w-full mt-4">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
                   <span>Scanning...</span>

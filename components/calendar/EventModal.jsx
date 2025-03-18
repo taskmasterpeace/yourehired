@@ -344,15 +344,17 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                         value={eventData.startTime}
                         onChange={(e) => handleChange('startTime', e.target.value)}
                         required
+                        className="w-full"
                       />
                     </div>
-                    <span>to</span>
+                    <span className="px-1">to</span>
                     <div className="flex-1">
                       <Input 
                         type="time"
                         value={eventData.endTime}
                         onChange={(e) => handleChange('endTime', e.target.value)}
                         required
+                        className="w-full"
                       />
                     </div>
                   </div>
@@ -452,24 +454,16 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               {/* Action buttons for existing events */}
               {eventData.id && (
                 <div className="flex space-x-2 w-full sm:w-auto justify-start">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          onClick={() => setIsDeleteDialogOpen(true)}
-                          className="h-9 w-9 text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete event</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="flex items-center"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
                   
                   <TooltipProvider>
                     <Tooltip>

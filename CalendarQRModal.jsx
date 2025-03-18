@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { generateICalString } from './calendarUtils.js';
 import { 
   Dialog, 
@@ -9,7 +10,19 @@ import {
   DialogFooter
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { CalendarIcon, X, Smartphone, Check, Download } from 'lucide-react';
+import { 
+  CalendarIcon, 
+  X, 
+  Smartphone, 
+  Check, 
+  Download, 
+  ThumbsUp, 
+  ThumbsDown, 
+  HelpCircle,
+  Share2
+} from 'lucide-react';
+import { Progress } from "../ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 // We'll use a dynamic import for QRCode to avoid SSR issues
 const QRCodeComponent = ({ value, size = 200 }) => {
