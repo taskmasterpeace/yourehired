@@ -395,10 +395,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                   <Briefcase className="h-4 w-4 mr-2 mt-3 text-gray-400" />
                   <Select 
                     value={eventData.opportunityId || "none"} 
-                    onValueChange={(value) => {
-                      console.log("Selected opportunity:", value);
-                      handleChange('opportunityId', value);
-                    }}
+                    onValueChange={(value) => handleChange('opportunityId', value)}
                     defaultValue="none"
                   >
                     <SelectTrigger id="opportunity" className="flex-1">
