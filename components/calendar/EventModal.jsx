@@ -277,7 +277,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[550px] dark:text-gray-200 border shadow-lg backdrop-blur-none">
+        <DialogContent className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border shadow-lg backdrop-blur-none">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
@@ -374,7 +374,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     <SelectTrigger id="type">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 border dark:border-gray-700">
+                    <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50">
                       <SelectItem value="interview">Interview</SelectItem>
                       <SelectItem value="deadline">Deadline</SelectItem>
                       <SelectItem value="followup">Follow-up</SelectItem>
@@ -414,7 +414,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     <SelectTrigger id="opportunity" className="flex-1">
                       <SelectValue placeholder="Link to job opportunity (optional)" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 border dark:border-gray-700">
+                    <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50">
                       <SelectItem value="none">None</SelectItem>
                       {Array.isArray(opportunities) && opportunities.length === 0 ? (
                         <SelectItem value="loading" disabled>Loading opportunities...</SelectItem>

@@ -228,7 +228,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md border dark:border-gray-700 shadow-lg">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Add to Calendar</span>
