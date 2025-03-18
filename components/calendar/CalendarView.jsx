@@ -1,13 +1,9 @@
 "use client"
 
 import React from 'react';
-import dynamic from 'next/dynamic';
+import BigCalendarView from "./BigCalendarView";
 
-// Use dynamic import for BigCalendarView to avoid SSR issues
-const BigCalendarView = dynamic(
-  () => import("./BigCalendarView"),
-  { ssr: false }
-);
+console.log("LOADING COMPONENT: CalendarView.jsx - VERSION 2");
 
 const CalendarView = ({ 
   events = [], 
@@ -15,6 +11,7 @@ const CalendarView = ({
   user,
   dispatch
 }) => {
+  console.log("RENDERING: CalendarView with events:", events.length);
   return (
     <BigCalendarView 
       events={events} 

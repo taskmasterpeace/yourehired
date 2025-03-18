@@ -8,6 +8,8 @@ import {
   DialogFooter,
   DialogDescription
 } from "../ui/dialog";
+
+console.log("LOADING COMPONENT: EventModal.jsx - VERSION 2");
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -275,7 +277,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-200 border shadow-lg backdrop-blur-none">
+        <DialogContent className="sm:max-w-[550px] bg-green-200 dark:bg-green-800 dark:text-gray-200 border shadow-lg backdrop-blur-none">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
@@ -337,7 +339,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 
                 <div className="grid gap-2">
                   <Label>Time</Label>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 bg-yellow-200 p-2 rounded">
                     <div className="flex-1">
                       <Input 
                         type="time"

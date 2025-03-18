@@ -3,6 +3,8 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 
+console.log("LOADING COMPONENT: CalendarTab.tsx - VERSION 2");
+
 // Use dynamic import to avoid SSR issues
 const CalendarView = dynamic(
   () => import('../calendar/CalendarView'),
@@ -24,6 +26,8 @@ export function CalendarTab({
   user,
   dispatch
 }: CalendarTabProps) {
+  console.log("RENDERING: CalendarTab with events:", events.length);
+  
   // Make sure we're only rendering calendar-related content
   return (
     <div className={`calendar-tab ${isDarkMode ? 'dark-mode' : ''}`}>

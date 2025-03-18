@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
+
+console.log("LOADING COMPONENT: BigCalendarView.jsx - VERSION 2");
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
