@@ -277,6 +277,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
               <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
               {calendarData ? (
                 <div className="bg-white p-4 rounded-lg">
+                  {/* Direct QR code rendering */}
                   <QRCodeSVG 
                     value={calendarData}
                     size={200}

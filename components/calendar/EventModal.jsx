@@ -462,7 +462,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     className="flex items-center"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                    Delete Event
                   </Button>
                   
                   <TooltipProvider>
