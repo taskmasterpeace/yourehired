@@ -9,7 +9,7 @@ import {
   DialogDescription
 } from "../ui/dialog";
 
-console.log("LOADING COMPONENT: EventModal.jsx - VERSION 2");
+console.log("LOADING COMPONENT: EventModal.jsx - VERSION 3 - " + new Date().toISOString());
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -278,6 +278,9 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border shadow-lg backdrop-blur-none">
+          <div className="bg-red-500 text-white p-4 mb-4 rounded-lg font-bold text-center">
+            THIS IS A TEST - VERSION 3
+          </div>
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
