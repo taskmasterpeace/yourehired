@@ -285,6 +285,7 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
                     level="M"
                     includeMargin={true}
                     className="border border-gray-200"
+                    style={{ display: 'block' }}
                   />
                 </div>
               ) : (

@@ -339,7 +339,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 
                 <div className="grid gap-2">
                   <Label>Time</Label>
-                  <div className="flex items-center space-x-2 bg-yellow-200 p-2 rounded">
+                  <div className="flex items-center space-x-2">
                     <div className="flex-1">
                       <Input 
                         type="time"
@@ -375,11 +375,11 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50">
-                      <SelectItem value="interview">Interview</SelectItem>
-                      <SelectItem value="deadline">Deadline</SelectItem>
-                      <SelectItem value="followup">Follow-up</SelectItem>
-                      <SelectItem value="assessment">Assessment</SelectItem>
-                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="interview" className="hover:bg-gray-100 dark:hover:bg-gray-700">Interview</SelectItem>
+                      <SelectItem value="deadline" className="hover:bg-gray-100 dark:hover:bg-gray-700">Deadline</SelectItem>
+                      <SelectItem value="followup" className="hover:bg-gray-100 dark:hover:bg-gray-700">Follow-up</SelectItem>
+                      <SelectItem value="assessment" className="hover:bg-gray-100 dark:hover:bg-gray-700">Assessment</SelectItem>
+                      <SelectItem value="general" className="hover:bg-gray-100 dark:hover:bg-gray-700">General</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -415,12 +415,12 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                       <SelectValue placeholder="Link to job opportunity (optional)" />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50">
-                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="none" className="hover:bg-gray-100 dark:hover:bg-gray-700">None</SelectItem>
                       {Array.isArray(opportunities) && opportunities.length === 0 ? (
-                        <SelectItem value="loading" disabled>Loading opportunities...</SelectItem>
+                        <SelectItem value="loading" disabled className="text-gray-500 dark:text-gray-400">Loading opportunities...</SelectItem>
                       ) : (
                         opportunities.map(opp => (
-                          <SelectItem key={opp.id} value={opp.id}>
+                          <SelectItem key={opp.id} value={opp.id} className="hover:bg-gray-100 dark:hover:bg-gray-700">
                             {opp.company} - {opp.position}
                           </SelectItem>
                         ))
@@ -582,7 +582,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
       
       {/* Template selection dialog */}
       <Dialog open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-[450px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg">
           <DialogHeader>
             <DialogTitle>Choose Event Template</DialogTitle>
             <DialogDescription>
