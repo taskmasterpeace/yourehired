@@ -277,43 +277,33 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
           </div>
           
           <TabsContent value="qrcode" className="w-full flex flex-col items-center">
-            {/* QR Code */}
+            {/* QR Code - Ultra Simple Version */}
             <div style={{ 
-              padding: '16px', 
+              padding: '20px', 
               backgroundColor: 'white', 
               borderRadius: '8px', 
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
-              border: '2px solid #bfdbfe', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center',
-              width: '100%',
-              maxWidth: '300px'
+              border: '2px solid #bfdbfe',
+              width: '250px',
+              textAlign: 'center'
             }}>
-              <div style={{ 
-                marginBottom: '8px', 
-                fontSize: '12px', 
-                color: '#6b7280', 
-                textAlign: 'center' 
-              }}>
+              <div style={{ marginBottom: '10px', fontSize: '12px', color: '#6b7280' }}>
                 Hey You're Hired! v0.41
               </div>
               
               {calendarData ? (
-                <div style={{ 
-                  backgroundColor: 'white', 
-                  padding: '16px', 
-                  borderRadius: '8px',
-                  border: '1px solid #e5e7eb'
-                }}>
-                  <QRCodeSVG 
-                    value={calendarData}
-                    size={200}
-                    level="M"
-                    includeMargin={true}
-                    style={{ display: 'block' }}
-                  />
-                </div>
+                // Direct QR code rendering with no wrappers
+                <QRCodeSVG 
+                  value={calendarData}
+                  size={200}
+                  level="M"
+                  includeMargin={true}
+                  style={{ 
+                    display: 'inline-block',
+                    border: '1px solid #e5e7eb',
+                    backgroundColor: 'white',
+                    padding: '8px'
+                  }}
+                />
               ) : (
                 <div style={{ 
                   width: '200px', 
@@ -321,34 +311,17 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
                   backgroundColor: '#f3f4f6', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  justifyContent: 'center', 
-                  borderRadius: '8px' 
+                  justifyContent: 'center',
+                  margin: '0 auto'
                 }}>
-                  <span style={{ color: '#6b7280', textAlign: 'center' }}>
-                    No calendar data available
-                  </span>
+                  <span style={{ color: '#6b7280' }}>No data</span>
                 </div>
               )}
             </div>
             
-            {/* Scanning progress indicator */}
-            {!feedbackGiven && calendarData && (
-              <div className="w-full mt-4">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>Scanning...</span>
-                  <span>{scanProgress}%</span>
-                </div>
-                <Progress value={scanProgress} className="h-1" />
-              </div>
-            )}
-            
-            {/* Instructions */}
-            <div className="mt-4 text-center text-sm text-gray-600">
-              <p className="flex items-center justify-center">
-                <Smartphone className="w-4 h-4 mr-1" />
-                Point your phone's camera at the QR code
-              </p>
-              <p className="mt-1">Your phone will recognize it as a calendar event</p>
+            {/* Simple instructions */}
+            <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px', color: '#4b5563' }}>
+              Point your phone's camera at the QR code
             </div>
           </TabsContent>
           
