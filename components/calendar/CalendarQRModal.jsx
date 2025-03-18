@@ -11,6 +11,7 @@ import {
 import { Button } from "../ui/button";
 import { Download } from 'lucide-react';
 
+// See LessonsLearned.md for implementation insights
 console.log("LOADING COMPONENT: CalendarQRModal.jsx - VERSION 3");
 
 const CalendarQRModal = ({ event, isOpen, onClose }) => {

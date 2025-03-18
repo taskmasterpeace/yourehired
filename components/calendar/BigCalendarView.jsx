@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
 
+// See LessonsLearned.md for implementation insights
 console.log("LOADING COMPONENT: BigCalendarView.jsx - VERSION 2");
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';

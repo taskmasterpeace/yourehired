@@ -9,6 +9,7 @@ import {
   DialogDescription
 } from "../ui/dialog";
 
+// See LessonsLearned.md for implementation insights
 console.log("LOADING COMPONENT: EventModal.jsx - VERSION 3 - " + new Date().toISOString());
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
