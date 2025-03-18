@@ -191,6 +191,3 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
 };
 
 export default AddToCalendarButton;
-};
-
-export default AddToCalendarButton;
