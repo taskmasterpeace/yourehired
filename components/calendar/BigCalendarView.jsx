@@ -3,7 +3,6 @@ import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, isToday } from 'date-fns';
 
 // See LessonsLearned.md for implementation insights
-console.log("LOADING COMPONENT: BigCalendarView.jsx - VERSION 2");
 import CalendarHeader from './CalendarHeader';
 import EventModal from './EventModal';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -39,11 +38,11 @@ const ColorLegend = () => {
 
   return (
     <div className="flex flex-wrap gap-3 mt-4 p-3 bg-white dark:bg-gray-800 rounded-md border dark:border-gray-700">
-      <div className="text-sm font-medium mr-2 dark:text-gray-200">Event Types:</div>
+      <div className="text-sm font-medium mr-2 text-gray-800 dark:text-gray-200">Event Types:</div>
       {eventTypes.map(item => (
         <div key={item.type} className="flex items-center">
           <div className={`w-3 h-3 rounded-full ${item.color} mr-1`}></div>
-          <span className="text-sm dark:text-gray-300">{item.label}</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{item.label}</span>
         </div>
       ))}
     </div>
@@ -73,20 +72,6 @@ const BigCalendarView = ({
   // Check if we're on mobile using the existing hook
   const isMobile = useMediaQuery('(max-width: 768px)');
   
-  // Debug events
-  useEffect(() => {
-    console.log('Calendar events:', events);
-    
-    // Check for any invalid dates
-    const invalidEvents = events.filter(event => {
-      const startDate = new Date(event.startDate || event.date);
-      return isNaN(startDate.getTime());
-    });
-    
-    if (invalidEvents.length > 0) {
-      console.error('Found invalid event dates:', invalidEvents);
-    }
-  }, [events]);
   
   // Load saved view preferences from localStorage
   const loadSavedPreferences = () => {
@@ -290,13 +275,14 @@ const BigCalendarView = ({
       style: {
         backgroundColor: colorMap[backgroundColor] || '#9ca3af',
         borderRadius: '4px',
-        color: 'white',
+        color: 'white', // Ensure text is visible on colored backgrounds
         border: 'none',
-        fontSize: isMobile ? '0.75rem' : 'inherit',
-        padding: isMobile ? '2px' : 'inherit',
+        fontSize: isMobile ? '0.75rem' : '0.875rem',
+        padding: isMobile ? '2px' : '4px',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        fontWeight: '500' // Make text slightly bolder for better visibility
       }
     };
   };
@@ -342,7 +328,11 @@ const BigCalendarView = ({
               events={formattedEvents}
               startAccessor="start"
               endAccessor="end"
-              style={{ height: '100%' }}
+              style={{ 
+                height: '100%',
+                backgroundColor: 'transparent'
+              }}
+              className="calendar-container dark:text-gray-200"
               view={viewMode}
               views={calendarViews}
               onView={(view) => setViewMode(view)}
@@ -369,12 +359,12 @@ const BigCalendarView = ({
                   agenda: {
                     event: ({ event }) => (
                       <div className="p-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => handleSelectEvent(event)}>
-                        <div className="font-medium dark:text-white">{event.title}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-200">
+                        <div className="font-medium text-gray-900 dark:text-white">{event.title}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300">
                           {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
                         </div>
                         {event.resource.location && (
-                          <div className="text-xs text-gray-600 dark:text-gray-200">
+                          <div className="text-xs text-gray-600 dark:text-gray-300">
                             Location: {event.resource.location}
                           </div>
                         )}
