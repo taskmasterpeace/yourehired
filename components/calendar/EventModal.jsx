@@ -340,7 +340,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 <div className="grid gap-2">
                   <Label>Time</Label>
                   <div className="flex items-center space-x-2">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <Input 
                         type="time"
                         value={eventData.startTime}
@@ -349,8 +349,8 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                         className="w-full"
                       />
                     </div>
-                    <span className="px-1">to</span>
-                    <div className="flex-1">
+                    <span className="px-1 flex-shrink-0">to</span>
+                    <div className="flex-1 min-w-0">
                       <Input 
                         type="time"
                         value={eventData.endTime}
@@ -464,7 +464,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     className="flex items-center bg-red-600 hover:bg-red-700 text-white font-medium"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Event
+                    DELETE EVENT
                   </Button>
                   
                   <TooltipProvider>
@@ -585,7 +585,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
         <DialogContent className="sm:max-w-[450px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg">
           <DialogHeader>
             <DialogTitle>Choose Event Template</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="dark:text-gray-300">
               Select a template to quickly create a common event type
             </DialogDescription>
           </DialogHeader>
@@ -595,12 +595,12 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               <Button
                 key={template.id}
                 variant="outline"
-                className="justify-start h-auto py-3 px-4"
+                className="justify-start h-auto py-3 px-4 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
                 onClick={() => applyTemplate(template)}
               >
                 <div className="flex flex-col items-start text-left">
                   <span className="font-medium">{template.name}</span>
-                  <span className="text-xs text-gray-500 mt-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-300 mt-1">
                     {template.duration} min • {template.type}
                   </span>
                 </div>

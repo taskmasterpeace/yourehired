@@ -29,28 +29,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 // Simple QR code component with direct import
 const QRCodeComponent = ({ value, size = 200 }) => {
   // Ensure we have a valid value
-  const safeValue = value || 'https://yourehired.app';
+  const safeValue = value || 'No calendar data available';
   
   // Debug the QR code value
   console.log("QR Code value length:", safeValue.length);
   console.log("QR Code value type:", typeof safeValue);
   
-  // Check if logo exists
-  const logoSettings = {
-    src: "/logo-small.png",
-    height: 24,
-    width: 24,
-    excavate: true
-  };
-  
   return (
-    <div className="bg-white rounded-lg">
+    <div className="bg-white rounded-lg p-2 border border-gray-200">
       <QRCodeSVG 
         value={safeValue}
         size={size}
         level="M"
         includeMargin={true}
-        imageSettings={logoSettings}
+        style={{ display: 'block' }}
       />
     </div>
   );
@@ -278,13 +270,12 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
             <div className="qr-container p-4 bg-white rounded-lg shadow-sm border-2 border-blue-200 flex flex-col items-center">
               <div className="text-center mb-2 text-xs text-gray-500">Hey You're Hired! v0.41</div>
               {calendarData ? (
-                <div className="bg-white p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <QRCodeSVG 
                     value={calendarData}
                     size={200}
                     level="M"
                     includeMargin={true}
-                    className="border border-gray-200"
                     style={{ display: 'block' }}
                   />
                 </div>
