@@ -133,23 +133,44 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   // Initialize form with event data when editing
   useEffect(() => {
     if (event) {
-      const eventDate = new Date(event.date || event.startDate || new Date());
-      
-      setEventData({
-        id: event.id || '',
-        title: event.title || '',
-        date: eventDate,
-        startTime: format(eventDate, 'HH:mm'),
-        endTime: event.endDate ? format(new Date(event.endDate), 'HH:mm') : format(new Date(eventDate.getTime() + 60 * 60 * 1000), 'HH:mm'),
-        type: event.type || 'general',
-        location: event.location || '',
-        description: event.description || '',
-        opportunityId: event.opportunityId || '',
-        reminder: event.reminder || {
-          enabled: true,
-          time: '30'
-        }
-      });
+      try {
+        const eventDate = new Date(event.date || event.startDate || new Date());
+        
+        // Create a clean copy without circular references
+        setEventData({
+          id: event.id || '',
+          title: event.title || '',
+          date: eventDate,
+          startTime: format(eventDate, 'HH:mm'),
+          endTime: event.endDate ? format(new Date(event.endDate), 'HH:mm') : format(new Date(eventDate.getTime() + 60 * 60 * 1000), 'HH:mm'),
+          type: event.type || 'general',
+          location: event.location || '',
+          description: event.description || '',
+          opportunityId: event.opportunityId || '',
+          reminder: event.reminder || {
+            enabled: true,
+            time: '30'
+          }
+        });
+      } catch (error) {
+        console.error("Error processing event data:", error);
+        // Set default values if there's an error
+        setEventData({
+          id: event.id || '',
+          title: event.title || '',
+          date: new Date(),
+          startTime: '09:00',
+          endTime: '10:00',
+          type: 'general',
+          location: '',
+          description: '',
+          opportunityId: '',
+          reminder: {
+            enabled: true,
+            time: '30'
+          }
+        });
+      }
     }
   }, [event]);
   
@@ -173,39 +194,53 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Create date objects for start and end times
-    const startDate = new Date(eventData.date);
-    const [startHours, startMinutes] = eventData.startTime.split(':');
-    startDate.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10));
-    
-    const endDate = new Date(eventData.date);
-    const [endHours, endMinutes] = eventData.endTime.split(':');
-    endDate.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10));
-    
-    // Prepare the complete event object
-    const completeEvent = {
-      ...eventData,
-      startDate,
-      endDate
-    };
-    
-    // If associated with an opportunity, add that data
-    if (eventData.opportunityId) {
-      const opportunity = opportunities.find(opp => opp.id === eventData.opportunityId);
-      if (opportunity) {
-        completeEvent.opportunity = opportunity;
+    try {
+      // Create date objects for start and end times
+      const startDate = new Date(eventData.date);
+      const [startHours, startMinutes] = eventData.startTime.split(':');
+      startDate.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10));
+      
+      const endDate = new Date(eventData.date);
+      const [endHours, endMinutes] = eventData.endTime.split(':');
+      endDate.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10));
+      
+      // Prepare the complete event object
+      const completeEvent = {
+        ...eventData,
+        startDate,
+        endDate
+      };
+      
+      // If associated with an opportunity, add that data
+      if (eventData.opportunityId) {
+        const opportunity = opportunities.find(opp => opp.id === eventData.opportunityId);
+        if (opportunity) {
+          completeEvent.opportunity = {
+            id: opportunity.id,
+            company: opportunity.company,
+            position: opportunity.position
+          };
+        }
       }
+      
+      onSave(completeEvent);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("There was an error saving the event. Please try again.");
     }
-    
-    onSave(completeEvent);
   };
 
   // Handle delete event
   const handleDelete = () => {
-    if (onDelete && eventData.id) {
-      onDelete(eventData.id);
-      setIsDeleteDialogOpen(false);
-      onClose();
+    try {
+      if (onDelete && eventData.id) {
+        onDelete(eventData.id);
+        setIsDeleteDialogOpen(false);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      alert("There was an error deleting the event. Please try again.");
     }
   };
 
@@ -269,22 +304,27 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   
   // Generate calendar data for QR code
   const getCalendarData = () => {
-    // Create date objects for start and end times
-    const startDate = new Date(eventData.date);
-    const [startHours, startMinutes] = eventData.startTime.split(':');
-    startDate.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10));
-    
-    const endDate = new Date(eventData.date);
-    const [endHours, endMinutes] = eventData.endTime.split(':');
-    endDate.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10));
-    
-    const eventForCalendar = {
-      ...eventData,
-      startDate,
-      endDate
-    };
-    
-    return generateICalString(eventForCalendar);
+    try {
+      // Create date objects for start and end times
+      const startDate = new Date(eventData.date);
+      const [startHours, startMinutes] = eventData.startTime.split(':');
+      startDate.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10));
+      
+      const endDate = new Date(eventData.date);
+      const [endHours, endMinutes] = eventData.endTime.split(':');
+      endDate.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10));
+      
+      const eventForCalendar = {
+        ...eventData,
+        startDate,
+        endDate
+      };
+      
+      return generateICalString(eventForCalendar);
+    } catch (error) {
+      console.error("Error generating calendar data:", error);
+      return "";
+    }
   };
   
   // Handle download of .ics file
@@ -481,7 +521,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             </div>
             
             {/* SUPER OBVIOUS DELETE BUTTON FOR EXISTING EVENTS */}
-            {eventData.id && (
+            {(eventData.id || event?.id) && (
               <div className="mt-6 mb-4">
                 <Button 
                   type="button" 
@@ -505,8 +545,23 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               </Button>
             </div>
             
+            {/* Direct download button for existing events */}
+            {(eventData.id || event?.id) && (
+              <div className="mt-4">
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={handleDownload}
+                  className="w-full flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Calendar (.ics) File
+                </Button>
+              </div>
+            )}
+            
             {/* QR CODE SECTION - Only for existing events */}
-            {eventData.id && (
+            {(eventData.id || event?.id) && (
               <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button"
