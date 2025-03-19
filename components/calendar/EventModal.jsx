@@ -422,37 +422,24 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             </div>
             
             
-            {/* Save/Cancel/Delete buttons in one row */}
+            {/* Save/Cancel/Delete buttons in one row - ALWAYS SHOW DELETE */}
             <div className="flex flex-col sm:flex-row gap-2 mt-4">
-              {/* Delete button - only show when editing */}
-              {(event?.id || event?._id || (eventData.id && eventData.id !== '')) ? (
-                <>
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                  <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-1/3">
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="w-full sm:w-1/3 bg-blue-600 hover:bg-blue-700">
-                    Update
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-1/2">
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="w-full sm:w-1/2 bg-blue-600 hover:bg-blue-700">
-                    Create Event
-                  </Button>
-                </>
-              )}
+              {/* Always show all three buttons */}
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-1/3">
+                Cancel
+              </Button>
+              <Button type="submit" className="w-full sm:w-1/3 bg-blue-600 hover:bg-blue-700">
+                {eventData.id ? 'Update' : 'Create'}
+              </Button>
             </div>
             
             {/* Direct download button for existing events */}
