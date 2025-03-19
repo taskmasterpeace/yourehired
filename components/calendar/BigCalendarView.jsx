@@ -192,6 +192,8 @@ const BigCalendarView = ({
   
   // Handle event selection
   const handleSelectEvent = (event) => {
+    console.log('Selected event:', event);
+    console.log('Event resource:', event.resource);
     setCurrentEvent(event.resource);
     setIsEventModalOpen(true);
   };
@@ -392,6 +394,7 @@ const BigCalendarView = ({
       
       {!isMobile && <ColorLegend />}
       
+      {console.log('Current event being passed to modal:', currentEvent)}
       <EventModal 
         isOpen={isEventModalOpen}
         onClose={() => {

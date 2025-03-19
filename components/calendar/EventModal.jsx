@@ -132,13 +132,16 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   
   // Initialize form with event data when editing
   useEffect(() => {
+    console.log('Event received in modal:', event);
+    console.log('Event ID type and value:', typeof event?.id, event?.id);
+    
     if (event) {
       try {
         const eventDate = new Date(event.date || event.startDate || new Date());
         
         // Create a clean copy without circular references
         setEventData({
-          id: event.id || '',
+          id: event.id || event._id || '', // Check for both id and _id
           title: event.title || '',
           date: eventDate,
           startTime: format(eventDate, 'HH:mm'),
@@ -152,6 +155,8 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             time: '30'
           }
         });
+        
+        console.log('EventData after setting:', eventData);
       } catch (error) {
         console.error("Error processing event data:", error);
         // Set default values if there's an error
@@ -521,7 +526,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             </div>
             
             {/* SUPER OBVIOUS DELETE BUTTON FOR EXISTING EVENTS */}
-            {(eventData.id || event?.id) && (
+            {(event?.id || event?._id || (eventData.id && eventData.id !== '')) && (
               <div className="mt-6 mb-4">
                 <Button 
                   type="button" 
@@ -561,7 +566,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             )}
             
             {/* QR CODE SECTION - Only for existing events */}
-            {(eventData.id || event?.id) && (
+            {(event?.id || event?._id || (eventData.id && eventData.id !== '')) && (
               <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button"
