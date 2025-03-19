@@ -147,3 +147,5 @@ const CalendarQRModal = ({ event, isOpen, onClose }) => {
 };
 
 export default CalendarQRModal;
+// This component is no longer used.
+// QR code functionality has been integrated directly into EventModal.jsx

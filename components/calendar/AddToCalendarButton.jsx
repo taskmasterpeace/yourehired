@@ -9,14 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
-import CalendarQRModal from './CalendarQRModal.jsx';
-
 const AddToCalendarButton = ({ event, variant = "default", size = "default", compact = false }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
   
   // Handle direct download of .ics file
   const handleDownload = (e) => {
@@ -131,14 +125,6 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
             <DropdownMenuItem onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              openModal();
-            }}>
-              <QrCode className="w-4 h-4 mr-2" />
-              <span>QR Code</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
               handleDownload(e);
             }}>
               <Download className="w-4 h-4 mr-2" />
@@ -154,12 +140,6 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        <CalendarQRModal 
-          event={event}
-          isOpen={isModalOpen}
-          onClose={closeModal}
-        />
       </>
     );
   }
@@ -172,7 +152,7 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          openModal();
+          handleDownload(e);
         }}
         className="add-to-calendar-btn"
         type="button"
@@ -180,12 +160,6 @@ const AddToCalendarButton = ({ event, variant = "default", size = "default", com
         <CalendarIcon className="w-4 h-4 mr-2" />
         Add to Calendar
       </Button>
-      
-      <CalendarQRModal 
-        event={event}
-        isOpen={isModalOpen}
-        onClose={closeModal}
-      />
     </>
   );
 };
