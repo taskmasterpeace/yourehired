@@ -36,6 +36,7 @@ export function CalendarTab({
         opportunities={opportunities}
         user={user}
         dispatch={dispatch}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

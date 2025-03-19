@@ -159,6 +159,7 @@ const TUICalendarView = ({
     if (calendarRef.current) {
       const instance = calendarRef.current.getInstance();
       
+      console.log("Applying calendar theme with isDarkMode:", isDarkMode);
       if (isDarkMode) {
         instance.setTheme({
           common: {
@@ -436,6 +437,8 @@ const TUICalendarView = ({
           {renderToolbar()}
           
           <div style={{ height: isMobile ? '60vh' : '70vh' }} className={isDarkMode ? styles.darkCalendar : ''}>
+            {/* Debug indicator for dark mode */}
+            {isDarkMode && <div className="text-xs text-right p-1 text-gray-400">Dark Mode Active</div>}
             <Calendar
               ref={calendarRef}
               height="100%"

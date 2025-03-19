@@ -10,6 +10,7 @@ const CalendarView = ({
   dispatch,
   isDarkMode = false
 }) => {
+  console.log("CalendarView rendering with isDarkMode:", isDarkMode);
   return (
     <TUICalendarView 
       events={events}

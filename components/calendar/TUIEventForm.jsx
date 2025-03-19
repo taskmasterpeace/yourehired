@@ -313,18 +313,17 @@ const TUIEventForm = ({
             
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 mt-4">
-              {/* Delete button - only show when editing */}
-              {eventData.id && (
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              )}
+              {/* Delete button - always show */}
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white"
+                disabled={!eventData.id}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
               <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-1/3">
                 Cancel
               </Button>
@@ -333,33 +332,33 @@ const TUIEventForm = ({
               </Button>
             </div>
             
-            {/* Calendar Export and QR Code - only show when editing */}
-            {eventData.id && (
-              <>
-                <div className="mt-4">
-                  <Button 
-                    type="button"
-                    variant="outline"
-                    onClick={handleDownload}
-                    className={`w-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 border-blue-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300'}`}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Calendar (.ics) File
-                  </Button>
-                </div>
-                
-                <div className={`mt-6 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <Button 
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowQRCode(!showQRCode)}
-                    className="w-full flex items-center justify-center"
-                  >
-                    <QrCode className="h-4 w-4 mr-2" />
-                    {showQRCode ? "Hide Calendar QR Code" : "Show Calendar QR Code"}
-                  </Button>
-                  
-                  {showQRCode && (
+            {/* Calendar Export and QR Code - always visible but disabled when not editing */}
+            <div className="mt-4">
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={handleDownload}
+                className={`w-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 border-blue-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300'}`}
+                disabled={!eventData.id}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Calendar (.ics) File
+              </Button>
+            </div>
+            
+            <div className={`mt-6 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => setShowQRCode(!showQRCode)}
+                className="w-full flex items-center justify-center"
+                disabled={!eventData.id}
+              >
+                <QrCode className="h-4 w-4 mr-2" />
+                {showQRCode ? "Hide Calendar QR Code" : "Show Calendar QR Code"}
+              </Button>
+              
+              {showQRCode && eventData.id && (
                     <div style={{ 
                       marginTop: '16px',
                       display: 'flex',
@@ -392,10 +391,8 @@ const TUIEventForm = ({
                         Scan with your phone's camera to add to your calendar
                       </p>
                     </div>
-                  )}
-                </div>
-              </>
-            )}
+                )}
+            </div>
           </form>
         </DialogContent>
       </Dialog>
