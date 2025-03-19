@@ -563,19 +563,17 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             
             {/* SUPER OBVIOUS DELETE BUTTON FOR EXISTING EVENTS */}
             {console.log('Rendering delete button, condition:', Boolean(event?.id || event?._id || (eventData.id && eventData.id !== '')))}
-            {(eventData.id || event?.id) && (
-              <div className="mt-6 mb-4">
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
-                >
-                  <Trash2 className="h-6 w-6 mr-3" />
-                  DELETE THIS EVENT
-                </Button>
-              </div>
-            )}
+            <div className="mt-6 mb-4">
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
+              >
+                <Trash2 className="h-6 w-6 mr-3" />
+                DELETE THIS EVENT
+              </Button>
+            </div>
             
             {/* Save/Cancel buttons */}
             <div className="flex flex-col sm:flex-row gap-2 mt-4">
@@ -602,72 +600,70 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               </div>
             )}
             
-            {/* QR CODE SECTION - Only for existing events */}
-            {(eventData.id || event?.id) && (
-              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowQRCode(!showQRCode)}
-                  className="w-full flex items-center justify-center"
-                >
-                  <QrCode className="h-4 w-4 mr-2" />
-                  {showQRCode ? "Hide Calendar QR Code" : "Show Calendar QR Code"}
-                </Button>
-                
-                {showQRCode && (
+            {/* QR CODE SECTION - Always visible now */}
+            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => setShowQRCode(!showQRCode)}
+                className="w-full flex items-center justify-center"
+              >
+                <QrCode className="h-4 w-4 mr-2" />
+                {showQRCode ? "Hide Calendar QR Code" : "Show Calendar QR Code"}
+              </Button>
+              
+              {showQRCode && (
+                <div style={{ 
+                  marginTop: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}>
                   <div style={{ 
-                    marginTop: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
+                    display: 'flex', 
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    padding: '16px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    margin: '16px 0'
                   }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'center',
-                      backgroundColor: 'white',
-                      padding: '16px',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      margin: '16px 0'
-                    }}>
-                      <QRCodeSVG 
-                        value={getCalendarData()}
-                        size={200}
-                        includeMargin={true}
-                        bgColor={"#FFFFFF"}
-                        fgColor={"#000000"}
-                      />
-                    </div>
-                    <p style={{ 
-                      textAlign: 'center', 
-                      fontSize: '14px', 
-                      color: '#4b5563', 
-                      marginBottom: '16px' 
-                    }}>
-                      Scan with your phone's camera to add to your calendar
-                    </p>
-                    <Button 
-                      onClick={handleDownload}
-                      style={{
-                        backgroundColor: '#3b82f6',
-                        color: 'white',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '100%'
-                      }}
-                    >
-                      <Download style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-                      Download .ics File
-                    </Button>
+                    <QRCodeSVG 
+                      value={getCalendarData()}
+                      size={200}
+                      includeMargin={true}
+                      bgColor={"#FFFFFF"}
+                      fgColor={"#000000"}
+                    />
                   </div>
-                )}
-              </div>
-            )}
+                  <p style={{ 
+                    textAlign: 'center', 
+                    fontSize: '14px', 
+                    color: '#4b5563', 
+                    marginBottom: '16px' 
+                  }}>
+                    Scan with your phone's camera to add to your calendar
+                  </p>
+                  <Button 
+                    onClick={handleDownload}
+                    style={{
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '100%'
+                    }}
+                  >
+                    <Download style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                    Download .ics File
+                  </Button>
+                </div>
+              )}
+            </div>
           </form>
         </DialogContent>
       </Dialog>
