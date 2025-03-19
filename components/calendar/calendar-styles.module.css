@@ -4,6 +4,52 @@
   color: #e5e7eb !important;
 }
 
+/* Add these new rules to ensure all text is visible in dark mode */
+.darkCalendar :global(.toastui-calendar-template-monthDayName) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-monthGridHeader-date) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-monthGridHeader-day) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-monthGridHeaderExceed-more) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-monthGrid-date) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-monthGrid-content) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-monthGrid-event) {
+  color: #ffffff !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-time-date) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-time-date-title) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-time-grid-row-labels) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-time-event) {
+  color: #ffffff !important;
+}
+
+/* Existing rules */
 .darkCalendar :global(.toastui-calendar-day-name) {
   background-color: #111827 !important;
   color: #e5e7eb !important;
@@ -56,4 +102,22 @@
 
 .darkCalendar :global(.toastui-calendar-month-more-close) {
   color: #e5e7eb !important;
+}
+
+/* Add these for better visibility of dates in other months */
+.darkCalendar :global(.toastui-calendar-extra-date) {
+  color: #9ca3af !important; /* Light gray for dates from other months */
+}
+
+.darkCalendar :global(.toastui-calendar-weekday-grid-date.toastui-calendar-extra-date) {
+  color: #9ca3af !important;
+}
+
+/* Make sure today's date is highlighted properly */
+.darkCalendar :global(.toastui-calendar-today) {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.darkCalendar :global(.toastui-calendar-today .toastui-calendar-weekday-grid-date) {
+  color: #3b82f6 !important; /* Blue for today's date */
 }
