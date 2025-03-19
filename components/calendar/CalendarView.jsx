@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import BigCalendarView from "./BigCalendarView";
+import TUICalendarView from "./TUICalendarView";
 
 const CalendarView = ({ 
   events = [], 
@@ -10,9 +10,9 @@ const CalendarView = ({
   dispatch
 }) => {
   return (
-    <BigCalendarView 
-      events={events} 
-      opportunities={opportunities} 
+    <TUICalendarView 
+      events={events}
+      opportunities={opportunities}
       user={user}
       dispatch={dispatch}
     />
