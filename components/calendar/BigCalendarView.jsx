@@ -246,10 +246,14 @@ const BigCalendarView = ({
   // Handle deleting an event
   const handleDeleteEvent = (eventId) => {
     console.log("Deleting event with ID:", eventId);
+    
+    // Handle if eventId is an object (the entire event was passed)
+    const id = typeof eventId === 'object' ? (eventId.id || eventId._id) : eventId;
+    
     if (dispatch) {
       dispatch({
         type: 'DELETE_EVENT',
-        payload: { id: eventId }
+        payload: { id: id }
       });
       
       // Show toast notification with more details

@@ -187,18 +187,15 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           onDelete(idToDelete);
           setIsDeleteDialogOpen(false);
           onClose();
+        } else if (event) {
+          // If we can't find an ID but have an event object, try to use the event itself
+          console.log("No ID found, attempting to delete using event object");
+          onDelete(event);
+          setIsDeleteDialogOpen(false);
+          onClose();
         } else {
-          // If we still don't have an ID but we're in edit mode, try to delete anyway
-          // This is a fallback for cases where the ID might be in an unexpected format
-          if (event) {
-            console.log("No ID found, but attempting to delete using event object");
-            onDelete(event);
-            setIsDeleteDialogOpen(false);
-            onClose();
-          } else {
-            console.error("No ID or event object available for deletion");
-            alert("Error: Cannot delete event without an ID");
-          }
+          console.error("No ID or event object available for deletion");
+          alert("Error: Cannot delete event without an ID");
         }
       }
     } catch (error) {
@@ -542,7 +539,10 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
       
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 max-w-[400px]">
+        <AlertDialogContent 
+          className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700"
+          style={{ maxWidth: '350px', width: '90%' }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="text-gray-900 dark:text-gray-100">Delete Event</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
