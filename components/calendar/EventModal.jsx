@@ -435,19 +435,24 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               </div>
             </div>
             
-            <DialogFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+            {/* Debug log for event ID */}
+            {console.log("Event ID for delete button:", eventData.id)}
+            
+            <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-4">
               {/* Delete button for existing events */}
-              {eventData.id && (
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="w-full sm:w-auto order-1 sm:order-none"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Event
-                </Button>
-              )}
+              <div className="w-full sm:w-auto">
+                {eventData.id && (
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Event
+                  </Button>
+                )}
+              </div>
               
               {/* Save/Cancel buttons */}
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
