@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Calendar from '@toast-ui/react-calendar';
 import '@toast-ui/calendar/dist/toastui-calendar.min.css';
-import './calendar-styles.css'; // Import the custom CSS
+import styles from './calendar-styles.module.css'; // Import the CSS module
 import { Card, CardContent } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -435,7 +435,7 @@ const TUICalendarView = ({
         <CardContent className="p-0">
           {renderToolbar()}
           
-          <div style={{ height: isMobile ? '60vh' : '70vh' }} className={isDarkMode ? 'dark-calendar' : ''}>
+          <div style={{ height: isMobile ? '60vh' : '70vh' }} className={isDarkMode ? styles.darkCalendar : ''}>
             <Calendar
               ref={calendarRef}
               height="100%"
