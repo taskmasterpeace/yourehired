@@ -64,7 +64,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
     startTime: '09:00',
     endTime: '10:00',
     type: 'general',
-    location: '',
     description: '',
     opportunityId: ''
   });
@@ -92,7 +91,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           startTime: format(eventDate, 'HH:mm'),
           endTime: event.endDate ? format(new Date(event.endDate), 'HH:mm') : format(new Date(eventDate.getTime() + 60 * 60 * 1000), 'HH:mm'),
           type: event.type || 'general',
-          location: event.location || '',
           description: event.description || '',
           opportunityId: event.opportunityId || ''
         });
@@ -109,7 +107,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           startTime: '09:00',
           endTime: '10:00',
           type: 'general',
-          location: '',
           description: '',
           opportunityId: ''
         });
@@ -354,7 +351,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 </div>
               </div>
               
-              {/* Event Type and Location */}
+              {/* Event Type and Associated Opportunity */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="type">Event Type</Label>
@@ -376,24 +373,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 </div>
                 
                 <div className="grid gap-2">
-                  <Label htmlFor="location">Location</Label>
-                  <div className="flex">
-                    <MapPin className="h-4 w-4 mr-2 mt-3 text-gray-400" />
-                    <Input 
-                      id="location"
-                      value={eventData.location}
-                      onChange={(e) => handleChange('location', e.target.value)}
-                      placeholder="Add location (optional)"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Associated Opportunity */}
-              <div className="grid gap-2">
-                <Label htmlFor="opportunity">Associated Job Opportunity</Label>
-                <div className="flex">
-                  <Briefcase className="h-4 w-4 mr-2 mt-3 text-gray-400" />
+                  <Label htmlFor="opportunity">Associated Opportunity</Label>
                   <Select 
                     value={eventData.opportunityId || "none"} 
                     onValueChange={(value) => {
@@ -404,19 +384,11 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                         handleChange('opportunityId', '');
                       } else {
                         handleChange('opportunityId', value);
-                        
-                        // Find the selected opportunity
-                        const selectedOpportunity = opportunities.find(opp => opp.id === value);
-                        if (selectedOpportunity) {
-                          // Log the found opportunity
-                          console.log("Found opportunity:", selectedOpportunity);
-                        }
                       }
                     }}
-                    defaultValue="none"
                   >
-                    <SelectTrigger id="opportunity" className="flex-1">
-                      <SelectValue placeholder="Link to job opportunity (optional)" />
+                    <SelectTrigger id="opportunity">
+                      <SelectValue placeholder="Select opportunity" />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50 max-h-[300px] overflow-y-auto">
                       <SelectItem value="none" className="hover:bg-gray-100 dark:hover:bg-gray-700">None</SelectItem>
@@ -433,6 +405,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                   </Select>
                 </div>
               </div>
+              
               
               {/* Description */}
               <div className="grid gap-2">
@@ -474,20 +447,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               </div>
             )}
             
-            {/* MOVED DELETE BUTTON FOR EXISTING EVENTS */}
-            {(event?.id || event?._id || (eventData.id && eventData.id !== '')) && (
-              <div className="mt-6 mb-4">
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
-                >
-                  <Trash2 className="h-6 w-6 mr-3" />
-                  DELETE THIS EVENT
-                </Button>
-              </div>
-            )}
             
             {/* QR CODE SECTION - Always visible now */}
             <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -553,6 +512,21 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 </div>
               )}
             </div>
+            
+            {/* DELETE BUTTON - ALWAYS AT THE VERY BOTTOM */}
+            {(event?.id || event?._id || (eventData.id && eventData.id !== '')) && (
+              <div className="mt-6 mb-4">
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
+                >
+                  <Trash2 className="h-6 w-6 mr-3" />
+                  DELETE THIS EVENT
+                </Button>
+              </div>
+            )}
           </form>
         </DialogContent>
       </Dialog>
