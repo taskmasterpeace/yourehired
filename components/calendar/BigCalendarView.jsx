@@ -247,16 +247,44 @@ const BigCalendarView = ({
   const handleDeleteEvent = (eventId) => {
     console.log("Deleting event with ID:", eventId);
     
+    let id;
+    
     // Handle if eventId is an object (the entire event was passed)
-    const id = typeof eventId === 'object' ? (eventId.id || eventId._id) : eventId;
+    if (typeof eventId === 'object') {
+      // Try to extract ID from the event object
+      if (eventId.id) {
+        id = eventId.id;
+      } else if (eventId._id) {
+        id = eventId._id;
+      } else if (eventId.resource && (eventId.resource.id || eventId.resource._id)) {
+        id = eventId.resource.id || eventId.resource._id;
+      } else {
+        // If we can't find an ID, log an error
+        console.error("Could not find ID in event object:", eventId);
+        
+        // Show error toast
+        toast({
+          title: "Error Deleting Event",
+          description: "Could not identify the event to delete.",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+    } else {
+      // If eventId is already a string or number, use it directly
+      id = eventId;
+    }
+    
+    console.log("Final ID for deletion:", id);
     
     if (dispatch) {
       dispatch({
         type: 'DELETE_EVENT',
-        payload: { id: id }
+        payload: { id }
       });
       
-      // Show toast notification with more details
+      // Show toast notification
       toast({
         title: "Event Deleted Successfully",
         description: "The event has been removed from your calendar.",

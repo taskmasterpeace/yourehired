@@ -177,26 +177,43 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
       console.log("Event object:", event);
       
       if (onDelete) {
-        // Use any available ID - check all possible locations
-        const idToDelete = eventData.id || event?.id || event?._id || 
-                          (event?.resource && (event.resource.id || event.resource._id));
+        // Try to get the ID from various possible locations
+        let idToDelete;
         
-        console.log("Using ID for deletion:", idToDelete);
+        if (typeof event === 'object') {
+          // Check all possible ID locations
+          idToDelete = event.id || event._id || 
+                      (event.resource && (event.resource.id || event.resource._id));
+          
+          // If we still don't have an ID, try to extract it from the event object
+          if (!idToDelete && event.resource) {
+            console.log("Trying to use resource object:", event.resource);
+            idToDelete = event.resource;
+          }
+        }
         
+        // If we couldn't find an ID in the event object, use eventData.id
+        if (!idToDelete) {
+          idToDelete = eventData.id;
+        }
+        
+        console.log("Final ID for deletion:", idToDelete);
+        
+        // Call onDelete with the ID or the entire event object as a fallback
         if (idToDelete) {
           onDelete(idToDelete);
-          setIsDeleteDialogOpen(false);
-          onClose();
         } else if (event) {
-          // If we can't find an ID but have an event object, try to use the event itself
-          console.log("No ID found, attempting to delete using event object");
+          console.log("No ID found, using entire event object");
           onDelete(event);
-          setIsDeleteDialogOpen(false);
-          onClose();
         } else {
-          console.error("No ID or event object available for deletion");
-          alert("Error: Cannot delete event without an ID");
+          console.error("No valid event or ID to delete");
+          alert("Error: Cannot delete this event");
+          return;
         }
+        
+        // Close dialogs and notify user
+        setIsDeleteDialogOpen(false);
+        onClose();
       }
     } catch (error) {
       console.error("Error deleting event:", error);
