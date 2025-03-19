@@ -111,7 +111,13 @@ const TUICalendarView = ({
   // Handle event click
   const handleClickEvent = (event) => {
     console.log('Clicked event:', event);
-    setCurrentEvent(event.raw);
+    // Make sure we're passing the event with its ID
+    const eventWithId = {
+      ...event.raw,
+      id: event.raw.id || event.id
+    };
+    console.log('Passing event to form:', eventWithId);
+    setCurrentEvent(eventWithId);
     setIsEventFormOpen(true);
   };
   

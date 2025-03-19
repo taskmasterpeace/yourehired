@@ -55,6 +55,18 @@ const TUIEventForm = ({
   const [showQRCode, setShowQRCode] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
+  // Add debugging for event data
+  useEffect(() => {
+    if (event) {
+      console.log("Event received in TUIEventForm:", event);
+      console.log("Event ID:", event.id);
+      console.log("Event raw:", event.raw);
+      if (event.raw) {
+        console.log("Raw event ID:", event.raw.id);
+      }
+    }
+  }, [event]);
+
   // Initialize form with event data when editing
   useEffect(() => {
     if (event) {
@@ -62,8 +74,15 @@ const TUIEventForm = ({
         const startDate = new Date(event.startDate || event.start || event.date || new Date());
         const endDate = new Date(event.endDate || event.end || new Date(startDate.getTime() + 60 * 60 * 1000));
         
+        // Extract ID from all possible locations
+        const eventId = event.id || 
+                       (event.raw && event.raw.id) || 
+                       '';
+        
+        console.log("Setting event ID to:", eventId);
+        
         setEventData({
-          id: event.id || '',
+          id: eventId,
           title: event.title || '',
           date: startDate, // Keep date for compatibility
           startDate: startDate,
@@ -339,7 +358,7 @@ const TUIEventForm = ({
                 variant="outline"
                 onClick={handleDownload}
                 className={`w-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 border-blue-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300'}`}
-                disabled={!eventData.id}
+                // Enable the button regardless of ID
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Calendar (.ics) File
@@ -352,13 +371,14 @@ const TUIEventForm = ({
                 variant="outline"
                 onClick={() => setShowQRCode(!showQRCode)}
                 className="w-full flex items-center justify-center"
-                disabled={!eventData.id}
+                // Enable the button regardless of ID
               >
                 <QrCode className="h-4 w-4 mr-2" />
                 {showQRCode ? "Hide Calendar QR Code" : "Show Calendar QR Code"}
               </Button>
               
-              {showQRCode && eventData.id && (
+              {/* Always show QR code when showQRCode is true, regardless of ID */}
+              {showQRCode && (
                     <div style={{ 
                       marginTop: '16px',
                       display: 'flex',
