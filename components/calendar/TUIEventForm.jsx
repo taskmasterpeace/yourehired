@@ -122,10 +122,25 @@ const TUIEventForm = ({
   
   // Handle form input changes
   const handleChange = (field, value) => {
-    setEventData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    console.log(`Changing ${field} to:`, value);
+    
+    // Special handling for opportunityId
+    if (field === 'opportunityId') {
+      // If "none" is selected, set to empty string
+      const finalValue = value === "none" ? "" : value;
+      console.log(`Setting opportunityId to:`, finalValue);
+      
+      setEventData(prev => ({
+        ...prev,
+        opportunityId: finalValue
+      }));
+    } else {
+      // Normal handling for other fields
+      setEventData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
     
     // If changing startDate, also update the date field for compatibility
     if (field === 'startDate') {
@@ -295,7 +310,7 @@ const TUIEventForm = ({
                   <Label htmlFor="opportunity" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Associated Opportunity</Label>
                   <Select 
                     value={eventData.opportunityId || "none"} 
-                    onValueChange={(value) => handleChange('opportunityId', value === "none" ? "" : value)}
+                    onValueChange={(value) => handleChange('opportunityId', value)}
                   >
                     <SelectTrigger id="opportunity" className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}>
                       <SelectValue placeholder="Select opportunity" />
@@ -351,19 +366,7 @@ const TUIEventForm = ({
               </Button>
             </div>
             
-            {/* Calendar Export and QR Code - always visible but disabled when not editing */}
-            <div className="mt-4">
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={handleDownload}
-                className={`w-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 border-blue-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300'}`}
-                // Enable the button regardless of ID
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download Calendar (.ics) File
-              </Button>
-            </div>
+            {/* Calendar Export and QR Code section is now simplified */}
             
             <div className={`mt-6 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
               <Button 
