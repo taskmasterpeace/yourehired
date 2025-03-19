@@ -236,6 +236,7 @@ const BigCalendarView = ({
   
   // Handle deleting an event
   const handleDeleteEvent = (eventId) => {
+    console.log("Deleting event with ID:", eventId);
     if (dispatch) {
       dispatch({
         type: 'DELETE_EVENT',
@@ -248,6 +249,8 @@ const BigCalendarView = ({
         description: "The event has been removed from your calendar.",
         duration: 3000,
       });
+    } else {
+      console.error("No dispatch function available for deletion");
     }
   };
   

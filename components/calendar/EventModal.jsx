@@ -242,10 +242,20 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   // Handle delete event
   const handleDelete = () => {
     try {
-      if (onDelete && eventData.id) {
-        onDelete(eventData.id);
-        setIsDeleteDialogOpen(false);
-        onClose();
+      console.log("Attempting to delete event with ID:", eventData.id);
+      if (onDelete) {
+        // Use event.id as a fallback if eventData.id is empty
+        const idToDelete = eventData.id || event?.id;
+        console.log("Using ID for deletion:", idToDelete);
+        
+        if (idToDelete) {
+          onDelete(idToDelete);
+          setIsDeleteDialogOpen(false);
+          onClose();
+        } else {
+          console.error("No ID available for deletion");
+          alert("Error: Cannot delete event without an ID");
+        }
       }
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -360,7 +370,11 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent 
-          className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg overflow-y-auto max-h-[90vh]"
+          className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg overflow-y-auto max-h-[80vh]"
+          style={{
+            overflowY: 'auto',
+            maxHeight: '80vh'
+          }}
         >
           <form onSubmit={handleSubmit}>
             <DialogHeader>
@@ -485,7 +499,10 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                   <Briefcase className="h-4 w-4 mr-2 mt-3 text-gray-400" />
                   <Select 
                     value={eventData.opportunityId || "none"} 
-                    onValueChange={(value) => handleChange('opportunityId', value)}
+                    onValueChange={(value) => {
+                      console.log("Selected opportunity:", value);
+                      handleChange('opportunityId', value);
+                    }}
                     defaultValue="none"
                   >
                     <SelectTrigger id="opportunity" className="flex-1">
@@ -642,11 +659,11 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
       
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700">
+        <AlertDialogContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 max-w-[400px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-gray-900 dark:text-gray-100">Delete Event</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
-              Are you sure you want to delete this event? This action cannot be undone.
+              Are you sure you want to delete this event?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
