@@ -31,7 +31,6 @@ import {
   Copy, 
   Save,
   AlertTriangle,
-  Sparkles,
   Download,
   QrCode
 } from 'lucide-react';
@@ -56,57 +55,6 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 
-// Event templates for quick creation
-const EVENT_TEMPLATES = [
-  {
-    id: 'phone-interview',
-    name: 'Phone Interview',
-    type: 'interview',
-    title: 'Phone Interview',
-    description: 'Initial phone screening interview.',
-    duration: 30, // minutes
-  },
-  {
-    id: 'technical-interview',
-    name: 'Technical Interview',
-    type: 'interview',
-    title: 'Technical Interview',
-    description: 'Technical skills assessment interview.',
-    duration: 60,
-  },
-  {
-    id: 'onsite-interview',
-    name: 'Onsite Interview',
-    type: 'interview',
-    title: 'Onsite Interview',
-    description: 'In-person interview at company office.',
-    duration: 120,
-  },
-  {
-    id: 'follow-up',
-    name: 'Follow-up Reminder',
-    type: 'followup',
-    title: 'Send Follow-up Email',
-    description: 'Send a thank you email or follow up on application status.',
-    duration: 15,
-  },
-  {
-    id: 'coding-assessment',
-    name: 'Coding Assessment',
-    type: 'assessment',
-    title: 'Complete Coding Assessment',
-    description: 'Complete the assigned coding challenge or technical assessment.',
-    duration: 120,
-  },
-  {
-    id: 'application-deadline',
-    name: 'Application Deadline',
-    type: 'deadline',
-    title: 'Application Deadline',
-    description: 'Last day to submit job application.',
-    duration: 30,
-  }
-];
 
 const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDelete }) => {
   const [eventData, setEventData] = useState({
@@ -122,7 +70,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   });
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   
   // Initialize form with event data when editing
@@ -287,26 +234,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
     onSave(completeEvent);
   };
 
-  // Apply template to current event
-  const applyTemplate = (template) => {
-    // Calculate end time based on duration
-    const startTime = eventData.startTime;
-    const [hours, minutes] = startTime.split(':').map(Number);
-    
-    const endTimeDate = new Date();
-    endTimeDate.setHours(hours, minutes + template.duration);
-    const endTime = format(endTimeDate, 'HH:mm');
-    
-    setEventData(prev => ({
-      ...prev,
-      title: template.title,
-      type: template.type,
-      description: template.description,
-      endTime
-    }));
-    
-    setIsTemplateMenuOpen(false);
-  };
   
   // Generate calendar data for QR code
   const getCalendarData = () => {
@@ -366,25 +293,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           }}
         >
           <form onSubmit={handleSubmit}>
-            <DialogHeader>
-              <DialogTitle>
-                {eventData.id ? 'Edit Event' : 'Create New Event'}
-              </DialogTitle>
-              {!eventData.id && (
-                <DialogDescription>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-2"
-                    onClick={() => setIsTemplateMenuOpen(true)}
-                  >
-                    <Sparkles className="h-4 w-4 mr-2 text-yellow-500" />
-                    Use Template
-                  </Button>
-                </DialogDescription>
-              )}
-            </DialogHeader>
             
             <div className="grid gap-4 py-4">
               {/* Title */}
@@ -540,19 +448,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               
             </div>
             
-            {/* SUPER OBVIOUS DELETE BUTTON FOR EXISTING EVENTS */}
-            {console.log('Rendering delete button, condition:', Boolean(event?.id || event?._id || (eventData.id && eventData.id !== '')))}
-            <div className="mt-6 mb-4">
-              <Button 
-                type="button" 
-                variant="destructive" 
-                onClick={() => setIsDeleteDialogOpen(true)}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
-              >
-                <Trash2 className="h-6 w-6 mr-3" />
-                DELETE THIS EVENT
-              </Button>
-            </div>
             
             {/* Save/Cancel buttons */}
             <div className="flex flex-col sm:flex-row gap-2 mt-4">
@@ -575,6 +470,21 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download Calendar (.ics) File
+                </Button>
+              </div>
+            )}
+            
+            {/* MOVED DELETE BUTTON FOR EXISTING EVENTS */}
+            {(event?.id || event?._id || (eventData.id && eventData.id !== '')) && (
+              <div className="mt-6 mb-4">
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-lg font-bold"
+                >
+                  <Trash2 className="h-6 w-6 mr-3" />
+                  DELETE THIS EVENT
                 </Button>
               </div>
             )}
@@ -668,41 +578,6 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Template selection dialog */}
-      <Dialog open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
-        <DialogContent className="sm:max-w-[450px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg">
-          <DialogHeader>
-            <DialogTitle>Choose Event Template</DialogTitle>
-            <DialogDescription className="dark:text-gray-300">
-              Select a template to quickly create a common event type
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            {EVENT_TEMPLATES.map(template => (
-              <Button
-                key={template.id}
-                variant="outline"
-                className="justify-start h-auto py-3 px-4 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
-                onClick={() => applyTemplate(template)}
-              >
-                <div className="flex flex-col items-start text-left">
-                  <span className="font-medium">{template.name}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-300 mt-1">
-                    {template.duration} min • {template.type}
-                  </span>
-                </div>
-              </Button>
-            ))}
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsTemplateMenuOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
