@@ -133,7 +133,10 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   // Initialize form with event data when editing
   useEffect(() => {
     console.log('Event received in modal:', event);
-    console.log('Event ID type and value:', typeof event?.id, event?.id);
+    console.log('Event properties:', event ? Object.keys(event) : 'No event');
+    console.log('Event ID:', event?.id);
+    console.log('Event _id:', event?._id);
+    console.log('Event resource:', event?.resource);
     
     if (event) {
       try {
@@ -157,6 +160,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
         });
         
         console.log('EventData after setting:', eventData);
+        console.log('EventData.id after setting:', eventData.id);
       } catch (error) {
         console.error("Error processing event data:", error);
         // Set default values if there's an error
@@ -526,7 +530,8 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             </div>
             
             {/* SUPER OBVIOUS DELETE BUTTON FOR EXISTING EVENTS */}
-            {(event?.id || event?._id || (eventData.id && eventData.id !== '')) && (
+            {console.log('Rendering delete button, condition:', Boolean(event?.id || event?._id || (eventData.id && eventData.id !== '')))}
+            {true && (
               <div className="mt-6 mb-4">
                 <Button 
                   type="button" 
@@ -566,7 +571,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             )}
             
             {/* QR CODE SECTION - Only for existing events */}
-            {(event?.id || event?._id || (eventData.id && eventData.id !== '')) && (
+            {true && (
               <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button"
