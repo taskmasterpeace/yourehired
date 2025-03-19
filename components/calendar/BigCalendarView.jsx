@@ -72,6 +72,11 @@ const BigCalendarView = ({
   // Check if we're on mobile using the existing hook
   const isMobile = useMediaQuery('(max-width: 768px)');
   
+  // Debug log to track events in state
+  useEffect(() => {
+    console.log("Current events in state:", events);
+  }, [events]);
+  
   
   // Load saved view preferences from localStorage
   const loadSavedPreferences = () => {
@@ -245,107 +250,93 @@ const BigCalendarView = ({
   
   // Handle deleting an event
   const handleDeleteEvent = (eventId) => {
-    console.log("Deleting event with ID:", eventId);
-    console.log("Event type:", typeof eventId);
-    console.log("All events:", events); // Log all events to see their structure
+    console.log("Attempting to delete event with ID:", eventId);
     
-    let id;
+    // Find the actual event in our events array
     let eventToDelete = null;
     
-    // Handle if eventId is an object (the entire event was passed)
     if (typeof eventId === 'object') {
-      console.log("Event object properties:", Object.keys(eventId));
-      
-      // Try to extract ID from the event object
-      if (eventId.id) {
-        id = eventId.id;
-        eventToDelete = eventId;
-      } else if (eventId._id) {
-        id = eventId._id;
-        eventToDelete = eventId;
-      } else if (eventId.resource && (eventId.resource.id || eventId.resource._id)) {
-        id = eventId.resource.id || eventId.resource._id;
-        eventToDelete = eventId.resource;
-      } else {
-        // If we can't find an ID, try using the entire object
-        console.error("Could not find ID in event object, trying to match by properties");
-        
-        // Try to find the matching event in our events array
-        const matchingEvent = events.find(e => 
-          e.title === (eventId.title || eventId.resource?.title)
+      // If we received the whole event object
+      if (eventId.resource) {
+        // If it's a calendar event with resource property
+        eventToDelete = events.find(e => 
+          (eventId.resource.id && e.id === eventId.resource.id) ||
+          (eventId.resource._id && e._id === eventId.resource._id)
         );
         
-        if (matchingEvent) {
-          console.log("Found matching event:", matchingEvent);
-          id = matchingEvent.id || matchingEvent._id;
-          eventToDelete = matchingEvent;
-        } else {
-          // Last resort - use the entire object
-          console.log("Using entire event object for deletion");
-          eventToDelete = eventId.resource || eventId;
-          
-          // Show warning toast but proceed
-          toast({
-            title: "Warning",
-            description: "Using alternative method to delete event. If this fails, please try again.",
-            variant: "warning",
-            duration: 3000,
-          });
+        if (!eventToDelete) {
+          // If not found in events array, use the resource directly
+          eventToDelete = eventId.resource;
+        }
+      } else {
+        // If it's a direct event object
+        eventToDelete = events.find(e => 
+          (eventId.id && e.id === eventId.id) || 
+          (eventId._id && e._id === eventId._id)
+        );
+        
+        if (!eventToDelete) {
+          // If not found in events array, use the object itself
+          eventToDelete = eventId;
         }
       }
     } else {
-      // If eventId is already a string or number, use it directly
-      id = eventId;
-      
-      // Try to find the matching event
-      eventToDelete = events.find(e => (e.id === id || e._id === id));
+      // If we received just the ID
+      eventToDelete = events.find(e => e.id === eventId || e._id === eventId);
     }
     
-    console.log("Final ID for deletion:", id);
     console.log("Event to delete:", eventToDelete);
     
-    if (dispatch) {
-      // Try different payload formats to match what the reducer expects
-      
-      // First attempt: Send the ID in an object
-      console.log("Dispatching DELETE_EVENT with payload:", { id });
-      dispatch({
-        type: 'DELETE_EVENT',
-        payload: { id }
+    if (!eventToDelete) {
+      console.error("Could not find event to delete");
+      toast({
+        title: "Error Deleting Event",
+        description: "Could not find the event to delete.",
+        variant: "destructive",
+        duration: 3000,
       });
+      return;
+    }
+    
+    // Now dispatch with the actual event object
+    if (dispatch) {
+      // Get the ID from the event
+      const id = eventToDelete.id || eventToDelete._id;
+      console.log("Dispatching DELETE_EVENT with ID:", id);
       
-      // Second attempt: Send just the ID
+      // Try with the ID first (most common approach)
       if (id) {
-        console.log("Also dispatching DELETE_EVENT with payload:", id);
         dispatch({
           type: 'DELETE_EVENT',
           payload: id
         });
       }
       
-      // Third attempt: Send the entire event object
-      if (eventToDelete) {
-        console.log("Also dispatching DELETE_EVENT with entire event:", eventToDelete);
-        dispatch({
-          type: 'DELETE_EVENT',
-          payload: eventToDelete
-        });
-      }
+      // Also try with the full event object as fallback
+      dispatch({
+        type: 'DELETE_EVENT',
+        payload: eventToDelete
+      });
       
-      // Show toast notification
+      // Show success toast
       toast({
-        title: "Event Deleted Successfully",
-        description: "The event has been removed from your calendar.",
+        title: "Event Deleted",
+        description: `"${eventToDelete.title || 'Event'}" has been removed from your calendar.`,
         variant: "success",
         duration: 3000,
       });
-    } else {
-      console.error("No dispatch function available for deletion");
       
-      // Show error toast
+      // Force a refresh of the UI
+      setTimeout(() => {
+        if (dispatch) {
+          dispatch({ type: 'REFRESH_EVENTS' });
+        }
+      }, 100);
+    } else {
+      console.error("No dispatch function available");
       toast({
         title: "Error Deleting Event",
-        description: "There was a problem deleting the event. Please try again.",
+        description: "There was a problem with the application state.",
         variant: "destructive",
         duration: 3000,
       });
