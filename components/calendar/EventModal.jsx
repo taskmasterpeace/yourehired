@@ -174,9 +174,13 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   const handleDelete = () => {
     try {
       console.log("Attempting to delete event with ID:", eventData.id);
+      console.log("Event object:", event);
+      
       if (onDelete) {
-        // Use event.id as a fallback if eventData.id is empty
-        const idToDelete = eventData.id || event?.id;
+        // Use any available ID - check all possible locations
+        const idToDelete = eventData.id || event?.id || event?._id || 
+                          (event?.resource && (event.resource.id || event.resource._id));
+        
         console.log("Using ID for deletion:", idToDelete);
         
         if (idToDelete) {
@@ -184,8 +188,17 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           setIsDeleteDialogOpen(false);
           onClose();
         } else {
-          console.error("No ID available for deletion");
-          alert("Error: Cannot delete event without an ID");
+          // If we still don't have an ID but we're in edit mode, try to delete anyway
+          // This is a fallback for cases where the ID might be in an unexpected format
+          if (event) {
+            console.log("No ID found, but attempting to delete using event object");
+            onDelete(event);
+            setIsDeleteDialogOpen(false);
+            onClose();
+          } else {
+            console.error("No ID or event object available for deletion");
+            alert("Error: Cannot delete event without an ID");
+          }
         }
       }
     } catch (error) {
