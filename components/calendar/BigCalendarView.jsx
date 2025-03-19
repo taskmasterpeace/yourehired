@@ -219,16 +219,25 @@ const BigCalendarView = ({
         type: isNewEvent ? 'ADD_EVENT' : 'UPDATE_EVENT', 
         payload: eventData 
       });
+      
+      // Show toast notification with more details
+      toast({
+        title: isNewEvent ? "Event Created Successfully" : "Event Updated Successfully",
+        description: `"${eventData.title}" has been ${isNewEvent ? 'added to' : 'updated in'} your calendar.`,
+        variant: "success",
+        duration: 3000,
+      });
     } else {
       console.warn("No dispatch function provided to BigCalendarView");
+      
+      // Show error toast
+      toast({
+        title: "Error Saving Event",
+        description: "There was a problem saving the event. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
     }
-    
-    // Show toast notification
-    toast({
-      title: isNewEvent ? "Hey! Event Created" : "Hey! Event Updated",
-      description: `${eventData.title} has been ${isNewEvent ? 'added to' : 'updated in'} your calendar.`,
-      duration: 3000,
-    });
     
     setIsEventModalOpen(false);
     setCurrentEvent(null);
@@ -243,14 +252,23 @@ const BigCalendarView = ({
         payload: { id: eventId }
       });
       
-      // Show toast notification
+      // Show toast notification with more details
       toast({
-        title: "Hey! Event Deleted",
+        title: "Event Deleted Successfully",
         description: "The event has been removed from your calendar.",
+        variant: "success",
         duration: 3000,
       });
     } else {
       console.error("No dispatch function available for deletion");
+      
+      // Show error toast
+      toast({
+        title: "Error Deleting Event",
+        description: "There was a problem deleting the event. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
     }
   };
   

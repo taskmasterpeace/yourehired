@@ -373,7 +373,9 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           className="sm:max-w-[550px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg overflow-y-auto max-h-[80vh]"
           style={{
             overflowY: 'auto',
-            maxHeight: '80vh'
+            maxHeight: '80vh',
+            width: '95vw', // Ensure it's not too wide on mobile
+            margin: '0 auto' // Center it
           }}
         >
           <form onSubmit={handleSubmit}>
@@ -501,14 +503,27 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                     value={eventData.opportunityId || "none"} 
                     onValueChange={(value) => {
                       console.log("Selected opportunity:", value);
-                      handleChange('opportunityId', value);
+                      
+                      // If "none" is selected, clear the opportunityId
+                      if (value === "none") {
+                        handleChange('opportunityId', '');
+                      } else {
+                        handleChange('opportunityId', value);
+                        
+                        // Find the selected opportunity
+                        const selectedOpportunity = opportunities.find(opp => opp.id === value);
+                        if (selectedOpportunity) {
+                          // Log the found opportunity
+                          console.log("Found opportunity:", selectedOpportunity);
+                        }
+                      }
                     }}
                     defaultValue="none"
                   >
                     <SelectTrigger id="opportunity" className="flex-1">
                       <SelectValue placeholder="Link to job opportunity (optional)" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50">
+                    <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50 max-h-[300px] overflow-y-auto">
                       <SelectItem value="none" className="hover:bg-gray-100 dark:hover:bg-gray-700">None</SelectItem>
                       {Array.isArray(opportunities) && opportunities.length === 0 ? (
                         <SelectItem value="loading" disabled className="text-gray-500 dark:text-gray-400">Loading opportunities...</SelectItem>
@@ -548,7 +563,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             
             {/* SUPER OBVIOUS DELETE BUTTON FOR EXISTING EVENTS */}
             {console.log('Rendering delete button, condition:', Boolean(event?.id || event?._id || (eventData.id && eventData.id !== '')))}
-            {true && (
+            {(eventData.id || event?.id) && (
               <div className="mt-6 mb-4">
                 <Button 
                   type="button" 
@@ -588,7 +603,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
             )}
             
             {/* QR CODE SECTION - Only for existing events */}
-            {true && (
+            {(eventData.id || event?.id) && (
               <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   type="button"
