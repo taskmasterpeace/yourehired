@@ -263,39 +263,46 @@ const BigCalendarView = ({
       return;
     }
     
-    // If we received an object with a resource property (from calendar selection)
-    if (eventId && eventId.resource && eventId.resource.id) {
-      console.log("Deleting using resource.id:", eventId.resource.id);
-      dispatch({
-        type: 'DELETE_EVENT',
-        payload: eventId.resource.id
-      });
+    // Step 1: Extract the original event ID regardless of input format
+    let originalEventId;
+    
+    // If we received a formatted event from the calendar
+    if (typeof eventId === 'object' && eventId.resource) {
+      originalEventId = eventId.resource.id;
+      console.log("Extracted ID from resource:", originalEventId);
     }
-    // If we received a direct event object with an id
-    else if (eventId && eventId.id) {
-      console.log("Deleting using event.id:", eventId.id);
-      dispatch({
-        type: 'DELETE_EVENT',
-        payload: eventId.id
-      });
+    // If we received an event directly from the modal
+    else if (typeof eventId === 'object' && eventId.id) {
+      originalEventId = eventId.id;
+      console.log("Extracted ID from event object:", originalEventId);
     }
-    // If we received just an ID string/number
-    else if (typeof eventId === 'string' || typeof eventId === 'number') {
-      console.log("Deleting using direct ID:", eventId);
-      dispatch({
-        type: 'DELETE_EVENT',
-        payload: eventId
-      });
-    }
-    // Fallback - try to use the whole object
+    // If we already received just the ID
     else {
-      console.log("Using fallback delete with entire object");
-      dispatch({
-        type: 'DELETE_EVENT',
-        payload: eventId
-      });
+      originalEventId = eventId;
+      console.log("Using provided ID directly:", originalEventId);
     }
     
+    // Step 2: Verify the event exists in the state
+    const eventExists = events.some(e => e.id === originalEventId);
+    
+    if (!eventExists) {
+      console.error(`Event with ID ${originalEventId} not found in state`);
+      toast({
+        title: "Error Deleting Event",
+        description: "The event could not be found in your calendar.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+    
+    // Step 3: Dispatch the delete action with the verified ID
+    dispatch({
+      type: 'DELETE_EVENT',
+      payload: originalEventId
+    });
+    
+    // Step 4: Update the UI
     toast({
       title: "Event Deleted",
       description: "The event has been removed from your calendar.",
@@ -303,7 +310,7 @@ const BigCalendarView = ({
       duration: 3000,
     });
     
-    // Close any open dialogs
+    // Step 5: Clean up any open UI elements
     setIsEventModalOpen(false);
     setCurrentEvent(null);
   };
