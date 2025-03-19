@@ -38,7 +38,8 @@ const TUIEventForm = ({
   event, 
   opportunities = [], 
   onSave, 
-  onDelete
+  onDelete,
+  isDarkMode = false
 }) => {
   const [eventData, setEventData] = useState({
     id: '',
@@ -197,7 +198,7 @@ const TUIEventForm = ({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent 
-          className="sm:max-w-[500px] bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 shadow-lg overflow-y-auto max-h-[80vh]"
+          className={`sm:max-w-[500px] ${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'} shadow-lg overflow-y-auto max-h-[80vh]`}
           style={{
             overflowY: 'auto',
             maxHeight: '80vh',
@@ -206,7 +207,7 @@ const TUIEventForm = ({
           }}
         >
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className={isDarkMode ? 'text-gray-100' : 'text-gray-900'}>
               {eventData.id ? 'Edit Event' : 'Create Event'}
             </DialogTitle>
           </DialogHeader>
@@ -215,34 +216,37 @@ const TUIEventForm = ({
             <div className="grid gap-4 py-4">
               {/* Title */}
               <div className="grid gap-2">
-                <Label htmlFor="title">Event Title</Label>
+                <Label htmlFor="title" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Event Title</Label>
                 <Input 
                   id="title"
                   value={eventData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   placeholder="Enter event title"
                   required
+                  className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}
                 />
               </div>
               
               {/* Date and Time */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label>Start Date & Time</Label>
+                  <Label className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Start Date & Time</Label>
                   <Input 
                     type="datetime-local"
                     value={formatDateForInput(eventData.startDate)}
                     onChange={(e) => handleChange('startDate', new Date(e.target.value))}
                     required
+                    className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>End Date & Time</Label>
+                  <Label className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>End Date & Time</Label>
                   <Input 
                     type="datetime-local"
                     value={formatDateForInput(eventData.endDate)}
                     onChange={(e) => handleChange('endDate', new Date(e.target.value))}
                     required
+                    className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}
                   />
                 </div>
               </div>
@@ -250,15 +254,15 @@ const TUIEventForm = ({
               {/* Event Type and Associated Opportunity */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="type">Event Type</Label>
+                  <Label htmlFor="type" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Event Type</Label>
                   <Select 
                     value={eventData.type} 
                     onValueChange={(value) => handleChange('type', value)}
                   >
-                    <SelectTrigger id="type">
+                    <SelectTrigger id="type" className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50">
+                    <SelectContent className={isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
                       <SelectItem value="interview">Interview</SelectItem>
                       <SelectItem value="deadline">Deadline</SelectItem>
                       <SelectItem value="followup">Follow-up</SelectItem>
@@ -269,15 +273,15 @@ const TUIEventForm = ({
                 </div>
                 
                 <div className="grid gap-2">
-                  <Label htmlFor="opportunity">Associated Opportunity</Label>
+                  <Label htmlFor="opportunity" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Associated Opportunity</Label>
                   <Select 
                     value={eventData.opportunityId || "none"} 
                     onValueChange={(value) => handleChange('opportunityId', value === "none" ? "" : value)}
                   >
-                    <SelectTrigger id="opportunity">
+                    <SelectTrigger id="opportunity" className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}>
                       <SelectValue placeholder="Select opportunity" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700 z-50 max-h-[300px] overflow-y-auto">
+                    <SelectContent className={isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'} style={{ maxHeight: '300px', overflowY: 'auto' }}>
                       <SelectItem value="none">None</SelectItem>
                       {Array.isArray(opportunities) && opportunities.length === 0 ? (
                         <SelectItem value="loading" disabled>Loading opportunities...</SelectItem>
@@ -295,13 +299,14 @@ const TUIEventForm = ({
               
               {/* Description */}
               <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Description</Label>
                 <Textarea 
                   id="description"
                   value={eventData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   placeholder="Add details about this event"
                   rows={3}
+                  className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}
                 />
               </div>
             </div>
@@ -336,14 +341,14 @@ const TUIEventForm = ({
                     type="button"
                     variant="outline"
                     onClick={handleDownload}
-                    className="w-full flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:hover:bg-blue-800 dark:text-blue-100 dark:border-blue-700"
+                    className={`w-full flex items-center justify-center ${isDarkMode ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 border-blue-700' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300'}`}
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download Calendar (.ics) File
                   </Button>
                 </div>
                 
-                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className={`mt-6 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                   <Button 
                     type="button"
                     variant="outline"
@@ -364,9 +369,9 @@ const TUIEventForm = ({
                       <div style={{ 
                         display: 'flex', 
                         justifyContent: 'center',
-                        backgroundColor: 'white',
+                        backgroundColor: 'white', // Always white for QR code
                         padding: '16px',
-                        border: '1px solid #e5e7eb',
+                        border: isDarkMode ? '1px solid #4b5563' : '1px solid #e5e7eb',
                         borderRadius: '8px',
                         margin: '16px 0'
                       }}>
@@ -381,7 +386,7 @@ const TUIEventForm = ({
                       <p style={{ 
                         textAlign: 'center', 
                         fontSize: '14px', 
-                        color: '#4b5563', 
+                        color: isDarkMode ? '#9ca3af' : '#4b5563', 
                         marginBottom: '16px' 
                       }}>
                         Scan with your phone's camera to add to your calendar
@@ -398,17 +403,17 @@ const TUIEventForm = ({
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent 
-          className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700"
+          className={`${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
           style={{ maxWidth: '350px', width: '90%' }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-gray-900 dark:text-gray-100">Delete Event</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
+            <AlertDialogTitle className={isDarkMode ? 'text-gray-100' : 'text-gray-900'}>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
               Are you sure you want to delete this event?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className={isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-900'}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete} 
               className="bg-red-500 hover:bg-red-600 text-white"

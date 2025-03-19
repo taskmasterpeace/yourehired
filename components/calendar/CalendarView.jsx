@@ -7,7 +7,8 @@ const CalendarView = ({
   events = [], 
   opportunities = [], 
   user,
-  dispatch
+  dispatch,
+  isDarkMode = false
 }) => {
   return (
     <TUICalendarView 
@@ -15,6 +16,7 @@ const CalendarView = ({
       opportunities={opportunities}
       user={user}
       dispatch={dispatch}
+      isDarkMode={isDarkMode}
     />
   );
 };

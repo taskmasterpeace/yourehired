@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Calendar from '@toast-ui/react-calendar';
 import '@toast-ui/calendar/dist/toastui-calendar.min.css';
+import './calendar-styles.css'; // Import the custom CSS
 import { Card, CardContent } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -13,7 +14,8 @@ const TUICalendarView = ({
   events = [], 
   opportunities = [], 
   user,
-  dispatch
+  dispatch,
+  isDarkMode = false
 }) => {
   const calendarRef = useRef(null);
   const { toast } = useToast();
@@ -88,6 +90,7 @@ const TUICalendarView = ({
         isReadOnly: false,
         backgroundColor: color,
         borderColor: color,
+        color: '#ffffff', // Text color
         raw: event // Store the original event data
       };
     } catch (error) {
@@ -98,11 +101,11 @@ const TUICalendarView = ({
   
   // Define calendar options
   const calendars = [
-    { id: 'interview', name: 'Interview', color: '#8b5cf6', backgroundColor: '#8b5cf6' },
-    { id: 'deadline', name: 'Deadline', color: '#ef4444', backgroundColor: '#ef4444' },
-    { id: 'followup', name: 'Follow-up', color: '#3b82f6', backgroundColor: '#3b82f6' },
-    { id: 'assessment', name: 'Assessment', color: '#eab308', backgroundColor: '#eab308' },
-    { id: 'general', name: 'General', color: '#9ca3af', backgroundColor: '#9ca3af' }
+    { id: 'interview', name: 'Interview', color: '#ffffff', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6' },
+    { id: 'deadline', name: 'Deadline', color: '#ffffff', backgroundColor: '#ef4444', borderColor: '#ef4444' },
+    { id: 'followup', name: 'Follow-up', color: '#ffffff', backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
+    { id: 'assessment', name: 'Assessment', color: '#ffffff', backgroundColor: '#eab308', borderColor: '#eab308' },
+    { id: 'general', name: 'General', color: '#ffffff', backgroundColor: '#9ca3af', borderColor: '#9ca3af' }
   ];
   
   // Handle event click
@@ -151,6 +154,136 @@ const TUICalendarView = ({
     }
   };
   
+  // Set up dark mode theme
+  useEffect(() => {
+    if (calendarRef.current) {
+      const instance = calendarRef.current.getInstance();
+      
+      if (isDarkMode) {
+        instance.setTheme({
+          common: {
+            backgroundColor: '#1f2937',
+            border: '#374151',
+            dayName: {
+              color: '#e5e7eb'
+            },
+            holiday: {
+              color: '#f87171'
+            },
+            saturday: {
+              color: '#93c5fd'
+            },
+            today: {
+              color: '#3b82f6'
+            }
+          },
+          month: {
+            dayExceptThisMonth: {
+              color: '#6b7280'
+            },
+            dayName: {
+              backgroundColor: '#111827',
+              color: '#e5e7eb'
+            },
+            holidayExceptThisMonth: {
+              color: '#ef4444'
+            },
+            weekend: {
+              backgroundColor: '#1f2937'
+            },
+            moreView: {
+              backgroundColor: '#374151',
+              border: '#4b5563',
+              boxShadow: 'none',
+              color: '#e5e7eb',
+              more: {
+                color: '#e5e7eb'
+              }
+            }
+          },
+          week: {
+            dayName: {
+              color: '#e5e7eb',
+              backgroundColor: '#111827'
+            },
+            today: {
+              color: '#3b82f6'
+            },
+            pastDay: {
+              color: '#9ca3af'
+            },
+            panelResizer: {
+              border: '#374151'
+            },
+            timeGridLeft: {
+              backgroundColor: '#1f2937',
+              borderRight: '#374151',
+              color: '#e5e7eb'
+            },
+            timeGridLeftAdditionalTimezone: {
+              backgroundColor: '#111827'
+            },
+            timeGridHalfHourLine: {
+              borderBottom: '#374151'
+            },
+            timeGridHourLine: {
+              borderBottom: '#4b5563'
+            },
+            nowIndicatorLabel: {
+              color: '#ef4444'
+            },
+            nowIndicatorPast: {
+              border: '#ef4444'
+            },
+            nowIndicatorBullet: {
+              backgroundColor: '#ef4444'
+            },
+            nowIndicatorToday: {
+              border: '#ef4444'
+            },
+            nowIndicatorFuture: {
+              border: '#ef4444'
+            },
+            pastTime: {
+              color: '#9ca3af'
+            },
+            futureTime: {
+              color: '#e5e7eb'
+            },
+            gridSelection: {
+              color: '#e5e7eb'
+            }
+          }
+        });
+      } else {
+        // Light mode theme
+        instance.setTheme({
+          common: {
+            backgroundColor: '#ffffff',
+            border: '#e5e7eb',
+            dayName: {
+              color: '#4b5563'
+            }
+          },
+          month: {
+            dayName: {
+              backgroundColor: '#f9fafb'
+            }
+          },
+          week: {
+            dayName: {
+              backgroundColor: '#f9fafb'
+            },
+            timeGridLeft: {
+              backgroundColor: '#f9fafb',
+              borderRight: '#e5e7eb'
+            }
+          }
+        });
+      }
+    }
+  }, [isDarkMode, calendarRef.current]);
+  
   // Set up mobile options
   useEffect(() => {
     if (calendarRef.current) {
@@ -193,7 +326,7 @@ const TUICalendarView = ({
   // Create calendar toolbar
   const renderToolbar = () => {
     return (
-      <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-b dark:border-gray-700">
+      <div className={`flex flex-col sm:flex-row justify-between items-center p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <Button 
             variant="outline"
@@ -225,7 +358,7 @@ const TUICalendarView = ({
           >
             &gt;
           </Button>
-          <h2 className="text-lg font-semibold ml-2">
+          <h2 className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             {calendarRef.current ? format(calendarRef.current.getInstance().getDate().toDate(), 'MMMM yyyy') : ''}
           </h2>
         </div>
@@ -284,12 +417,12 @@ const TUICalendarView = ({
     ];
 
     return (
-      <div className="flex flex-wrap gap-3 mt-4 p-3 bg-white dark:bg-gray-800 rounded-md border dark:border-gray-700">
-        <div className="text-sm font-medium mr-2 text-gray-800 dark:text-gray-200">Event Types:</div>
+      <div className={`flex flex-wrap gap-3 mt-4 p-3 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className={`text-sm font-medium mr-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Event Types:</div>
         {eventTypes.map(item => (
           <div key={item.type} className="flex items-center">
             <div className={`w-3 h-3 rounded-full ${item.color} mr-1`}></div>
-            <span className="text-sm text-gray-700 dark:text-gray-300">{item.label}</span>
+            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
           </div>
         ))}
       </div>
@@ -298,11 +431,11 @@ const TUICalendarView = ({
   
   return (
     <div className="grid grid-cols-1 gap-4">
-      <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <Card className={isDarkMode ? 'dark:bg-gray-800 dark:border-gray-700' : 'bg-white border-gray-200'}>
         <CardContent className="p-0">
           {renderToolbar()}
           
-          <div style={{ height: isMobile ? '60vh' : '70vh' }}>
+          <div style={{ height: isMobile ? '60vh' : '70vh' }} className={isDarkMode ? 'dark-calendar' : ''}>
             <Calendar
               ref={calendarRef}
               height="100%"
@@ -310,9 +443,10 @@ const TUICalendarView = ({
               month={{ startDayOfWeek: 0 }}
               calendars={calendars}
               events={formattedEvents}
-              useDetailPopup={true}
+              useDetailPopup={false}
               onClickEvent={handleClickEvent}
               isReadOnly={false}
+              theme={isDarkMode ? 'dark' : 'light'}
             />
           </div>
         </CardContent>
@@ -330,6 +464,7 @@ const TUICalendarView = ({
         opportunities={opportunities}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
+        isDarkMode={isDarkMode}
       />
     </div>
   );
