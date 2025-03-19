@@ -71,6 +71,8 @@ const TUIEventForm = ({
   useEffect(() => {
     if (event) {
       try {
+        console.log("Processing event in form:", event);
+        
         const startDate = new Date(event.startDate || event.start || event.date || new Date());
         const endDate = new Date(event.endDate || event.end || new Date(startDate.getTime() + 60 * 60 * 1000));
         

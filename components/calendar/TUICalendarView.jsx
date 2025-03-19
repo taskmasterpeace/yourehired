@@ -111,10 +111,14 @@ const TUICalendarView = ({
   // Handle event click
   const handleClickEvent = (event) => {
     console.log('Clicked event:', event);
-    // Make sure we're passing the event with its ID
+    // Make sure we're passing the event with its ID and all necessary data
     const eventWithId = {
       ...event.raw,
-      id: event.raw.id || event.id
+      id: event.raw?.id || event.id,
+      title: event.title,
+      start: event.start,
+      end: event.end,
+      calendarId: event.calendarId
     };
     console.log('Passing event to form:', eventWithId);
     setCurrentEvent(eventWithId);
@@ -456,6 +460,12 @@ const TUICalendarView = ({
               onClickEvent={handleClickEvent}
               isReadOnly={false}
               theme={isDarkMode ? 'dark' : 'light'}
+              // Add these properties to fix the multiple day selection issue
+              usageStatistics={false}
+              useCreationPopup={false}
+              useFormPopup={false}
+              // Make sure events are clickable
+              eventFilter={(event) => true}
             />
           </div>
         </CardContent>
