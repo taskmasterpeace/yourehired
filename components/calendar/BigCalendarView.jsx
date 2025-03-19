@@ -250,89 +250,9 @@ const BigCalendarView = ({
   
   // Handle deleting an event
   const handleDeleteEvent = (eventId) => {
-    console.log("Attempting to delete event with ID:", eventId);
+    console.log("Delete request received for:", eventId);
     
-    // Find the actual event in our events array
-    let eventToDelete = null;
-    
-    if (typeof eventId === 'object') {
-      // If we received the whole event object
-      if (eventId.resource) {
-        // If it's a calendar event with resource property
-        eventToDelete = events.find(e => 
-          (eventId.resource.id && e.id === eventId.resource.id) ||
-          (eventId.resource._id && e._id === eventId.resource._id)
-        );
-        
-        if (!eventToDelete) {
-          // If not found in events array, use the resource directly
-          eventToDelete = eventId.resource;
-        }
-      } else {
-        // If it's a direct event object
-        eventToDelete = events.find(e => 
-          (eventId.id && e.id === eventId.id) || 
-          (eventId._id && e._id === eventId._id)
-        );
-        
-        if (!eventToDelete) {
-          // If not found in events array, use the object itself
-          eventToDelete = eventId;
-        }
-      }
-    } else {
-      // If we received just the ID
-      eventToDelete = events.find(e => e.id === eventId || e._id === eventId);
-    }
-    
-    console.log("Event to delete:", eventToDelete);
-    
-    if (!eventToDelete) {
-      console.error("Could not find event to delete");
-      toast({
-        title: "Error Deleting Event",
-        description: "Could not find the event to delete.",
-        variant: "destructive",
-        duration: 3000,
-      });
-      return;
-    }
-    
-    // Now dispatch with the actual event object
-    if (dispatch) {
-      // Get the ID from the event
-      const id = eventToDelete.id || eventToDelete._id;
-      console.log("Dispatching DELETE_EVENT with ID:", id);
-      
-      // Try with the ID first (most common approach)
-      if (id) {
-        dispatch({
-          type: 'DELETE_EVENT',
-          payload: id
-        });
-      }
-      
-      // Also try with the full event object as fallback
-      dispatch({
-        type: 'DELETE_EVENT',
-        payload: eventToDelete
-      });
-      
-      // Show success toast
-      toast({
-        title: "Event Deleted",
-        description: `"${eventToDelete.title || 'Event'}" has been removed from your calendar.`,
-        variant: "success",
-        duration: 3000,
-      });
-      
-      // Force a refresh of the UI
-      setTimeout(() => {
-        if (dispatch) {
-          dispatch({ type: 'REFRESH_EVENTS' });
-        }
-      }, 100);
-    } else {
+    if (!dispatch) {
       console.error("No dispatch function available");
       toast({
         title: "Error Deleting Event",
@@ -340,7 +260,52 @@ const BigCalendarView = ({
         variant: "destructive",
         duration: 3000,
       });
+      return;
     }
+    
+    // If we received an object with a resource property (from calendar selection)
+    if (eventId && eventId.resource && eventId.resource.id) {
+      console.log("Deleting using resource.id:", eventId.resource.id);
+      dispatch({
+        type: 'DELETE_EVENT',
+        payload: eventId.resource.id
+      });
+    }
+    // If we received a direct event object with an id
+    else if (eventId && eventId.id) {
+      console.log("Deleting using event.id:", eventId.id);
+      dispatch({
+        type: 'DELETE_EVENT',
+        payload: eventId.id
+      });
+    }
+    // If we received just an ID string/number
+    else if (typeof eventId === 'string' || typeof eventId === 'number') {
+      console.log("Deleting using direct ID:", eventId);
+      dispatch({
+        type: 'DELETE_EVENT',
+        payload: eventId
+      });
+    }
+    // Fallback - try to use the whole object
+    else {
+      console.log("Using fallback delete with entire object");
+      dispatch({
+        type: 'DELETE_EVENT',
+        payload: eventId
+      });
+    }
+    
+    toast({
+      title: "Event Deleted",
+      description: "The event has been removed from your calendar.",
+      variant: "success",
+      duration: 3000,
+    });
+    
+    // Close any open dialogs
+    setIsEventModalOpen(false);
+    setCurrentEvent(null);
   };
   
   // Handle date navigation
