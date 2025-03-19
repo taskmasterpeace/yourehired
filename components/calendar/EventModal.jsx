@@ -327,28 +327,24 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                   </Popover>
                 </div>
                 
-                <div className="grid gap-2">
-                  <Label>Time</Label>
-                  <div className="flex items-center" style={{ gap: '8px' }}>
-                    <div style={{ width: '45%' }}>
-                      <Input 
-                        type="time"
-                        value={eventData.startTime}
-                        onChange={(e) => handleChange('startTime', e.target.value)}
-                        required
-                        style={{ width: '100%' }}
-                      />
-                    </div>
-                    <span style={{ flexShrink: 0 }}>to</span>
-                    <div style={{ width: '45%' }}>
-                      <Input 
-                        type="time"
-                        value={eventData.endTime}
-                        onChange={(e) => handleChange('endTime', e.target.value)}
-                        required
-                        style={{ width: '100%' }}
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Start Time</Label>
+                    <Input 
+                      type="time"
+                      value={eventData.startTime}
+                      onChange={(e) => handleChange('startTime', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>End Time</Label>
+                    <Input 
+                      type="time"
+                      value={eventData.endTime}
+                      onChange={(e) => handleChange('endTime', e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
               </div>
@@ -439,106 +435,27 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               </div>
             </div>
             
-            <DialogFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              {/* Action buttons for existing events */}
-              {eventData.id && eventData.id !== '' && (
-                <div className="flex space-x-2 w-full sm:w-auto justify-start">
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="flex items-center bg-red-600 hover:bg-red-700 text-white font-medium"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    DELETE EVENT
-                  </Button>
-                  
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          onClick={handleDuplicate}
-                          className="h-9 w-9"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Duplicate event</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  
-                  <div 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                  >
-                    <AddToCalendarButton 
-                      event={{
-                        title: eventData.title,
-                        startDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.startTime}`),
-                        endDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.endTime}`),
-                        description: eventData.description,
-                        location: eventData.location
-                      }}
-                      variant="outline"
-                      size="sm"
-                      compact={true}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              {/* Add to calendar button for new events */}
-              {!eventData.id && (
-                <div className="w-full sm:w-auto">
-                  <div 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                  >
-                    <AddToCalendarButton 
-                      event={{
-                        title: eventData.title,
-                        startDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.startTime}`),
-                        endDate: new Date(`${format(eventData.date, 'yyyy-MM-dd')}T${eventData.endTime}`),
-                        description: eventData.description,
-                        location: eventData.location
-                      }}
-                      variant="outline"
-                      size="sm"
-                    />
-                  </div>
-                </div>
+            <DialogFooter className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+              {/* Delete button for existing events */}
+              {eventData.id && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="w-full sm:w-auto order-1 sm:order-none"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Event
+                </Button>
               )}
               
               {/* Save/Cancel buttons */}
-              <div className="flex space-x-2 w-full sm:w-auto justify-end">
-                <Button type="button" variant="outline" onClick={onClose}>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {eventData.id ? (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Update
-                    </>
-                  ) : 'Create Event'}
+                <Button type="submit" className="w-full sm:w-auto">
+                  {eventData.id ? 'Update Event' : 'Create Event'}
                 </Button>
               </div>
             </DialogFooter>
@@ -548,19 +465,19 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
       
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center">
-              <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-              Delete Event
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-gray-900 dark:text-gray-100">Delete Event</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
               Are you sure you want to delete this event? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+            <AlertDialogCancel className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
