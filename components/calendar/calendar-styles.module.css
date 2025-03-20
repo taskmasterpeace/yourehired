@@ -49,6 +49,40 @@
   color: #ffffff !important;
 }
 
+/* Add these rules to ensure event text is visible in dark mode */
+.darkCalendar :global(.toastui-calendar-event) {
+  color: white !important;
+}
+
+.darkCalendar :global(.toastui-calendar-event-title) {
+  color: white !important;
+}
+
+.darkCalendar :global(.toastui-calendar-event-time) {
+  color: white !important;
+}
+
+.darkCalendar :global(.toastui-calendar-event-dot) {
+  background-color: white !important;
+}
+
+/* Make sure all text in the calendar is visible */
+.darkCalendar :global(.toastui-calendar-template-allday-title) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-time-date-schedule-block-wrap) {
+  color: #e5e7eb !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-time-schedule) {
+  color: white !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-time-schedule-content) {
+  color: white !important;
+}
+
 /* Existing rules */
 .darkCalendar :global(.toastui-calendar-day-name) {
   background-color: #111827 !important;

@@ -460,10 +460,27 @@ const TUICalendarView = ({
               onClickEvent={handleClickEvent}
               isReadOnly={false}
               theme={isDarkMode ? 'dark' : 'light'}
-              // Add these properties to fix the multiple day selection issue
+              // Add these properties to fix the selection issues
               usageStatistics={false}
               useCreationPopup={false}
               useFormPopup={false}
+              selectable={true}
+              // Add a proper selection handler
+              onBeforeCreateSchedule={(scheduleData) => {
+                // This prevents the default behavior and lets us handle it
+                const startTime = scheduleData.start.toDate();
+                const endTime = scheduleData.end ? scheduleData.end.toDate() : new Date(startTime.getTime() + 60 * 60 * 1000);
+                
+                // Create a new event
+                setCurrentEvent({
+                  title: '',
+                  startDate: startTime,
+                  endDate: endTime,
+                  type: 'general',
+                  description: ''
+                });
+                setIsEventFormOpen(true);
+              }}
               // Make sure events are clickable
               eventFilter={(event) => true}
             />
