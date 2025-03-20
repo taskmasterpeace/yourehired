@@ -272,9 +272,17 @@ const TUIEventForm = ({
   // Format date for datetime-local input
   const formatDateForInput = (date) => {
     try {
+      // First, ensure we have a valid Date object
+      if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        console.error("Invalid date provided to formatDateForInput:", date);
+        // Return current date/time as fallback
+        return format(new Date(), "yyyy-MM-dd'T'HH:mm");
+      }
+      
       return format(date, "yyyy-MM-dd'T'HH:mm");
     } catch (error) {
-      console.error("Error formatting date:", error);
+      console.error("Error formatting date:", error, "Date value was:", date);
+      // Return current date/time as fallback
       return format(new Date(), "yyyy-MM-dd'T'HH:mm");
     }
   };
