@@ -83,6 +83,49 @@
   color: white !important;
 }
 
+/* Target the event titles in month view */
+.darkCalendar :global(.toastui-calendar-month-event) {
+  color: white !important;
+}
+
+.darkCalendar :global(.toastui-calendar-month-event-title) {
+  color: white !important;
+}
+
+/* Target the event content in month view */
+.darkCalendar :global(.toastui-calendar-weekday-event) {
+  color: white !important;
+}
+
+.darkCalendar :global(.toastui-calendar-weekday-event-title) {
+  color: white !important;
+}
+
+/* Target all event content */
+.darkCalendar :global(.toastui-calendar-template-event) {
+  color: white !important;
+}
+
+.darkCalendar :global(.toastui-calendar-template-event-title) {
+  color: white !important;
+}
+
+/* Target the specific event content in month view */
+.darkCalendar :global(.toastui-calendar-weekday-events) span,
+.darkCalendar :global(.toastui-calendar-weekday-events) div {
+  color: white !important;
+}
+
+/* Target the event time text */
+.darkCalendar :global(.toastui-calendar-template-time) {
+  color: white !important;
+}
+
+/* Target all text in events */
+.darkCalendar :global([class*="toastui-calendar-event"]) * {
+  color: white !important;
+}
+
 /* Existing rules */
 .darkCalendar :global(.toastui-calendar-day-name) {
   background-color: #111827 !important;
