@@ -11,6 +11,8 @@ const CalendarView = ({
   isDarkMode = false
 }) => {
   console.log("CalendarView rendering with isDarkMode:", isDarkMode);
+  console.log("EXPLICITLY USING TUICalendarView - BigCalendarView is deprecated");
+  
   return (
     <TUICalendarView 
       events={events}

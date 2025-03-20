@@ -17,6 +17,11 @@ interface CalendarTabProps {
   isDarkMode: boolean;
   user: any;
   dispatch: any;
+  // Remove any references to BigCalendarView props
+  date?: Date;
+  setDate?: (date: Date) => void;
+  eventTypeFilter?: string;
+  setEventTypeFilter?: (filter: string) => void;
 }
 
 export function CalendarTab({
@@ -24,11 +29,16 @@ export function CalendarTab({
   opportunities,
   isDarkMode,
   user,
-  dispatch
+  dispatch,
+  // Remove unused props
+  date,
+  setDate,
+  eventTypeFilter,
+  setEventTypeFilter
 }: CalendarTabProps) {
   console.log("RENDERING: CalendarTab with events:", events.length);
+  console.log("EXPLICITLY USING TUICalendarView via CalendarView");
   
-  // Make sure we're only rendering calendar-related content
   return (
     <div className={`calendar-tab ${isDarkMode ? 'dark-mode' : ''}`}>
       <CalendarView 

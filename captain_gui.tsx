@@ -2037,10 +2037,6 @@ export default function CAPTAINGui() {
               <CalendarTab 
                 events={events}
                 opportunities={opportunities}
-                date={date}
-                setDate={setDate}
-                eventTypeFilter={eventTypeFilter}
-                setEventTypeFilter={setEventTypeFilter}
                 isDarkMode={isDarkMode}
                 user={user}
                 dispatch={dispatch}
