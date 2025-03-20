@@ -123,7 +123,8 @@ const TUIEventForm = ({
         console.log("Setting start date to:", startDate);
         console.log("Setting end date to:", endDate);
         
-        setEventData({
+        // Create a new object first, then set it to state
+        const newEventData = {
           id: eventId,
           title: event.title || '',
           date: startDate, // Keep date for compatibility
@@ -132,7 +133,15 @@ const TUIEventForm = ({
           type: event.type || event.calendarId || 'general',
           description: event.description || event.body || '',
           opportunityId: event.opportunityId || ''
-        });
+        };
+        
+        console.log("New event data being set:", newEventData);
+        setEventData(newEventData);
+        
+        // Log after state update in next render cycle
+        setTimeout(() => {
+          console.log('EventData after setting (next tick):', eventData);
+        }, 0);
       } catch (error) {
         console.error("Error processing event data:", error);
         // Set default values if there's an error
