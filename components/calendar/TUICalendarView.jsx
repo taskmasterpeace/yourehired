@@ -1,14 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Calendar from '@toast-ui/react-calendar';
-import '@toast-ui/calendar/dist/toastui-calendar.min.css';
-import styles from './calendar-styles.module.css'; // Import the CSS module
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "../ui/card";
-import { useToast } from "../ui/use-toast";
-import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Button } from "../ui/button";
-import { format } from 'date-fns';
+import { useToast } from "../ui/use-toast";
+import { format, parseISO } from 'date-fns';
 import TUIEventForm from './TUIEventForm';
-import { getEventColor } from './calendarUtils';
+
+// Import a simple calendar library instead of TUI Calendar
+import { Calendar as ReactCalendar, dateFnsLocalizer } from 'react-big-calendar';
+import { startOfWeek, getDay, parse } from 'date-fns';
+import enUS from 'date-fns/locale/en-US';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+// Set up the localizer for react-big-calendar
+const locales = {
+  'en-US': enUS,
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
 
 const TUICalendarView = ({ 
   events = [], 
@@ -17,18 +31,14 @@ const TUICalendarView = ({
   dispatch,
   isDarkMode = false
 }) => {
-  const calendarRef = useRef(null);
   const { toast } = useToast();
   const [selectedView, setSelectedView] = useState('month');
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState(null);
-  const isMobile = useMediaQuery('(max-width: 768px)');
   
-  // Format events for TUI Calendar
+  // Format events for the calendar
   const formattedEvents = events.map(event => {
     try {
-      console.log("Processing event:", event);
-      
       // Ensure we have valid dates
       let startDate;
       if (event.startDate instanceof Date) {
@@ -64,42 +74,25 @@ const TUICalendarView = ({
         endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
       }
       
-      console.log("Event dates processed:", { 
-        title: event.title,
-        start: startDate,
-        end: endDate
-      });
-      
-      // Get color from the existing utility function
-      const colorClass = getEventColor(event);
-      const backgroundColor = colorClass.split(' ')[0].replace('bg-', '');
-      
-      // Map Tailwind color classes to actual color values
-      const colorMap = {
-        'gray-400': '#9ca3af',
-        'blue-500': '#3b82f6',
-        'purple-500': '#8b5cf6',
-        'yellow-500': '#eab308',
-        'orange-500': '#f97316',
-        'green-500': '#22c55e',
-        'red-500': '#ef4444',
-        'gray-600': '#4b5563'
+      // Get color based on event type
+      const getEventColor = (type) => {
+        switch(type) {
+          case 'interview': return '#8b5cf6'; // purple
+          case 'deadline': return '#ef4444'; // red
+          case 'followup': return '#3b82f6'; // blue
+          case 'assessment': return '#eab308'; // yellow
+          default: return '#9ca3af'; // gray
+        }
       };
-      
-      const color = colorMap[backgroundColor] || '#9ca3af';
       
       return {
         id: event.id,
-        calendarId: event.type || 'general',
         title: event.title || "Untitled Event",
         start: startDate,
         end: endDate,
-        category: 'time',
-        isReadOnly: false,
-        backgroundColor: color,
-        borderColor: color,
-        color: '#ffffff', // Text color
-        raw: event // Store the original event data
+        allDay: false,
+        resource: event, // Store the original event data
+        backgroundColor: getEventColor(event.type)
       };
     } catch (error) {
       console.error("Error formatting event:", error, event);
@@ -107,53 +100,54 @@ const TUICalendarView = ({
     }
   }).filter(Boolean);
   
-  // Define calendar options
-  const calendars = [
-    { id: 'interview', name: 'Interview', color: '#ffffff', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6' },
-    { id: 'deadline', name: 'Deadline', color: '#ffffff', backgroundColor: '#ef4444', borderColor: '#ef4444' },
-    { id: 'followup', name: 'Follow-up', color: '#ffffff', backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
-    { id: 'assessment', name: 'Assessment', color: '#ffffff', backgroundColor: '#eab308', borderColor: '#eab308' },
-    { id: 'general', name: 'General', color: '#ffffff', backgroundColor: '#9ca3af', borderColor: '#9ca3af' }
-  ];
-  
   // Handle event click
-  const handleClickEvent = (event) => {
-    console.log('CLICKED EVENT:', event);
+  const handleSelectEvent = (event) => {
+    console.log('Selected event:', event);
     
-    // Create a brand new event object with explicit properties
-    const eventData = {
+    // Create a complete event object to pass to the form
+    const eventToEdit = {
       id: event.id,
       title: event.title,
-      startDate: new Date(event.start),
-      endDate: new Date(event.end),
-      type: event.calendarId,
-      description: '',
-      opportunityId: ''
+      startDate: event.start,
+      endDate: event.end,
+      type: event.resource?.type || 'general',
+      description: event.resource?.description || '',
+      opportunityId: event.resource?.opportunityId || ''
     };
     
-    // If we have raw data, use it to populate additional fields
-    if (event.raw) {
-      eventData.description = event.raw.description || '';
-      eventData.opportunityId = event.raw.opportunityId || '';
-      
-      // Copy any other properties from raw data
-      Object.keys(event.raw).forEach(key => {
-        if (!eventData[key] && key !== 'id') {
-          eventData[key] = event.raw[key];
-        }
-      });
-    }
-    
-    console.log('SENDING TO FORM:', eventData);
-    
-    // Force a new object creation to ensure React detects the change
-    setCurrentEvent({...eventData});
+    console.log('Event being passed to form:', eventToEdit);
+    setCurrentEvent(eventToEdit);
     setIsEventFormOpen(true);
   };
   
-  // Handle event creation
+  // Handle slot selection (creating a new event)
+  const handleSelectSlot = ({ start }) => {
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    
+    setCurrentEvent({
+      title: '',
+      startDate: start,
+      endDate: end,
+      type: 'general',
+      description: ''
+    });
+    
+    setIsEventFormOpen(true);
+  };
+  
+  // Handle creating a new event
   const handleCreateEvent = () => {
-    setCurrentEvent(null);
+    const start = new Date();
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    
+    setCurrentEvent({
+      title: '',
+      startDate: start,
+      endDate: end,
+      type: 'general',
+      description: ''
+    });
+    
     setIsEventFormOpen(true);
   };
   
@@ -181,7 +175,6 @@ const TUICalendarView = ({
     if (dispatch) {
       console.log("Deleting event with ID:", eventId);
       
-      // Make sure we have a valid ID to delete
       if (!eventId) {
         console.error("No valid event ID to delete");
         toast({
@@ -204,175 +197,18 @@ const TUICalendarView = ({
     }
   };
   
-  // Set up dark mode theme
-  useEffect(() => {
-    if (calendarRef.current) {
-      const instance = calendarRef.current.getInstance();
-      
-      console.log("Applying calendar theme with isDarkMode:", isDarkMode);
-      if (isDarkMode) {
-        instance.setTheme({
-          common: {
-            backgroundColor: '#1f2937',
-            border: '#374151',
-            dayName: {
-              color: '#e5e7eb'
-            },
-            holiday: {
-              color: '#f87171'
-            },
-            saturday: {
-              color: '#93c5fd'
-            },
-            today: {
-              color: '#3b82f6'
-            }
-          },
-          month: {
-            dayExceptThisMonth: {
-              color: '#6b7280'
-            },
-            dayName: {
-              backgroundColor: '#111827',
-              color: '#e5e7eb'
-            },
-            holidayExceptThisMonth: {
-              color: '#ef4444'
-            },
-            weekend: {
-              backgroundColor: '#1f2937'
-            },
-            moreView: {
-              backgroundColor: '#374151',
-              border: '#4b5563',
-              boxShadow: 'none',
-              color: '#e5e7eb',
-              more: {
-                color: '#e5e7eb'
-              }
-            }
-          },
-          week: {
-            dayName: {
-              color: '#e5e7eb',
-              backgroundColor: '#111827'
-            },
-            today: {
-              color: '#3b82f6'
-            },
-            pastDay: {
-              color: '#9ca3af'
-            },
-            panelResizer: {
-              border: '#374151'
-            },
-            timeGridLeft: {
-              backgroundColor: '#1f2937',
-              borderRight: '#374151',
-              color: '#e5e7eb'
-            },
-            timeGridLeftAdditionalTimezone: {
-              backgroundColor: '#111827'
-            },
-            timeGridHalfHourLine: {
-              borderBottom: '#374151'
-            },
-            timeGridHourLine: {
-              borderBottom: '#4b5563'
-            },
-            nowIndicatorLabel: {
-              color: '#ef4444'
-            },
-            nowIndicatorPast: {
-              border: '#ef4444'
-            },
-            nowIndicatorBullet: {
-              backgroundColor: '#ef4444'
-            },
-            nowIndicatorToday: {
-              border: '#ef4444'
-            },
-            nowIndicatorFuture: {
-              border: '#ef4444'
-            },
-            pastTime: {
-              color: '#9ca3af'
-            },
-            futureTime: {
-              color: '#e5e7eb'
-            },
-            gridSelection: {
-              color: '#e5e7eb'
-            }
-          }
-        });
-      } else {
-        // Light mode theme
-        instance.setTheme({
-          common: {
-            backgroundColor: '#ffffff',
-            border: '#e5e7eb',
-            dayName: {
-              color: '#4b5563'
-            }
-          },
-          month: {
-            dayName: {
-              backgroundColor: '#f9fafb'
-            }
-          },
-          week: {
-            dayName: {
-              backgroundColor: '#f9fafb'
-            },
-            timeGridLeft: {
-              backgroundColor: '#f9fafb',
-              borderRight: '#e5e7eb'
-            }
-          }
-        });
+  // Custom event styling
+  const eventStyleGetter = (event) => {
+    return {
+      style: {
+        backgroundColor: event.backgroundColor || '#3b82f6',
+        borderRadius: '4px',
+        color: 'white',
+        border: 'none',
+        display: 'block'
       }
-    }
-  }, [isDarkMode, calendarRef.current]);
-  
-  // Set up mobile options
-  useEffect(() => {
-    if (calendarRef.current) {
-      const instance = calendarRef.current.getInstance();
-      
-      if (isMobile) {
-        // Set mobile-friendly options
-        instance.setOptions({
-          week: {
-            narrowWeekend: true,
-            hourStart: 8,
-            hourEnd: 20
-          },
-          month: {
-            visibleWeeksCount: 4
-          }
-        });
-        
-        // Switch to day view on mobile if in week view
-        if (selectedView === 'week') {
-          setSelectedView('day');
-          instance.changeView('day');
-        }
-      } else {
-        // Set desktop options
-        instance.setOptions({
-          week: {
-            narrowWeekend: false,
-            hourStart: 0,
-            hourEnd: 24
-          },
-          month: {
-            visibleWeeksCount: 6
-          }
-        });
-      }
-    }
-  }, [isMobile]);
+    };
+  };
   
   // Create calendar toolbar
   const renderToolbar = () => {
@@ -382,77 +218,40 @@ const TUICalendarView = ({
           <Button 
             variant="outline"
             onClick={() => {
-              if (calendarRef.current) {
-                calendarRef.current.getInstance().today();
-              }
+              setSelectedView('month');
             }}
           >
-            Today
+            Month
           </Button>
           <Button 
             variant="outline"
-            onClick={() => {
-              if (calendarRef.current) {
-                calendarRef.current.getInstance().prev();
-              }
-            }}
-          >
-            &lt;
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => {
-              if (calendarRef.current) {
-                calendarRef.current.getInstance().next();
-              }
-            }}
-          >
-            &gt;
-          </Button>
-          <h2 className={`text-lg font-semibold ml-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-            {calendarRef.current ? format(calendarRef.current.getInstance().getDate().toDate(), 'MMMM yyyy') : ''}
-          </h2>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant={selectedView === 'day' ? 'default' : 'outline'}
-            onClick={() => {
-              setSelectedView('day');
-              if (calendarRef.current) {
-                calendarRef.current.getInstance().changeView('day');
-              }
-            }}
-          >
-            Day
-          </Button>
-          <Button 
-            variant={selectedView === 'week' ? 'default' : 'outline'}
             onClick={() => {
               setSelectedView('week');
-              if (calendarRef.current) {
-                calendarRef.current.getInstance().changeView('week');
-              }
             }}
           >
             Week
           </Button>
           <Button 
-            variant={selectedView === 'month' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => {
-              setSelectedView('month');
-              if (calendarRef.current) {
-                calendarRef.current.getInstance().changeView('month');
-              }
+              setSelectedView('day');
             }}
           >
-            Month
+            Day
           </Button>
-          
-          <Button onClick={handleCreateEvent}>
-            Create Event
+          <Button 
+            variant="outline"
+            onClick={() => {
+              setSelectedView('agenda');
+            }}
+          >
+            Agenda
           </Button>
         </div>
+        
+        <Button onClick={handleCreateEvent}>
+          Create Event
+        </Button>
       </div>
     );
   };
@@ -460,11 +259,11 @@ const TUICalendarView = ({
   // Color legend component for event types
   const ColorLegend = () => {
     const eventTypes = [
-      { type: 'interview', label: 'Interview', color: 'bg-purple-500' },
-      { type: 'deadline', label: 'Deadline', color: 'bg-red-500' },
-      { type: 'followup', label: 'Follow-up', color: 'bg-blue-500' },
-      { type: 'assessment', label: 'Assessment', color: 'bg-yellow-500' },
-      { type: 'general', label: 'General', color: 'bg-gray-400' }
+      { type: 'interview', label: 'Interview', color: '#8b5cf6' },
+      { type: 'deadline', label: 'Deadline', color: '#ef4444' },
+      { type: 'followup', label: 'Follow-up', color: '#3b82f6' },
+      { type: 'assessment', label: 'Assessment', color: '#eab308' },
+      { type: 'general', label: 'General', color: '#9ca3af' }
     ];
 
     return (
@@ -472,7 +271,7 @@ const TUICalendarView = ({
         <div className={`text-sm font-medium mr-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Event Types:</div>
         {eventTypes.map(item => (
           <div key={item.type} className="flex items-center">
-            <div className={`w-3 h-3 rounded-full ${item.color} mr-1`}></div>
+            <div style={{ backgroundColor: item.color }} className="w-3 h-3 rounded-full mr-1"></div>
             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
           </div>
         ))}
@@ -486,49 +285,28 @@ const TUICalendarView = ({
         <CardContent className="p-0">
           {renderToolbar()}
           
-          <div style={{ height: isMobile ? '60vh' : '70vh' }} className={isDarkMode ? styles.darkCalendar : ''}>
-            {/* Debug indicator for dark mode */}
-            {isDarkMode && <div className="text-xs text-right p-1 text-gray-400">Dark Mode Active</div>}
-            <Calendar
-              ref={calendarRef}
-              height="100%"
-              view={selectedView}
-              month={{ startDayOfWeek: 0 }}
-              calendars={calendars}
+          <div style={{ height: '70vh' }} className={isDarkMode ? 'dark-calendar' : ''}>
+            <ReactCalendar
+              localizer={localizer}
               events={formattedEvents}
-              useDetailPopup={false}
-              onClickEvent={handleClickEvent}
-              isReadOnly={false}
-              theme={isDarkMode ? 'dark' : 'light'}
-              // Add these properties to fix the selection issues
-              usageStatistics={false}
-              useCreationPopup={false}
-              useFormPopup={false}
-              selectable={true}
-              // Add a proper selection handler
-              onBeforeCreateSchedule={(scheduleData) => {
-                // This prevents the default behavior and lets us handle it
-                const startTime = scheduleData.start.toDate();
-                const endTime = scheduleData.end ? scheduleData.end.toDate() : new Date(startTime.getTime() + 60 * 60 * 1000);
-                
-                // Create a new event
-                setCurrentEvent({
-                  title: '',
-                  startDate: startTime,
-                  endDate: endTime,
-                  type: 'general',
-                  description: ''
-                });
-                setIsEventFormOpen(true);
-              }}
-              // Make sure events are clickable
-              eventFilter={(event) => true}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              views={['month', 'week', 'day', 'agenda']}
+              view={selectedView}
+              onView={(view) => setSelectedView(view)}
+              selectable
+              onSelectEvent={handleSelectEvent}
+              onSelectSlot={handleSelectSlot}
+              eventPropGetter={eventStyleGetter}
+              popup
+              className={isDarkMode ? 'dark-mode-calendar' : ''}
             />
           </div>
         </CardContent>
       </Card>
       
-      {!isMobile && <ColorLegend />}
+      <ColorLegend />
       
       <TUIEventForm
         isOpen={isEventFormOpen}
@@ -542,6 +320,58 @@ const TUICalendarView = ({
         onDelete={handleDeleteEvent}
         isDarkMode={isDarkMode}
       />
+      
+      {/* Add some custom styles for dark mode */}
+      {isDarkMode && (
+        <style jsx global>{`
+          .dark-mode-calendar {
+            background-color: #1f2937;
+            color: white;
+          }
+          .dark-mode-calendar .rbc-header {
+            background-color: #111827;
+            color: white;
+          }
+          .dark-mode-calendar .rbc-month-view {
+            border-color: #374151;
+          }
+          .dark-mode-calendar .rbc-day-bg {
+            background-color: #1f2937;
+          }
+          .dark-mode-calendar .rbc-today {
+            background-color: #374151;
+          }
+          .dark-mode-calendar .rbc-off-range-bg {
+            background-color: #111827;
+          }
+          .dark-mode-calendar .rbc-time-view {
+            background-color: #1f2937;
+            border-color: #374151;
+          }
+          .dark-mode-calendar .rbc-time-header {
+            background-color: #111827;
+            border-color: #374151;
+          }
+          .dark-mode-calendar .rbc-time-content {
+            border-color: #374151;
+          }
+          .dark-mode-calendar .rbc-time-slot {
+            border-color: #374151;
+          }
+          .dark-mode-calendar .rbc-agenda-view {
+            background-color: #1f2937;
+            color: white;
+          }
+          .dark-mode-calendar .rbc-agenda-table {
+            border-color: #374151;
+          }
+          .dark-mode-calendar .rbc-agenda-date-cell,
+          .dark-mode-calendar .rbc-agenda-time-cell,
+          .dark-mode-calendar .rbc-agenda-event-cell {
+            border-color: #374151;
+          }
+        `}</style>
+      )}
     </div>
   );
 };

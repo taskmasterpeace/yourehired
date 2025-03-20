@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "../ui/select";
-import { QRCodeSVG } from 'qrcode.react';
-import { generateICalString } from './calendarUtils.js';
-import { Download, QrCode, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   AlertDialog,
@@ -32,12 +30,12 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 
-const TUIEventForm = ({ 
-  isOpen, 
-  onClose, 
-  event, 
-  opportunities = [], 
-  onSave, 
+const TUIEventForm = ({
+  isOpen,
+  onClose,
+  event,
+  opportunities = [],
+  onSave,
   onDelete,
   isDarkMode = false
 }) => {
@@ -52,7 +50,6 @@ const TUIEventForm = ({
     opportunityId: ''
   });
   
-  const [showQRCode, setShowQRCode] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Debug logging
@@ -62,23 +59,6 @@ const TUIEventForm = ({
     console.log('EVENT TITLE:', event?.title);
   }, [event]);
   
-  // Add debugging for event data
-  useEffect(() => {
-    if (event) {
-      console.log("Event received in TUIEventForm:", event);
-      console.log("Event ID:", event.id);
-      console.log("Event title:", event.title);
-      console.log("Event startDate:", event.startDate);
-      console.log("Event endDate:", event.endDate);
-      console.log("Event type:", event.type);
-      console.log("Event description:", event.description);
-      console.log("Event raw:", event.raw);
-      if (event.raw) {
-        console.log("Raw event ID:", event.raw.id);
-      }
-    }
-  }, [event]);
-
   // Initialize form with event data when editing
   useEffect(() => {
     if (event) {
@@ -114,18 +94,9 @@ const TUIEventForm = ({
           endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
         }
         
-        // Extract ID from all possible locations
-        const eventId = event.id || 
-                       (event.raw && event.raw.id) || 
-                       '';
-        
-        console.log("Setting event ID to:", eventId);
-        console.log("Setting start date to:", startDate);
-        console.log("Setting end date to:", endDate);
-        
         // Create a new object first, then set it to state
         const newEventData = {
-          id: eventId,
+          id: event.id || '',
           title: event.title || '',
           date: startDate, // Keep date for compatibility
           startDate: startDate,
@@ -137,11 +108,6 @@ const TUIEventForm = ({
         
         console.log("New event data being set:", newEventData);
         setEventData(newEventData);
-        
-        // Log after state update in next render cycle
-        setTimeout(() => {
-          console.log('EventData after setting (next tick):', eventData);
-        }, 0);
       } catch (error) {
         console.error("Error processing event data:", error);
         // Set default values if there's an error
@@ -236,39 +202,6 @@ const TUIEventForm = ({
     }
   };
   
-  // Generate calendar data for QR code
-  const getCalendarData = () => {
-    try {
-      return generateICalString({
-        ...eventData,
-        date: eventData.startDate
-      });
-    } catch (error) {
-      console.error("Error generating calendar data:", error);
-      return "";
-    }
-  };
-  
-  // Handle download of .ics file
-  const handleDownload = () => {
-    const calendarData = getCalendarData();
-    if (!calendarData) return;
-    
-    try {
-      const blob = new Blob([calendarData], { type: 'text/calendar;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${eventData.title || 'event'}.ics`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading calendar file:", error);
-    }
-  };
-  
   // Format date for datetime-local input
   const formatDateForInput = (date) => {
     try {
@@ -290,7 +223,7 @@ const TUIEventForm = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent 
+        <DialogContent
           className={`sm:max-w-[500px] ${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'} shadow-lg overflow-y-auto max-h-[80vh]`}
           style={{
             overflowY: 'auto',
@@ -305,20 +238,12 @@ const TUIEventForm = ({
             </DialogTitle>
           </DialogHeader>
           
-          {/* Debug info */}
-          <div className="bg-yellow-100 p-2 mb-4 rounded text-xs">
-            <p><strong>DEBUG INFO:</strong></p>
-            <p>Event ID: {event?.id || 'None'}</p>
-            <p>Event Title: {event?.title || 'None'}</p>
-            <p>Is Edit Mode: {event?.id ? 'YES' : 'NO'}</p>
-          </div>
-          
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               {/* Title */}
               <div className="grid gap-2">
                 <Label htmlFor="title" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Event Title</Label>
-                <Input 
+                <Input
                   id="title"
                   value={eventData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
@@ -332,7 +257,7 @@ const TUIEventForm = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Start Date & Time</Label>
-                  <Input 
+                  <Input
                     type="datetime-local"
                     value={formatDateForInput(eventData.startDate)}
                     onChange={(e) => handleChange('startDate', new Date(e.target.value))}
@@ -342,7 +267,7 @@ const TUIEventForm = ({
                 </div>
                 <div className="grid gap-2">
                   <Label className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>End Date & Time</Label>
-                  <Input 
+                  <Input
                     type="datetime-local"
                     value={formatDateForInput(eventData.endDate)}
                     onChange={(e) => handleChange('endDate', new Date(e.target.value))}
@@ -356,8 +281,8 @@ const TUIEventForm = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="type" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Event Type</Label>
-                  <Select 
-                    value={eventData.type} 
+                  <Select
+                    value={eventData.type}
                     onValueChange={(value) => handleChange('type', value)}
                   >
                     <SelectTrigger id="type" className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}>
@@ -375,8 +300,8 @@ const TUIEventForm = ({
                 
                 <div className="grid gap-2">
                   <Label htmlFor="opportunity" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Associated Opportunity</Label>
-                  <Select 
-                    value={eventData.opportunityId || "none"} 
+                  <Select
+                    value={eventData.opportunityId || "none"}
                     onValueChange={(value) => handleChange('opportunityId', value)}
                   >
                     <SelectTrigger id="opportunity" className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}>
@@ -401,7 +326,7 @@ const TUIEventForm = ({
               {/* Description */}
               <div className="grid gap-2">
                 <Label htmlFor="description" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Description</Label>
-                <Textarea 
+                <Textarea
                   id="description"
                   value={eventData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
@@ -414,17 +339,18 @@ const TUIEventForm = ({
             
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 mt-4">
-              {/* Delete button - always show */}
-              <Button 
-                type="button" 
-                variant="destructive" 
-                onClick={() => setIsDeleteDialogOpen(true)}
-                className="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white"
-                disabled={!eventData.id}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
+              {/* Delete button - only show when editing */}
+              {eventData.id && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="w-full sm:w-1/3 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              )}
               <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-1/3">
                 Cancel
               </Button>
@@ -432,64 +358,13 @@ const TUIEventForm = ({
                 {eventData.id ? 'Update' : 'Create'}
               </Button>
             </div>
-            
-            {/* Calendar Export and QR Code section is now simplified */}
-            
-            <div className={`mt-6 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={() => setShowQRCode(!showQRCode)}
-                className="w-full flex items-center justify-center"
-                // Enable the button regardless of ID
-              >
-                <QrCode className="h-4 w-4 mr-2" />
-                {showQRCode ? "Hide Calendar QR Code" : "Show Calendar QR Code"}
-              </Button>
-              
-              {/* Always show QR code when showQRCode is true, regardless of ID */}
-              {showQRCode && (
-                    <div style={{ 
-                      marginTop: '16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center'
-                    }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center',
-                        backgroundColor: 'white', // Always white for QR code
-                        padding: '16px',
-                        border: isDarkMode ? '1px solid #4b5563' : '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        margin: '16px 0'
-                      }}>
-                        <QRCodeSVG 
-                          value={getCalendarData()}
-                          size={200}
-                          includeMargin={true}
-                          bgColor={"#FFFFFF"}
-                          fgColor={"#000000"}
-                        />
-                      </div>
-                      <p style={{ 
-                        textAlign: 'center', 
-                        fontSize: '14px', 
-                        color: isDarkMode ? '#9ca3af' : '#4b5563', 
-                        marginBottom: '16px' 
-                      }}>
-                        Scan with your phone's camera to add to your calendar
-                      </p>
-                    </div>
-                )}
-            </div>
           </form>
         </DialogContent>
       </Dialog>
       
       {/* Delete confirmation dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent 
+        <AlertDialogContent
           className={`${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
           style={{ maxWidth: '350px', width: '90%' }}
         >
@@ -501,8 +376,8 @@ const TUIEventForm = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className={isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-900'}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
+            <AlertDialogAction
+              onClick={handleDelete}
               className="bg-red-500 hover:bg-red-600 text-white"
             >
               Delete
