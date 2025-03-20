@@ -153,6 +153,20 @@ const TUICalendarView = ({
   // Handle deleting an event
   const handleDeleteEvent = (eventId) => {
     if (dispatch) {
+      console.log("Deleting event with ID:", eventId);
+      
+      // Make sure we have a valid ID to delete
+      if (!eventId) {
+        console.error("No valid event ID to delete");
+        toast({
+          title: "Error Deleting Event",
+          description: "Could not identify the event to delete.",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+      
       dispatch({ type: 'DELETE_EVENT', payload: eventId });
       
       toast({
