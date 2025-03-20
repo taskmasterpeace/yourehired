@@ -55,6 +55,13 @@ const TUIEventForm = ({
   const [showQRCode, setShowQRCode] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
+  // Debug logging
+  useEffect(() => {
+    console.log('TUIEventForm RECEIVED EVENT:', event);
+    console.log('EVENT ID:', event?.id);
+    console.log('EVENT TITLE:', event?.title);
+  }, [event]);
+  
   // Add debugging for event data
   useEffect(() => {
     if (event) {
@@ -280,6 +287,14 @@ const TUIEventForm = ({
               {eventData.id ? 'Edit Event' : 'Create Event'}
             </DialogTitle>
           </DialogHeader>
+          
+          {/* Debug info */}
+          <div className="bg-yellow-100 p-2 mb-4 rounded text-xs">
+            <p><strong>DEBUG INFO:</strong></p>
+            <p>Event ID: {event?.id || 'None'}</p>
+            <p>Event Title: {event?.title || 'None'}</p>
+            <p>Is Edit Mode: {event?.id ? 'YES' : 'NO'}</p>
+          </div>
           
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">

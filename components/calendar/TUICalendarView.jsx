@@ -110,28 +110,30 @@ const TUICalendarView = ({
   
   // Handle event click
   const handleClickEvent = (event) => {
-    console.log('Clicked event:', event);
+    console.log('CLICKED EVENT:', event);
     
-    try {
-      // Create a complete event object with all necessary data
-      const eventToEdit = {
-        id: event.id,
-        title: event.title,
-        startDate: event.start,
-        endDate: event.end,
-        type: event.calendarId || 'general',
-        description: event.raw?.description || '',
-        opportunityId: event.raw?.opportunityId || ''
-      };
-      
-      console.log('Event being passed to form:', eventToEdit);
-      
-      // Set the current event and open the form
-      setCurrentEvent(eventToEdit);
-      setIsEventFormOpen(true);
-    } catch (error) {
-      console.error('Error processing clicked event:', error);
+    // Create a brand new event object with explicit properties
+    const eventData = {
+      id: event.id,
+      title: event.title,
+      startDate: new Date(event.start),
+      endDate: new Date(event.end),
+      type: event.calendarId,
+      description: '',
+      opportunityId: ''
+    };
+    
+    // If we have raw data, use it to populate additional fields
+    if (event.raw) {
+      eventData.description = event.raw.description || '';
+      eventData.opportunityId = event.raw.opportunityId || '';
     }
+    
+    console.log('SENDING TO FORM:', eventData);
+    
+    // Force a new object creation to ensure React detects the change
+    setCurrentEvent({...eventData});
+    setIsEventFormOpen(true);
   };
   
   // Handle event creation
