@@ -111,17 +111,40 @@ const TUICalendarView = ({
   // Handle event click
   const handleClickEvent = (event) => {
     console.log('Clicked event:', event);
-    // Make sure we're passing the event with its ID and all necessary data
-    const eventWithId = {
-      ...event.raw,
-      id: event.raw?.id || event.id,
-      title: event.title,
-      start: event.start,
-      end: event.end,
-      calendarId: event.calendarId
-    };
-    console.log('Passing event to form:', eventWithId);
-    setCurrentEvent(eventWithId);
+    
+    // Create a complete event object with all necessary data
+    let eventToEdit = null;
+    
+    // First, check if we have the raw event data
+    if (event.raw) {
+      console.log('Using raw event data:', event.raw);
+      eventToEdit = {
+        ...event.raw,
+        id: event.raw.id || event.id,
+        title: event.raw.title || event.title,
+        startDate: event.raw.startDate || event.start,
+        endDate: event.raw.endDate || event.end,
+        type: event.raw.type || event.calendarId,
+        description: event.raw.description || ''
+      };
+    } else {
+      // If no raw data, use the event object directly
+      console.log('Using direct event data:', event);
+      eventToEdit = {
+        id: event.id,
+        title: event.title,
+        startDate: event.start,
+        endDate: event.end,
+        type: event.calendarId || 'general',
+        description: ''
+      };
+    }
+    
+    // Log the event we're passing to the form
+    console.log('Event being passed to form:', eventToEdit);
+    
+    // Set the current event and open the form
+    setCurrentEvent(eventToEdit);
     setIsEventFormOpen(true);
   };
   

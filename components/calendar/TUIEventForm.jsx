@@ -60,6 +60,11 @@ const TUIEventForm = ({
     if (event) {
       console.log("Event received in TUIEventForm:", event);
       console.log("Event ID:", event.id);
+      console.log("Event title:", event.title);
+      console.log("Event startDate:", event.startDate);
+      console.log("Event endDate:", event.endDate);
+      console.log("Event type:", event.type);
+      console.log("Event description:", event.description);
       console.log("Event raw:", event.raw);
       if (event.raw) {
         console.log("Raw event ID:", event.raw.id);
@@ -73,8 +78,34 @@ const TUIEventForm = ({
       try {
         console.log("Processing event in form:", event);
         
-        const startDate = new Date(event.startDate || event.start || event.date || new Date());
-        const endDate = new Date(event.endDate || event.end || new Date(startDate.getTime() + 60 * 60 * 1000));
+        // Ensure we have valid dates
+        let startDate;
+        if (event.startDate instanceof Date) {
+          startDate = event.startDate;
+        } else if (event.startDate) {
+          startDate = new Date(event.startDate);
+        } else if (event.start instanceof Date) {
+          startDate = event.start;
+        } else if (event.start) {
+          startDate = new Date(event.start);
+        } else if (event.date) {
+          startDate = new Date(event.date);
+        } else {
+          startDate = new Date();
+        }
+        
+        let endDate;
+        if (event.endDate instanceof Date) {
+          endDate = event.endDate;
+        } else if (event.endDate) {
+          endDate = new Date(event.endDate);
+        } else if (event.end instanceof Date) {
+          endDate = event.end;
+        } else if (event.end) {
+          endDate = new Date(event.end);
+        } else {
+          endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+        }
         
         // Extract ID from all possible locations
         const eventId = event.id || 
@@ -82,6 +113,8 @@ const TUIEventForm = ({
                        '';
         
         console.log("Setting event ID to:", eventId);
+        console.log("Setting start date to:", startDate);
+        console.log("Setting end date to:", endDate);
         
         setEventData({
           id: eventId,
