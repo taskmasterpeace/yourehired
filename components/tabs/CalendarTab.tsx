@@ -17,7 +17,7 @@ interface CalendarTabProps {
   isDarkMode: boolean;
   user: any;
   dispatch: any;
-  // Remove any references to BigCalendarView props
+  // These props are optional and may be passed from parent
   date?: Date;
   setDate?: (date: Date) => void;
   eventTypeFilter?: string;
@@ -30,7 +30,6 @@ export function CalendarTab({
   isDarkMode,
   user,
   dispatch,
-  // Remove unused props
   date,
   setDate,
   eventTypeFilter,

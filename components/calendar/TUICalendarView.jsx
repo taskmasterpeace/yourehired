@@ -27,6 +27,8 @@ const TUICalendarView = ({
   // Format events for TUI Calendar
   const formattedEvents = events.map(event => {
     try {
+      console.log("Processing event:", event);
+      
       // Ensure we have valid dates
       let startDate;
       if (event.startDate instanceof Date) {
@@ -61,6 +63,12 @@ const TUICalendarView = ({
       if (isNaN(endDate.getTime())) {
         endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
       }
+      
+      console.log("Event dates processed:", { 
+        title: event.title,
+        start: startDate,
+        end: endDate
+      });
       
       // Get color from the existing utility function
       const colorClass = getEventColor(event);
@@ -127,6 +135,13 @@ const TUICalendarView = ({
     if (event.raw) {
       eventData.description = event.raw.description || '';
       eventData.opportunityId = event.raw.opportunityId || '';
+      
+      // Copy any other properties from raw data
+      Object.keys(event.raw).forEach(key => {
+        if (!eventData[key] && key !== 'id') {
+          eventData[key] = event.raw[key];
+        }
+      });
     }
     
     console.log('SENDING TO FORM:', eventData);
