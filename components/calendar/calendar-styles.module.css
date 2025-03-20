@@ -1,32 +1,32 @@
 /* components/calendar/calendar-styles.module.css */
 .darkCalendar :global(.toastui-calendar-layout) {
   background-color: #1f2937 !important;
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 /* Add these new rules to ensure all text is visible in dark mode */
 .darkCalendar :global(.toastui-calendar-template-monthDayName) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-monthGridHeader-date) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-monthGridHeader-day) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-monthGridHeaderExceed-more) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-monthGrid-date) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-monthGrid-content) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-monthGrid-event) {
@@ -34,15 +34,15 @@
 }
 
 .darkCalendar :global(.toastui-calendar-template-time-date) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-time-date-title) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-time-grid-row-labels) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-time-event) {
@@ -68,11 +68,11 @@
 
 /* Make sure all text in the calendar is visible */
 .darkCalendar :global(.toastui-calendar-template-allday-title) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-time-date-schedule-block-wrap) {
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-template-time-schedule) {
@@ -86,7 +86,7 @@
 /* Existing rules */
 .darkCalendar :global(.toastui-calendar-day-name) {
   background-color: #111827 !important;
-  color: #e5e7eb !important;
+  color: #ffffff !important;
 }
 
 .darkCalendar :global(.toastui-calendar-daygrid-cell) {
@@ -99,7 +99,7 @@
 
 .darkCalendar :global(.toastui-calendar-time-column) {
   background-color: #1f2937 !important;
-  color: #e5e7eb !important;
+  color: #ffffff !important;
   border-color: #374151 !important;
 }
 
@@ -140,11 +140,11 @@
 
 /* Add these for better visibility of dates in other months */
 .darkCalendar :global(.toastui-calendar-extra-date) {
-  color: #9ca3af !important; /* Light gray for dates from other months */
+  color: #d1d5db !important; /* Lighter gray but still visible */
 }
 
 .darkCalendar :global(.toastui-calendar-weekday-grid-date.toastui-calendar-extra-date) {
-  color: #9ca3af !important;
+  color: #d1d5db !important; /* Lighter gray but still visible */
 }
 
 /* Make sure today's date is highlighted properly */
