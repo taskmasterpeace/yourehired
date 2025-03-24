@@ -24,6 +24,29 @@ interface SettingsTabProps {
   setLocalStorageOnly: (value: boolean) => void;
 }
 
+// Define the type for the duplicateWarning state
+interface DuplicateWarning {
+  type: string;
+  count: number;
+  examples: string[];
+}
+
+// Define the exportData type
+interface ExportData {
+  applications?: any[];
+  achievements?: any[];
+  userLevel?: any;
+  analytics?: any;
+}
+
+// Handle error messages properly with type guards
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+};
+
 export function SettingsTab({
   opportunities,
   jobRecommendations,
@@ -69,22 +92,28 @@ export function SettingsTab({
       }
     }
   };
-  const [importData, setImportData] = useState(null);
-  const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [importData, setImportData] = useState<any>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState<DuplicateWarning | null>(null);
   const [importStep, setImportStep] = useState('select'); // 'select', 'confirm', 'complete'
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   // Import handler
-  const handleFileImport = (event) => {
-    const file = event.target.files[0];
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const data = JSON.parse(e.target.result as string);
+        const result = e.target?.result;
+        if (!result || typeof result !== 'string') {
+          console.error('Failed to read file or result is not a string');
+          return;
+        }
+        
+        const data = JSON.parse(result);
         
         // Basic validation
         if (typeof data !== 'object') {
@@ -105,16 +134,16 @@ export function SettingsTab({
         }
         
         // Check for potential duplicates
-        let duplicateWarning = null;
+        let duplicateWarning: DuplicateWarning | null = null;
         
         if (importOptions.applications) {
           const existingApps = JSON.parse(localStorage.getItem('jobApplications') || '[]');
           const newApps = data.applications || [];
           
           // Check for potential duplicates by company and position
-          const potentialDuplicates = newApps.filter(newApp => 
-            existingApps.some(existingApp => 
-              existingApp.company === newApp.company && 
+          const potentialDuplicates = newApps.filter((newApp: any) =>
+            existingApps.some((existingApp: any) =>
+              existingApp.company === newApp.company &&
               existingApp.position === newApp.position
             )
           );
@@ -123,7 +152,7 @@ export function SettingsTab({
             duplicateWarning = {
               type: 'applications',
               count: potentialDuplicates.length,
-              examples: potentialDuplicates.slice(0, 2).map(app => `${app.company} - ${app.position}`)
+              examples: potentialDuplicates.slice(0, 2).map((app: any) => `${app.company} - ${app.position}`)
             };
           }
         }
@@ -133,9 +162,9 @@ export function SettingsTab({
         setDuplicateWarning(duplicateWarning);
         setImportStep('confirm');
         
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Import error:', error);
-        setImportStatus(`Error importing data: ${error.message}`);
+        setImportStatus(`Error importing data: ${getErrorMessage(error)}`);
       }
     };
     
@@ -157,11 +186,11 @@ export function SettingsTab({
           newApps = importData.applications;
         } else if (strategy === 'merge') {
           // Merge, avoiding duplicates by company and position
-          const existingKeys = new Set(existingApps.map(app => `${app.company}-${app.position}`));
+          const existingKeys = new Set(existingApps.map((app: any) => `${app.company}-${app.position}`));
           
           newApps = [
             ...existingApps,
-            ...importData.applications.filter(app => 
+            ...importData.applications.filter((app: any) => 
               !existingKeys.has(`${app.company}-${app.position}`)
             )
           ];
@@ -190,9 +219,9 @@ export function SettingsTab({
       // Reload the page after a short delay
       setTimeout(() => window.location.reload(), 1500);
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Import confirmation error:', error);
-      setImportStatus(`Error importing data: ${error.message}`);
+      setImportStatus(`Error importing data: ${getErrorMessage(error)}`);
     }
   };
 
@@ -207,7 +236,7 @@ export function SettingsTab({
   // Export handler - enhanced version
   const handleExportData = () => {
     try {
-      const exportData = {};
+      const exportData: ExportData = {};
       
       // Get job applications if selected
       if (importOptions.applications) {
@@ -236,9 +265,9 @@ export function SettingsTab({
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Export error:', error);
-      alert(`Error exporting data: ${error.message}`);
+      alert(`Error exporting data: ${getErrorMessage(error)}`);
     }
   };
 
@@ -272,9 +301,9 @@ export function SettingsTab({
       // Reload the page to see changes
       window.location.reload();
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Reset error:', error);
-      alert(`Error resetting data: ${error.message}`);
+      alert(`Error resetting data: ${getErrorMessage(error)}`);
     }
   };
 
@@ -620,7 +649,7 @@ export function SettingsTab({
                   </div>
                   
                   {duplicateWarning && (
-                    <Alert variant="warning" className="bg-amber-50 text-amber-800 dark:bg-amber-900 dark:text-amber-100 border-amber-200 dark:border-amber-800">
+                    <Alert className="bg-amber-50 text-amber-800 dark:bg-amber-900 dark:text-amber-100 border-amber-200 dark:border-amber-800">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Potential Duplicates Detected</AlertTitle>
                       <AlertDescription>

@@ -6,7 +6,7 @@ import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, ReferenceLine, ReferenceArea
+  ResponsiveContainer, Line
 } from 'recharts';
 import { Calendar, Award, MessageSquare, UserCheck, Star } from "lucide-react";
 
@@ -193,16 +193,26 @@ export function TimelineWithMilestones({
                 
                 const index = currentData.indexOf(dataPoint);
                 
+                // Create custom milestone marker with Line
+                const milestoneData = [
+                  { date: milestone.date, value: 0 },
+                  { date: milestone.date, value: Math.max(...currentData.map(d => d.totalCount)) }
+                ];
+                
                 return (
-                  <ReferenceLine 
+                  <Line
                     key={milestone.id}
-                    x={milestone.date}
+                    data={milestoneData}
+                    type="monotone"
+                    dataKey="value"
                     stroke={milestone.type === 'offer' ? '#f97316' : '#3b82f6'}
                     strokeWidth={2}
                     strokeDasharray="3 3"
+                    dot={false}
+                    activeDot={false}
                     label={{
+                      position: 'top',
                       value: milestone.title,
-                      position: 'insideTopRight',
                       fill: isDarkMode ? '#e2e8f0' : '#1e293b',
                       fontSize: 10
                     }}
@@ -215,13 +225,23 @@ export function TimelineWithMilestones({
                 const dataPoint = currentData.find(d => d.date === achievement.date);
                 if (!dataPoint) return null;
                 
+                // Create achievement marker with Line
+                const achievementData = [
+                  { date: achievement.date, value: 0 },
+                  { date: achievement.date, value: Math.max(...currentData.map(d => d.totalCount)) }
+                ];
+                
                 return (
-                  <ReferenceLine 
+                  <Line 
                     key={achievement.id}
-                    x={achievement.date}
+                    data={achievementData}
+                    type="monotone"
+                    dataKey="value"
                     stroke="#eab308"
                     strokeWidth={1}
                     strokeDasharray="3 3"
+                    dot={false}
+                    activeDot={false}
                   />
                 );
               })}

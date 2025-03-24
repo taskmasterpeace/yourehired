@@ -106,7 +106,7 @@ const TUICalendarView = ({
     
     // Create a complete event object to pass to the form
     const eventToEdit = {
-      id: event.id,
+      id: event.resource?.id || event.id,
       title: event.title,
       startDate: event.start,
       endDate: event.end,
@@ -156,9 +156,16 @@ const TUICalendarView = ({
     const isNewEvent = !eventData.id;
     
     if (dispatch) {
+      // Ensure we have valid dates
+      const eventToSave = {
+        ...eventData,
+        startDate: eventData.startDate instanceof Date ? eventData.startDate : new Date(eventData.startDate),
+        endDate: eventData.endDate instanceof Date ? eventData.endDate : new Date(eventData.endDate)
+      };
+      
       dispatch({ 
         type: isNewEvent ? 'ADD_EVENT' : 'UPDATE_EVENT', 
-        payload: eventData 
+        payload: eventToSave 
       });
       
       toast({
@@ -167,6 +174,9 @@ const TUICalendarView = ({
         variant: "success",
         duration: 3000,
       });
+      
+      setIsEventFormOpen(false);
+      setCurrentEvent(null);
     }
   };
   
@@ -194,6 +204,9 @@ const TUICalendarView = ({
         variant: "success",
         duration: 3000,
       });
+      
+      setIsEventFormOpen(false);
+      setCurrentEvent(null);
     }
   };
   

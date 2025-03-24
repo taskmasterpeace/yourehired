@@ -1,16 +1,21 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
-import { 
-  getUserOpportunities, 
-  saveUserOpportunities,
-  getUserResume,
-  saveUserResume,
-  getUserEvents,
-  saveUserEvents
-} from '../lib/userDataService';
+import { useRouter } from 'next/router';
+
+type User = {
+  id: string;
+  email: string;
+  user_metadata: {
+    full_name: string;
+  };
+};
+
+type Session = {
+  user: User;
+  access_token: string;
+  expires_at: number;
+};
 
 type AuthContextType = {
   user: User | null;
@@ -24,7 +29,7 @@ type AuthContextType = {
   }>;
   signInWithGoogle: () => Promise<{
     error: Error | null;
-    data?: Session | null;
+    data?: any;
   }>;
   signUp: (email: string, password: string) => Promise<{
     error: Error | null;
@@ -53,245 +58,97 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [localStorageOnly, setLocalStorageOnly] = useState<boolean>(
-    typeof window !== 'undefined' && localStorage.getItem('localStorageOnly') === 'true' || false
-  );
+  const [localStorageOnly, setLocalStorageOnly] = useState<boolean>(true);
+  const router = useRouter();
 
+  // Initialize from localStorage on mount
   useEffect(() => {
-    // Check if Supabase is properly initialized
-    if (!supabase.auth) {
-      console.error('Supabase auth is not available. Authentication will not work.');
-      setIsLoading(false);
-      return;
+    const storedUser = localStorage.getItem('captain_user');
+    const storedSession = localStorage.getItem('captain_session');
+    
+    if (storedUser && storedSession) {
+      setUser(JSON.parse(storedUser));
+      setSession(JSON.parse(storedSession));
     }
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error('Error getting session:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    try {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (_event, session) => {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setIsLoading(false);
-        }
-      );
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    } catch (error) {
-      console.error('Error setting up auth listener:', error);
-      setIsLoading(false);
-      return () => {}; // Return empty cleanup function
-    }
+    
+    setIsLoading(false);
   }, []);
 
+  // Simplified auth functions that only use localStorage
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Create mock user and session
+      const mockUser = {
+        id: `local_${Date.now()}`,
         email,
-        password,
-      });
-      
-      return { data: data.session, error };
-    } catch (error) {
-      return { error: error as Error, data: null };
-    }
-  };
+        user_metadata: {
+          full_name: email.split('@')[0]
+        }
+      };
 
-  // Add Google Sign In function
-  const signInWithGoogle = async () => {
-    try {
-      // Use environment variable if available, otherwise use window.location.origin
-      const redirectUrl = process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL || `${window.location.origin}/app`;
-      console.log('Redirecting to:', redirectUrl); // Add this for debugging
+      const mockSession = {
+        user: mockUser,
+        access_token: 'local_token',
+        expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000)
+      };
+
+      // Store in localStorage
+      localStorage.setItem('captain_user', JSON.stringify(mockUser));
+      localStorage.setItem('captain_session', JSON.stringify(mockSession));
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-        },
-      });
+      setUser(mockUser);
+      setSession(mockSession);
       
-      return { data: data.session, error };
+      return { data: mockSession, error: null };
     } catch (error) {
-      return { error: error as Error, data: null };
+      return { error: error instanceof Error ? error : new Error('Unknown error'), data: null };
     }
   };
 
   const signUp = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      return { data: data.session, error };
-    } catch (error) {
-      return { error: error as Error, data: null };
-    }
+    return signIn(email, password);
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('captain_user');
+    localStorage.removeItem('captain_session');
+    setUser(null);
+    setSession(null);
+  };
+
+  const signInWithGoogle = async () => {
+    return { error: new Error('Google sign-in not available in local mode'), data: null };
   };
 
   const resetPassword = async (email: string) => {
-    try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      return { data, error };
-    } catch (error) {
-      return { error: error as Error, data: null };
-    }
+    return { error: new Error('Password reset not available in local mode'), data: null };
   };
 
-  // Update localStorage when localStorageOnly changes
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    localStorage.setItem('localStorageOnly', localStorageOnly.toString());
-    
-    // If switching from local-only to cloud storage, offer to sync local data
-    if (user && !localStorageOnly && localStorage.getItem('localStorageOnly') === 'true') {
-      // Get local data
-      try {
-        const localOpportunities = JSON.parse(localStorage.getItem('opportunities') || '[]');
-        const localResume = localStorage.getItem('masterResume') || '';
-        const localEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        
-        // If there's local data, offer to sync it
-        if (localOpportunities.length > 0 || localResume || localEvents.length > 0) {
-          const shouldSync = window.confirm(
-            "You have local data that isn't synced to the cloud. Would you like to upload your local data now?"
-          );
-          
-          if (shouldSync) {
-            saveUserData({
-              opportunities: localOpportunities,
-              resume: localResume,
-              events: localEvents
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error syncing local data:', error);
-      }
-    }
-  }, [localStorageOnly, user]);
-
-  // Add online/offline event listeners
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    const handleOnline = async () => {
-      // If we have pending syncs and we're not in local-only mode
-      if (localStorage.getItem('pendingSync') === 'true' && !localStorageOnly && user) {
-        console.log('Back online. Syncing pending data...');
-        try {
-          // Get local data
-          const localOpportunities = JSON.parse(localStorage.getItem('opportunities') || '[]');
-          const localResume = localStorage.getItem('masterResume') || '';
-          const localEvents = JSON.parse(localStorage.getItem('events') || '[]');
-          
-          // Sync to server
-          await saveUserData({
-            opportunities: localOpportunities,
-            resume: localResume,
-            events: localEvents
-          });
-          
-          console.log('Pending data synced successfully');
-        } catch (error) {
-          console.error('Error syncing pending data:', error);
-        }
-      }
-    };
-    
-    window.addEventListener('online', handleOnline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-    };
-  }, [user, localStorageOnly]);
-  
-  // User data functions
+  // Simplified data functions that only use localStorage
   const loadUserData = async () => {
-    // If in local storage only mode, don't load from database
-    if (localStorageOnly) {
-      return { opportunities: [], resume: '', events: [] };
+    const storedData = localStorage.getItem('captainAppState');
+    if (storedData) {
+      return JSON.parse(storedData);
     }
-    
-    if (!user) return { opportunities: [], resume: '', events: [] };
-    
-    try {
-      const [opportunities, resume, events] = await Promise.all([
-        getUserOpportunities(user.id),
-        getUserResume(user.id),
-        getUserEvents(user.id)
-      ]);
-      
-      return { opportunities, resume, events };
-    } catch (err) {
-      console.error('Error loading user data:', err);
-      throw err;
-    }
+    return { opportunities: [], resume: '', events: [] };
   };
 
-  const saveUserData = async ({ opportunities, resume, events }) => {
-    // If in local storage only mode, don't save to database
-    if (localStorageOnly) {
-      return; // Just return as data is already saved to localStorage by the state management
-    }
-    
-    if (!user) throw new Error('User must be logged in to save data');
-    
-    // Check if online
-    if (!navigator.onLine) {
-      console.warn('Currently offline. Data will only be saved locally.');
-      // Set a flag to sync when back online
-      localStorage.setItem('pendingSync', 'true');
-      return;
-    }
-    
+  const saveUserData = async ({ opportunities, resume, events }: {
+    opportunities?: any[];
+    resume?: string;
+    events?: any[];
+  }) => {
     try {
-      const savePromises = [];
-      
-      if (opportunities) {
-        savePromises.push(saveUserOpportunities(user.id, opportunities));
-      }
-      
-      if (resume) {
-        savePromises.push(saveUserResume(user.id, resume));
-      }
-      
-      if (events) {
-        savePromises.push(saveUserEvents(user.id, events));
-      }
-      
-      await Promise.all(savePromises);
-      // Clear pending sync flag if successful
-      localStorage.removeItem('pendingSync');
-    } catch (err) {
-      console.error('Error saving user data:', err);
-      // Set a flag to retry sync later
-      localStorage.setItem('pendingSync', 'true');
-      // Don't throw the error to prevent app crashes
-      // Instead, we'll retry on next save attempt or when online
+      const currentData = await loadUserData();
+      const newData = {
+        ...currentData,
+        ...(opportunities && { opportunities }),
+        ...(resume && { resume }),
+        ...(events && { events })
+      };
+      localStorage.setItem('captainAppState', JSON.stringify(newData));
+    } catch (error) {
+      console.error('Error saving user data:', error);
     }
   };
 

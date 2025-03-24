@@ -18,6 +18,8 @@ interface OpportunitiesTabProps {
   user: any;
   masterResume: string;
   dispatch: any;
+  lastModifiedTimestamps?: Record<number, string>;
+  setLastModifiedTimestamps?: (timestamps: Record<number, string>) => void;
 }
 
 export function OpportunitiesTab({
@@ -28,7 +30,9 @@ export function OpportunitiesTab({
   isDarkMode,
   user,
   masterResume,
-  dispatch
+  dispatch,
+  lastModifiedTimestamps = {},
+  setLastModifiedTimestamps = () => {}
 }: OpportunitiesTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -36,7 +40,6 @@ export function OpportunitiesTab({
   const [sortBy, setSortBy] = useState("lastModified");
   const [sortDirection, setSortDirection] = useState("desc");
   const [viewMode, setViewMode] = useState("card");
-  const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState({});
   const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -66,11 +69,26 @@ export function OpportunitiesTab({
   // Helper function for batch deletion
   const handleBatchDelete = () => {
     if (window.confirm(`Are you sure you want to delete ${selectedJobIds.length} selected job(s)?`)) {
-      selectedJobIds.forEach(id => {
+      // Create a copy of the IDs to prevent issues during deletion
+      const idsToDelete = [...selectedJobIds];
+      
+      // First check if the currently selected opportunity will be deleted
+      const selectedId = opportunities[selectedOpportunityIndex]?.id;
+      const willDeleteSelected = idsToDelete.includes(selectedId);
+      
+      // Delete all selected opportunities at once
+      idsToDelete.forEach(id => {
         dispatch({ type: 'DELETE_OPPORTUNITY', payload: id });
       });
+      
+      // Reset the selection state
       setSelectedJobIds([]);
       setIsBatchSelectMode(false);
+      
+      // If we deleted the currently selected opportunity, select the first one
+      if (willDeleteSelected) {
+        setSelectedOpportunityIndex(0);
+      }
     }
   };
 
@@ -86,6 +104,22 @@ export function OpportunitiesTab({
     } else {
       setSelectedJobIds([...selectedJobIds, id]);
     }
+  };
+
+  // Function to select multiple jobs at once
+  const selectMultipleJobs = (ids: number[]) => {
+    setSelectedJobIds((prevSelected) => {
+      const newSelected = [...prevSelected];
+      
+      // Add all the IDs that aren't already selected
+      ids.forEach(id => {
+        if (!newSelected.includes(id)) {
+          newSelected.push(id);
+        }
+      });
+      
+      return newSelected;
+    });
   };
 
   // Handle adding a new opportunity
@@ -162,7 +196,7 @@ export function OpportunitiesTab({
     : [];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
       <div className="md:col-span-1">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Job Opportunities</h2>
@@ -260,8 +294,10 @@ export function OpportunitiesTab({
           setIsBatchSelectMode={setIsBatchSelectMode}
           selectedJobIds={selectedJobIds}
           toggleJobSelection={toggleJobSelection}
+          selectMultipleJobs={selectMultipleJobs}
           handleBatchDelete={handleBatchDelete}
           isDarkMode={isDarkMode}
+          dispatch={dispatch}
         />
       </div>
       

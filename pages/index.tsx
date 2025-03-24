@@ -16,7 +16,7 @@ export default function LandingPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const authTriggerRef = useRef(null);
+  const authTriggerRef = useRef<HTMLButtonElement>(null);
   
   // If user is already logged in, redirect to the main application
   useEffect(() => {

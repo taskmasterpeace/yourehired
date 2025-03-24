@@ -24,6 +24,15 @@ function AppContent({ Component, pageProps }: AppProps) {
   useEffect(() => {
     if (!router.isReady || isLoading) return
 
+    // EMERGENCY FIX: Add emergency page to SAFE_PATHS
+    const EMERGENCY_PATHS = [...SAFE_PATHS, '/emergency-fix']
+    
+    // Completely skip redirects for emergency page
+    if (router.pathname === '/emergency-fix') {
+      console.log('Accessing emergency page - skipping all redirects');
+      return;
+    }
+
     // Ensure redirectPath is always a valid string with a fallback
     let redirectPath = user ? '/app' : '/landing'
     
@@ -31,12 +40,12 @@ function AppContent({ Component, pageProps }: AppProps) {
       currentPath: router.pathname,
       redirectPath,
       user: !!user,
-      isValid: SAFE_PATHS.includes(router.pathname)
+      isValid: EMERGENCY_PATHS.includes(router.pathname)
     })
 
     // Handle root path and invalid paths
     // Don't redirect from login page even if user is not authenticated
-    if ((router.pathname === '/' || !SAFE_PATHS.includes(router.pathname)) && 
+    if ((router.pathname === '/' || !EMERGENCY_PATHS.includes(router.pathname)) && 
         router.pathname !== '/login') {
       console.log('Executing redirect to:', redirectPath)
       router.push(redirectPath)

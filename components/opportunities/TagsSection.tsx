@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
-import { Opportunity } from '../../context/types';
+import { Opportunity, Tag as AppTag } from '../../context/types';
 import { Edit, X, Plus, Pencil, Save, FileDown, HelpCircle, Trash2 } from 'lucide-react';
 import { 
   Dialog,
@@ -24,7 +24,12 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
 
 // Configuration for tag colors
-const TAG_COLOR_CLASSES = {
+const TAG_COLOR_CLASSES: Record<string, {
+  bg: string;
+  text: string;
+  border: string;
+  hover: string;
+}> = {
   blue: {
     bg: "bg-blue-100",
     text: "text-blue-800",
@@ -66,10 +71,24 @@ const TAG_COLOR_CLASSES = {
 // Available tag colors for selection
 const TAG_COLORS = ['blue', 'green', 'purple', 'red', 'yellow', 'gray'];
 
+// Local Tag interface for compatibility
 interface Tag {
   text: string;
   color: string;
 }
+
+// Function to convert AppTag to local Tag
+const appTagToLocalTag = (tag: AppTag): Tag => ({
+  text: tag.name,
+  color: tag.color
+});
+
+// Function to convert local Tag to AppTag
+const localTagToAppTag = (tag: Tag, id: number = Date.now()): AppTag => ({
+  id,
+  name: tag.text,
+  color: tag.color
+});
 
 interface TagsSectionProps {
   opportunity: Opportunity;
@@ -87,11 +106,12 @@ export const TagsSection = ({
   const [isEditing, setIsEditing] = useState(false);
   const [newTagText, setNewTagText] = useState('');
   const [newTagColor, setNewTagColor] = useState('blue');
-  const [tags, setTags] = useState<Tag[]>(opportunity.tags || []);
+  const [tags, setTags] = useState<Tag[]>(opportunity.tags ? opportunity.tags.map(appTagToLocalTag) : []);
   const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
   const [editedTagText, setEditedTagText] = useState('');
   const [editedTagColor, setEditedTagColor] = useState('');
-  const [showHelpDialog, setShowHelpDialog] = useState<boolean | string>(false);
+  const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
+  const [helpDialogContent, setHelpDialogContent] = useState('');
   const [recentlyUsedTags, setRecentlyUsedTags] = useState<Tag[]>([]);
 
   // Load recently used tags from localStorage
@@ -108,7 +128,7 @@ export const TagsSection = ({
 
   // Update tags when opportunity changes
   useEffect(() => {
-    setTags(opportunity.tags || []);
+    setTags(opportunity.tags ? opportunity.tags.map(appTagToLocalTag) : []);
   }, [opportunity.id, opportunity.tags]);
 
   const handleAddTag = () => {
@@ -123,8 +143,9 @@ export const TagsSection = ({
     setTags(updatedTags);
     setNewTagText('');
     
-    // Update the opportunity with the new tags
-    updateOpportunity(opportunity.id, { tags: updatedTags });
+    // Convert local tags to AppTags before updating the opportunity
+    const appTags = updatedTags.map(tag => localTagToAppTag(tag));
+    updateOpportunity(opportunity.id, { tags: appTags });
     
     // Add to recently used tags
     updateRecentlyUsedTags(newTag);
@@ -152,8 +173,9 @@ export const TagsSection = ({
       const updatedTags = tags.filter((_, index) => index !== indexToRemove);
       setTags(updatedTags);
       
-      // Update the opportunity with the filtered tags
-      updateOpportunity(opportunity.id, { tags: updatedTags });
+      // Convert local tags to AppTags before updating the opportunity
+      const appTags = updatedTags.map(tag => localTagToAppTag(tag));
+      updateOpportunity(opportunity.id, { tags: appTags });
     }
   };
 
@@ -175,8 +197,9 @@ export const TagsSection = ({
     setTags(updatedTags);
     setEditingTagIndex(null);
     
-    // Update the opportunity with the edited tags
-    updateOpportunity(opportunity.id, { tags: updatedTags });
+    // Convert local tags to AppTags before updating the opportunity
+    const appTags = updatedTags.map(tag => localTagToAppTag(tag));
+    updateOpportunity(opportunity.id, { tags: appTags });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -197,7 +220,11 @@ export const TagsSection = ({
     if (!tags.some(t => t.text === tag.text)) {
       const updatedTags = [...tags, tag];
       setTags(updatedTags);
-      updateOpportunity(opportunity.id, { tags: updatedTags });
+      
+      // Convert local tags to AppTags before updating the opportunity
+      const appTags = updatedTags.map(tag => localTagToAppTag(tag));
+      updateOpportunity(opportunity.id, { tags: appTags });
+      
       updateRecentlyUsedTags(tag);
     }
   };
@@ -224,6 +251,11 @@ export const TagsSection = ({
     URL.revokeObjectURL(url);
   };
 
+  const handleOpenHelpDialog = (content: string) => {
+    setHelpDialogContent(content);
+    setIsHelpDialogOpen(true);
+  }
+
   return (
     <div className={`p-4 mb-4 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' :  'bg-white border-gray-200'}`}>
       <div className="flex justify-between items-center mb-4">
@@ -236,7 +268,7 @@ export const TagsSection = ({
                   variant="ghost" 
                   size="sm" 
                   className="ml-1 h-6 w-6 p-0"
-                  onClick={() => setShowHelpDialog("tags-feature")}
+                  onClick={() => handleOpenHelpDialog("tags-feature")}
                 >
                   <HelpCircle className="h-3 w-3" />
                 </Button>
@@ -418,7 +450,10 @@ export const TagsSection = ({
       )}
       
       {/* Help Dialog */}
-      <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
+      <Dialog 
+        open={isHelpDialogOpen} 
+        onOpenChange={setIsHelpDialogOpen}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Using Tags</DialogTitle>
@@ -477,7 +512,7 @@ export const TagsSection = ({
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  setShowHelpDialog(false);
+                  setIsHelpDialogOpen(false);
                   openGuide('tags-keywords', 'tags-feature');
                 }}
                 className="block" // Make this button visible now that we have implemented the routing
@@ -485,7 +520,7 @@ export const TagsSection = ({
                 View Full Guide
               </Button>
             )}
-            <Button onClick={() => setShowHelpDialog(false)}>Close</Button>
+            <Button onClick={() => setIsHelpDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

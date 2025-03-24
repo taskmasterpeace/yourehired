@@ -54,6 +54,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import { toast } from "@/components/ui/use-toast";
 
 
 const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDelete }) => {
@@ -65,7 +66,8 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
     endTime: '10:00',
     type: 'general',
     description: '',
-    opportunityId: ''
+    opportunityId: '',
+    location: ''
   });
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -81,22 +83,39 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
     
     if (event) {
       try {
+        // Parse the ID correctly - ensure we're getting a number for comparison
+        let eventId = null;
+        
+        if (event.id) {
+          eventId = typeof event.id === 'string' ? parseInt(event.id, 10) : event.id;
+        } else if (event._id) {
+          eventId = typeof event._id === 'string' ? parseInt(event._id, 10) : event._id;
+        } else if (event.resource && event.resource.id) {
+          eventId = typeof event.resource.id === 'string' ? 
+            parseInt(event.resource.id, 10) : event.resource.id;
+        }
+        
+        console.log('Parsed event ID:', eventId);
+        
         const eventDate = new Date(event.date || event.startDate || new Date());
         
         // Create a clean copy without circular references
         setEventData({
-          id: event.id || event._id || '', // Check for both id and _id
+          id: eventId, // Use our parsed id
           title: event.title || '',
           date: eventDate,
           startTime: format(eventDate, 'HH:mm'),
           endTime: event.endDate ? format(new Date(event.endDate), 'HH:mm') : format(new Date(eventDate.getTime() + 60 * 60 * 1000), 'HH:mm'),
           type: event.type || 'general',
           description: event.description || '',
-          opportunityId: event.opportunityId || ''
+          opportunityId: event.opportunityId || '',
+          location: event.location || ''
         });
         
-        console.log('EventData after setting:', eventData);
-        console.log('EventData.id after setting:', eventData.id);
+        console.log('EventData after setting:', {
+          ...eventData,
+          id: eventId // Log this separately to verify
+        });
       } catch (error) {
         console.error("Error processing event data:", error);
         // Set default values if there's an error
@@ -108,7 +127,8 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           endTime: '10:00',
           type: 'general',
           description: '',
-          opportunityId: ''
+          opportunityId: '',
+          location: ''
         });
       }
     }
@@ -116,11 +136,12 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
   
   // Handle form input changes
   const handleChange = (field, value) => {
-    // If the field is opportunityId and the value is "none", set it to an empty string
-    if (field === 'opportunityId' && value === 'none') {
+    if (field === 'opportunityId') {
+      // If "none" is selected, set to empty string
+      const finalValue = value === "none" ? "" : value;
       setEventData(prev => ({
         ...prev,
-        [field]: ''
+        [field]: finalValue
       }));
     } else {
       setEventData(prev => ({
@@ -148,12 +169,20 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
       const completeEvent = {
         ...eventData,
         startDate,
-        endDate
+        endDate,
+        // Convert opportunityId to number if it exists and is a string
+        opportunityId: eventData.opportunityId ? 
+          (typeof eventData.opportunityId === 'string' ? 
+            parseInt(eventData.opportunityId, 10) : eventData.opportunityId) : undefined
       };
       
       // If associated with an opportunity, add that data
-      if (eventData.opportunityId) {
-        const opportunity = opportunities.find(opp => opp.id === eventData.opportunityId);
+      if (completeEvent.opportunityId) {
+        // Find the opportunity by ID, making sure to compare as numbers
+        const opportunity = opportunities.find(opp => 
+          opp.id === completeEvent.opportunityId
+        );
+        
         if (opportunity) {
           completeEvent.opportunity = {
             id: opportunity.id,
@@ -163,106 +192,59 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
         }
       }
       
+      console.log("Saving event with data:", completeEvent);
       onSave(completeEvent);
+      toast({
+        title: eventData.id ? "Event updated" : "Event created",
+        description: "Your event has been saved successfully.",
+      });
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("There was an error saving the event. Please try again.");
+      toast({
+        title: "Error",
+        description: "There was an error saving the event. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   // Handle delete event
   const handleDelete = () => {
-    try {
-      console.log("Attempting to delete event with ID:", eventData.id);
-      console.log("Event object:", event);
-      
-      if (onDelete) {
-        // Try to get the ID from various possible locations
-        let idToDelete;
-        
-        if (typeof event === 'object') {
-          // Check all possible ID locations
-          idToDelete = event.id || event._id || 
-                      (event.resource && (event.resource.id || event.resource._id));
-          
-          // If we still don't have an ID, try to extract it from the event object
-          if (!idToDelete && event.resource) {
-            console.log("Trying to use resource object:", event.resource);
-            idToDelete = event.resource;
-          }
-        }
-        
-        // If we couldn't find an ID in the event object, use eventData.id
-        if (!idToDelete) {
-          idToDelete = eventData.id;
-        }
-        
-        console.log("Final ID for deletion:", idToDelete);
-        
-        // Call onDelete with the ID or the entire event object as a fallback
-        if (idToDelete) {
-          onDelete(idToDelete);
-        } else if (event) {
-          console.log("No ID found, using entire event object");
-          onDelete(event);
-        } else {
-          console.error("No valid event or ID to delete");
-          alert("Error: Cannot delete this event");
-          return;
-        }
-        
-        // Close dialogs and notify user
+    console.log("Attempting to delete event with data:", eventData);
+    console.log("Event ID to delete:", eventData.id);
+    
+    // Make sure we have a valid ID
+    if (eventData.id) {
+      try {
+        console.log("Calling onDelete with ID:", eventData.id);
+        onDelete(eventData.id);
         setIsDeleteDialogOpen(false);
-        onClose();
+        toast({
+          title: "Event deleted",
+          description: "Your event has been deleted successfully.",
+        });
+      } catch (error) {
+        console.error("Error in handleDelete:", error);
+        toast({
+          title: "Error",
+          description: "Could not delete the event. Please try again.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      alert("There was an error deleting the event. Please try again.");
+    } else {
+      console.error("No valid ID found for deletion");
+      toast({
+        title: "Error",
+        description: "Could not identify the event to delete.",
+        variant: "destructive",
+      });
     }
   };
 
-  // Handle duplicate event
-  const handleDuplicate = () => {
-    // Create a copy of the current event without the ID
-    const duplicatedEvent = {
-      ...eventData,
-      id: '', // Remove ID to create a new event
-      title: `${eventData.title} (Copy)`,
-      date: addDays(new Date(eventData.date), 1) // Schedule for the next day
-    };
-    
-    // Create date objects for start and end times
-    const startDate = new Date(duplicatedEvent.date);
-    const [startHours, startMinutes] = duplicatedEvent.startTime.split(':');
-    startDate.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10));
-    
-    const endDate = new Date(duplicatedEvent.date);
-    const [endHours, endMinutes] = duplicatedEvent.endTime.split(':');
-    endDate.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10));
-    
-    // Prepare the complete event object
-    const completeEvent = {
-      ...duplicatedEvent,
-      startDate,
-      endDate
-    };
-    
-    // If associated with an opportunity, add that data
-    if (duplicatedEvent.opportunityId) {
-      const opportunity = opportunities.find(opp => opp.id === duplicatedEvent.opportunityId);
-      if (opportunity) {
-        completeEvent.opportunity = opportunity;
-      }
-    }
-    
-    onSave(completeEvent);
-  };
-
-  
-  // Generate calendar data for QR code
-  const getCalendarData = () => {
+  // Generate calendar event URL for QR code
+  const generateCalendarEventUrl = () => {
     try {
-      // Create date objects for start and end times
+      // Create date objects from form data before formatting
       const startDate = new Date(eventData.date);
       const [startHours, startMinutes] = eventData.startTime.split(':');
       startDate.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10));
@@ -271,39 +253,26 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
       const [endHours, endMinutes] = eventData.endTime.split(':');
       endDate.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10));
       
-      const eventForCalendar = {
-        ...eventData,
-        startDate,
-        endDate
-      };
+      // Format the dates for the URL
+      const formattedStartDate = format(startDate, "yyyyMMdd'T'HHmmss'Z'");
+      const formattedEndDate = format(endDate, "yyyyMMdd'T'HHmmss'Z'");
       
-      return generateICalString(eventForCalendar);
+      const title = encodeURIComponent(eventData.title);
+      const description = encodeURIComponent(eventData.description);
+      const location = encodeURIComponent(eventData.location || '');
+      
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${description}&location=${location}&dates=${formattedStartDate}/${formattedEndDate}`;
     } catch (error) {
-      console.error("Error generating calendar data:", error);
-      return "";
+      console.error("Error generating calendar URL:", error);
+      toast({
+        title: "Error",
+        description: "Could not generate calendar link. Please check your event details.",
+        variant: "destructive",
+      });
+      return '#';
     }
   };
-  
-  // Handle download of .ics file
-  const handleDownload = () => {
-    const calendarData = getCalendarData();
-    if (!calendarData) return;
-    
-    try {
-      const blob = new Blob([calendarData], { type: 'text/calendar;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${eventData.title || 'event'}.ics`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading calendar file:", error);
-    }
-  };
-  
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -403,16 +372,7 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                   <Label htmlFor="opportunity">Associated Opportunity</Label>
                   <Select 
                     value={eventData.opportunityId || "none"} 
-                    onValueChange={(value) => {
-                      console.log("Selected opportunity:", value);
-                      
-                      // If "none" is selected, clear the opportunityId
-                      if (value === "none") {
-                        handleChange('opportunityId', '');
-                      } else {
-                        handleChange('opportunityId', value);
-                      }
-                    }}
+                    onValueChange={(value) => handleChange('opportunityId', value)}
                   >
                     <SelectTrigger id="opportunity">
                       <SelectValue placeholder="Select opportunity" />
@@ -433,6 +393,15 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
                 </div>
               </div>
               
+              {/* Location */}
+              <div className="grid gap-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={eventData.location}
+                  onChange={(e) => handleChange('location', e.target.value)}
+                />
+              </div>
               
               {/* Description */}
               <div className="grid gap-2">
@@ -469,86 +438,38 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
               </Button>
             </div>
             
+            {/* Direct delete button for debugging */}
+            {eventData.id && (
+              <div className="mt-4 border-t pt-4">
+                <Button 
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    console.log("Direct delete with ID:", eventData.id);
+                    onDelete(eventData.id);
+                    onClose();
+                  }}
+                  className="w-full bg-red-800 hover:bg-red-900"
+                >
+                  Force Delete (Debug)
+                </Button>
+              </div>
+            )}
+            
             {/* Direct download button for existing events */}
             {(eventData.id || event?.id) && (
               <div className="mt-4">
                 <Button 
                   type="button"
                   variant="outline"
-                  onClick={handleDownload}
+                  onClick={() => setShowQRCode(true)}
                   className="w-full flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300"
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Calendar (.ics) File
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Show QR Code
                 </Button>
               </div>
             )}
-            
-            
-            {/* QR CODE SECTION - Always visible now */}
-            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={() => setShowQRCode(!showQRCode)}
-                className="w-full flex items-center justify-center"
-              >
-                <QrCode className="h-4 w-4 mr-2" />
-                {showQRCode ? "Hide Calendar QR Code" : "Show Calendar QR Code"}
-              </Button>
-              
-              {showQRCode && (
-                <div style={{ 
-                  marginTop: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center',
-                    backgroundColor: 'white',
-                    padding: '16px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    margin: '16px 0'
-                  }}>
-                    <QRCodeSVG 
-                      value={getCalendarData()}
-                      size={200}
-                      includeMargin={true}
-                      bgColor={"#FFFFFF"}
-                      fgColor={"#000000"}
-                    />
-                  </div>
-                  <p style={{ 
-                    textAlign: 'center', 
-                    fontSize: '14px', 
-                    color: '#4b5563', 
-                    marginBottom: '16px' 
-                  }}>
-                    Scan with your phone's camera to add to your calendar
-                  </p>
-                  <Button 
-                    onClick={handleDownload}
-                    style={{
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100%'
-                    }}
-                  >
-                    <Download style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-                    Download .ics File
-                  </Button>
-                </div>
-              )}
-            </div>
             
           </form>
         </DialogContent>
@@ -577,6 +498,18 @@ const EventModal = ({ isOpen, onClose, event, opportunities = [], onSave, onDele
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* QR Code Dialog */}
+      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Scan to Add to Calendar</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center p-4">
+            <QRCodeSVG value={generateCalendarEventUrl()} size={200} />
+          </div>
+        </DialogContent>
+      </Dialog>
       
     </>
   );

@@ -24,6 +24,11 @@ interface ProgressTrackerProps {
 }
 
 export function ProgressTracker({ achievements, isDarkMode, compact = false }: ProgressTrackerProps) {
+  // Calculate overall progress
+  const totalAchievements = achievements.length;
+  const unlockedAchievements = achievements.filter(a => a.unlocked).length;
+  const totalProgress = Math.round((unlockedAchievements / totalAchievements) * 100);
+
   // Filter achievements that are in progress (not unlocked but have some progress)
   const inProgressAchievements = achievements
     .filter(a => !a.unlocked && a.progress > 0)
@@ -64,7 +69,7 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
   };
   
   // Prepare data for application status pie chart
-  const prepareChartData = (achievements) => {
+  const prepareChartData = (achievements: Achievement[]) => {
     // This should use the actual application status data
     // In a real implementation, this would come from the analytics.statusCounts
     
@@ -78,29 +83,56 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
     ];
   };
 
-  // Prepare data for achievement category distribution
-  const prepareCategoryData = (achievements) => {
-    // Count achievements by category
-    const categoryCount = achievements.reduce((acc, achievement) => {
+  // Prepare data for category breakdown
+  const prepareCategoryData = (achievements: Achievement[]) => {
+    // Group achievements by category and count unlocked ones
+    const categories = achievements.reduce((acc: Record<string, {total: number, unlocked: number}>, achievement: Achievement) => {
       const category = achievement.category || 'uncategorized';
-      acc[category] = (acc[category] || 0) + 1;
+      
+      if (!acc[category]) {
+        acc[category] = { total: 0, unlocked: 0 };
+      }
+      
+      acc[category].total += 1;
+      if (achievement.unlocked) {
+        acc[category].unlocked += 1;
+      }
+      
       return acc;
     }, {});
     
-    // Convert to array format for pie chart with predefined colors
-    const categoryColors = {
-      milestones: '#8884d8',
-      consistency: '#00C49F',
-      quality: '#FFBB28',
-      mastery: '#FF8042',
-      uncategorized: '#6b7280'
+    // Calculate completion percentage for each category
+    return Object.entries(categories).map(([category, data]) => ({
+      name: getCategoryName(category as string),
+      percent: Math.round((data.unlocked / data.total) * 100),
+      color: getCategoryColor(category as string, isDarkMode)
+    }));
+  };
+  
+  // Get friendly display name for category
+  const getCategoryName = (category: string): string => {
+    const categoryNames: Record<string, string> = {
+      milestones: 'Milestones',
+      consistency: 'Consistency',
+      quality: 'Quality',
+      mastery: 'Mastery',
+      uncategorized: 'Other'
     };
     
-    return Object.entries(categoryCount).map(([name, value]) => ({
-      name,
-      value,
-      color: categoryColors[name] || '#6b7280'
-    }));
+    return categoryNames[category] || category;
+  };
+  
+  // Get color for category
+  const getCategoryColor = (category: string, darkMode: boolean): string => {
+    const categoryColors: Record<string, string> = {
+      milestones: darkMode ? '#8b5cf6' : '#6d28d9', // Purple
+      consistency: darkMode ? '#10b981' : '#059669', // Green
+      quality: darkMode ? '#f59e0b' : '#d97706', // Amber
+      mastery: darkMode ? '#3b82f6' : '#2563eb', // Blue
+      uncategorized: darkMode ? '#6b7280' : '#4b5563' // Gray
+    };
+    
+    return categoryColors[category] || (darkMode ? '#6b7280' : '#4b5563');
   };
 
   return (
@@ -129,12 +161,11 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  formatter={(value, name) => [`${value} achievements`, name]}
-                  contentStyle={{ 
+                <Tooltip
+                  formatter={(value: number, name: string) => [`${value} achievements`, name]}
+                  contentStyle={{
                     backgroundColor: isDarkMode ? '#374151' : '#fff',
                     borderColor: isDarkMode ? '#4B5563' : '#E5E7EB',
-                    borderRadius: '0.375rem'
                   }}
                 />
                 <Legend 
@@ -170,19 +201,18 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
                     outerRadius={70}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string, percent: number }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     labelLine={false}
                   >
                     {prepareCategoryData(achievements).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value, name) => [`${value} achievements`, name]}
-                    contentStyle={{ 
+                  <Tooltip
+                    formatter={(value: number, name: string) => [`${value} achievements`, name]}
+                    contentStyle={{
                       backgroundColor: isDarkMode ? '#374151' : '#fff',
                       borderColor: isDarkMode ? '#4B5563' : '#E5E7EB',
-                      borderRadius: '0.375rem'
                     }}
                   />
                 </PieChart>
@@ -215,6 +245,7 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
                   progress={achievement.progress}
                   total={achievement.total}
                   isDarkMode={isDarkMode}
+                  size="sm"
                 />
                 
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
@@ -299,7 +330,7 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
                     progress={achievement.progress}
                     total={achievement.total}
                     isDarkMode={isDarkMode}
-                    height="h-1.5"
+                    size="sm"
                   />
                 </div>
               </div>
@@ -323,6 +354,27 @@ export function ProgressTracker({ achievements, isDarkMode, compact = false }: P
           ))}
         </div>
       </div>
+
+      <div className="mt-6">
+        <h3 className="text-sm font-medium mb-2">Completion by Category</h3>
+        <div className="space-y-2">
+          {prepareCategoryData(achievements).map(({ name, percent, color }: { name: string, percent: number, color: string }) => (
+            <div key={name} className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: color }}></div>
+                <span className="text-xs">{name}</span>
+              </div>
+              <span className="text-xs">{percent}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <EnhancedProgressBar 
+        progress={totalProgress} 
+        total={100} 
+        isDarkMode={isDarkMode} 
+      />
     </div>
   );
 }

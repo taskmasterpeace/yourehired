@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Clear LocalStorage</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: white;
+      }
+      h1 {
+        color: #333;
+      }
+      .button {
+        background-color: #ff0000;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      .success {
+        background-color: #e6ffe6;
+        border: 1px solid #ccffcc;
+        padding: 10px;
+        border-radius: 4px;
+        color: #006600;
+        margin-top: 10px;
+      }
+      .blue-button {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Authentication Bypass</h1>
+      <p>Use one of the options below to fix your application:</p>
+      
+      <button class="button" onclick="clearStorage()">
+        CLEAR ALL DATA
+      </button>
+      
+      <button class="blue-button" onclick="setupAuthBypass()">
+        SETUP AUTH BYPASS
+      </button>
+      
+      <div id="message"></div>
+      
+      <p>After running one of the operations, go to: <a href="/app">/app</a></p>
+      <p>Or try these specific routes: <a href="/app/analytics">/app/analytics</a> | <a href="/app/opportunities">/app/opportunities</a></p>
+    </div>
+    
+    <script>
+      // Function to clear localStorage
+      function clearStorage() {
+        try {
+          localStorage.clear();
+          document.getElementById("message").innerHTML = '<div class="success">SUCCESS: All data cleared! You can now set up the auth bypass.</div>';
+        } catch(e) {
+          document.getElementById("message").innerHTML = '<div style="color: red;">Error: ' + e.message + '</div>';
+        }
+      }
+      
+      // Function to set up authentication bypass
+      function setupAuthBypass() {
+        try {
+          // Set local storage only mode
+          localStorage.setItem('localStorageOnly', 'true');
+          
+          // Create mock user
+          const mockUser = {
+            id: "demo-user-123",
+            email: "demo@example.com",
+            user_metadata: {
+              full_name: "Demo User"
+            },
+            created_at: new Date().toISOString()
+          };
+          
+          // Create mock session
+          const mockSession = {
+            user: mockUser,
+            access_token: "demo-token",
+            expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days from now
+          };
+          
+          // Store in localStorage
+          localStorage.setItem('captain_user', JSON.stringify(mockUser));
+          localStorage.setItem('captain_session', JSON.stringify(mockSession));
+          
+          // Initialize empty state if needed
+          if (!localStorage.getItem('captainAppState')) {
+            localStorage.setItem('captainAppState', JSON.stringify({
+              opportunities: [],
+              events: [],
+              resume: ""
+            }));
+          }
+          
+          document.getElementById("message").innerHTML = '<div class="success">SUCCESS: Auth bypass configured! You can now <a href="/app">access the application</a>.</div>';
+        } catch(e) {
+          document.getElementById("message").innerHTML = '<div style="color: red;">Error: ' + e.message + '</div>';
+        }
+      }
+      
+      // Run setup on page load
+      window.onload = function() {
+        // Don't auto-clear to give user the choice
+      };
+    </script>
+  </body>
+</html> 

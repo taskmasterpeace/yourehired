@@ -53,17 +53,22 @@ export const KeywordsSection = ({
   isDarkMode,
   openGuide
 }: KeywordsSectionProps) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [showAddKeywordDialog, setShowAddKeywordDialog] = useState(false);
-  const [newKeyword, setNewKeyword] = useState({ text: '', relevance: 3 });
+  const [showOptimizeDialog, setShowOptimizeDialog] = useState(false);
   const [editingKeywordIndex, setEditingKeywordIndex] = useState<number | null>(null);
-  const [editedKeyword, setEditedKeyword] = useState({ text: '', relevance: 3 });
+  const [editedKeyword, setEditedKeyword] = useState<Keyword>({ 
+    text: '', 
+    relevance: 3, 
+    inResume: false,
+    category: 'should-have' 
+  });
   const [showHelpDialog, setShowHelpDialog] = useState<boolean | string>(false);
   const [highlightInResume, setHighlightInResume] = useState(false);
   const [keywordMatchPercentage, setKeywordMatchPercentage] = useState(0);
-  const [showOptimizeDialog, setShowOptimizeDialog] = useState(false);
   const [optimizationSuggestions, setOptimizationSuggestions] = useState<string[]>([]);
 
   // Initialize keywords from opportunity data
@@ -155,8 +160,8 @@ export const KeywordsSection = ({
         if (partialMatches > 0) return 3; // Basic match
         
         // Check for related terms (simplified example)
-        const relatedTerms = {
-          'react': ['reactjs', 'react.js', 'frontend framework'],
+        const relatedTerms: Record<string, string[]> = {
+          'react': ['reactjs', 'react.js', 'jsx', 'tsx'],
           'javascript': ['js', 'ecmascript', 'frontend development'],
           'typescript': ['ts', 'typed javascript'],
           'node.js': ['nodejs', 'server-side javascript'],
@@ -257,17 +262,11 @@ export const KeywordsSection = ({
 
   // Add a new keyword
   const handleAddKeyword = () => {
-    if (newKeyword.text.trim() === '') return;
+    if (editedKeyword.text.trim() === '') return;
     
-    const keywordToAdd: Keyword = {
-      text: newKeyword.text.trim(),
-      relevance: newKeyword.relevance,
-      inResume: checkIfInResume(newKeyword.text.trim())
-    };
-    
-    const updatedKeywords = [...keywords, keywordToAdd];
+    const updatedKeywords = [...keywords, editedKeyword];
     setKeywords(updatedKeywords);
-    setNewKeyword({ text: '', relevance: 3 });
+    setEditedKeyword({ text: '', relevance: 3, inResume: false, category: 'should-have' });
     setShowAddKeywordDialog(false);
     
     // Update the opportunity
@@ -280,10 +279,7 @@ export const KeywordsSection = ({
   // Edit an existing keyword
   const handleEditKeyword = (index: number) => {
     setEditingKeywordIndex(index);
-    setEditedKeyword({
-      text: keywords[index].text,
-      relevance: keywords[index].relevance
-    });
+    setEditedKeyword(keywords[index]);
   };
 
   // Save edited keyword
@@ -291,11 +287,7 @@ export const KeywordsSection = ({
     if (editingKeywordIndex === null || editedKeyword.text.trim() === '') return;
     
     const updatedKeywords = [...keywords];
-    updatedKeywords[editingKeywordIndex] = {
-      text: editedKeyword.text.trim(),
-      relevance: editedKeyword.relevance,
-      inResume: checkIfInResume(editedKeyword.text.trim())
-    };
+    updatedKeywords[editingKeywordIndex] = editedKeyword;
     
     setKeywords(updatedKeywords);
     setEditingKeywordIndex(null);
@@ -828,8 +820,8 @@ export const KeywordsSection = ({
               <Label htmlFor="keyword-text">Skill</Label>
               <Input
                 id="keyword-text"
-                value={newKeyword.text}
-                onChange={(e) => setNewKeyword({...newKeyword, text: e.target.value})}
+                value={editedKeyword.text}
+                onChange={(e) => setEditedKeyword({...editedKeyword, text: e.target.value})}
                 placeholder="e.g., React, Project Management"
                 autoFocus
               />
@@ -838,16 +830,16 @@ export const KeywordsSection = ({
             <div className="space-y-2">
               <div className="flex justify-between">
                 <Label htmlFor="keyword-relevance">Relevance</Label>
-                <span className="text-sm text-gray-500">{newKeyword.relevance}/5</span>
+                <span className="text-sm text-gray-500">{editedKeyword.relevance}/5</span>
               </div>
               <div className="flex items-center space-x-2">
                 <select 
                   className="text-xs p-1 border rounded mr-2"
-                  value={newKeyword.relevance}
+                  value={editedKeyword.relevance}
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
-                    setNewKeyword({
-                      ...newKeyword, 
+                    setEditedKeyword({
+                      ...editedKeyword, 
                       relevance: value,
                       category: value >= 4 ? 'must-have' : value >= 2 ? 'should-have' : 'could-have'
                     });
@@ -860,7 +852,7 @@ export const KeywordsSection = ({
                   <option value="1">Could-have (1)</option>
                 </select>
                 <div className="flex">
-                  {renderStars(newKeyword.relevance)}
+                  {renderStars(editedKeyword.relevance)}
                 </div>
               </div>
               <p className="text-xs text-gray-500">

@@ -29,6 +29,8 @@ export interface Opportunity {
   applicationUrl?: string;
   source?: string;
   tags?: Tag[];
+  keywords?: string[] | any[];
+  selectedKeywords?: string[];
 }
 
 export interface CalendarEvent {
@@ -60,9 +62,11 @@ export type AppAction =
   | { type: 'ADD_OPPORTUNITY'; payload: Opportunity }
   | { type: 'UPDATE_OPPORTUNITY'; payload: { id: number; updates: Partial<Opportunity> } }
   | { type: 'DELETE_OPPORTUNITY'; payload: number }
+  | { type: 'SET_OPPORTUNITIES'; payload: Opportunity[] }
   | { type: 'UPDATE_MASTER_RESUME'; payload: string }
   | { type: 'ADD_EVENT'; payload: CalendarEvent }
   | { type: 'UPDATE_EVENT'; payload: { id: number; updates: Partial<CalendarEvent> } }
   | { type: 'DELETE_EVENT'; payload: number }
+  | { type: 'SET_EVENTS'; payload: CalendarEvent[] }
   | { type: 'UPDATE_USER_PROFILE'; payload: Partial<UserProfile> }
   | { type: 'ADD_CHAT_MESSAGE'; payload: { opportunityId: number; message: string; sender: 'user' | 'ai' } };

@@ -1,0 +1,203 @@
+/* FullCalendar styling */
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: var(--border-color, #e2e8f0);
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border-color: var(--border-color, #e2e8f0);
+}
+
+.fc-theme-standard .fc-toolbar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.fc .fc-button-primary {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.fc .fc-button-primary:disabled {
+  background-color: #93c5fd;
+  border-color: #93c5fd;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Dark mode styling */
+.dark .fc,
+.fc-dark,
+[data-theme="dark"] .fc {
+  --fc-border-color: #4b5563;
+  --fc-page-bg-color: #1f2937;
+  --fc-neutral-bg-color: #374151;
+  --fc-neutral-text-color: #e5e7eb;
+  --fc-event-bg-color: #3b82f6;
+  --fc-event-border-color: #3b82f6;
+  --fc-event-text-color: #ffffff;
+  --fc-list-event-hover-bg-color: #374151;
+  --fc-button-text-color: #f3f4f6;
+  --fc-button-bg-color: #3b82f6;
+  --fc-button-border-color: #3b82f6;
+  --fc-button-hover-bg-color: #2563eb;
+  --fc-button-hover-border-color: #2563eb;
+  --fc-button-active-bg-color: #1d4ed8;
+  --fc-button-active-border-color: #1d4ed8;
+}
+
+.dark .fc-theme-standard .fc-scrollgrid,
+.fc-dark .fc-theme-standard .fc-scrollgrid,
+[data-theme="dark"] .fc-theme-standard .fc-scrollgrid {
+  border-color: #4b5563;
+}
+
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th,
+.fc-dark .fc-theme-standard td,
+.fc-dark .fc-theme-standard th,
+[data-theme="dark"] .fc-theme-standard td,
+[data-theme="dark"] .fc-theme-standard th {
+  border-color: #4b5563;
+}
+
+.dark .fc-col-header-cell,
+.fc-dark .fc-col-header-cell,
+[data-theme="dark"] .fc-col-header-cell {
+  background-color: #374151;
+}
+
+.dark .fc-day-today,
+.fc-dark .fc-day-today,
+[data-theme="dark"] .fc-day-today {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* FullCalendar Styling */
+.fc {
+  --fc-border-color: #e5e7eb;
+  --fc-event-bg-color: #3b82f6;
+  --fc-event-border-color: #3b82f6;
+  --fc-today-bg-color: rgba(59, 130, 246, 0.1);
+  --fc-button-bg-color: #3b82f6;
+  --fc-button-border-color: #3b82f6;
+  --fc-button-hover-bg-color: #2563eb;
+  --fc-button-hover-border-color: #2563eb;
+  --fc-button-active-bg-color: #1d4ed8;
+  --fc-button-active-border-color: #1d4ed8;
+}
+
+.fc .fc-daygrid-day-number,
+.fc .fc-col-header-cell-cushion {
+  color: #374151;
+  text-decoration: none;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.fc .fc-button-primary {
+  background-color: var(--fc-button-bg-color);
+  border-color: var(--fc-button-border-color);
+}
+
+.fc .fc-button-primary:not(:disabled):hover {
+  background-color: var(--fc-button-hover-bg-color);
+  border-color: var(--fc-button-hover-border-color);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--fc-button-active-bg-color);
+  border-color: var(--fc-button-active-border-color);
+}
+
+/* Dark Mode for FullCalendar */
+.dark .fc,
+[data-theme="dark"] .fc {
+  --fc-border-color: #374151;
+  --fc-event-text-color: #ffffff;
+  --fc-today-bg-color: rgba(59, 130, 246, 0.15);
+  --fc-page-bg-color: #1f2937;
+  --fc-neutral-bg-color: #1f2937;
+  --fc-neutral-text-color: #e5e7eb;
+  --fc-button-text-color: #ffffff;
+  background-color: transparent;
+}
+
+.dark .fc table,
+[data-theme="dark"] .fc table {
+  border-color: var(--fc-border-color);
+}
+
+.dark .fc-scrollgrid,
+[data-theme="dark"] .fc-scrollgrid {
+  border-color: var(--fc-border-color);
+}
+
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th,
+[data-theme="dark"] .fc-theme-standard td,
+[data-theme="dark"] .fc-theme-standard th {
+  border-color: var(--fc-border-color);
+}
+
+.dark .fc .fc-daygrid-day-number,
+.dark .fc .fc-col-header-cell-cushion,
+[data-theme="dark"] .fc .fc-daygrid-day-number,
+[data-theme="dark"] .fc .fc-col-header-cell-cushion {
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-toolbar-title,
+[data-theme="dark"] .fc .fc-toolbar-title {
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-button,
+[data-theme="dark"] .fc .fc-button {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-button:hover,
+[data-theme="dark"] .fc .fc-button:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+.dark .fc .fc-button.fc-button-active,
+.dark .fc .fc-button:active,
+[data-theme="dark"] .fc .fc-button.fc-button-active,
+[data-theme="dark"] .fc .fc-button:active {
+  background-color: #6b7280;
+  border-color: #9ca3af;
+}
+
+.dark .fc .fc-highlight,
+[data-theme="dark"] .fc .fc-highlight {
+  background-color: rgba(55, 65, 81, 0.7);
+}
+
+.dark .fc .fc-daygrid-day.fc-day-today,
+[data-theme="dark"] .fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.dark .fc .fc-timegrid-slot,
+[data-theme="dark"] .fc .fc-timegrid-slot {
+  border-color: var(--fc-border-color);
+} 

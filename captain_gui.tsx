@@ -30,8 +30,18 @@ import { OpportunitiesTab } from './components/tabs/OpportunitiesTab'
 import { OpportunityDetails } from './components/opportunities/OpportunityDetails'
 import { OpportunityList } from './components/opportunities/OpportunityList'
 import { useDarkMode } from '@/hooks/useDarkMode'
-import AddToCalendarButton from './components/calendar/AddToCalendarButton'
-import { generateICalString } from './components/calendar/calendarUtils'
+import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar as CalendarIcon2 } from 'lucide-react'
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area } from 'recharts'
+import openai from './lib/openai'
+import { HelpCenter } from './components/help/HelpCenter'
+import { GuideViewer } from './components/help/GuideViewer'
+import { allGuides } from './components/help/guides'
+import { useAppState } from './context/context'
+import { Opportunity, CalendarEvent } from './context/types'
+import { format, parseISO, isEqual, isSameDay } from 'date-fns'
+import { Sheet, SheetContent, SheetTrigger } from "./components/ui/sheet"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui/collapsible"
+import { motion } from "framer-motion" // For animations
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "./components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs"
@@ -41,19 +51,34 @@ import { ScrollArea } from "./components/ui/scroll-area"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./components/ui/dialog"
 import { Switch } from "./components/ui/switch"
 import { ThumbsUp, ThumbsDown, PlusCircle, Search, CalendarIcon, BarChart, Send, User, Bot, FileText, MessageSquare, Lock, Unlock, Maximize2, Minimize2, ChevronLeft, ChevronRight, Filter, Menu, ArrowUp, HelpCircle, Settings } from 'lucide-react'
-import { BarChartIcon, PieChartIcon, LineChartIcon, ActivityIcon, Trophy, Award, Flame, Rocket, Users, Building, Home, Lightbulb, Calendar as CalendarIcon2 } from 'lucide-react'
-import { ResponsiveContainer, PieChart, Pie, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, AreaChart, Area } from 'recharts'
-import { generateChatResponse, generateSuggestions } from './lib/openai'
-import { HelpCenter } from './components/help/HelpCenter'
-import { GuideViewer } from './components/help/GuideViewer'
-import { allGuides } from './components/help/guides'
-import { useAppState } from './context/context'
-import { Opportunity } from './context/types'
-import { format, parseISO, isEqual, isSameDay } from 'date-fns'
-import { Sheet, SheetContent, SheetTrigger } from "./components/ui/sheet"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui/collapsible"
-import { motion } from "framer-motion" // For animations
 
+// Right before the component definition, add this interface
+interface StatusChange {
+  id: number;
+  opportunityId: number;
+  oldStatus: string;
+  newStatus: string;
+  date: string;
+  company: string;
+  position: string;
+}
+
+// Add this interface below the StatusChange interface
+interface JobRecommendation {
+  id: number;
+  company: string;
+  position: string;
+  location: string;
+  description: string;
+  salary?: string;
+  url?: string;
+  source?: string;
+}
+
+interface RatedRecommendation extends JobRecommendation {
+  rating: string;
+  ratedAt: string;
+}
 
 // Define prompts by status and category
 const promptsByStatus = {
@@ -161,7 +186,7 @@ const promptsByStatus = {
     "Draft a professional email declining the offer while expressing gratitude and maintaining the relationship",
     "What constructive feedback should I provide when declining this offer that would be helpful but not burning bridges?",
     "Help me craft language that keeps the door open for future opportunities with this company",
-    "What specific lessons should I document from this process to improve my job search strategy going forward?"
+    "What specific lessons should I document from this experience to improve my job search strategy going forward?"
   ],
   "Rejected": [
     "What specific aspects of my application or interview performance should I evaluate to improve future applications?",
@@ -308,6 +333,9 @@ const TAG_COLOR_CLASSES = {
 const ProtectedContent = ({ 
   children, 
   fallback = <div className="p-4 text-center">Please sign in to access this feature</div> 
+}: { 
+  children: React.ReactNode; 
+  fallback?: React.ReactNode;
 }) => {
   const { user, isLoading } = useAuth();
   
@@ -336,19 +364,43 @@ export default function CAPTAINGui() {
     async function fetchUserData() {
       if (user) {
         try {
+          // Get data from Supabase
           const userData = await loadUserData();
           
-          // Update app state with user data
+          // Check if we have opportunities from Supabase
           if (userData.opportunities && userData.opportunities.length > 0) {
-            dispatch({ type: 'SET_OPPORTUNITIES', payload: userData.opportunities });
-          }
-          
-          if (userData.resume) {
-            dispatch({ type: 'UPDATE_MASTER_RESUME', payload: userData.resume });
-          }
-          
-          if (userData.events && userData.events.length > 0) {
-            dispatch({ type: 'SET_EVENTS', payload: userData.events });
+            // If we have data from the cloud and user is not in local-only mode,
+            // completely replace the opportunities with cloud data
+            if (!localStorageOnly) {
+              console.log('Replacing local opportunities with cloud data');
+              
+              // Rather than adding one by one, just set the entire array at once
+              // This assumes we've added a 'SET_OPPORTUNITIES' action to our reducer
+              dispatch({ type: 'SET_OPPORTUNITIES', payload: userData.opportunities });
+              
+              // Also update the resume and events
+              if (userData.resume) {
+                dispatch({ type: 'UPDATE_MASTER_RESUME', payload: userData.resume });
+              }
+              
+              if (userData.events && userData.events.length > 0) {
+                // Similar approach for events - replace all at once
+                dispatch({ type: 'SET_EVENTS', payload: userData.events });
+              }
+              
+              // Update last modified timestamps for all opportunities
+              const newTimestamps = {...lastModifiedTimestamps};
+              userData.opportunities.forEach(opp => {
+                newTimestamps[opp.id] = new Date().toISOString();
+              });
+              setLastModifiedTimestamps(newTimestamps);
+              
+              console.log(`Loaded ${userData.opportunities.length} opportunities from cloud`);
+            } else {
+              console.log('User in local-only mode, not loading cloud data');
+            }
+          } else {
+            console.log('No opportunities found in cloud storage');
           }
         } catch (error) {
           console.error('Error loading user data:', error);
@@ -357,7 +409,7 @@ export default function CAPTAINGui() {
     }
     
     fetchUserData();
-  }, [user]);
+  }, [user, localStorageOnly]);
   
   // Save user data when it changes
   useEffect(() => {
@@ -424,7 +476,7 @@ export default function CAPTAINGui() {
   const [currentMessage, setCurrentMessage] = useState("");
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState({});
+  const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState<Record<number, string>>({});
   const [isJobDescriptionExpanded, setIsJobDescriptionExpanded] = useState(false);
   
   // Import/Export state variables
@@ -473,22 +525,16 @@ export default function CAPTAINGui() {
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
   const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
 
-  // Calendar enhancement states
-  const [calendarView, setCalendarView] = useState("month"); //  "month" or "week"
-  const [weekStartDate, setWeekStartDate] = useState(new Date());
-  const [eventTypeFilter, setEventTypeFilter] = useState('all');
-  const [editingEvent, setEditingEvent] = useState(null);
-
   // Mobile touch handling
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   
   // Status change tracking
-  const [statusChanges, setStatusChanges] = useState([]);
+  const [statusChanges, setStatusChanges] = useState<StatusChange[]>([]);
 
   // AI prompt states
-  const [aiPrompts, setAiPrompts] = useState([]);
+  const [aiPrompts, setAiPrompts] = useState<string[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
   
   // Timeline period state
@@ -501,15 +547,15 @@ export default function CAPTAINGui() {
     "Tips for salary negotiation"
   ];
 
-  const [jobRecommendations, setJobRecommendations] = useState([
+  const [jobRecommendations, setJobRecommendations] = useState<JobRecommendation[]>([
     { id: 1, company: "TechGiant", position: "Senior Frontend Developer", location: "Remote", description: "TechGiant is seeking a Senior Frontend Developer to lead our web application team. The ideal candidate will have 5+ years of experience with React, TypeScript, and state management libraries. You'll be responsible for architecting scalable frontend solutions and mentoring junior developers." },
     { id: 2, company: "DataDrive", position: "Machine Learning Engineer", location: "New York, NY", description: "DataDrive is looking for a Machine Learning Engineer to join our AI research team. You'll work on cutting-edge projects involving natural language processing and computer vision. Strong background in Python, PyTorch or TensorFlow, and experience with large language models is required." },
     { id: 3, company: "CloudScale", position: "DevOps Engineer", location: "San Francisco, CA", description: "CloudScale needs a DevOps Engineer to streamline our CI/CD pipelines and manage our cloud infrastructure. Experience with AWS, Kubernetes, and Infrastructure as Code (e.g., Terraform) is essential. You'll be responsible for maintaining high availability and scalability of our services." }
   ]);
   const [currentRecommendationIndex, setCurrentRecommendationIndex] = useState(0);
-  const [ratedRecommendations, setRatedRecommendations] = useState([]);
+  const [ratedRecommendations, setRatedRecommendations] = useState<RatedRecommendation[]>([]);
   const [totalRecommendations, setTotalRecommendations] = useState(3); // Initial count based on default recommendations
-  const [recommendationsPreview, setRecommendationsPreview] = useState([]);
+  const [recommendationsPreview, setRecommendationsPreview] = useState<JobRecommendation[]>([]);
   
   // Define selectedOpportunity before any useEffect that uses it
   const selectedOpportunity = opportunities.length > 0 ? opportunities[selectedOpportunityIndex] : undefined;
@@ -528,17 +574,17 @@ export default function CAPTAINGui() {
   }, []);
 
   // Helper function to get prompts based on status
-  const getPromptsForStatus = (status) => {
+  const getPromptsForStatus = (status: string): string[] => {
     // Default prompts if status doesn't match any category
     const defaultPrompts = [
       "Help me craft a compelling cover letter for this position",
-      "What skills should I highlight in my resume for this role?",
-      "How should I prepare for an interview for this position?",
-      "What questions should I ask the interviewer about this role?"
+      "Draft an email following up on my application",
+      "What questions should I prepare for an interview for this role?",
+      "How do I negotiate salary for this position?"
     ];
-    
+
     // If status is undefined or not in our map, return default prompts
-    if (!status || !promptsByStatus[status]) {
+    if (!status || !(status in promptsByStatus)) {
       console.log("Using default prompts - status not found:", status);
       return defaultPrompts;
     }
@@ -558,20 +604,34 @@ export default function CAPTAINGui() {
     }
     
     // Get prompts from our predefined list
-    const statusPrompts = promptsByStatus[status] || [];
-    const categoryPrompts = promptsByCategory[category] || [];
+    const statusPrompts = status in promptsByStatus ? promptsByStatus[status as keyof typeof promptsByStatus] : [];
+    const categoryPrompts = category in promptsByCategory ? promptsByCategory[category as keyof typeof promptsByCategory] : [];
     
     // Prioritize status-specific prompts but ensure variety
     // Return 3 from status and 1 from category for more specificity
     const selectedStatusPrompts = statusPrompts.slice(0, 3);
     const selectedCategoryPrompts = categoryPrompts
-      .filter(prompt => !selectedStatusPrompts.includes(prompt))
+      .filter((prompt: string) => !selectedStatusPrompts.includes(prompt))
       .slice(0, 1);
       
     const result = [...selectedStatusPrompts, ...selectedCategoryPrompts];
     
     // If we somehow ended up with no prompts, return the defaults
     return result.length > 0 ? result : defaultPrompts;
+  };
+
+  // Function to generate chat prompt based on the opportunity
+  const generateChatPrompt = (prompt: string): string => {
+    if (!selectedOpportunity) {
+      return `${prompt}`;
+    }
+    
+    return `${prompt}\n\nContext about this job opportunity:
+Company: ${selectedOpportunity.company}
+Position: ${selectedOpportunity.position}
+Status: ${selectedOpportunity.status}
+Job Description: ${selectedOpportunity.jobDescription || 'No job description available.'}
+Notes: ${selectedOpportunity.notes || 'No notes available.'}`;
   };
 
   // Helper function for updating last modified timestamp
@@ -585,6 +645,12 @@ export default function CAPTAINGui() {
   const updateOpportunity = (opportunityId: number, updates: Partial<Opportunity>) => {
     // Get the current opportunity
     const currentOpp = opportunities.find(opp => opp.id === opportunityId);
+    
+    // Only proceed if we found the opportunity
+    if (!currentOpp) {
+      console.error(`Opportunity with ID ${opportunityId} not found`);
+      return;
+    }
     
     // If we're updating status, record this change
     if (updates.status && updates.status !== currentOpp.status) {
@@ -610,547 +676,6 @@ export default function CAPTAINGui() {
     });
     updateLastModified(opportunityId);
   };
-  
-  // Handle file selection for import
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setImportFile(file);
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const jsonData = JSON.parse(event.target?.result as string);
-        
-        // Validate the imported data structure
-        if (Array.isArray(jsonData) && jsonData.length > 0) {
-          // Basic validation to ensure each item has required fields
-          const validData = jsonData.filter(item => 
-            item && typeof item === 'object' && 
-            'company' in item && 
-            'position' in item && 
-            'jobDescription' in item
-          );
-          
-          // Assign new IDs to avoid conflicts
-          const processedData = validData.map(item => ({
-            ...item,
-            id: Date.now() + Math.floor(Math.random() * 1000) // Ensure unique IDs
-          }));
-          
-          setImportData(processedData);
-          setSelectedImportIds(processedData.map(item => item.id));
-        } else {
-          alert("Invalid import file format. Please select a valid export file.");
-          setImportData([]);
-          setSelectedImportIds([]);
-        }
-      } catch (error) {
-        console.error("Error parsing import file:", error);
-        alert("Error parsing the file. Please make sure it's a valid JSON file.");
-        setImportData([]);
-        setSelectedImportIds([]);
-      }
-    };
-    
-    reader.readAsText(file);
-  };
-
-  // Handle export of selected opportunities
-  // CSV parsing and handling functions
-  const handleRecommendationsCSVChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const csvText = event.target?.result as string;
-        const recommendations = parseCSVToRecommendations(csvText);
-        
-        setRecommendationsPreview(recommendations);
-      } catch (error) {
-        console.error("Error parsing CSV file:", error);
-        alert("Error parsing the CSV file. Please check the format.");
-        setRecommendationsPreview([]);
-      }
-    };
-    
-    reader.readAsText(file);
-  };
-
-  const parseCSVToRecommendations = (csvText: string) => {
-    // Split by lines and get header row
-    const lines = csvText.split('\n');
-    const headers = lines[0].split(',').map(header => header.trim());
-    
-    // Map CSV columns to recommendation properties
-    return lines.slice(1).filter(line => line.trim() !== '').map((line, index) => {
-      // Handle quoted fields properly
-      let values = [];
-      let inQuotes = false;
-      let currentValue = '';
-      
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"' && (i === 0 || line[i-1] !== '\\')) {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          values.push(currentValue);
-          currentValue = '';
-        } else {
-          currentValue += char;
-        }
-      }
-      
-      // Add the last value
-      values.push(currentValue);
-      
-      // Clean up values (remove quotes)
-      values = values.map(val => {
-        if (val.startsWith('"') && val.endsWith('"')) {
-          return val.substring(1, val.length - 1).replace(/""/g, '"');
-        }
-        return val.trim();
-      });
-      
-      // Create object from headers and values
-      const rowData = {};
-      headers.forEach((header, i) => {
-        rowData[header] = values[i] || '';
-      });
-      
-      // Create recommendation object
-      return {
-        id: Date.now() + index,
-        company: rowData['company'] || '',
-        position: rowData['position'] || '',
-        location: rowData['location'] || '',
-        description: rowData['description'] || '',
-        salary: rowData['salary'] || '',
-        url: rowData['url'] || '',
-        source: rowData['source'] || ''
-      };
-    });
-  };
-
-  const handleImportRecommendations = () => {
-    if (recommendationsPreview.length === 0) return;
-    
-    setJobRecommendations(recommendationsPreview);
-    setTotalRecommendations(recommendationsPreview.length);
-    setCurrentRecommendationIndex(0);
-    setRecommendationsPreview([]);
-    
-    // Show success message
-    alert(`Successfully imported ${recommendationsPreview.length} job recommendations.`);
-  };
-
-  const handleRateRecommendation = (rating) => {
-    // Get current recommendation
-    const currentRecommendation = jobRecommendations[currentRecommendationIndex];
-    
-    // Add rating to current recommendation
-    const ratedRecommendation = {
-      ...currentRecommendation,
-      rating,
-      ratedAt: new Date().toISOString()
-    };
-    
-    // Add to rated recommendations
-    setRatedRecommendations([...ratedRecommendations, ratedRecommendation]);
-    
-    // If user is interested, optionally create a new opportunity
-    if (rating === 'interested') {
-      const shouldCreateOpportunity = window.confirm(
-        "Would you like to add this job to your opportunities list?"
-      );
-      
-      if (shouldCreateOpportunity) {
-        const newOpportunity = {
-          id: Date.now(),
-          company: currentRecommendation.company,
-          position: currentRecommendation.position,
-          jobDescription: currentRecommendation.description,
-          status: "Interested",
-          appliedDate: new Date().toLocaleDateString('en-US', { 
-            year: 'numeric', month: 'long', day: 'numeric' 
-          }),
-          location: currentRecommendation.location,
-          salary: currentRecommendation.salary || "",
-          applicationUrl: currentRecommendation.url || "",
-          source: currentRecommendation.source || "",
-          resume: masterResume,
-          notes: "",
-          tags: []
-        };
-        
-        dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpportunity });
-        updateLastModified(newOpportunity.id);
-      }
-    }
-    
-    // Move to next recommendation
-    handleNextRecommendation();
-  };
-
-  const handleNextRecommendation = () => {
-    if (currentRecommendationIndex < jobRecommendations.length - 1) {
-      setCurrentRecommendationIndex(currentRecommendationIndex + 1);
-    } else {
-      // Cycle back to the beginning if we've gone through all
-      setCurrentRecommendationIndex(0);
-    }
-  };
-
-  const handleExportRatedRecommendations = () => {
-    if (ratedRecommendations.length === 0) return;
-    
-    // Create CSV content
-    const headers = ['id', 'company', 'position', 'location', 'description', 'salary', 'url', 'source', 'rating', 'ratedAt'];
-    const csvRows = [headers.join(',')];
-    
-    ratedRecommendations.forEach(rec => {
-      const values = [
-        rec.id,
-        `"${(rec.company || '').replace(/"/g, '""')}"`,
-        `"${(rec.position || '').replace(/"/g, '""')}"`,
-        `"${(rec.location || '').replace(/"/g, '""')}"`,
-        `"${(rec.description || '').replace(/"/g, '""')}"`,
-        `"${(rec.salary || '').replace(/"/g, '""')}"`,
-        `"${(rec.url || '').replace(/"/g, '""')}"`,
-        `"${(rec.source || '').replace(/"/g, '""')}"`,
-        rec.rating,
-        rec.ratedAt
-      ];
-      csvRows.push(values.join(','));
-    });
-    
-    const csvContent = csvRows.join('\n');
-    
-    // Create a blob and download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create download link and trigger download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `job-recommendations-ratings-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    
-    // Clean up
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleExportOpportunities = () => {
-    if (selectedExportIds.length === 0) return;
-    
-    // Filter opportunities based on selection
-    const opportunitiesToExport = opportunities.filter(opp => 
-      selectedExportIds.includes(opp.id)
-    );
-    
-    // Create export data
-    const exportData = JSON.stringify(opportunitiesToExport, null, 2);
-    
-    // Create a blob and download link
-    const blob = new Blob([exportData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create download link and trigger download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `job-opportunities-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    
-    // Clean up
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // Handle import of selected opportunities
-  const handleImportOpportunities = () => {
-    if (selectedImportIds.length === 0) return;
-    
-    // Filter import data based on selection
-    const opportunitiesToImport = importData.filter(opp => 
-      selectedImportIds.includes(opp.id)
-    );
-    
-    // Add each opportunity to the state
-    opportunitiesToImport.forEach(opp => {
-      // Generate a unique ID for each imported opportunity
-      const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
-      
-      // Create a new opportunity object
-      const newOpp = {
-        ...opp,
-        id: uniqueId
-      };
-      
-      // Add to state using dispatch
-      dispatch({ type: 'ADD_OPPORTUNITY', payload: newOpp });
-      
-      // Update last modified timestamp
-      updateLastModified(uniqueId);
-    });
-    
-    // Reset import state
-    setImportData([]);
-    setSelectedImportIds([]);
-    setImportFile(null);
-    
-    // Show success message
-    alert(`Successfully imported ${opportunitiesToImport.length} opportunities.`);
-  };
-
-  // Helper function to calculate application streak
-  const calculateStreak = (opportunities) => {
-    const today = new Date();
-    let streak = 0;
-    
-    for (let i = 0; i < 30; i++) { // Check up to 30 days back
-      const checkDate = new Date(today);
-      checkDate.setDate(today.getDate() - i);
-      
-      const hasApplication = opportunities.some(opp => {
-        const appDate = new Date(opp.appliedDate);
-        return appDate.toDateString() === checkDate.toDateString();
-      });
-      
-      if (hasApplication) {
-        streak++;
-      } else if (i > 0) { // If we're not checking today
-        break; // End streak on first day with no applications
-      }
-    }
-    
-    return streak;
-  };
-
-  // Helper functions for calendar
-  // Helper function to parse date strings
-  const parseEventDate = (dateString) => {
-    if (!dateString) return new Date();
-    
-    try {
-      // Try parsing with date-fns first
-      try {
-        const parsedDate = parseISO(dateString);
-        // Check if the date is valid
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate;
-        }
-      } catch (e) {
-        // Continue to next method if this fails
-      }
-      
-      // Try regular Date constructor
-      const regularDate = new Date(dateString);
-      if (!isNaN(regularDate.getTime())) {
-        return regularDate;
-      }
-      
-      // If we have a string like "March 15, 2023"
-      if (typeof dateString === 'string' && dateString.includes(',')) {
-        const parts = dateString.split(',');
-        if (parts.length === 2) {
-          const monthDay = parts[0].trim();
-          const year = parts[1].trim();
-          return new Date(`${monthDay} ${year}`);
-        }
-      }
-      
-      // Default to current date if all parsing fails
-      return new Date();
-    } catch (e) {
-      console.error("Error parsing date:", e);
-      return new Date();
-    }
-  };
-
-  // Helper function to get events for a specific day
-  const getEventsForDay = (day) => {
-    return events
-      .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
-      .filter(event => {
-        const eventDate = parseEventDate(event.date);
-        return day.getDate() === eventDate.getDate() && 
-               day.getMonth() === eventDate.getMonth() && 
-               day.getFullYear() === eventDate.getFullYear();
-      });
-  };
-  
-  // Helper function to get the week's date range
-  const getWeekDates = (startDate) => {
-    const dates = [];
-    const currentDate = new Date(startDate);
-    
-    // Set to the start of the week (Sunday)
-    currentDate.setDate(currentDate.getDate() - currentDate.getDay());
-    
-    // Get all 7 days of the week
-    for (let i = 0; i < 7; i++) {
-      dates.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    return dates;
-  };
-  
-  // Helper function to get status changes for a specific day
-  const getStatusChangesForDay = (day) => {
-    return statusChanges.filter(change => {
-      const changeDate = new Date(change.date);
-      return isSameDay(day, changeDate);
-    });
-  };
-
-  // Enhanced function to get events for a day with job application info
-  const getEnhancedEventsForDay = (day) => {
-    if (!day) return { events: [], applications: [], statusChanges: [], totalActivity: 0 };
-    
-    // Get regular events
-    const dayEvents = events
-      .filter(event => eventTypeFilter === 'all' || event.type === eventTypeFilter)
-      .filter(event => {
-        try {
-          // Try multiple date parsing approaches
-          let eventDate;
-          if (typeof event.date === 'string') {
-            // Try parsing with date-fns first
-            try {
-              eventDate = parseISO(event.date);
-            } catch (e) {
-              // Fall back to regular Date constructor
-              eventDate = new Date(event.date);
-            }
-          } else if (event.date instanceof Date) {
-            eventDate = event.date;
-          } else {
-            return false;
-          }
-          
-          return isSameDay(day, eventDate);
-        } catch (e) {
-          console.error("Error comparing dates:", e);
-          return false;
-        }
-      });
-    
-    // Check for job applications on this day
-    const jobApplications = opportunities.filter(opp => {
-      if (!opp.appliedDate) return false;
-      
-      try {
-        // Try multiple date parsing approaches
-        let appDate;
-        try {
-          appDate = parseISO(opp.appliedDate);
-        } catch (e) {
-          appDate = new Date(opp.appliedDate);
-        }
-        
-        return isSameDay(day, appDate);
-      } catch (e) {
-        console.error("Error comparing application dates:", e);
-        return false;
-      }
-    });
-    
-    // Get status changes for this day
-    const dayStatusChanges = getStatusChangesForDay(day);
-    
-    return {
-      events: dayEvents,
-      applications: jobApplications,
-      statusChanges: dayStatusChanges,
-      totalActivity: dayEvents.length + jobApplications.length + dayStatusChanges.length
-    };
-  };
-
-  // Function to handle batch deletion
-  const handleBatchDelete = () => {
-    // Show confirmation dialog
-    if (window.confirm(`Are you sure you want to delete ${selectedJobIds.length} selected job(s)?`)) {
-      // Delete each selected job
-      selectedJobIds.forEach(id => {
-        dispatch({ type: 'DELETE_OPPORTUNITY', payload: id });
-      });
-      
-      // Reset selection
-      setSelectedJobIds([]);
-      setIsBatchSelectMode(false);
-    }
-  };
-
-  // Toggle function for selecting/deselecting a job
-  const toggleJobSelection = (id: number) => {
-    if (id === -1) {
-      // Special case to clear all selections
-      setSelectedJobIds([]);
-      return;
-    }
-    
-    if (selectedJobIds.includes(id)) {
-      setSelectedJobIds(selectedJobIds.filter(jobId => jobId !== id));
-    } else {
-      setSelectedJobIds([...selectedJobIds, id]);
-    }
-  };
-
-  // Mobile touch handlers
-  const handleTouchStart = (e) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-  
-  const handleTouchMove = (e) => {
-    if (touchStart - e.targetTouches[0].clientX > 50) {
-      // Swipe left - go to next opportunity if available
-      if (selectedOpportunityIndex < opportunities.length - 1) {
-        setSelectedOpportunityIndex(selectedOpportunityIndex + 1);
-      }
-    } else if (touchStart - e.targetTouches[0].clientX < -50) {
-      // Swipe right - go to previous opportunity if available
-      if (selectedOpportunityIndex > 0) {
-        setSelectedOpportunityIndex(selectedOpportunityIndex - 1);
-      }
-    }
-  };
-
-  // Scroll handler for back to top button
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Effect to update prompts when opportunity changes
-  useEffect(() => {
-    if (selectedOpportunity) {
-      setIsLoadingPrompts(true);
-      // Simulate loading for animation effect
-      setTimeout(() => {
-        const prompts = getPromptsForStatus(selectedOpportunity.status);
-        
-        // Ensure we have an array of strings
-        const cleanPrompts = prompts.map(p => typeof p === 'string' ? p : '').filter(Boolean);
-        setAiPrompts(cleanPrompts);
-        setIsLoadingPrompts(false);
-      }, 300);
-    } else {
-      // Reset prompts if no opportunity is selected
-      setAiPrompts([]);
-    }
-  }, [selectedOpportunity]);
 
   // Generate analytics data using useMemo to prevent recalculation on every render
   const analytics = useMemo(() => {
@@ -1177,7 +702,7 @@ export default function CAPTAINGui() {
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
     // Generate timeline data for different periods
-    const generateTimelineData = (days) => {
+    const generateTimelineData = (days: number) => {
       const today = new Date();
       const startDate = new Date();
       startDate.setDate(today.getDate() - days);
@@ -1202,35 +727,23 @@ export default function CAPTAINGui() {
           app.date.getDate() === point.date.getDate() &&
           app.date.getMonth() === point.date.getMonth() &&
           app.date.getFullYear() === point.date.getFullYear()
-        ).length;
+        );
         
-        // Add to running total
-        runningTotal += appsOnDate;
-        
-        // For the first point, count all applications before the start date
-        if (index === 0) {
-          const appsBeforeStart = applicationsWithDates.filter(app => 
-            app.date < point.date
-          ).length;
-          runningTotal += appsBeforeStart;
-        }
-        
-        point.count = appsOnDate;
+        point.count = appsOnDate.length;
+        runningTotal += point.count;
         point.totalCount = runningTotal;
       });
       
-      // Format dates for display and return
-      return datePoints.map(point => ({
-        date: point.date.toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric'
-        }),
-        count: point.count,
-        totalCount: point.totalCount
-      }));
+      return datePoints;
     };
 
     // Generate data for different time periods
+    
+    // Fix for all-time view date calculation
+    const getDateDifference = (date1: Date, date2: Date): number => {
+      return Math.ceil((date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24));
+    };
+    
     const timelineData = {
       '7days': generateTimelineData(7),
       '30days': generateTimelineData(30),
@@ -1238,7 +751,7 @@ export default function CAPTAINGui() {
       'all': applicationsWithDates.length > 0 ? (() => {
         // For all-time view, use actual application dates
         const firstAppDate = applicationsWithDates[0].date;
-        const daysDiff = Math.ceil((new Date() - firstAppDate) / (1000 * 60 * 60 * 24));
+        const daysDiff = getDateDifference(new Date(), firstAppDate);
         return generateTimelineData(Math.min(daysDiff, 365)); // Cap at 365 days
       })() : []
     };
@@ -1283,28 +796,60 @@ export default function CAPTAINGui() {
       return appDate >= startOfWeek;
     }).length;
     
+    // Helper function to calculate application streak
+    const calculateStreak = (opportunities: Opportunity[]) => {
+      const today = new Date();
+      let streak = 0;
+      
+      // Check the past 30 days for consecutive applications
+      for (let i = 0; i < 30; i++) {
+        const checkDate = new Date();
+        checkDate.setDate(today.getDate() - i);
+        
+        const hasApplication = opportunities.some(opp => {
+          const appDate = new Date(opp.appliedDate);
+          return appDate.toDateString() === checkDate.toDateString();
+        });
+        
+        if (hasApplication) {
+          streak++;
+        } else if (streak > 0) {
+          // Break on first day with no applications
+          break;
+        }
+      }
+      
+      return streak;
+    };
+
     // Job Search Level System
-    const calculateJobSearchLevel = (opportunities) => {
+    const calculateJobSearchLevel = (opportunities: Opportunity[]) => {
       const baseScore = opportunities.length * 10;
-      const interviewBonus = opportunities.filter(opp => 
+      const interviewBonus = opportunities.filter((opp: Opportunity) => 
         ['Screening', 'Technical Assessment', 'First Interview', 'Second Interview', 'Final Interview'].includes(opp.status)
       ).length * 25;
-      const offerBonus = opportunities.filter(opp => 
+      const offerBonus = opportunities.filter((opp: Opportunity) => 
         ['Offer Received', 'Offer Accepted'].includes(opp.status)
       ).length * 100;
       
       const totalScore = baseScore + interviewBonus + offerBonus;
       
-      // Level calculation
-      const level = Math.floor(Math.sqrt(totalScore / 10)) + 1;
-      const nextLevelScore = Math.pow((level), 2) * 10;
-      const progress = Math.min((totalScore / nextLevelScore) * 100, 100);
+      // Define levels
+      const level = Math.floor(totalScore / 100) + 1;
+      const nextLevelScore = level * 100;
+      const progress = totalScore % 100;
       
-      return { level, totalScore, nextLevelScore, progress };
+      return {
+        level,
+        progress,
+        nextLevelScore,
+        pointsToNextLevel: nextLevelScore - totalScore,
+        totalScore
+      };
     };
     
     // Achievement System
-    const calculateAchievements = (opportunities, events) => {
+    const calculateAchievements = (opportunities: Opportunity[], events: CalendarEvent[]) => {
       return [
         {
           id: 'first_application',
@@ -1316,36 +861,36 @@ export default function CAPTAINGui() {
           total: 1
         },
         {
-          id: 'application_streak',
-          name: 'Consistency Champion',
-          description: 'Apply to jobs for 5 consecutive days',
-          icon: 'Flame',
-          unlocked: calculateStreak(opportunities) >= 5,
-          progress: Math.min(calculateStreak(opportunities), 5),
-          total: 5
+          id: 'application_milestone',
+          name: 'Application Sprint',
+          description: 'Apply to 20 jobs',
+          icon: 'Send',
+          unlocked: opportunities.length >= 20,
+          progress: Math.min(opportunities.length, 20),
+          total: 20
         },
         {
           id: 'interview_milestone',
           name: 'Interview Pro',
           description: 'Secure 5 interviews',
           icon: 'Users',
-          unlocked: opportunities.filter(opp => 
+          unlocked: opportunities.filter((opp: Opportunity) => 
             ['First Interview', 'Second Interview', 'Final Interview'].includes(opp.status)
           ).length >= 5,
-          progress: opportunities.filter(opp => 
+          progress: opportunities.filter((opp: Opportunity) => 
             ['First Interview', 'Second Interview', 'Final Interview'].includes(opp.status)
           ).length,
           total: 5
         },
         {
           id: 'offer_milestone',
-          name: 'Offer Magnet',
+          name: 'Offer Collector',
           description: 'Receive 3 job offers',
           icon: 'Award',
-          unlocked: opportunities.filter(opp => 
+          unlocked: opportunities.filter((opp: Opportunity) => 
             ['Offer Received', 'Offer Accepted', 'Offer Declined'].includes(opp.status)
           ).length >= 3,
-          progress: opportunities.filter(opp => 
+          progress: opportunities.filter((opp: Opportunity) => 
             ['Offer Received', 'Offer Accepted', 'Offer Declined'].includes(opp.status)
           ).length,
           total: 3
@@ -1355,12 +900,12 @@ export default function CAPTAINGui() {
           name: 'Explorer',
           description: 'Apply to 10 different companies',
           icon: 'Globe',
-          unlocked: new Set(opportunities.map(opp => opp.company)).size >= 10,
-          progress: Math.min(new Set(opportunities.map(opp => opp.company)).size, 10),
+          unlocked: new Set(opportunities.map((opp: Opportunity) => opp.company)).size >= 10,
+          progress: Math.min(new Set(opportunities.map((opp: Opportunity) => opp.company)).size, 10),
           total: 10
         },
         {
-          id: 'perfect_week',
+          id: 'streak_week',
           name: 'Perfect Week',
           description: 'Apply to at least one job every day for a week',
           icon: 'CalendarIcon2',
@@ -1372,12 +917,12 @@ export default function CAPTAINGui() {
     };
     
     // Weekly Activity Patterns
-    const calculateDayOfWeekActivity = (opportunities, events) => {
+    const calculateDayOfWeekActivity = (opportunities: Opportunity[], events: CalendarEvent[]) => {
       const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const activityByDay = daysOfWeek.map(day => ({ day, count: 0 }));
       
       // Count applications by day of week
-      opportunities.forEach(opp => {
+      opportunities.forEach((opp: Opportunity) => {
         try {
           const date = new Date(opp.appliedDate);
           const dayIndex = date.getDay();
@@ -1388,7 +933,7 @@ export default function CAPTAINGui() {
       });
       
       // Count events by day of week
-      events.forEach(event => {
+      events.forEach((event: CalendarEvent) => {
         try {
           const date = new Date(event.date);
           const dayIndex = date.getDay();
@@ -1401,35 +946,44 @@ export default function CAPTAINGui() {
       // Find most and least active days
       const sortedDays = [...activityByDay].sort((a, b) => b.count - a.count);
       const mostActiveDay = sortedDays[0];
-      const leastActiveDay = [...activityByDay].filter(day => day.count > 0)
-        .sort((a, b) => a.count - b.count)[0] || { day: 'None', count: 0 };
+      const leastActiveDay = [...activityByDay].filter(day => day.count > 0).sort((a, b) => a.count - b.count)[0] || sortedDays[sortedDays.length - 1];
       
-      return { activityByDay, mostActiveDay, leastActiveDay };
+      return {
+        activityByDay,
+        mostActiveDay,
+        leastActiveDay
+      };
     };
     
     // Weekly Challenges
     const generateWeeklyChallenges = () => {
+      // Helper function for date difference calculation
+      const getDateDifference = (date1: Date, date2: Date): number => {
+        return Math.ceil((date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24));
+      };
+      
       // Get current week number
       const now = new Date();
       const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const weekNumber = Math.ceil((((now - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
+      const weekNumber = Math.ceil(
+        (getDateDifference(now, startOfYear) + startOfYear.getDay() + 1) / 7
+      );
       
       // This week's applications
       const startOfThisWeek = new Date(now);
       startOfThisWeek.setDate(now.getDate() - now.getDay());
-      startOfThisWeek.setHours(0, 0, 0, 0);
       
-      const thisWeekApplications = opportunities.filter(opp => {
+      const applicationsThisWeek = opportunities.filter((opp: Opportunity) => {
         try {
           const appDate = new Date(opp.appliedDate);
-          return appDate >= startOfThisWeek;
+          return appDate >= startOfThisWeek && appDate <= now;
         } catch (e) {
           return false;
         }
       }).length;
       
-      // Use week number as seed for "random" challenges
-      const challenges = [
+      // Generate weekly challenges
+      return [
         {
           id: `week_${weekNumber}_1`,
           name: 'Application Sprint',
@@ -1437,39 +991,41 @@ export default function CAPTAINGui() {
           reward: '50 points',
           icon: 'Send',
           target: 5,
-          progress: thisWeekApplications,
-          expires: 'Sunday'
+          progress: applicationsThisWeek,
+          complete: applicationsThisWeek >= 5
         },
         {
           id: `week_${weekNumber}_2`,
-          name: 'Network Builder',
-          description: 'Add 3 networking contacts',
-          reward: '30 points',
-          icon: 'Users',
+          name: 'Quality Applications',
+          description: 'Write 3 custom cover letters',
+          reward: '75 points',
+          icon: 'FileText',
           target: 3,
-          progress: opportunities.filter(opp => 
-            opp.status === "Networking" && new Date(opp.appliedDate) >= startOfThisWeek
+          progress: events.filter((event: CalendarEvent) => 
+            event.type === 'followup' && 
+            event.date >= startOfThisWeek.toISOString()
           ).length,
-          expires: 'Sunday'
+          complete: events.filter((event: CalendarEvent) => 
+            event.type === 'followup' && 
+            event.date >= startOfThisWeek.toISOString()
+          ).length >= 3
         },
         {
           id: `week_${weekNumber}_3`,
-          name: 'Skill Builder',
-          description: 'Update your resume with a new skill',
-          reward: '20 points',
-          icon: 'Award',
+          name: 'Network Builder',
+          description: 'Attend 1 networking event',
+          reward: '100 points',
+          icon: 'Users',
           target: 1,
-          progress: 0, // Would need to track resume updates
-          expires: 'Sunday'
+          progress: 0,
+          complete: false
         }
       ];
-      
-      return challenges;
     };
     
     // Job Search Insights
-    const generateJobSearchInsights = (opportunities) => {
-      const insights = [];
+    const generateJobSearchInsights = (opportunities: Opportunity[]) => {
+      const insights: {title: string, description: string, icon: string}[] = [];
       
       // Only generate insights if we have enough data
       if (opportunities.length < 5) {
@@ -1477,24 +1033,25 @@ export default function CAPTAINGui() {
       }
       
       // Response rate by company size
-      const largeCompanies = opportunities.filter(opp => 
+      const largeCompanies = opportunities.filter((opp: Opportunity) => 
         opp.company.includes("Inc") || opp.company.includes("Corp") || opp.company.includes("LLC")
       );
       const largeCompanyResponseRate = largeCompanies.length > 0 
-        ? (largeCompanies.filter(opp => 
+        ? (largeCompanies.filter((opp: Opportunity) => 
             ['Screening', 'Technical Assessment', 'First Interview'].includes(opp.status)
           ).length / largeCompanies.length) * 100
         : 0;
-        
-      const smallCompanies = opportunities.filter(opp => 
+      
+      const smallCompanies = opportunities.filter((opp: Opportunity) => 
         !opp.company.includes("Inc") && !opp.company.includes("Corp") && !opp.company.includes("LLC")
       );
       const smallCompanyResponseRate = smallCompanies.length > 0 
-        ? (smallCompanies.filter(opp => 
+        ? (smallCompanies.filter((opp: Opportunity) => 
             ['Screening', 'Technical Assessment', 'First Interview'].includes(opp.status)
           ).length / smallCompanies.length) * 100
         : 0;
       
+      // Add company size insight if there's a significant difference
       if (largeCompanies.length > 3 && smallCompanies.length > 3) {
         if (largeCompanyResponseRate > smallCompanyResponseRate + 10) {
           insights.push({
@@ -1515,7 +1072,7 @@ export default function CAPTAINGui() {
       const last30Days = new Date();
       last30Days.setDate(last30Days.getDate() - 30);
       
-      const applicationsLast30Days = opportunities.filter(opp => {
+      const applicationsLast30Days = opportunities.filter((opp: Opportunity) => {
         try {
           const appDate = new Date(opp.appliedDate);
           return appDate >= last30Days;
@@ -1524,16 +1081,17 @@ export default function CAPTAINGui() {
         }
       }).length;
       
+      // Add application volume insights
       if (applicationsLast30Days < 10) {
         insights.push({
           title: "Increase Your Application Volume",
-          description: "You've submitted only " + applicationsLast30Days + " applications in the last 30 days. Job searching is a numbers game - aim for at least 15-20 applications per month to improve your chances.",
-          icon: "BarChart"
+          description: "You've submitted only " + applicationsLast30Days + " applications in the last 30 days. Consider increasing your application rate to improve your chances.",
+          icon: "TrendingUp"
         });
-      } else if (applicationsLast30Days > 40) {
+      } else if (applicationsLast30Days > 30) {
         insights.push({
-          title: "Quality Over Quantity",
-          description: "You've submitted " + applicationsLast30Days + " applications in the last 30 days. Consider focusing more on quality applications with customized materials rather than high volume.",
+          title: "Strong Application Volume",
+          description: "You've submitted " + applicationsLast30Days + " applications in the last 30 days. Your high volume approach increases your chances of finding opportunities.",
           icon: "Award"
         });
       }
@@ -1733,57 +1291,6 @@ export default function CAPTAINGui() {
     setIsEditingDate(false);
   };
 
-  const handleNewEventChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setNewEvent({
-      ...newEvent,
-      [e.target.id]: e.target.value,
-    });
-  };
-
-  const handleNewEventTypeChange = (value: string) => {
-    setNewEvent({
-      ...newEvent,
-      type: value,
-    });
-  };
-
-  const handleNewEventOpportunityChange = (value: string) => {
-    setNewEvent({
-      ...newEvent,
-      opportunityId: value,
-    });
-  };
-
-  const handleSaveNewEvent = () => {
-    // Convert from YYYY-MM-DD to a more readable format
-    const dateObj = new Date(newEvent.date);
-    const formattedDate = dateObj.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    
-    const newEventObj = {
-      id: Date.now(),
-      title: newEvent.title,
-      date: formattedDate,
-      type: newEvent.type,
-      opportunityId: newEvent.opportunityId !== "none" ? parseInt(newEvent.opportunityId) : undefined,
-      notes: newEvent.notes
-    };
-    
-    dispatch({ type: 'ADD_EVENT', payload: newEventObj });
-    
-    // Reset form
-    setNewEvent({
-      title: "",
-      date: new Date().toISOString().split('T')[0],
-      type: "interview",
-      opportunityId: "",
-      notes: ""
-    });
-  };
-
   const [localChatMessages, setLocalChatMessages] = useState<{ role: string; content: string }[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   
@@ -1879,6 +1386,190 @@ export default function CAPTAINGui() {
     }
   };
 
+  // Fix for all-time view date calculation
+
+  // Weekly Activity Patterns
+  const calculateDayOfWeekActivity = (opportunities: Opportunity[], events: CalendarEvent[]) => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const activityByDay = daysOfWeek.map(day => ({ day, count: 0 }));
+    
+    // Count applications by day of week
+    opportunities.forEach((opp: Opportunity) => {
+      try {
+        const date = new Date(opp.appliedDate);
+        const dayIndex = date.getDay();
+        activityByDay[dayIndex].count += 1;
+      } catch (e) {
+        // Handle invalid dates
+      }
+    });
+    
+    // Count events by day of week
+    events.forEach((event: CalendarEvent) => {
+      try {
+        const date = new Date(event.date);
+        const dayIndex = date.getDay();
+        activityByDay[dayIndex].count += 1;
+      } catch (e) {
+        // Handle invalid dates
+      }
+    });
+    
+    // Find most and least active days
+    const sortedDays = [...activityByDay].sort((a, b) => b.count - a.count);
+    const mostActiveDay = sortedDays[0];
+    const leastActiveDay = [...activityByDay].filter(day => day.count > 0).sort((a, b) => a.count - b.count)[0] || sortedDays[sortedDays.length - 1];
+    
+    return {
+      activityByDay,
+      mostActiveDay,
+      leastActiveDay
+    };
+  };
+
+  // Weekly Challenges
+  const generateWeeklyChallenges = () => {
+    // Helper function for date difference calculation
+    const getDateDifference = (date1: Date, date2: Date): number => {
+      return Math.ceil((date1.getTime() - date2.getTime()) / (1000 * 60 * 60 * 24));
+    };
+    
+    // Get current week number
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const weekNumber = Math.ceil(
+      (getDateDifference(now, startOfYear) + startOfYear.getDay() + 1) / 7
+    );
+    
+    // This week's applications
+    const startOfThisWeek = new Date(now);
+    startOfThisWeek.setDate(now.getDate() - now.getDay());
+    
+    const applicationsThisWeek = opportunities.filter((opp: Opportunity) => {
+      try {
+        const appDate = new Date(opp.appliedDate);
+        return appDate >= startOfThisWeek && appDate <= now;
+      } catch (e) {
+        return false;
+      }
+    }).length;
+    
+    // Generate weekly challenges
+    return [
+      {
+        id: `week_${weekNumber}_1`,
+        name: 'Application Sprint',
+        description: 'Apply to 5 jobs this week',
+        reward: '50 points',
+        icon: 'Send',
+        target: 5,
+        progress: applicationsThisWeek,
+        complete: applicationsThisWeek >= 5
+      },
+      {
+        id: `week_${weekNumber}_2`,
+        name: 'Quality Applications',
+        description: 'Write 3 custom cover letters',
+        reward: '75 points',
+        icon: 'FileText',
+        target: 3,
+        progress: events.filter((event: CalendarEvent) => 
+          event.type === 'followup' && 
+          event.date >= startOfThisWeek.toISOString()
+        ).length,
+        complete: events.filter((event: CalendarEvent) => 
+          event.type === 'followup' && 
+          event.date >= startOfThisWeek.toISOString()
+        ).length >= 3
+      },
+      {
+        id: `week_${weekNumber}_3`,
+        name: 'Network Builder',
+        description: 'Attend 1 networking event',
+        reward: '100 points',
+        icon: 'Users',
+        target: 1,
+        progress: 0,
+        complete: false
+      }
+    ];
+  };
+
+  // Job Search Insights
+  const generateJobSearchInsights = (opportunities: Opportunity[]) => {
+    const insights: {title: string, description: string, icon: string}[] = [];
+    
+    // Only generate insights if we have enough data
+    if (opportunities.length < 5) {
+      return insights;
+    }
+    
+    // Response rate by company size
+    const largeCompanies = opportunities.filter((opp: Opportunity) => 
+      opp.company.includes("Inc") || opp.company.includes("Corp") || opp.company.includes("LLC")
+    );
+    const largeCompanyResponseRate = largeCompanies.length > 0 
+      ? (largeCompanies.filter((opp: Opportunity) => 
+          ['Screening', 'Technical Assessment', 'First Interview'].includes(opp.status)
+        ).length / largeCompanies.length) * 100
+      : 0;
+      
+    const smallCompanies = opportunities.filter((opp: Opportunity) => 
+      !opp.company.includes("Inc") && !opp.company.includes("Corp") && !opp.company.includes("LLC")
+    );
+    const smallCompanyResponseRate = smallCompanies.length > 0 
+      ? (smallCompanies.filter((opp: Opportunity) => 
+          ['Screening', 'Technical Assessment', 'First Interview'].includes(opp.status)
+        ).length / smallCompanies.length) * 100
+      : 0;
+    
+    // Add company size insight if there's a significant difference
+    if (largeCompanies.length > 3 && smallCompanies.length > 3) {
+      if (largeCompanyResponseRate > smallCompanyResponseRate + 10) {
+        insights.push({
+          title: "Large Companies Favor Your Profile",
+          description: `You're getting ${largeCompanyResponseRate.toFixed(0)}% response rate from larger companies vs ${smallCompanyResponseRate.toFixed(0)}% from smaller ones. Consider focusing more on established companies.`,
+          icon: "Building"
+        });
+      } else if (smallCompanyResponseRate > largeCompanyResponseRate + 10) {
+        insights.push({
+          title: "Startups & Small Companies Respond Better",
+          description: `You're getting ${smallCompanyResponseRate.toFixed(0)}% response rate from smaller companies vs ${largeCompanyResponseRate.toFixed(0)}% from larger ones. Consider targeting more startups and small businesses.`,
+          icon: "Home"
+        });
+      }
+    }
+    
+    // Application volume insight
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+    
+    const applicationsLast30Days = opportunities.filter((opp: Opportunity) => {
+      try {
+        const appDate = new Date(opp.appliedDate);
+        return appDate >= last30Days;
+      } catch (e) {
+        return false;
+      }
+    }).length;
+    
+    // Add application volume insights
+    if (applicationsLast30Days < 10) {
+      insights.push({
+        title: "Increase Your Application Volume",
+        description: "You've submitted only " + applicationsLast30Days + " applications in the last 30 days. Consider increasing your application rate to improve your chances.",
+        icon: "TrendingUp"
+      });
+    } else if (applicationsLast30Days > 30) {
+      insights.push({
+        title: "Strong Application Volume",
+        description: "You've submitted " + applicationsLast30Days + " applications in the last 30 days. Your high volume approach increases your chances of finding opportunities.",
+        icon: "Award"
+      });
+    }
+    
+    return insights;
+  };
 
   return isClientSide ? (
     <div className="min-h-screen flex flex-col">

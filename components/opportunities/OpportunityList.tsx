@@ -4,7 +4,7 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "../../components/ui/select";
 import { ScrollArea } from "../../components/ui/scroll-area";
-import { Search, Filter, CalendarIcon } from 'lucide-react';
+import { Search, Filter, Calendar, SortAsc } from 'lucide-react';
 import { Opportunity } from '../../context/types';
 import { StatusBadge } from './StatusBadge';
 
@@ -29,8 +29,10 @@ interface OpportunityListProps {
   setIsBatchSelectMode: (mode: boolean) => void;
   selectedJobIds: number[];
   toggleJobSelection: (id: number) => void;
+  selectMultipleJobs: (ids: number[]) => void;
   handleBatchDelete: () => void;
   isDarkMode: boolean;
+  dispatch: any;
 }
 
 export const OpportunityList = ({
@@ -54,8 +56,10 @@ export const OpportunityList = ({
   setIsBatchSelectMode,
   selectedJobIds,
   toggleJobSelection,
+  selectMultipleJobs,
   handleBatchDelete,
-  isDarkMode
+  isDarkMode,
+  dispatch
 }: OpportunityListProps) => {
   // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter(opp => {
@@ -180,72 +184,76 @@ export const OpportunityList = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-gray-500" />
-              <Select value={statusFilter} onValueChange={setStatusFilter} className="flex-1">
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Statuses</SelectItem>
-                  
-                  <SelectGroup>
-                    <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
-                    <SelectItem value="Bookmarked">Bookmarked</SelectItem>
-                    <SelectItem value="Interested">Interested</SelectItem>
-                    <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
-                    <SelectItem value="Networking">Networking</SelectItem>
-                  </SelectGroup>
-                  
-                  <SelectGroup>
-                    <SelectLabel className="select-category-label">Application</SelectLabel>
-                    <SelectItem value="Preparing Application">Preparing Application</SelectItem>
-                    <SelectItem value="Applied">Applied</SelectItem>
-                    <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
-                  </SelectGroup>
-                  
-                  <SelectGroup>
-                    <SelectLabel className="select-category-label">Interview Process</SelectLabel>
-                    <SelectItem value="Screening">Screening</SelectItem>
-                    <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
-                    <SelectItem value="First Interview">First Interview</SelectItem>
-                    <SelectItem value="Second Interview">Second Interview</SelectItem>
-                    <SelectItem value="Final Interview">Final Interview</SelectItem>
-                    <SelectItem value="Reference Check">Reference Check</SelectItem>
-                  </SelectGroup>
-                  
-                  <SelectGroup>
-                    <SelectLabel className="select-category-label">Decision</SelectLabel>
-                    <SelectItem value="Negotiating">Negotiating</SelectItem>
-                    <SelectItem value="Offer Received">Offer Received</SelectItem>
-                    <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
-                    <SelectItem value="Offer Declined">Offer Declined</SelectItem>
-                    <SelectItem value="Rejected">Rejected</SelectItem>
-                    <SelectItem value="Withdrawn">Withdrawn</SelectItem>
-                    <SelectItem value="Position Filled">Position Filled</SelectItem>
-                    <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
-                  </SelectGroup>
-                  
-                  <SelectGroup>
-                    <SelectLabel className="select-category-label">Follow-up</SelectLabel>
-                    <SelectItem value="Following Up">Following Up</SelectItem>
-                    <SelectItem value="Waiting">Waiting</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <div className="flex-1">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    
+                    <SelectGroup>
+                      <SelectLabel className="select-category-label">Initial Contact</SelectLabel>
+                      <SelectItem value="Bookmarked">Bookmarked</SelectItem>
+                      <SelectItem value="Interested">Interested</SelectItem>
+                      <SelectItem value="Recruiter Contact">Recruiter Contact</SelectItem>
+                      <SelectItem value="Networking">Networking</SelectItem>
+                    </SelectGroup>
+                    
+                    <SelectGroup>
+                      <SelectLabel className="select-category-label">Application</SelectLabel>
+                      <SelectItem value="Preparing Application">Preparing Application</SelectItem>
+                      <SelectItem value="Applied">Applied</SelectItem>
+                      <SelectItem value="Application Acknowledged">Application Acknowledged</SelectItem>
+                    </SelectGroup>
+                    
+                    <SelectGroup>
+                      <SelectLabel className="select-category-label">Interview Process</SelectLabel>
+                      <SelectItem value="Screening">Screening</SelectItem>
+                      <SelectItem value="Technical Assessment">Technical Assessment</SelectItem>
+                      <SelectItem value="First Interview">First Interview</SelectItem>
+                      <SelectItem value="Second Interview">Second Interview</SelectItem>
+                      <SelectItem value="Final Interview">Final Interview</SelectItem>
+                      <SelectItem value="Reference Check">Reference Check</SelectItem>
+                    </SelectGroup>
+                    
+                    <SelectGroup>
+                      <SelectLabel className="select-category-label">Decision</SelectLabel>
+                      <SelectItem value="Negotiating">Negotiating</SelectItem>
+                      <SelectItem value="Offer Received">Offer Received</SelectItem>
+                      <SelectItem value="Offer Accepted">Offer Accepted</SelectItem>
+                      <SelectItem value="Offer Declined">Offer Declined</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
+                      <SelectItem value="Withdrawn">Withdrawn</SelectItem>
+                      <SelectItem value="Position Filled">Position Filled</SelectItem>
+                      <SelectItem value="Position Cancelled">Position Cancelled</SelectItem>
+                    </SelectGroup>
+                    
+                    <SelectGroup>
+                      <SelectLabel className="select-category-label">Follow-up</SelectLabel>
+                      <SelectItem value="Following Up">Following Up</SelectItem>
+                      <SelectItem value="Waiting">Waiting</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
-              <CalendarIcon className="h-4 w-4 text-gray-500" />
-              <Select value={dateFilter} onValueChange={setDateFilter} className="flex-1">
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Dates</SelectItem>
-                  <SelectItem value="Last 7 Days">Last 7 Days</SelectItem>
-                  <SelectItem value="Last 30 Days">Last 30 Days</SelectItem>
-                  <SelectItem value="Last 90 Days">Last 90 Days</SelectItem>
-                </SelectContent>
-              </Select>
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <div className="flex-1">
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All dates</SelectItem>
+                    <SelectItem value="recent">Recent (7 days)</SelectItem>
+                    <SelectItem value="thisMonth">This month</SelectItem>
+                    <SelectItem value="lastMonth">Last month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           
@@ -253,36 +261,38 @@ export const OpportunityList = ({
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
             </svg>
-            <Select value={`${sortBy}-${sortDirection}`} onValueChange={(value) => {
-              const [field, direction] = value.split('-');
-              setSortBy(field);
-              setSortDirection(direction);
-            }} className="flex-1">
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Sort by Date</SelectLabel>
-                  <SelectItem value="lastModified-desc">Last Modified (Newest First)</SelectItem>
-                  <SelectItem value="lastModified-asc">Last Modified (Oldest First)</SelectItem>
-                  <SelectItem value="appliedDate-desc">Date Applied (Newest First)</SelectItem>
-                  <SelectItem value="appliedDate-asc">Date Applied (Oldest First)</SelectItem>
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Sort by Name</SelectLabel>
-                  <SelectItem value="company-asc">Company (A-Z)</SelectItem>
-                  <SelectItem value="company-desc">Company (Z-A)</SelectItem>
-                  <SelectItem value="position-asc">Position (A-Z)</SelectItem>
-                  <SelectItem value="position-desc">Position (Z-A)</SelectItem>
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Sort by Status</SelectLabel>
-                  <SelectItem value="status-asc">Status (A-Z)</SelectItem>
-                  <SelectItem value="status-desc">Status (Z-A)</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <div className="flex-1">
+              <Select value={`${sortBy}-${sortDirection}`} onValueChange={(value) => {
+                const [field, direction] = value.split('-');
+                setSortBy(field);
+                setSortDirection(direction);
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Sort by Date</SelectLabel>
+                    <SelectItem value="lastModified-desc">Last Modified (Newest First)</SelectItem>
+                    <SelectItem value="lastModified-asc">Last Modified (Oldest First)</SelectItem>
+                    <SelectItem value="appliedDate-desc">Date Applied (Newest First)</SelectItem>
+                    <SelectItem value="appliedDate-asc">Date Applied (Oldest First)</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Sort by Name</SelectLabel>
+                    <SelectItem value="company-asc">Company (A-Z)</SelectItem>
+                    <SelectItem value="company-desc">Company (Z-A)</SelectItem>
+                    <SelectItem value="position-asc">Position (A-Z)</SelectItem>
+                    <SelectItem value="position-desc">Position (Z-A)</SelectItem>
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>Sort by Status</SelectLabel>
+                    <SelectItem value="status-asc">Status (A-Z)</SelectItem>
+                    <SelectItem value="status-desc">Status (Z-A)</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
             
             <div className="flex space-x-1">
               <Button 
@@ -332,12 +342,19 @@ export const OpportunityList = ({
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    // Select all visible jobs
-                    sortedOpportunities.forEach(opp => {
-                      if (!selectedJobIds.includes(opp.id)) {
-                        toggleJobSelection(opp.id);
-                      }
-                    });
+                    // Get all currently visible opportunity IDs
+                    const visibleJobIds = sortedOpportunities.map(opp => opp.id);
+                    
+                    // If all visible jobs are already selected, deselect them all
+                    const allSelected = visibleJobIds.every(id => selectedJobIds.includes(id));
+                    
+                    if (allSelected) {
+                      // Deselect all visible jobs
+                      toggleJobSelection(-1); // This clears all selections
+                    } else {
+                      // Use the new function to select multiple jobs at once
+                      selectMultipleJobs(visibleJobIds);
+                    }
                   }}
                 >
                   Select All
@@ -404,16 +421,39 @@ export const OpportunityList = ({
                           <StatusBadge status={opp.status} />
                         </div>
                         <p className="text-xs text-gray-500 mt-1">{opp.appliedDate}</p>
-                        <p className="text-xs text-gray-400">
-                          Updated: {lastModifiedTimestamps[opp.id] 
-                            ? new Date(lastModifiedTimestamps[opp.id]).toLocaleString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) 
-                            : 'Never'}
-                        </p>
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-gray-400">
+                            Updated: {lastModifiedTimestamps[opp.id] 
+                              ? new Date(lastModifiedTimestamps[opp.id]).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) 
+                              : 'Never'}
+                          </p>
+                          {isBatchSelectMode && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent card selection
+                                if (window.confirm('Are you sure you want to delete this opportunity?')) {
+                                  try {
+                                    dispatch({ type: 'DELETE_OPPORTUNITY', payload: opp.id });
+                                  } catch (error) {
+                                    console.error('Error deleting opportunity:', error);
+                                    alert('Failed to delete opportunity. Please try again.');
+                                  }
+                                }
+                              }}
+                              className="p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900 text-red-500 dark:text-red-400 transition-colors"
+                              title="Delete opportunity"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
@@ -460,6 +500,27 @@ export const OpportunityList = ({
                         <span>{opp.appliedDate}</span>
                       </div>
                     </div>
+                    {isBatchSelectMode && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent list item selection
+                          if (window.confirm('Are you sure you want to delete this opportunity?')) {
+                            try {
+                              dispatch({ type: 'DELETE_OPPORTUNITY', payload: opp.id });
+                            } catch (error) {
+                              console.error('Error deleting opportunity:', error);
+                              alert('Failed to delete opportunity. Please try again.');
+                            }
+                          }
+                        }}
+                        className="ml-2 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900 text-red-500 dark:text-red-400 transition-colors"
+                        title="Delete opportunity"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 );
               }

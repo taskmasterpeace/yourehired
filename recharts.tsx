@@ -1,10 +1,5 @@
-import { 
-  BarChart, Bar, 
-  PieChart, Pie, Cell, 
-  LineChart, Line, 
-  AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
-} from 'recharts';
+import React from 'react';
+import * as RechartsOriginal from 'recharts';
 
 // Color schemes for charts
 export const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
@@ -34,10 +29,63 @@ export const STATUS_COLORS = {
   "Waiting": "#0284c7"
 };
 
-export { 
-  BarChart, Bar, 
-  PieChart, Pie, Cell, 
-  LineChart, Line, 
-  AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+// Create wrapper components to avoid circular reference
+export const BarChart: React.FC<any> = (props) => {
+  return <RechartsOriginal.BarChart {...props} />;
+};
+
+export const Bar: React.FC<any> = (props) => {
+  return <RechartsOriginal.Bar {...props} />;
+};
+
+export const PieChart: React.FC<any> = (props) => {
+  return <RechartsOriginal.PieChart {...props} />;
+};
+
+export const Pie: React.FC<any> = (props) => {
+  return <RechartsOriginal.Pie {...props} />;
+};
+
+export const Cell: React.FC<any> = (props) => {
+  return <RechartsOriginal.Cell {...props} />;
+};
+
+export const LineChart: React.FC<any> = (props) => {
+  return <RechartsOriginal.LineChart {...props} />;
+};
+
+export const Line: React.FC<any> = (props) => {
+  return <RechartsOriginal.Line {...props} />;
+};
+
+export const AreaChart: React.FC<any> = (props) => {
+  return <RechartsOriginal.AreaChart {...props} />;
+};
+
+export const Area: React.FC<any> = (props) => {
+  return <RechartsOriginal.Area {...props} />;
+};
+
+export const XAxis: React.FC<any> = (props) => {
+  return <RechartsOriginal.XAxis {...props} />;
+};
+
+export const YAxis: React.FC<any> = (props) => {
+  return <RechartsOriginal.YAxis {...props} />;
+};
+
+export const CartesianGrid: React.FC<any> = (props) => {
+  return <RechartsOriginal.CartesianGrid {...props} />;
+};
+
+export const Tooltip: React.FC<any> = (props) => {
+  return <RechartsOriginal.Tooltip {...props} />;
+};
+
+export const Legend: React.FC<any> = (props) => {
+  return <RechartsOriginal.Legend {...props} />;
+};
+
+export const ResponsiveContainer: React.FC<any> = (props) => {
+  return <RechartsOriginal.ResponsiveContainer {...props} />;
 };

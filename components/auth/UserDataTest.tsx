@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 
 export function UserDataTest() {
   const { user, isLoading, loadUserData, saveUserData } = useAuth();
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState<any>(null);
   const [testResult, setTestResult] = useState('');
   const [isDataLoading, setIsDataLoading] = useState(false);
 
@@ -25,7 +25,7 @@ export function UserDataTest() {
       const data = await loadUserData();
       setUserData(data);
       setTestResult('Data loaded successfully!');
-    } catch (err) {
+    } catch (err: any) {
       setTestResult(`Loading data failed: ${err.message}`);
     } finally {
       setIsDataLoading(false);
@@ -68,10 +68,12 @@ export function UserDataTest() {
       });
       
       setTestResult('Test data saved successfully!');
-      
-      // Reload data to show the changes
-      await handleLoadData();
-    } catch (err) {
+      setUserData({
+        opportunities: testOpportunities,
+        resume: testResume,
+        events: testEvents
+      });
+    } catch (err: any) {
       setTestResult(`Saving test data failed: ${err.message}`);
     } finally {
       setIsDataLoading(false);
@@ -90,11 +92,14 @@ export function UserDataTest() {
         events: []
       });
       
-      setTestResult('Data cleared successfully!');
+      setUserData({
+        opportunities: [],
+        resume: '',
+        events: []
+      });
       
-      // Reload data to show the changes
-      await handleLoadData();
-    } catch (err) {
+      setTestResult('Data cleared successfully!');
+    } catch (err: any) {
       setTestResult(`Clearing data failed: ${err.message}`);
     } finally {
       setIsDataLoading(false);

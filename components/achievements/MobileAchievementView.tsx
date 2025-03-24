@@ -247,8 +247,7 @@ export function MobileAchievementView({
                                   achievement.unlocked 
                                     ? 'bg-green-500' 
                                     : percentage > 0 
-                                      ? '
-                                      bg-blue-500' 
+                                      ? 'bg-blue-500' 
                                       : isDarkMode ? 'bg-gray-500' : 'bg-gray-300'
                                 }`} 
                                 style={{ width: `${percentage}%` }}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -11,40 +11,81 @@ export function SignInForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [signInTimer, setSignInTimer] = useState<NodeJS.Timeout | null>(null);
   const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
+
+  // Clear any active timer when component unmounts
+  useEffect(() => {
+    return () => {
+      if (signInTimer) {
+        clearTimeout(signInTimer);
+      }
+    };
+  }, [signInTimer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
+    
+    console.log('Sign in process started...');
+
+    // Set a timeout to handle stuck sign-in process
+    const timer = setTimeout(() => {
+      console.log('Sign in process timed out after 15 seconds');
+      setError('Sign in process is taking longer than expected. Please try again or use an alternative sign-in method.');
+      setIsLoading(false);
+    }, 15000); // 15 seconds timeout
+    
+    setSignInTimer(timer);
 
     try {
       // Check if signIn function exists (it might not if Supabase isn't initialized)
       if (!signIn) {
-        setError('Authentication service is not available. Please check console for details.');
+        clearTimeout(timer);
+        setSignInTimer(null);
+        setError('Authentication service is not available. Please try refreshing the page or check your internet connection.');
         console.error('Sign in function is not available - Supabase may not be properly initialized');
+        setIsLoading(false);
         return;
       }
 
+      console.log('Calling signIn function...');
       const { error, data } = await signIn(email, password);
+      
+      // Clear the timeout since we got a response
+      clearTimeout(timer);
+      setSignInTimer(null);
+      
       if (error) {
-        setError(error.message);
         console.error('Sign in error:', error);
+        // Provide more user-friendly error messages based on error type
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please try again.');
+        } else if (error.message.includes('network')) {
+          setError('Network error. Please check your internet connection and try again.');
+        } else {
+          setError(error.message || 'An error occurred during sign in.');
+        }
       } else if (data) {
         // Successful login, redirect to main application
+        console.log('Successfully signed in! Redirecting...');
         router.push('/app');
-        // Show success message
-        console.log('Successfully signed in!');
       } else {
         // No data and no error is unusual
         console.warn('Sign in returned neither data nor error');
         setError('Unable to sign in. Please try again later.');
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      // Clear the timeout since we got a response (even an error)
+      clearTimeout(timer);
+      setSignInTimer(null);
+      
       console.error('Unexpected error during sign in:', err);
+      setError('An unexpected error occurred. Please refresh the page and try again.');
     } finally {
+      // Set loading to false if not already done by the timeout
       setIsLoading(false);
     }
   };
@@ -53,17 +94,51 @@ export function SignInForm() {
     setError(null);
     setIsLoading(true);
     
+    console.log('Google sign in process started...');
+    
+    // Set a timeout for Google sign-in process
+    const timer = setTimeout(() => {
+      console.log('Google sign in process timed out');
+      setError('Google sign in is taking longer than expected. Please check your popup blocker and try again.');
+      setIsLoading(false);
+    }, 30000); // 30 seconds timeout for OAuth
+    
+    setSignInTimer(timer);
+    
     try {
+      if (!signInWithGoogle) {
+        clearTimeout(timer);
+        setSignInTimer(null);
+        setError('Google authentication is not available. Please try refreshing the page.');
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('Calling signInWithGoogle function...');
       const { error } = await signInWithGoogle();
+      
+      // Clear the timeout since we got a response
+      clearTimeout(timer);
+      setSignInTimer(null);
+      
       if (error) {
-        setError(error.message);
         console.error('Google sign in error:', error);
+        // Check for specific Google sign-in errors
+        if (error.message.includes('popup')) {
+          setError('Google sign-in popup was blocked. Please allow popups for this site and try again.');
+        } else {
+          setError(error.message || 'An error occurred during Google sign in.');
+        }
         setIsLoading(false);
       }
       // No need to redirect here as the OAuth redirect will handle it
     } catch (err) {
-      setError('An unexpected error occurred with Google sign in');
+      // Clear the timeout
+      clearTimeout(timer);
+      setSignInTimer(null);
+      
       console.error('Unexpected error during Google sign in:', err);
+      setError('An unexpected error occurred with Google sign in. Please try again later.');
       setIsLoading(false);
     }
   };

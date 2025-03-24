@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import TUICalendarView from "./TUICalendarView";
+import FullCalendarView from "./FullCalendarView";
 
 const CalendarView = ({ 
   events = [], 
@@ -15,7 +15,7 @@ const CalendarView = ({
   console.log("Opportunities count:", opportunities.length);
   
   return (
-    <TUICalendarView 
+    <FullCalendarView 
       events={events}
       opportunities={opportunities}
       user={user}

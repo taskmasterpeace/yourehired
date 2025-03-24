@@ -66,7 +66,7 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
         // Log the raw data for debugging
         console.log("Raw imported data:", rawText.substring(0, 200) + "...");
         
-        let data;
+        let data: any;
         
         try {
           // First attempt: standard JSON parse
@@ -207,7 +207,7 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
           if (normalizedJob.keywords) {
             // Ensure keywords have the correct structure
             normalizedJob.keywords = Array.isArray(normalizedJob.keywords) ? 
-              normalizedJob.keywords.map(keyword => {
+              normalizedJob.keywords.map((keyword: any) => {
                 if (typeof keyword === 'string') {
                   // Convert string keywords to proper format
                   return {
@@ -685,7 +685,7 @@ export function DataManagement({ isDarkMode, onNavigateBack }: DataManagementPro
                 }
               }}
               className="mt-3 flex items-center gap-2"
-              variant="primary"
+              variant="default"
             >
               <ArrowLeft className="h-4 w-4" />
               Return to Dashboard to View Imported Data

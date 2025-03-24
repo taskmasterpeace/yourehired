@@ -16,7 +16,6 @@ import {
   Zap, Star, Clock, TrendingUp, Calendar, ChartPie as ChartIcon, Gamepad2 as GamepadIcon
 } from 'lucide-react';
 import { TooltipHelper } from "../ui/tooltip-helper";
-import { tooltipContent } from "../../lib/tooltipContent";
 import { AchievementRulesPanel } from "../achievements/AchievementRulesPanel";
 import { ProgressTracker } from "../achievements/ProgressTracker";
 import { LevelBenefitsExplainer } from "../levels/LevelBenefitsExplainer";
@@ -24,12 +23,142 @@ import { TimelineWithMilestones } from "../timeline/TimelineWithMilestones";
 import { AchievementCollection } from "../achievements/AchievementCollection";
 import { EnhancedProgressBar } from "../achievements/EnhancedProgressBar";
 
+// Define the TimelineDataPoint interface to match what TimelineWithMilestones expects
+interface TimelineEvent {
+  id: string;
+  date: string;
+  type: 'application' | 'response' | 'interview' | 'offer' | 'achievement';
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+interface TimelineDataPoint {
+  date: string;
+  count: number;
+  totalCount: number;
+  events?: TimelineEvent[];
+}
+
+interface JobSearchInsight {
+  title: string;
+  description: string;
+  actionItems?: string[];
+  icon?: string;
+}
+
+interface StatusBreakdown {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface Challenge {
+  id: string;
+  title?: string;
+  name: string;
+  description: string;
+  reward: string;
+  progress: number;
+  total?: number;
+  target: number;
+  icon: string;
+  complete: boolean;
+  expires?: string;
+}
+
+interface LevelBenefit {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+interface AchievementProgress {
+  total: number;
+  completed: number;
+  inProgress: number;
+}
+
+// Interface for the Achievement type used in this component
+interface AchievementType {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  progress: number;
+  total: number;
+  category?: string;
+  points?: number;
+  rarity?: string;
+}
+
+interface ApplicationTimeline {
+  '7days': Array<{date: Date | string; count: number; totalCount: number; events?: TimelineEvent[]}>;
+  '30days': Array<{date: Date | string; count: number; totalCount: number; events?: TimelineEvent[]}>;
+  '90days': Array<{date: Date | string; count: number; totalCount: number; events?: TimelineEvent[]}>;
+  'all': Array<{date: Date | string; count: number; totalCount: number; events?: TimelineEvent[]}>;
+  [key: string]: Array<{date: Date | string; count: number; totalCount: number; events?: TimelineEvent[]}>;
+}
+
+interface AnalyticsData {
+  totalApplications: number;
+  responseRate: string;
+  interviewRate: string;
+  offerRate: string;
+  activeApplications: number;
+  weeklyApplicationCount?: number;
+  statusCounts: Record<string, number>;
+  applicationTimeline: ApplicationTimeline;
+  jobSearchStats: {
+    level: number;
+    progress: number;
+    nextLevelScore: number;
+    pointsToNextLevel: number;
+    totalScore: number;
+  };
+  achievements: AchievementType[];
+  weeklyPatterns?: {
+    activityByDay: { day: string; count: number }[];
+    mostActiveDay: { day: string; count: number };
+    leastActiveDay: { day: string; count: number };
+  };
+  weeklyChallenges: Challenge[];
+  jobSearchInsights: JobSearchInsight[];
+}
+
+interface Opportunity {
+  id: number;
+  company: string;
+  position: string;
+  status: string;
+  appliedDate: string;
+  [key: string]: any;
+}
+
 interface AnalyticsTabProps {
-  analytics: any;
-  opportunities: any[];
+  analytics: AnalyticsData;
+  opportunities: Opportunity[];
   isDarkMode: boolean;
   user: any;
 }
+
+// Define local tooltip content to avoid the errors
+const localTooltipContent = {
+  totalApplications: "Total number of job applications you've submitted",
+  responseRate: "Percentage of applications that received a response",
+  interviewRate: "Percentage of applications that led to interviews",
+  offerRate: "Percentage of applications that resulted in job offers",
+  jobSearchLevel: "Your job search level based on activity and achievements",
+  applicationTimeline: "Timeline showing your application activity over time",
+  weeklyPatterns: "Patterns in your job search activity by day of week",
+  currentStreak: "Your current consecutive days of job search activity",
+  achievements: "Progress towards unlocking job search achievements",
+  weeklyChallenges: "Weekly challenges to boost your job search",
+  statusBreakdown: "Breakdown of your applications by current status",
+  insights: "Key insights about your job applications",
+  levelBenefits: "Benefits you unlock at each level"
+};
 
 export function AnalyticsTab({
   analytics,
@@ -37,7 +166,7 @@ export function AnalyticsTab({
   isDarkMode,
   user
 }: AnalyticsTabProps) {
-  const [timelinePeriod, setTimelinePeriod] = useState('30days');
+  const [timelinePeriod, setTimelinePeriod] = useState<string>('30days');
   const [achievementRulesPanelOpen, setAchievementRulesPanelOpen] = useState(false);
   
   // Convert status counts to chart data
@@ -47,7 +176,18 @@ export function AnalyticsTab({
   }));
   
   // Get timeline data based on selected period
-  const timelineData = analytics.applicationTimeline?.[timelinePeriod] || [];
+  const timelineData = analytics.applicationTimeline?.[timelinePeriod as keyof ApplicationTimeline] || [];
+
+  // Helper function to convert Date objects to strings for TimelineWithMilestones
+  const convertTimelineData = (period: string): TimelineDataPoint[] => {
+    return (analytics.applicationTimeline?.[period as keyof ApplicationTimeline] || []).map(item => ({
+      // Convert Date to string if it's a Date object
+      date: typeof item.date === 'string' ? item.date : item.date.toISOString().split('T')[0],
+      count: item.count,
+      totalCount: item.totalCount,
+      events: item.events
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -72,7 +212,7 @@ export function AnalyticsTab({
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl flex items-center">
                   Total Applications
-                  <TooltipHelper content={tooltipContent.totalApplications} />
+                  <TooltipHelper content={localTooltipContent.totalApplications} />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -92,7 +232,7 @@ export function AnalyticsTab({
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center">
                   Response Rate
-                  <TooltipHelper content={tooltipContent.responseRate} />
+                  <TooltipHelper content={localTooltipContent.responseRate} />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -112,7 +252,7 @@ export function AnalyticsTab({
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center">
                   Interview Rate
-                  <TooltipHelper content={tooltipContent.interviewRate} />
+                  <TooltipHelper content={localTooltipContent.interviewRate} />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -132,7 +272,7 @@ export function AnalyticsTab({
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center">
                   Offer Rate
-                  <TooltipHelper content={tooltipContent.offerRate} />
+                  <TooltipHelper content={localTooltipContent.offerRate} />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -154,7 +294,7 @@ export function AnalyticsTab({
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
                 Insights & Applications Needing Attention
-                <TooltipHelper content={tooltipContent.applicationInsights || "Key insights about your job applications"} />
+                <TooltipHelper content={localTooltipContent.insights} />
               </CardTitle>
               <CardDescription>
                 Important information about your job search that needs attention
@@ -261,13 +401,16 @@ export function AnalyticsTab({
                 <div>
                   <CardTitle className="text-xl flex items-center">
                     Application Timeline
-                    <TooltipHelper content={tooltipContent.applicationTimeline || "Visual timeline of your application activity"} />
+                    <TooltipHelper content={localTooltipContent.applicationTimeline} />
                   </CardTitle>
                   <CardDescription>
                     Track your application progress over time
                   </CardDescription>
                 </div>
-                <Select value={timelinePeriod} onValueChange={setTimelinePeriod}>
+                <Select 
+                  value={timelinePeriod} 
+                  onValueChange={(value) => setTimelinePeriod(value)}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select time period" />
                   </SelectTrigger>
@@ -282,6 +425,12 @@ export function AnalyticsTab({
             </CardHeader>
             <CardContent>
               <div className="mb-6">
+                <div className="flex items-center mb-2">
+                  <h2 className="text-xl font-medium mr-2">Application Analytics</h2>
+                  <TooltipHelper 
+                    content="Key insights about your job applications"
+                  />
+                </div>
                 <h3 className="text-lg font-medium mb-3">Application Stage Timeline</h3>
                 <div className="overflow-x-auto pb-4">
                   <div className="min-w-[800px]">
@@ -318,7 +467,7 @@ export function AnalyticsTab({
                               style={{ 
                                 left: `${position}%`, 
                                 transform: 'translateX(-50%)',
-                                backgroundColor: STATUS_COLORS[opp.status] || '#64748b'
+                                backgroundColor: STATUS_COLORS[opp.status as keyof typeof STATUS_COLORS] || '#64748b'
                               }}
                             >
                               {opp.company?.charAt(0) || '?'}
@@ -343,10 +492,10 @@ export function AnalyticsTab({
               
               <TimelineWithMilestones 
                 timelineData={{
-                  '7days': analytics.applicationTimeline?.['7days'] || [],
-                  '30days': analytics.applicationTimeline?.['30days'] || [],
-                  '90days': analytics.applicationTimeline?.['90days'] || [],
-                  'all': analytics.applicationTimeline?.['all'] || []
+                  '7days': convertTimelineData('7days'),
+                  '30days': convertTimelineData('30days'),
+                  '90days': convertTimelineData('90days'),
+                  'all': convertTimelineData('all')
                 }}
                 isDarkMode={isDarkMode}
               />
@@ -410,7 +559,7 @@ export function AnalyticsTab({
             <CardHeader>
               <CardTitle className="text-xl flex items-center">
                 Application Status Breakdown
-                <TooltipHelper content={tooltipContent.statusBreakdown || "Distribution of your applications by status"} />
+                <TooltipHelper content={localTooltipContent.statusBreakdown} />
               </CardTitle>
               <CardDescription>
                 Detailed breakdown of your job application statuses
@@ -455,7 +604,7 @@ export function AnalyticsTab({
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center">
                   Job Search Level
-                  <TooltipHelper content={tooltipContent.jobSearchLevel} />
+                  <TooltipHelper content={localTooltipContent.jobSearchLevel} />
                 </CardTitle>
                 <CardDescription className="text-base">
                   Your progress in the job search journey
@@ -471,7 +620,7 @@ export function AnalyticsTab({
                       progress={analytics.jobSearchStats.progress || 0}
                       total={100}
                       isDarkMode={isDarkMode}
-                      height="h-3"
+                      size="lg"
                     />
                     <p className="text-lg mt-3">
                       {analytics.jobSearchStats.totalScore || 0} points • Next level at {analytics.jobSearchStats.nextLevelScore || 100} points
@@ -495,7 +644,7 @@ export function AnalyticsTab({
               <CardHeader>
                 <CardTitle className="text-xl flex items-center">
                   Weekly Challenges
-                  <TooltipHelper content={tooltipContent.weeklyChallenges} />
+                  <TooltipHelper content={localTooltipContent.weeklyChallenges} />
                 </CardTitle>
                 <CardDescription className="text-base">
                   Complete these challenges to boost your job search
@@ -555,12 +704,12 @@ export function AnalyticsTab({
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center">
                     Achievement Progress
-                    <TooltipHelper content={tooltipContent.achievementProgress || "Track your achievement progress"} />
+                    <TooltipHelper content={localTooltipContent.achievements} />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ProgressTracker 
-                    achievements={analytics.achievements} 
+                    achievements={analytics.achievements as any} 
                     isDarkMode={isDarkMode} 
                   />
                 </CardContent>
@@ -573,7 +722,7 @@ export function AnalyticsTab({
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center">
                     Level Benefits
-                    <TooltipHelper content={tooltipContent.levelBenefits || "Benefits you unlock at each level"} />
+                    <TooltipHelper content={localTooltipContent.levelBenefits} />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -591,7 +740,7 @@ export function AnalyticsTab({
           {/* Achievement Collection */}
           {analytics.achievements && analytics.achievements.length > 0 && (
             <AchievementCollection 
-              achievements={analytics.achievements} 
+              achievements={analytics.achievements as any}
               isDarkMode={isDarkMode}
             />
           )}

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useToast } from "../ui/use-toast";
 import { getEventColor } from './calendarUtils';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { Button } from "../ui/button";
 
 // Setup the localizer for react-big-calendar
 const locales = {
@@ -218,39 +219,58 @@ const BigCalendarView = ({
   const handleSaveEvent = (eventData) => {
     const isNewEvent = !eventData.id;
     
-    // Here you would dispatch to your state management
-    if (dispatch) {
-      dispatch({ 
-        type: isNewEvent ? 'ADD_EVENT' : 'UPDATE_EVENT', 
-        payload: eventData 
-      });
+    try {
+      // Ensure opportunityId is a number if provided
+      let finalEventData = { ...eventData };
       
-      // Show toast notification with more details
-      toast({
-        title: isNewEvent ? "Event Created Successfully" : "Event Updated Successfully",
-        description: `"${eventData.title}" has been ${isNewEvent ? 'added to' : 'updated in'} your calendar.`,
-        variant: "success",
-        duration: 3000,
-      });
-    } else {
-      console.warn("No dispatch function provided to BigCalendarView");
+      if (finalEventData.opportunityId) {
+        // Convert opportunityId to number if it's a string
+        finalEventData.opportunityId = typeof finalEventData.opportunityId === 'string' ? 
+          parseInt(finalEventData.opportunityId, 10) : finalEventData.opportunityId;
+      }
+
+      // Here you would dispatch to your state management
+      if (dispatch) {
+        dispatch({ 
+          type: isNewEvent ? 'ADD_EVENT' : 'UPDATE_EVENT', 
+          payload: isNewEvent ? finalEventData : { id: finalEventData.id, updates: finalEventData } 
+        });
+        
+        // Show toast notification with more details
+        toast({
+          title: isNewEvent ? "Event Created Successfully" : "Event Updated Successfully",
+          description: `"${eventData.title}" has been ${isNewEvent ? 'added to' : 'updated in'} your calendar.`,
+          variant: "success",
+          duration: 3000,
+        });
+      } else {
+        console.warn("No dispatch function provided to BigCalendarView");
+        
+        // Show error toast
+        toast({
+          title: "Error Saving Event",
+          description: "There was a problem saving the event. Please try again.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
       
-      // Show error toast
+      setIsEventModalOpen(false);
+      setCurrentEvent(null);
+    } catch (error) {
+      console.error("Error saving event:", error);
       toast({
         title: "Error Saving Event",
-        description: "There was a problem saving the event. Please try again.",
+        description: "There was a problem saving the event: " + error.message,
         variant: "destructive",
         duration: 3000,
       });
     }
-    
-    setIsEventModalOpen(false);
-    setCurrentEvent(null);
   };
   
   // Handle deleting an event
   const handleDeleteEvent = (eventId) => {
-    console.log("Delete request received for:", eventId);
+    console.log("Delete request received in BigCalendarView:", eventId);
     
     if (!dispatch) {
       console.error("No dispatch function available");
@@ -263,56 +283,43 @@ const BigCalendarView = ({
       return;
     }
     
-    // Step 1: Extract the original event ID regardless of input format
-    let originalEventId;
-    
-    // If we received a formatted event from the calendar
-    if (typeof eventId === 'object' && eventId.resource) {
-      originalEventId = eventId.resource.id;
-      console.log("Extracted ID from resource:", originalEventId);
-    }
-    // If we received an event directly from the modal
-    else if (typeof eventId === 'object' && eventId.id) {
-      originalEventId = eventId.id;
-      console.log("Extracted ID from event object:", originalEventId);
-    }
-    // If we already received just the ID
-    else {
-      originalEventId = eventId;
-      console.log("Using provided ID directly:", originalEventId);
-    }
-    
-    // Step 2: Verify the event exists in the state
-    const eventExists = events.some(e => e.id === originalEventId);
-    
-    if (!eventExists) {
-      console.error(`Event with ID ${originalEventId} not found in state`);
+    try {
+      // Convert to number if it's a string
+      let idToDelete = eventId;
+      
+      if (typeof idToDelete === 'string' && !isNaN(parseInt(idToDelete, 10))) {
+        idToDelete = parseInt(idToDelete, 10);
+        console.log("Converted string ID to number:", idToDelete);
+      }
+      
+      console.log("Final ID to delete:", idToDelete);
+      
+      // Dispatch the delete action
+      dispatch({
+        type: 'DELETE_EVENT',
+        payload: idToDelete
+      });
+      
+      // Update the UI
+      toast({
+        title: "Event Deleted",
+        description: "The event has been removed from your calendar.",
+        variant: "success",
+        duration: 3000,
+      });
+      
+      // Clean up any open UI elements
+      setIsEventModalOpen(false);
+      setCurrentEvent(null);
+    } catch (error) {
+      console.error("Error deleting event:", error);
       toast({
         title: "Error Deleting Event",
-        description: "The event could not be found in your calendar.",
+        description: error.message || "Could not delete the event. Please try again.",
         variant: "destructive",
         duration: 3000,
       });
-      return;
     }
-    
-    // Step 3: Dispatch the delete action with the verified ID
-    dispatch({
-      type: 'DELETE_EVENT',
-      payload: originalEventId
-    });
-    
-    // Step 4: Update the UI
-    toast({
-      title: "Event Deleted",
-      description: "The event has been removed from your calendar.",
-      variant: "success",
-      duration: 3000,
-    });
-    
-    // Step 5: Clean up any open UI elements
-    setIsEventModalOpen(false);
-    setCurrentEvent(null);
   };
   
   // Handle date navigation
@@ -374,6 +381,17 @@ const BigCalendarView = ({
     agenda: true
   };
   
+  // Debug function to log events
+  const logEvents = () => {
+    console.log("All events:", events);
+    console.log("Event IDs:", events.map(e => e.id));
+    toast({
+      title: "Events Logged",
+      description: `${events.length} events found. Check console.`,
+      duration: 3000,
+    });
+  };
+  
   return (
     <div className="grid grid-cols-1 gap-4">
       <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -387,6 +405,18 @@ const BigCalendarView = ({
             onCreateEvent={() => handleSelectSlot({ start: selectedDate })}
             onNavigate={handleNavigate}
           />
+          
+          {/* Debug button */}
+          <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={logEvents}
+              className="text-xs"
+            >
+              Debug: Log Events
+            </Button>
+          </div>
           
           <div className="p-2 sm:p-4" style={{ height: isMobile ? '60vh' : '70vh' }}>
             <Calendar

@@ -23,7 +23,7 @@ export default function LoginPage() {
     }
   }, [user, isLoading, router]);
 
-  const handleEmailLogin = async (e) => {
+  const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');

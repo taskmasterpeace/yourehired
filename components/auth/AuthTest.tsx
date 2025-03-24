@@ -14,10 +14,10 @@ export function AuthTest() {
       console.log("Direct auth test starting");
       
       // Check if we're using the real client
-      const isDummyClient = !supabase.supabaseUrl;
+      const isDummyClient = !(supabase as any).supabaseUrl;
       console.log("Client check:", {
         isDummyClient,
-        hasUrl: !!supabase.supabaseUrl,
+        hasUrl: !!(supabase as any).supabaseUrl,
         hasAuth: !!supabase.auth
       });
       
@@ -41,7 +41,7 @@ export function AuthTest() {
       
       setResult({ 
         success: !!data.session, 
-        userId: data.user?.id || null,
+        userId: data.session?.user?.id || null,
         error: error?.message || null 
       });
     } catch (e) {

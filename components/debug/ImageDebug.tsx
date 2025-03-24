@@ -4,7 +4,7 @@ import React from 'react';
  * A component to debug image loading issues
  * This component attempts to load an image and reports success/failure
  */
-export default function ImageDebug({ src, alt = "Debug image" }) {
+export default function ImageDebug({ src, alt = "Debug image" }: { src: string, alt?: string }) {
   const [status, setStatus] = React.useState('loading');
   
   return (

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "../ui/select";
-import { Trash2 } from 'lucide-react';
+import { Trash2, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   AlertDialog,
@@ -29,6 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import QRCode from 'qrcode.react';
+import { toast } from "@/components/ui/use-toast";
 
 const TUIEventForm = ({
   isOpen,
@@ -47,10 +49,23 @@ const TUIEventForm = ({
     endDate: new Date(Date.now() + 60 * 60 * 1000),
     type: 'general',
     description: '',
-    opportunityId: ''
+    opportunityId: '',
+    location: ''
   });
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  
+  // Generate calendar event URL for QR code
+  const generateCalendarEventUrl = () => {
+    const startDate = format(eventData.startDate, "yyyyMMdd'T'HHmmss'Z'");
+    const endDate = format(eventData.endDate, "yyyyMMdd'T'HHmmss'Z'");
+    const title = encodeURIComponent(eventData.title);
+    const description = encodeURIComponent(eventData.description);
+    const location = encodeURIComponent(eventData.location);
+    
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${description}&location=${location}&dates=${startDate}/${endDate}`;
+  };
   
   // Debug logging
   useEffect(() => {
@@ -98,12 +113,13 @@ const TUIEventForm = ({
         const newEventData = {
           id: event.id || '',
           title: event.title || '',
-          date: startDate, // Keep date for compatibility
+          date: startDate,
           startDate: startDate,
           endDate: endDate,
           type: event.type || event.calendarId || 'general',
           description: event.description || event.body || '',
-          opportunityId: event.opportunityId || ''
+          opportunityId: event.opportunityId || '',
+          location: event.location || ''
         };
         
         console.log("New event data being set:", newEventData);
@@ -119,7 +135,8 @@ const TUIEventForm = ({
           endDate: new Date(Date.now() + 60 * 60 * 1000),
           type: 'general',
           description: '',
-          opportunityId: ''
+          opportunityId: '',
+          location: ''
         });
       }
     } else {
@@ -132,7 +149,8 @@ const TUIEventForm = ({
         endDate: new Date(Date.now() + 60 * 60 * 1000),
         type: 'general',
         description: '',
-        opportunityId: ''
+        opportunityId: '',
+        location: ''
       });
     }
   }, [event]);
@@ -173,18 +191,46 @@ const TUIEventForm = ({
     e.preventDefault();
     
     try {
+      // Create date objects for start and end times
+      const startDate = new Date(eventData.date);
+      const [startHours, startMinutes] = format(eventData.startDate, 'HH:mm').split(':');
+      startDate.setHours(parseInt(startHours, 10), parseInt(startMinutes, 10));
+      
+      const endDate = new Date(eventData.date);
+      const [endHours, endMinutes] = format(eventData.endDate, 'HH:mm').split(':');
+      endDate.setHours(parseInt(endHours, 10), parseInt(endMinutes, 10));
+      
       // Prepare the complete event object
       const completeEvent = {
         ...eventData,
-        // Ensure date field is set for compatibility
-        date: eventData.startDate
+        startDate,
+        endDate
       };
       
+      // If associated with an opportunity, add that data
+      if (eventData.opportunityId) {
+        const opportunity = opportunities.find(opp => opp.id === eventData.opportunityId);
+        if (opportunity) {
+          completeEvent.opportunity = {
+            id: opportunity.id,
+            company: opportunity.company,
+            position: opportunity.position
+          };
+        }
+      }
+      
       onSave(completeEvent);
-      onClose();
+      toast({
+        title: eventData.id ? "Event updated" : "Event created",
+        description: "Your event has been saved successfully.",
+      });
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("There was an error saving the event. Please try again.");
+      toast({
+        title: "Error",
+        description: "There was an error saving the event. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   
@@ -194,7 +240,10 @@ const TUIEventForm = ({
       if (onDelete && eventData.id) {
         onDelete(eventData.id);
         setIsDeleteDialogOpen(false);
-        onClose();
+        toast({
+          title: "Event deleted",
+          description: "Your event has been deleted successfully.",
+        });
       }
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -277,6 +326,18 @@ const TUIEventForm = ({
                 </div>
               </div>
               
+              {/* Location */}
+              <div className="grid gap-2">
+                <Label htmlFor="location" className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Location</Label>
+                <Input
+                  id="location"
+                  value={eventData.location}
+                  onChange={(e) => handleChange('location', e.target.value)}
+                  placeholder="Enter event location"
+                  className={isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}
+                />
+              </div>
+              
               {/* Event Type and Associated Opportunity */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -351,6 +412,18 @@ const TUIEventForm = ({
                   Delete
                 </Button>
               )}
+              {/* QR Code button - only show when editing */}
+              {eventData.id && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowQRCode(true)}
+                  className="w-full sm:w-1/3"
+                >
+                  <QrCode className="h-4 w-4 mr-2" />
+                  QR Code
+                </Button>
+              )}
               <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-1/3">
                 Cancel
               </Button>
@@ -385,6 +458,28 @@ const TUIEventForm = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* QR Code dialog */}
+      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+        <DialogContent
+          className={`sm:max-w-[300px] ${isDarkMode ? 'bg-gray-800 text-gray-100 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
+        >
+          <DialogHeader>
+            <DialogTitle className={isDarkMode ? 'text-gray-100' : 'text-gray-900'}>Event QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center p-4">
+            <QRCode
+              value={generateCalendarEventUrl()}
+              size={200}
+              level="H"
+              includeMargin={true}
+            />
+            <p className="mt-4 text-sm text-center">
+              Scan this QR code to add this event to your calendar
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

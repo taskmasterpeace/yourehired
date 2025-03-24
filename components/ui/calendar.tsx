@@ -1,8 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 import { DayPicker } from "react-day-picker"
+import { addDays, format, isToday } from "date-fns"
 
 import { cn } from "../../lib/utils"
 import { buttonVariants } from "../ui/button"
@@ -80,81 +81,61 @@ function Calendar({
     }
   };
   // Custom day renderer to show event indicators with improved error handling
-  const renderDay = (day: Date, selectedDay: Date, dayProps: any) => {
-    // Add debugging to see what's happening
-    console.log("Rendering day:", day, dayProps);
-    
-    // Early return if dayProps is missing
-    if (!dayProps) {
-      console.warn("Calendar: dayProps is undefined in renderDay");
-      return <div>{day?.getDate?.() || ""}</div>;
-    }
+  const renderDay = React.useCallback(
+    (props: React.HTMLAttributes<HTMLDivElement> & { 
+      day: { date: Date; displayMonth: Date; outside: boolean; }; 
+      modifiers: Record<string, boolean>; 
+    }) => {
+      const { day, modifiers, ...dayProps } = props;
+      // Only process if it's a Date object
+      if (!(day.date instanceof Date)) {
+        return <div {...dayProps}>Invalid</div>;
+      }
 
-    try {
-      // Comprehensive safety check for the day parameter
-      if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
-        return <div {...dayProps}>{dayProps.children}</div>;
-      }
-      
-      // Safely get events for this day
-      let dayEvents = [];
-      try {
-        dayEvents = getEventsForDay(day);
-      } catch (eventError) {
-        console.error("Error getting events for day:", eventError);
-        dayEvents = [];
-      }
-      
-      const hasEvents = dayEvents.length > 0;
-      
-      // Generate a safe key prefix
-      const safeKeyPrefix = day instanceof Date && !isNaN(day.getTime()) 
-        ? day.toISOString() 
-        : `fallback-${Math.random()}`;
+      const currentEvents = getEventsForDay(day.date);
+      const hasEvents = currentEvents.length > 0;
+      const isDayToday = isToday(day.date);
       
       return (
-        <div {...dayProps} className={cn(dayProps.className)}>
-          <div className="relative h-full w-full p-0">
-            <div className="h-9 w-9 p-0 font-normal aria-selected:opacity-100 flex items-center justify-center">
-              {day.getDate()}
-            </div>
-            
-            {hasEvents && (
-              <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1">
-                {dayEvents.slice(0, 3).map((event, i) => {
-                  // Safe event color determination
-                  let eventColor;
-                  try {
-                    eventColor = getEventColor(event);
-                  } catch (colorError) {
-                    console.error("Error getting event color:", colorError);
-                    eventColor = "bg-muted-foreground";
-                  }
-                  
-                  // Ensure we're only using the background color class
-                  const bgColorClass = eventColor.split(' ')[0];
-                  
-                  return (
-                    <div 
-                      key={`${safeKeyPrefix}-event-${i}-${event?.id || i}`} 
-                      className={`h-1.5 w-1.5 rounded-full ${bgColorClass}`}
-                    />
-                  );
-                })}
-                {dayEvents.length > 3 && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
-                )}
-              </div>
-            )}
+        <div
+          {...dayProps}
+          className={cn(
+            'relative p-0',
+            dayProps.className,
+            hasEvents && 'has-events'
+          )}
+        >
+          <div className={cn(
+            'flex h-9 w-9 items-center justify-center rounded-md',
+            isDayToday && 'bg-primary text-primary-foreground font-bold'
+          )}>
+            <time dateTime={format(day.date, 'yyyy-MM-dd')}>
+              {format(day.date, 'd')}
+            </time>
           </div>
+          
+          {/* Event indicators */}
+          {hasEvents && (
+            <div className={cn(
+              "absolute bottom-1 left-1/2 transform -translate-x-1/2 flex space-x-0.5"
+            )}>
+              {currentEvents.slice(0, 3).map((event, idx) => (
+                <div 
+                  key={idx} 
+                  className="h-1 w-1 rounded-full" 
+                  style={{ backgroundColor: getEventColor(event) }} 
+                />
+              ))}
+              {currentEvents.length > 3 && (
+                <div className="h-1 w-1 rounded-full bg-gray-400" />
+              )}
+            </div>
+          )}
         </div>
       );
-    } catch (error) {
-      // Fallback in case of any unexpected errors
-      console.error("Error rendering calendar day:", error);
-      return <div {...(dayProps || {})}>{dayProps?.children || day?.getDate?.() || ""}</div>;
-    }
-  };
+    },
+    [events]
+  );
   
   return (
     <DayPicker
@@ -195,8 +176,12 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        Chevron: ({ orientation, ...props }) => {
+          if (orientation === 'left') {
+            return <ChevronLeft className="h-4 w-4" />;
+          }
+          return <ChevronRight className="h-4 w-4" />;
+        },
         Day: renderDay
       }}
       {...props}
