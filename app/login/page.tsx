@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -28,6 +27,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clickCount, setClickCount] = useState(0); // Add this for debugging
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get("redirectTo") || "/app";
   const { user, isLoading: authLoading } = useAuth();
@@ -60,13 +60,11 @@ export default function LoginPage() {
   const handleEmailLogin = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     setError("");
-
     // Using updated AuthService that returns errors instead of throwing them
     const { error: signInError } = await AuthService.signIn(
       values.email,
       values.password
     );
-
     if (signInError) {
       console.error("Login error:", signInError);
       // Handle specific error messages for better user experience
@@ -102,6 +100,16 @@ export default function LoginPage() {
     // If successful, redirect will happen automatically when auth state changes
   };
 
+  // New signup handler that uses window.location
+  const goToSignup = (e) => {
+    e.preventDefault();
+    console.log(`Sign up clicked. Click count: ${clickCount + 1}`);
+    setClickCount((prev) => prev + 1);
+
+    // Force navigation with window.location for reliability
+    window.location.href = "/signup";
+  };
+
   // If user exists or auth is loading, show loading indicator
   if ((user || authLoading) && !error) {
     return (
@@ -128,7 +136,6 @@ export default function LoginPage() {
     >
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40"></div>
-
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
@@ -152,7 +159,6 @@ export default function LoginPage() {
             </Button>
           </Link>
         </header>
-
         {/* Main content */}
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
@@ -171,14 +177,12 @@ export default function LoginPage() {
                 Sign in to your account
               </p>
             </div>
-
             {error && (
               <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md flex items-start">
                 <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 text-red-500" />
                 <p>{error}</p>
               </div>
             )}
-
             <div className="space-y-4">
               <Button
                 onClick={handleGoogleLogin}
@@ -197,7 +201,6 @@ export default function LoginPage() {
                 )}
                 Continue with Google
               </Button>
-
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
@@ -208,7 +211,6 @@ export default function LoginPage() {
                   </span>
                 </div>
               </div>
-
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(handleEmailLogin)}
@@ -242,7 +244,6 @@ export default function LoginPage() {
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="password"
@@ -278,7 +279,6 @@ export default function LoginPage() {
                       </FormItem>
                     )}
                   />
-
                   <Button
                     type="submit"
                     className="w-full"
@@ -290,27 +290,30 @@ export default function LoginPage() {
                         Signing in...
                       </>
                     ) : (
-                      "Sign in"
+                      <div className="p-0 h-auto font-normal text-lg">
+                        Sign in
+                      </div>
                     )}
                   </Button>
                 </form>
               </Form>
 
+              {/* Completely redesigned signup section */}
               <div className="text-center mt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Don't have an account?{" "}
-                  <Link
-                    href="/signup"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Sign up
-                  </Link>
+                  Don't have an account?
                 </p>
+                <Button
+                  variant="link"
+                  className="text-blue-600 p-0 h-auto font-normal text-sm"
+                  onClick={goToSignup}
+                >
+                  Sign up
+                </Button>
               </div>
             </div>
           </div>
         </main>
-
         {/* Footer */}
         <footer className="container mx-auto p-4 text-center text-sm text-white">
           <p>

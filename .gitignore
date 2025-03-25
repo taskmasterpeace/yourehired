@@ -6,7 +6,7 @@
 # next.js
 /.next/
 /out/
-/imported-lib
+
 
 # production
 /build
