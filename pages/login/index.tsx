@@ -7,7 +7,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Loader2, AlertCircle } from "lucide-react";
-import { useAuth } from "@/context/auth-context"; // Your existing auth provider
+import { useAuth } from "@/context/auth-context";
 import { AuthService } from "@/lib/auth-service";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,8 +20,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { cn } from "@/lib/utils"; // Make sure you have this utility
-import { loginSchema } from "@/lib/validation";
+import { cn } from "@/lib/utils";
+
+// Login form validation schema
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, { message: "Email is required" })
+    .email({ message: "Invalid email address" }),
+  password: z
+    .string()
+    .min(1, { message: "Password is required" })
+    .min(8, { message: "Password must be at least 8 characters" }),
+});
 
 // Type for the login form values
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -61,26 +72,52 @@ export default function LoginPage() {
   const handleEmailLogin = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     setError("");
-    try {
-      await AuthService.signIn(values.email, values.password);
-      // Redirect will happen via useEffect when auth state changes
-    } catch (err: any) {
-      console.error("Login error:", err);
-      setError(err.message || "Invalid email or password. Please try again.");
+
+    // Using updated AuthService that returns errors instead of throwing them
+    const { error: signInError } = await AuthService.signIn(
+      values.email,
+      values.password
+    );
+
+    if (signInError) {
+      console.error("Login error:", signInError);
+
+      // Handle specific error messages for better user experience
+      if (signInError.message.includes("Invalid login credentials")) {
+        setError("Invalid email or password. Please try again.");
+      } else if (signInError.message.includes("Too many requests")) {
+        setError("Too many login attempts. Please try again later.");
+      } else if (signInError.message.includes("Email not confirmed")) {
+        setError("Please verify your email before logging in.");
+      } else {
+        setError(
+          signInError.message || "Authentication failed. Please try again."
+        );
+      }
+
       setIsSubmitting(false);
+      return;
     }
+
+    // Success - Auth context will update and useEffect will handle redirect
+    // No need to set isSubmitting to false as the page will redirect
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      await AuthService.signInWithGoogle();
-      // Redirect will happen automatically when auth state changes
-    } catch (err: any) {
-      console.error("Google sign-in error:", err);
+    setIsSubmitting(true);
+    setError("");
+
+    const { error: googleError } = await AuthService.signInWithGoogle();
+
+    if (googleError) {
+      console.error("Google sign-in error:", googleError);
       setError(
-        err.message || "Failed to sign in with Google. Please try again."
+        googleError.message ||
+          "Failed to sign in with Google. Please try again."
       );
+      setIsSubmitting(false);
     }
+    // If successful, redirect will happen automatically when auth state changes
   };
 
   // If user exists or auth is loading, show loading indicator
@@ -161,9 +198,18 @@ export default function LoginPage() {
                 onClick={handleGoogleLogin}
                 className="w-full flex items-center justify-center gap-2"
                 variant="outline"
+                disabled={isSubmitting}
               >
-                <img src="/google-logo.png" alt="Google" className="w-5 h-5" />
-                Sign in with Google
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <img
+                    src="/google-logo.png"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+                )}
+                Continue with Google
               </Button>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">

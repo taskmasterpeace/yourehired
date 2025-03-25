@@ -4,21 +4,27 @@ import { getSupabaseClient } from "./supabase-client";
 const origin = typeof window !== "undefined" ? window.location.origin : "";
 
 export const AuthService = {
+  /**
+   * Sign in with email and password
+   * @returns Object containing data and error (if any)
+   */
   async signIn(email: string, password: string) {
     const supabase = getSupabaseClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) throw error;
-
-    return true;
+    return { data, error };
   },
 
+  /**
+   * Sign up with email and password
+   * @returns Object containing data and error (if any)
+   */
   async signUp(email: string, password: string) {
     const supabase = getSupabaseClient();
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -26,42 +32,123 @@ export const AuthService = {
       },
     });
 
-    if (error) throw error;
-
-    return true;
+    return { data, error };
   },
 
+  /**
+   * Sign out the current user
+   * @returns Object containing success status and error (if any)
+   */
   async signOut() {
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signOut();
 
-    if (error) throw error;
-
-    return true;
+    return { success: !error, error };
   },
 
+  /**
+   * Send password reset email
+   * @returns Object containing success status and error (if any)
+   */
   async resetPassword(email: string) {
     const supabase = getSupabaseClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/reset-password`,
     });
 
-    if (error) throw error;
-
-    return true;
+    return { success: !error, data, error };
   },
 
+  /**
+   * Sign in with Google OAuth
+   * @returns Object containing data and error (if any)
+   */
   async signInWithGoogle() {
     const supabase = getSupabaseClient();
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${origin}/auth/callback`,
       },
     });
 
-    if (error) throw error;
+    return { data, error };
+  },
 
-    return true;
+  /**
+   * Get the current user session
+   * @returns Object containing session data and error (if any)
+   */
+  async getSession() {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.getSession();
+
+    return {
+      session: data.session,
+      error,
+    };
+  },
+
+  /**
+   * Get the current user
+   * @returns Object containing user data and error (if any)
+   */
+  async getUser() {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.getUser();
+
+    return {
+      user: data.user,
+      error,
+    };
+  },
+
+  /**
+   * Update user profile
+   * @returns Object containing user data and error (if any)
+   */
+  async updateProfile(userData: { [key: string]: any }) {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.updateUser(userData);
+
+    return {
+      user: data.user,
+      error,
+    };
+  },
+
+  /**
+   * Change password for authenticated user
+   * @returns Object containing user data and error (if any)
+   */
+  async changePassword(password: string) {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.updateUser({
+      password,
+    });
+
+    return {
+      user: data.user,
+      error,
+    };
+  },
+
+  /**
+   * Verify OTP (one-time password) for email verification or password recovery
+   * @returns Object containing session data and error (if any)
+   */
+  async verifyOTP(email: string, token: string, type: "email" | "recovery") {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type,
+    });
+
+    return {
+      session: data.session,
+      user: data.user,
+      error,
+    };
   },
 };
