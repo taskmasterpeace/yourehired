@@ -8,7 +8,7 @@ export interface Tag {
 export interface ChatMessage {
   id: number;
   message: string;
-  sender: 'user' | 'ai';
+  sender: "user" | "ai";
   timestamp: string;
 }
 
@@ -37,7 +37,7 @@ export interface CalendarEvent {
   id: number;
   title: string;
   date: string;
-  type: 'interview' | 'deadline' | 'followup' | 'assessment';
+  type: "interview" | "deadline" | "followup" | "assessment";
   opportunityId?: number;
 }
 
@@ -57,16 +57,45 @@ export interface AppState {
   chatMessages: { [opportunityId: number]: ChatMessage[] };
 }
 
-// Define all possible actions
 export type AppAction =
-  | { type: 'ADD_OPPORTUNITY'; payload: Opportunity }
-  | { type: 'UPDATE_OPPORTUNITY'; payload: { id: number; updates: Partial<Opportunity> } }
-  | { type: 'DELETE_OPPORTUNITY'; payload: number }
-  | { type: 'SET_OPPORTUNITIES'; payload: Opportunity[] }
-  | { type: 'UPDATE_MASTER_RESUME'; payload: string }
-  | { type: 'ADD_EVENT'; payload: CalendarEvent }
-  | { type: 'UPDATE_EVENT'; payload: { id: number; updates: Partial<CalendarEvent> } }
-  | { type: 'DELETE_EVENT'; payload: number }
-  | { type: 'SET_EVENTS'; payload: CalendarEvent[] }
-  | { type: 'UPDATE_USER_PROFILE'; payload: Partial<UserProfile> }
-  | { type: 'ADD_CHAT_MESSAGE'; payload: { opportunityId: number; message: string; sender: 'user' | 'ai' } };
+  | { type: "ADD_OPPORTUNITY"; payload: Opportunity }
+  | { type: "SET_OPPORTUNITIES"; payload: Opportunity[] }
+  | {
+      type: "UPDATE_OPPORTUNITY";
+      payload: { id: number | string; updates: Partial<Opportunity> };
+    }
+  | { type: "DELETE_OPPORTUNITY"; payload: number | string }
+  | { type: "UPDATE_MASTER_RESUME"; payload: string }
+  | { type: "ADD_EVENT"; payload: CalendarEvent }
+  | { type: "SET_EVENTS"; payload: CalendarEvent[] }
+  | {
+      type: "UPDATE_EVENT";
+      payload: { id: number | string; updates: Partial<CalendarEvent> };
+    }
+  | { type: "DELETE_EVENT"; payload: number | string }
+  | { type: "UPDATE_USER_PROFILE"; payload: Partial<AppState["userProfile"]> }
+  | {
+      type: "ADD_CHAT_MESSAGE";
+      payload: {
+        opportunityId: number | string;
+        message: string;
+        sender: string;
+      };
+    }
+  // Add the LOAD_DATA type here:
+  | {
+      type: "LOAD_DATA";
+      payload: {
+        opportunities: Opportunity[];
+        events: CalendarEvent[];
+        masterResume?: string;
+        userProfile?: {
+          name: string;
+          email: string;
+          preferences: {
+            darkMode: boolean;
+          };
+        };
+        chatMessages?: Record<string | number, any[]>;
+      };
+    };

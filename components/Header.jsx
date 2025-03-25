@@ -15,7 +15,6 @@ import { AuthModal } from "@/components/auth/AuthModal";
 
 const Header = ({
   isDarkMode,
-  localStorageOnly,
   user,
   authLoading,
   notifications = [],
@@ -47,14 +46,6 @@ const Header = ({
           Hey You're Hired!
         </h1>
       </div>
-
-      {/* Local storage indicator */}
-      {localStorageOnly && (
-        <div className="hidden md:flex bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium items-center">
-          <Lock className="h-3 w-3 mr-1" />
-          Local Storage Only
-        </div>
-      )}
 
       {/* Add NotificationBell here */}
       <div className="flex items-center gap-4">

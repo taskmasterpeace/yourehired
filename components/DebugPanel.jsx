@@ -15,7 +15,6 @@ const DebugPanel = ({
   jobRecommendations,
   currentRecommendationIndex,
   ratedRecommendations,
-  localStorageOnly,
 }) => {
   if (!showDebugPanel) return null;
 
@@ -141,9 +140,7 @@ const DebugPanel = ({
                     isDarkMode ? "bg-gray-700" : "bg-gray-100"
                   }`}
                 >
-                  {localStorageOnly
-                    ? "Local Storage Only"
-                    : "Cloud + Local Storage"}
+                  Supabase Cloud Storage
                 </pre>
               </div>
             </div>
@@ -167,25 +164,13 @@ const DebugPanel = ({
                 </p>
               </div>
               <div>
-                <h4 className="text-sm font-medium">Local Storage Usage</h4>
+                <h4 className="text-sm font-medium">Database Usage</h4>
                 <pre
                   className={`text-xs p-1 rounded ${
                     isDarkMode ? "bg-gray-700" : "bg-gray-100"
                   }`}
                 >
-                  {(() => {
-                    try {
-                      const usage = JSON.stringify(
-                        localStorage.getItem("captainAppState")
-                      ).length;
-                      return `${(usage / 1024).toFixed(2)} KB / 5MB (${(
-                        (usage / (5 * 1024 * 1024)) *
-                        100
-                      ).toFixed(2)}%)`;
-                    } catch (e) {
-                      return "Unable to calculate";
-                    }
-                  })()}
+                  {`Opportunities: ${opportunities.length}, Events: ${events.length}`}
                 </pre>
               </div>
               <div>
@@ -205,16 +190,6 @@ const DebugPanel = ({
                     }}
                   >
                     Log State
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      localStorage.removeItem("captainAppState");
-                      alert("Local storage cleared. Refresh to reset app.");
-                    }}
-                  >
-                    Clear Storage
                   </Button>
                 </div>
               </div>

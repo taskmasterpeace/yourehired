@@ -1,17 +1,13 @@
 "use client";
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-
 import { useNotifications } from "@/context/NotificationContext";
-
 // Extract components
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DebugPanel from "@/components/DebugPanel";
 import StorageOptionsDialog from "@/components/settings/StorageOptionsDialog";
-
 import NotificationBell from "@/components/notifications/NotificationBell";
 const NotificationCenter = dynamic(
   () =>
@@ -30,14 +26,11 @@ import { SettingsTab } from "@/components/tabs/SettingsTab";
 import { HelpTab } from "@/components/tabs/HelpTab";
 import { OpportunitiesTab } from "@/components/tabs/OpportunitiesTab";
 import { useDarkMode } from "@/hooks/useDarkMode";
-
 import { useAppState } from "@/context/context";
 import { Opportunity, CalendarEvent } from "@/context/types";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { ArrowUp, HelpCircle, Settings } from "lucide-react";
-import { loadUserData, saveUserData, useAuth } from "@/context/auth-context";
+import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { AuthService } from "@/lib/auth-service";
 import { promptsByStatus, promptsByCategory } from "@/utils/constants/prompts";
@@ -46,23 +39,17 @@ import { StatusChange, JobRecommendation, RatedRecommendation } from "@/types";
 import { ProtectedContent } from "@/components/ProtectedContent";
 import { allGuides } from "@/components/help/guides";
 import { useAnalytics } from "@/context/useAnalytics";
+
 export default function CAPTAINGui() {
-  const { state, dispatch } = useAppState();
+  const { state, dispatch, loading: stateLoading } = useAppState();
   const { opportunities, masterResume, events, chatMessages } = state;
-  const {
-    user,
-
-    isLoading: authLoading,
-
-    localStorageOnly,
-    setLocalStorageOnly,
-  } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const notificationContext = useNotifications();
   const [showStorageOptionsDialog, setShowStorageOptionsDialog] =
     useState(false);
-
   const [isClientSide, setIsClientSide] = useState(false);
   const router = useRouter();
+
   const handleLogout = async () => {
     try {
       await AuthService.signOut();
@@ -71,93 +58,6 @@ export default function CAPTAINGui() {
       console.error("Error signing out:", error);
     }
   };
-  // Load user data when user logs in
-  useEffect(() => {
-    async function fetchUserData() {
-      if (user) {
-        try {
-          // Get data from Supabase
-          const userData = await loadUserData();
-
-          // Check if we have opportunities from Supabase
-          if (userData.opportunities && userData.opportunities.length > 0) {
-            // If we have data from the cloud and user is not in local-only mode,
-            // completely replace the opportunities with cloud data
-            if (!localStorageOnly) {
-              console.log("Replacing local opportunities with cloud data");
-
-              // Rather than adding one by one, just set the entire array at once
-              // This assumes we've added a 'SET_OPPORTUNITIES' action to our reducer
-              dispatch({
-                type: "SET_OPPORTUNITIES",
-                payload: userData.opportunities,
-              });
-
-              // Also update the resume and events
-              if (userData.resume) {
-                dispatch({
-                  type: "UPDATE_MASTER_RESUME",
-                  payload: userData.resume,
-                });
-              }
-
-              if (userData.events && userData.events.length > 0) {
-                // Similar approach for events - replace all at once
-                dispatch({ type: "SET_EVENTS", payload: userData.events });
-              }
-
-              // Update last modified timestamps for all opportunities
-              const newTimestamps = { ...lastModifiedTimestamps };
-              userData.opportunities.forEach((opp) => {
-                newTimestamps[opp.id] = new Date().toISOString();
-              });
-              setLastModifiedTimestamps(newTimestamps);
-
-              console.log(
-                `Loaded ${userData.opportunities.length} opportunities from cloud`
-              );
-            } else {
-              console.log("User in local-only mode, not loading cloud data");
-            }
-          } else {
-            console.log("No opportunities found in cloud storage");
-          }
-        } catch (error) {
-          console.error("Error loading user data:", error);
-        }
-      }
-    }
-
-    fetchUserData();
-  }, [user, localStorageOnly]);
-
-  // Save user data when it changes
-  useEffect(() => {
-    async function persistUserData() {
-      if (user) {
-        try {
-          await saveUserData({
-            opportunities,
-            resume: masterResume,
-            events,
-          });
-        } catch (error) {
-          console.error("Error saving user data:", error);
-        }
-      }
-    }
-
-    // Debounce to avoid too many saves
-    const timeoutId = setTimeout(persistUserData, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [opportunities, masterResume, events, user]);
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [activeTab, setActiveTab] = useState("opportunities");
-  const [helpView, setHelpView] = useState<{
-    active: boolean;
-    guideId?: string;
-    sectionId?: string;
-  }>({ active: false });
 
   // Set client-side flag after initial render
   useEffect(() => {
@@ -179,17 +79,16 @@ export default function CAPTAINGui() {
     if (user && !localStorage.getItem("welcomed")) {
       // Set a flag to avoid showing the welcome message repeatedly
       localStorage.setItem("welcomed", "true");
-
       // Show welcome message
       alert(`Welcome, ${user.email}! Your account is now connected.`);
     }
-
     // Show storage options explanation for first-time users
     if (user && !localStorage.getItem("storageOptionsExplained")) {
       setShowStorageOptionsDialog(true);
       localStorage.setItem("storageOptionsExplained", "true");
     }
   }, [user]);
+
   const [selectedOpportunityIndex, setSelectedOpportunityIndex] = useState(0);
   const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false);
   const [isEditingJobDescription, setIsEditingJobDescription] = useState(false);
@@ -204,13 +103,11 @@ export default function CAPTAINGui() {
   >({});
   const [isJobDescriptionExpanded, setIsJobDescriptionExpanded] =
     useState(false);
-
   // Import/Export state variables
   const [selectedExportIds, setSelectedExportIds] = useState<number[]>([]);
   const [importData, setImportData] = useState<Opportunity[]>([]);
   const [selectedImportIds, setSelectedImportIds] = useState<number[]>([]);
   const [importFile, setImportFile] = useState<File | null>(null);
-
   // New state variables for editing job details, contact info, and notes
   const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
   const [isEditingContactInfo, setIsEditingContactInfo] = useState(false);
@@ -227,17 +124,14 @@ export default function CAPTAINGui() {
     recruiterPhone: "",
   });
   const [editedNotes, setEditedNotes] = useState("");
-
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
   const [viewMode, setViewMode] = useState("card"); // "card" or "list"
-
   // Sorting states
   const [sortBy, setSortBy] = useState("lastModified");
   const [sortDirection, setSortDirection] = useState("desc"); // "asc" or "desc"
-
   // New state for calendar event creation
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -246,26 +140,20 @@ export default function CAPTAINGui() {
     opportunityId: "",
     notes: "",
   });
-
   // Batch selection states
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
   const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
-
   // Mobile touch handling
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const { isDarkMode, toggleDarkMode } = useDarkMode();
-
   // Status change tracking
   const [statusChanges, setStatusChanges] = useState<StatusChange[]>([]);
-
   // AI prompt states
   const [aiPrompts, setAiPrompts] = useState<string[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
-
   // Timeline period state
   const [timelinePeriod, setTimelinePeriod] = useState("30days");
-
   const [jobRecommendations, setJobRecommendations] = useState<
     JobRecommendation[]
   >(initialJobRecommendations);
@@ -278,7 +166,6 @@ export default function CAPTAINGui() {
   const [recommendationsPreview, setRecommendationsPreview] = useState<
     JobRecommendation[]
   >([]);
-
   // Define selectedOpportunity before any useEffect that uses it
   const selectedOpportunity =
     opportunities.length > 0
@@ -307,13 +194,11 @@ export default function CAPTAINGui() {
       "What questions should I prepare for an interview for this role?",
       "How do I negotiate salary for this position?",
     ];
-
     // If status is undefined or not in our map, return default prompts
     if (!status || !(status in promptsByStatus)) {
       console.log("Using default prompts - status not found:", status);
       return defaultPrompts;
     }
-
     // Get the category based on status
     let category = "";
     if (
@@ -355,7 +240,6 @@ export default function CAPTAINGui() {
     } else if (["Following Up", "Waiting"].includes(status)) {
       category = "Follow-up";
     }
-
     // Get prompts from our predefined list
     const statusPrompts =
       status in promptsByStatus
@@ -365,16 +249,13 @@ export default function CAPTAINGui() {
       category in promptsByCategory
         ? promptsByCategory[category as keyof typeof promptsByCategory]
         : [];
-
     // Prioritize status-specific prompts but ensure variety
     // Return 3 from status and 1 from category for more specificity
     const selectedStatusPrompts = statusPrompts.slice(0, 3);
     const selectedCategoryPrompts = categoryPrompts
       .filter((prompt: string) => !selectedStatusPrompts.includes(prompt))
       .slice(0, 1);
-
     const result = [...selectedStatusPrompts, ...selectedCategoryPrompts];
-
     // If we somehow ended up with no prompts, return the defaults
     return result.length > 0 ? result : defaultPrompts;
   };
@@ -384,7 +265,6 @@ export default function CAPTAINGui() {
     if (!selectedOpportunity) {
       return `${prompt}`;
     }
-
     return `${prompt}\n\nContext about this job opportunity:
 Company: ${selectedOpportunity.company}
 Position: ${selectedOpportunity.position}
@@ -409,13 +289,11 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
   ) => {
     // Get the current opportunity
     const currentOpp = opportunities.find((opp) => opp.id === opportunityId);
-
     // Only proceed if we found the opportunity
     if (!currentOpp) {
       console.error(`Opportunity with ID ${opportunityId} not found`);
       return;
     }
-
     // If we're updating status, record this change
     if (updates.status && updates.status !== currentOpp.status) {
       const newStatusChange = {
@@ -427,10 +305,8 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
         company: currentOpp.company,
         position: currentOpp.position,
       };
-
       setStatusChanges((prev) => [...prev, newStatusChange]);
     }
-
     dispatch({
       type: "UPDATE_OPPORTUNITY",
       payload: {
@@ -443,6 +319,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
 
   // Generate analytics data using useMemo to prevent recalculation on every render
   const analytics = useAnalytics(opportunities, events, statusChanges);
+
   // Filter opportunities based on search term, status filter, and date filter
   const filteredOpportunities = opportunities.filter((opp) => {
     // Search term matching
@@ -451,16 +328,13 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       opp.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
       opp.jobDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (opp.notes && opp.notes.toLowerCase().includes(searchTerm.toLowerCase()));
-
     // Status filtering
     const matchesStatus = statusFilter === "All" || opp.status === statusFilter;
-
     // Date filtering
     let matchesDate = true;
     if (dateFilter !== "All") {
       const today = new Date();
       const appliedDate = new Date(opp.appliedDate);
-
       switch (dateFilter) {
         case "Last 7 Days":
           const sevenDaysAgo = new Date();
@@ -479,7 +353,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           break;
       }
     }
-
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -494,24 +367,19 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           ? new Date(lastModifiedTimestamps[b.id]).getTime()
           : 0;
         return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
-
       case "appliedDate":
         const aDate = new Date(a.appliedDate).getTime();
         const bDate = new Date(b.appliedDate).getTime();
         return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
-
       case "company":
         const compResult = a.company.localeCompare(b.company);
         return sortDirection === "asc" ? compResult : -compResult;
-
       case "position":
         const posResult = a.position.localeCompare(b.position);
         return sortDirection === "asc" ? posResult : -posResult;
-
       case "status":
         const statResult = a.status.localeCompare(b.status);
         return sortDirection === "asc" ? statResult : -statResult;
-
       default:
         return 0;
     }
@@ -558,23 +426,18 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       month: "long",
       day: "numeric",
     });
-
     // Use a timestamp for a unique ID
     const uniqueId = Date.now();
-
     const newOpp = {
       ...newOpportunity,
       id: uniqueId,
       appliedDate: formattedDate,
       resume: masterResume, // Use the master resume for the new opportunity
     };
-
     // Use dispatch instead of setState
     dispatch({ type: "ADD_OPPORTUNITY", payload: newOpp });
-
     // Update last modified timestamp
     updateLastModified(uniqueId);
-
     // After the state update, find the index of the new opportunity and select it
     // We need to do this in the next render cycle to ensure the state has updated
     setTimeout(() => {
@@ -586,7 +449,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
         setSelectedOpportunityIndex(opportunities.length - 1);
       }
     }, 0);
-
     // Reset form
     setNewOpportunity({
       company: "",
@@ -615,10 +477,8 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       month: "long",
       day: "numeric",
     });
-
     // Use the helper function to update the opportunity
     updateOpportunity(selectedOpportunity.id, { appliedDate: formattedDate });
-
     setIsEditingDate(false);
   };
 
@@ -626,7 +486,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
     { role: string; content: string }[]
   >([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-
   // Get chat messages for the selected opportunity
   const opportunityMessages = useMemo(() => {
     if (!selectedOpportunity) return [];
@@ -673,7 +532,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
 
   const handleSendMessage = async () => {
     if (currentMessage.trim() === "" || !selectedOpportunity) return;
-
     // Add user message to global state
     dispatch({
       type: "ADD_CHAT_MESSAGE",
@@ -683,7 +541,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
         sender: "user",
       },
     });
-
     const userMessage = { role: "user", content: currentMessage };
     setLocalChatMessages((prev) => [...prev, userMessage]);
     setCurrentMessage("");
@@ -712,7 +569,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       }
 
       const data = await response.json();
-
       // Add AI response to global state
       dispatch({
         type: "ADD_CHAT_MESSAGE",
@@ -722,7 +578,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           sender: "ai",
         },
       });
-
       setLocalChatMessages((prev) => [
         ...prev,
         {
@@ -732,7 +587,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       ]);
     } catch (error) {
       console.error("Error in chat:", error);
-
       // Add error message to global state
       dispatch({
         type: "ADD_CHAT_MESSAGE",
@@ -742,7 +596,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           sender: "ai",
         },
       });
-
       setLocalChatMessages((prev) => [
         ...prev,
         {
@@ -753,6 +606,23 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
     }
   };
 
+  const [activeTab, setActiveTab] = useState("opportunities");
+  const [helpView, setHelpView] = useState<{
+    active: boolean;
+    guideId?: string;
+    sectionId?: string;
+  }>({ active: false });
+
+  if (stateLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-blue-200 rounded-full animate-pulse mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold">Loading You're Hired!...</h2>
+        </div>
+      </div>
+    );
+  }
   return isClientSide ? (
     <div className="min-h-screen flex flex-col">
       <div
@@ -762,7 +632,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       >
         <Header
           isDarkMode={isDarkMode}
-          localStorageOnly={localStorageOnly}
           user={user}
           authLoading={authLoading}
           notifications={notificationContext?.notifications || []}
@@ -771,7 +640,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           onMarkAllRead={notificationContext?.markAllAsRead}
           onMarkOneRead={notificationContext?.markAsRead}
         />
-
         <Tabs
           value={activeTab}
           onValueChange={(value) => {
@@ -807,7 +675,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
               </TabsTrigger>
             </div>
           </TabsList>
-
           <TabsContent
             value="opportunities"
             className="p-2 sm:p-4 flex-grow overflow-auto"
@@ -825,7 +692,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
               />
             </ProtectedContent>
           </TabsContent>
-
           <TabsContent
             value="resume"
             className="p-2 sm:p-4 flex-grow overflow-auto"
@@ -843,7 +709,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
               />
             </ProtectedContent>
           </TabsContent>
-
           <TabsContent
             value="captain"
             className="p-2 sm:p-4 flex-grow overflow-auto"
@@ -861,7 +726,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
               />
             </ProtectedContent>
           </TabsContent>
-
           <TabsContent
             value="analytics"
             className="p-2 sm:p-4 flex-grow overflow-auto"
@@ -875,7 +739,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
               />
             </ProtectedContent>
           </TabsContent>
-
           <TabsContent
             value="calendar"
             className="p-2 sm:p-4 flex-grow overflow-auto"
@@ -890,7 +753,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
               />
             </ProtectedContent>
           </TabsContent>
-
           <TabsContent
             value="settings"
             className="p-2 sm:p-4 flex-grow overflow-auto"
@@ -905,12 +767,9 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
                 setShowDebugPanel={setShowDebugPanel}
                 toggleDarkMode={toggleDarkMode}
                 user={user}
-                localStorageOnly={localStorageOnly}
-                setLocalStorageOnly={setLocalStorageOnly}
               />
             </ProtectedContent>
           </TabsContent>
-
           <TabsContent
             value="help"
             className="p-2 sm:p-4 flex-grow overflow-auto"
@@ -923,7 +782,6 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
             />
           </TabsContent>
         </Tabs>
-
         {/* Back to top button */}
         {showBackToTop && (
           <Button
@@ -933,13 +791,11 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
             <ArrowUp className="h-5 w-5" />
           </Button>
         )}
-
         {/* Storage Options Dialog */}
         <StorageOptionsDialog
           open={showStorageOptionsDialog}
           onOpenChange={setShowStorageOptionsDialog}
         />
-
         {/* Debug panel */}
         <DebugPanel
           showDebugPanel={showDebugPanel}
@@ -953,16 +809,13 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           jobRecommendations={jobRecommendations}
           currentRecommendationIndex={currentRecommendationIndex}
           ratedRecommendations={ratedRecommendations}
-          localStorageOnly={localStorageOnly}
         />
-
         {/* Hidden auth modal */}
         <div className="hidden">
           <AuthModal
             trigger={<button id="auth-modal-trigger">Sign In</button>}
           />
         </div>
-
         {/* Footer */}
         <Footer isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       </div>
