@@ -1,6 +1,4 @@
-// pages/signin.tsx or app/signin/page.tsx
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -8,21 +6,42 @@ import Image from "next/image";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/auth-context"; // Your existing auth provider
 import { AuthService } from "@/lib/auth-service";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { cn } from "@/lib/utils"; // Make sure you have this utility
+import { loginSchema } from "@/lib/validation";
+
+// Type for the login form values
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get("redirectTo") || "/app";
-
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Setup form with validation
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -39,13 +58,11 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleEmailLogin = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     setError("");
-
     try {
-      await AuthService.signIn(email, password);
+      await AuthService.signIn(values.email, values.password);
       // Redirect will happen via useEffect when auth state changes
     } catch (err: any) {
       console.error("Login error:", err);
@@ -92,7 +109,6 @@ export default function LoginPage() {
     >
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40"></div>
-
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
@@ -116,7 +132,6 @@ export default function LoginPage() {
             </Button>
           </Link>
         </header>
-
         {/* Main content */}
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
@@ -135,13 +150,12 @@ export default function LoginPage() {
                 Sign in to your account
               </p>
             </div>
-
             {error && (
-              <div className="p-3 bg-red-100 border border-red-200 text-red-800 rounded-md text-sm">
-                {error}
+              <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md flex items-start">
+                <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 text-red-500" />
+                <p>{error}</p>
               </div>
             )}
-
             <div className="space-y-4">
               <Button
                 onClick={handleGoogleLogin}
@@ -151,7 +165,6 @@ export default function LoginPage() {
                 <img src="/google-logo.png" alt="Google" className="w-5 h-5" />
                 Sign in with Google
               </Button>
-
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
@@ -163,51 +176,92 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSubmitting}
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(handleEmailLogin)}
+                  className="space-y-4"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign in"
-                  )}
-                </Button>
-              </form>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field, fieldState }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="name@example.com"
+                            disabled={isSubmitting}
+                            autoComplete="email"
+                            className={cn(
+                              fieldState.error &&
+                                "border-red-500 focus-visible:ring-red-500"
+                            )}
+                          />
+                        </FormControl>
+                        {fieldState.error && (
+                          <div className="flex items-center text-red-500 text-sm mt-1">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            <FormMessage className="text-red-500 font-semibold" />
+                          </div>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field, fieldState }) => (
+                      <FormItem className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Password</FormLabel>
+                          <Link
+                            href="/forgot-password"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            Forgot password?
+                          </Link>
+                        </div>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="password"
+                            disabled={isSubmitting}
+                            autoComplete="current-password"
+                            className={cn(
+                              fieldState.error &&
+                                "border-red-500 focus-visible:ring-red-500"
+                            )}
+                          />
+                        </FormControl>
+                        {fieldState.error && (
+                          <div className="flex items-center text-red-500 text-sm mt-1">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            <FormMessage className="text-red-500 font-semibold" />
+                          </div>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Sign in"
+                    )}
+                  </Button>
+                </form>
+              </Form>
 
               <div className="text-center mt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -223,7 +277,6 @@ export default function LoginPage() {
             </div>
           </div>
         </main>
-
         {/* Footer */}
         <footer className="container mx-auto p-4 text-center text-sm text-white">
           <p>

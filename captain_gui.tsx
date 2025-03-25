@@ -51,6 +51,7 @@ import {
   Home,
   Lightbulb,
   Calendar as CalendarIcon2,
+  LogOut,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -138,6 +139,8 @@ import {
   Settings,
 } from "lucide-react";
 import { loadUserData, saveUserData } from "./context/auth-context";
+import { useRouter } from "next/navigation";
+import { AuthService } from "./lib/auth-service";
 // Right before the component definition, add this interface
 interface StatusChange {
   id: number;
@@ -450,7 +453,7 @@ export default function CAPTAINGui() {
   const { opportunities, masterResume, events, chatMessages } = state;
   const {
     user,
-    signOut,
+
     isLoading: authLoading,
 
     localStorageOnly,
@@ -461,7 +464,15 @@ export default function CAPTAINGui() {
     useState(false);
 
   const [isClientSide, setIsClientSide] = useState(false);
-
+  const router = useRouter();
+  const handleLogout = async () => {
+    try {
+      await AuthService.signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
   // Load user data when user logs in
   useEffect(() => {
     async function fetchUserData() {
@@ -1999,14 +2010,8 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
             ) : user ? (
               <div className="flex items-center gap-2">
                 <span className="text-sm hidden md:inline">{user.email}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    await signOut();
-                    window.location.href = "/login"; // Redirect to login page after sign out
-                  }}
-                >
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </Button>
               </div>
@@ -2014,7 +2019,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
               <AuthModal
                 trigger={
                   <Button variant="outline" size="sm">
-                    Sign In
+                    Sifgn In
                   </Button>
                 }
               />
