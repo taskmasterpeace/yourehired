@@ -4,13 +4,14 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 
-import { Label } from "@/components/ui/label";
 import { useNotifications } from "@/context/NotificationContext";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+
+// Extract components
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import DebugPanel from "@/components/DebugPanel";
+import StorageOptionsDialog from "@/components/settings/StorageOptionsDialog";
+
 import NotificationBell from "@/components/notifications/NotificationBell";
 const NotificationCenter = dynamic(
   () =>
@@ -29,21 +30,13 @@ import { SettingsTab } from "@/components/tabs/SettingsTab";
 import { HelpTab } from "@/components/tabs/HelpTab";
 import { OpportunitiesTab } from "@/components/tabs/OpportunitiesTab";
 import { useDarkMode } from "@/hooks/useDarkMode";
-import { Calendar as CalendarIcon2, LogOut } from "lucide-react";
 
 import { useAppState } from "@/context/context";
 import { Opportunity, CalendarEvent } from "@/context/types";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Lock, ArrowUp, HelpCircle, Settings } from "lucide-react";
+
+import { ArrowUp, HelpCircle, Settings } from "lucide-react";
 import { loadUserData, saveUserData, useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { AuthService } from "@/lib/auth-service";
@@ -1553,70 +1546,17 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"
         } flex-grow flex flex-col`}
       >
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4 items-end">
-            <img
-              src="/logo.png"
-              alt="Hey You're Hired! Logo"
-              className="h-24 w-24 mr-2"
-            />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">
-              Hey You're Hired!
-            </h1>
-          </div>
-
-          {/* Local storage indicator */}
-          {localStorageOnly && (
-            <div className="hidden md:flex bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium items-center">
-              <Lock className="h-3 w-3 mr-1" />
-              Local Storage Only
-            </div>
-          )}
-
-          {/* Add NotificationBell here */}
-          <div className="flex items-center gap-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <div>
-                  <NotificationBell />
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="p-0" align="end">
-                <NotificationCenter
-                  notifications={notificationContext?.notifications || []}
-                  onClearAll={notificationContext?.clearAllNotifications}
-                  onClearOne={notificationContext?.clearNotification}
-                  onMarkAllRead={notificationContext?.markAllAsRead}
-                  onMarkOneRead={notificationContext?.markAsRead}
-                  isDarkMode={isDarkMode}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Authentication UI */}
-          <div className="ml-auto flex items-center gap-2">
-            {authLoading ? (
-              <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-            ) : user ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm hidden md:inline">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <AuthModal
-                trigger={
-                  <Button variant="outline" size="sm">
-                    Sifgn In
-                  </Button>
-                }
-              />
-            )}
-          </div>
-        </div>
+        <Header
+          isDarkMode={isDarkMode}
+          localStorageOnly={localStorageOnly}
+          user={user}
+          authLoading={authLoading}
+          notifications={notificationContext?.notifications || []}
+          onClearAll={notificationContext?.clearAllNotifications}
+          onClearOne={notificationContext?.clearNotification}
+          onMarkAllRead={notificationContext?.markAllAsRead}
+          onMarkOneRead={notificationContext?.markAsRead}
+        />
 
         <Tabs
           value={activeTab}
@@ -1781,293 +1721,26 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
         )}
 
         {/* Storage Options Dialog */}
-        <Dialog
+        <StorageOptionsDialog
           open={showStorageOptionsDialog}
           onOpenChange={setShowStorageOptionsDialog}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Data Storage Options</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p>
-                Hey You're Hired! offers two ways to store your job application
-                data:
-              </p>
-
-              <div className="space-y-3">
-                <div className="p-3 border rounded-md">
-                  <h3 className="font-medium">Cloud Storage (Default)</h3>
-                  <p className="text-sm text-gray-600">
-                    Your data is securely stored on our servers and available on
-                    any device when you log in.
-                  </p>
-                  <div className="text-sm text-green-600 mt-1">
-                    ✓ Access from anywhere
-                    <br />
-                    ✓ Data backup
-                    <br />✓ Device synchronization
-                  </div>
-                </div>
-
-                <div className="p-3 border rounded-md">
-                  <h3 className="font-medium">Local Storage Only</h3>
-                  <p className="text-sm text-gray-600">
-                    Your data stays only on this device and is never sent to our
-                    servers.
-                  </p>
-                  <div className="text-sm text-blue-600 mt-1">
-                    ✓ Enhanced privacy
-                    <br />
-                    ✓ Works offline
-                    <br />✓ No server storage
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-sm">
-                You can change this setting anytime in the Privacy Settings
-                section.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => setShowStorageOptionsDialog(false)}>
-                Got it
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        />
 
         {/* Debug panel */}
-        {showDebugPanel && (
-          <div
-            className={`fixed bottom-0 right-0 w-full md:w-1/2 lg:w-1/3 z-50 ${
-              isDarkMode
-                ? "bg-gray-800 text-gray-200"
-                : "bg-white text-gray-800"
-            } border-t border-l ${
-              isDarkMode ? "border-gray-700" : "border-gray-300"
-            } shadow-lg`}
-          >
-            <div
-              className={`flex justify-between items-center p-2 border-b ${
-                isDarkMode ? "border-gray-700" : "border-gray-300"
-              }`}
-            >
-              <h3 className="font-medium">Debug Panel</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => setShowDebugPanel(false)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </Button>
-            </div>
-            <div className="p-2 max-h-[50vh] overflow-auto">
-              <Tabs defaultValue="state">
-                <TabsList className="mb-2">
-                  <TabsTrigger value="state">State</TabsTrigger>
-                  <TabsTrigger value="props">Props</TabsTrigger>
-                  <TabsTrigger value="performance">Performance</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="state">
-                  <div className="space-y-2">
-                    <div>
-                      <h4 className="text-sm font-medium">
-                        Selected Opportunity Index
-                      </h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        }`}
-                      >
-                        {selectedOpportunityIndex}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">Active Tab</h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        }`}
-                      >
-                        {activeTab}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">
-                        Opportunities Count
-                      </h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        }`}
-                      >
-                        {opportunities.length}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">Events Count</h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        }`}
-                      >
-                        {events.length}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">
-                        Selected Opportunity
-                      </h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        } overflow-auto max-h-40`}
-                      >
-                        {JSON.stringify(selectedOpportunity, null, 2)}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">
-                        Job Recommendations
-                      </h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        } overflow-auto max-h-40`}
-                      >
-                        {JSON.stringify(
-                          {
-                            total: jobRecommendations.length,
-                            current: currentRecommendationIndex,
-                            rated: ratedRecommendations.length,
-                          },
-                          null,
-                          2
-                        )}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">Storage Mode</h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        }`}
-                      >
-                        {localStorageOnly
-                          ? "Local Storage Only"
-                          : "Cloud + Local Storage"}
-                      </pre>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="props">
-                  <div className="space-y-2">
-                    <div>
-                      <h4 className="text-sm font-medium">Component Props</h4>
-                      <p className="text-xs text-gray-500">
-                        No props available for root component
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="performance">
-                  <div className="space-y-2">
-                    <div>
-                      <h4 className="text-sm font-medium">Render Count</h4>
-                      <p className="text-xs">
-                        Component render metrics would appear here
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">
-                        Local Storage Usage
-                      </h4>
-                      <pre
-                        className={`text-xs p-1 rounded ${
-                          isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                        }`}
-                      >
-                        {(() => {
-                          try {
-                            const usage = JSON.stringify(
-                              localStorage.getItem("captainAppState")
-                            ).length;
-                            return `${(usage / 1024).toFixed(2)} KB / 5MB (${(
-                              (usage / (5 * 1024 * 1024)) *
-                              100
-                            ).toFixed(2)}%)`;
-                          } catch (e) {
-                            return "Unable to calculate";
-                          }
-                        })()}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium">Actions</h4>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            console.log("Current state:", {
-                              opportunities,
-                              events,
-                              selectedOpportunity,
-                              activeTab,
-                            });
-                            alert("State logged to console");
-                          }}
-                        >
-                          Log State
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            localStorage.removeItem("captainAppState");
-                            alert(
-                              "Local storage cleared. Refresh to reset app."
-                            );
-                          }}
-                        >
-                          Clear Storage
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
-        )}
+        <DebugPanel
+          showDebugPanel={showDebugPanel}
+          setShowDebugPanel={setShowDebugPanel}
+          isDarkMode={isDarkMode}
+          selectedOpportunityIndex={selectedOpportunityIndex}
+          activeTab={activeTab}
+          opportunities={opportunities}
+          events={events}
+          selectedOpportunity={selectedOpportunity}
+          jobRecommendations={jobRecommendations}
+          currentRecommendationIndex={currentRecommendationIndex}
+          ratedRecommendations={ratedRecommendations}
+          localStorageOnly={localStorageOnly}
+        />
 
         {/* Hidden auth modal */}
         <div className="hidden">
@@ -2077,64 +1750,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
         </div>
 
         {/* Footer */}
-        <footer
-          className={`mt-8 py-4 border-t ${
-            isDarkMode ? "border-gray-700" : "border-gray-200"
-          }`}
-        >
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center">
-              <p
-                className={`text-sm ${
-                  isDarkMode ? "text-gray-400" : "text-gray-500"
-                } mb-3 sm:mb-0`}
-              >
-                © 2025 Hey You're Hired!
-              </p>
-
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={isDarkMode}
-                    onCheckedChange={toggleDarkMode}
-                    id="footer-dark-mode"
-                  />
-                  <Label
-                    htmlFor="footer-dark-mode"
-                    className={`text-sm ${
-                      isDarkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    {isDarkMode ? "Dark Mode" : "Light Mode"}
-                  </Label>
-                </div>
-
-                <div
-                  className={`text-sm ${
-                    isDarkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
-                  <a
-                    href="#"
-                    className={`hover:text-blue-400 mr-3 ${
-                      isDarkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    Privacy
-                  </a>
-                  <a
-                    href="#"
-                    className={`hover:text-blue-400 ${
-                      isDarkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    Terms
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <Footer isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       </div>
     </div>
   ) : (
