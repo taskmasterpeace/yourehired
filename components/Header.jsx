@@ -37,7 +37,7 @@ const Header = ({
 
   return (
     <div className="flex justify-between items-center mb-4">
-      <div className="flex items-center gap-4 items-end">
+      <div className="flex items-center gap-4 ">
         <img
           src="/logo.png"
           alt="Hey You're Hired! Logo"
