@@ -83,7 +83,10 @@ const Header = ({
           <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
         ) : user ? (
           <div className="flex items-center gap-2">
-            <span className="text-sm hidden md:inline">{user.email}</span>
+            {/* Modified user email display */}
+            {user.email && (
+              <span className="text-sm mr-2 md:inline">{user.email}</span>
+            )}
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
