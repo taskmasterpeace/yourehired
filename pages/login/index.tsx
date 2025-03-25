@@ -21,18 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-
-// Login form validation schema
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, { message: "Email is required" })
-    .email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(1, { message: "Password is required" })
-    .min(8, { message: "Password must be at least 8 characters" }),
-});
+import { loginSchema } from "@/lib/validation";
 
 // Type for the login form values
 type LoginFormValues = z.infer<typeof loginSchema>;
