@@ -1,70 +1,60 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-// These environment variables need to be set in your .env.local file
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Create a singleton instance for the browser
+let browserClient: SupabaseClient | null = null;
 
-console.log('Initializing Supabase client...');
-console.log('URL available:', !!supabaseUrl);
-console.log('Key available:', !!supabaseAnonKey);
+// Create a single supabase client for the browser
+export const createSupabaseClient = () => {
+  // For SSR, always create a new client
+  if (typeof window === "undefined") {
+    return createNewClient();
+  }
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase URL or Anon Key is missing. Please check your environment variables.');
-}
+  // For client-side, use the singleton pattern
+  if (!browserClient) {
+    browserClient = createNewClient();
+  }
 
-// Create a dummy client if credentials are missing
-const createDummyClient = () => {
-  console.warn('Using dummy Supabase client. Authentication features will not work.');
-  
-  return {
-    auth: {
-      getSession: () => {
-        console.log('Dummy client: getSession called');
-        return Promise.resolve({ data: { session: null } });
-      },
-      onAuthStateChange: () => {
-        console.log('Dummy client: onAuthStateChange called');
-        return { data: { subscription: { unsubscribe: () => {} } } };
-      },
-      signInWithPassword: () => {
-        console.log('Dummy client: signInWithPassword called');
-        return Promise.resolve({ data: { session: null }, error: null });
-      },
-      signUp: () => {
-        console.log('Dummy client: signUp called');
-        return Promise.resolve({ data: { session: null }, error: null });
-      },
-      signOut: () => {
-        console.log('Dummy client: signOut called');
-        return Promise.resolve();
-      },
-      resetPasswordForEmail: () => {
-        console.log('Dummy client: resetPasswordForEmail called');
-        return Promise.resolve({ data: null, error: null });
-      },
-      signInWithOAuth: () => {
-        console.log('Dummy client: signInWithOAuth called');
-        return Promise.resolve({ data: { url: null }, error: null });
-      }
-    }
-  };
+  return browserClient;
 };
 
-// Export the client or a dummy if credentials are missing
-let client;
-try {
-  if (supabaseUrl && supabaseAnonKey) {
-    console.log('Creating real Supabase client...');
-    client = createClient(supabaseUrl, supabaseAnonKey);
-    console.log('Supabase client created successfully');
-  } else {
-    console.log('Creating dummy Supabase client...');
-    client = createDummyClient();
+// Helper to create a new client
+function createNewClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Missing Supabase environment variables");
   }
-} catch (error) {
-  console.error('Error creating Supabase client:', error);
-  console.log('Falling back to dummy client...');
-  client = createDummyClient();
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
 }
 
-export const supabase = client;
+// For server-side operations that need admin privileges
+export const createSupabaseAdminClient = () => {
+  // This should only be used server-side
+  if (typeof window !== "undefined") {
+    throw new Error("Admin client should only be used on the server");
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing Supabase admin environment variables");
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+};
