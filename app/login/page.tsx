@@ -27,7 +27,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [clickCount, setClickCount] = useState(0); // Add this for debugging
+  const [clickCount, setClickCount] = useState(0);
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get("redirectTo") || "/app";
   const { user, isLoading: authLoading } = useAuth();
@@ -100,14 +100,18 @@ export default function LoginPage() {
     // If successful, redirect will happen automatically when auth state changes
   };
 
-  // New signup handler that uses window.location
+  // Navigation handlers that use window.location for reliability
   const goToSignup = (e) => {
     e.preventDefault();
     console.log(`Sign up clicked. Click count: ${clickCount + 1}`);
     setClickCount((prev) => prev + 1);
-
-    // Force navigation with window.location for reliability
     window.location.href = "/signup";
+  };
+
+  const goToForgotPassword = (e) => {
+    e.preventDefault();
+    console.log(`Forgot password clicked.`);
+    window.location.href = "/forgot-password";
   };
 
   // If user exists or auth is loading, show loading indicator
@@ -251,12 +255,14 @@ export default function LoginPage() {
                       <FormItem className="space-y-2">
                         <div className="flex items-center justify-between">
                           <FormLabel>Password</FormLabel>
-                          <Link
-                            href="/forgot-password"
-                            className="text-sm text-blue-600 hover:underline"
+                          {/* Updated forgot password link */}
+                          <Button
+                            variant="link"
+                            className="text-sm text-blue-600 p-0 h-auto hover:underline"
+                            onClick={goToForgotPassword}
                           >
                             Forgot password?
-                          </Link>
+                          </Button>
                         </div>
                         <FormControl>
                           <Input
@@ -297,8 +303,7 @@ export default function LoginPage() {
                   </Button>
                 </form>
               </Form>
-
-              {/* Completely redesigned signup section */}
+              {/* Signup section */}
               <div className="text-center mt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Don't have an account?

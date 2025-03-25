@@ -1,4 +1,5 @@
 "use client";
+
 import { useAuth } from "@/context/auth-context";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -9,34 +10,44 @@ export function AuthRedirector({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Don't redirect while auth state is still loading
     if (isLoading) return;
 
-    // First, determine if this is a route that requires authentication
-    // based on the URL structure rather than explicit lists
+    // Classify the current route
     const isAppRoute = pathname === "/app" || pathname.startsWith("/app/");
-    const isPublicRoute =
-      pathname === "/" ||
-      pathname === "/landing" ||
+    const isLandingRoute = pathname === "/landing";
+    const isAuthRoute =
       pathname === "/login" ||
       pathname === "/signup" ||
       pathname.startsWith("/auth/");
+    const isRootRoute = pathname === "/";
 
-    // If it's neither a recognized app route nor public route,
-    // don't redirect - let the framework handle 404s
-    if (!isAppRoute && !isPublicRoute) {
+    // RULE 1: Redirect root path to landing page if not authenticated
+    if (isRootRoute && !user) {
+      router.push("/landing");
       return;
     }
 
-    // Redirect authenticated users from landing pages to app
-    if (user && isPublicRoute && !pathname.startsWith("/auth/")) {
+    // RULE 2: Redirect root path to app if authenticated
+    if (isRootRoute && user) {
       router.push("/app");
+      return;
     }
-    // Redirect unauthenticated users from app routes to landing
-    else if (!user && isAppRoute) {
+
+    // RULE 3: Redirect to /app if user is logged in and on landing/auth pages
+    if (user && (isLandingRoute || isAuthRoute)) {
+      router.push("/app");
+      return;
+    }
+
+    // RULE 4: Redirect to /landing if user is NOT logged in and trying to access app routes
+    if (!user && isAppRoute) {
       router.push("/landing");
+      return;
     }
   }, [user, isLoading, router, pathname]);
 
+  // Show loading state while determining auth status
   if (isLoading) {
     return (
       <div className="p-4 text-center">
