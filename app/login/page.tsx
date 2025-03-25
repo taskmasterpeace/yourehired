@@ -1,11 +1,10 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { AuthService } from "@/lib/auth-service";
@@ -46,9 +45,9 @@ export default function LoginPage() {
   // Redirect if user is already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      window.location.href = redirectTo;
+      router.push(redirectTo);
     }
-  }, [user, authLoading, redirectTo]);
+  }, [user, authLoading, redirectTo, router]);
 
   // Check for error parameter in URL
   useEffect(() => {
@@ -70,7 +69,6 @@ export default function LoginPage() {
 
     if (signInError) {
       console.error("Login error:", signInError);
-
       // Handle specific error messages for better user experience
       if (signInError.message.includes("Invalid login credentials")) {
         setError("Invalid email or password. Please try again.");
@@ -83,21 +81,16 @@ export default function LoginPage() {
           signInError.message || "Authentication failed. Please try again."
         );
       }
-
       setIsSubmitting(false);
       return;
     }
-
     // Success - Auth context will update and useEffect will handle redirect
-    // No need to set isSubmitting to false as the page will redirect
   };
 
   const handleGoogleLogin = async () => {
     setIsSubmitting(true);
     setError("");
-
     const { error: googleError } = await AuthService.signInWithGoogle();
-
     if (googleError) {
       console.error("Google sign-in error:", googleError);
       setError(
@@ -117,7 +110,7 @@ export default function LoginPage() {
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
           <p>Please wait...</p>
           <Button
-            onClick={() => (window.location.href = redirectTo)}
+            onClick={() => router.push(redirectTo)}
             variant="link"
             className="mt-4"
           >
@@ -135,6 +128,7 @@ export default function LoginPage() {
     >
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40"></div>
+
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
@@ -158,6 +152,7 @@ export default function LoginPage() {
             </Button>
           </Link>
         </header>
+
         {/* Main content */}
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
@@ -176,12 +171,14 @@ export default function LoginPage() {
                 Sign in to your account
               </p>
             </div>
+
             {error && (
               <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md flex items-start">
                 <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 text-red-500" />
                 <p>{error}</p>
               </div>
             )}
+
             <div className="space-y-4">
               <Button
                 onClick={handleGoogleLogin}
@@ -200,6 +197,7 @@ export default function LoginPage() {
                 )}
                 Continue with Google
               </Button>
+
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
@@ -312,6 +310,7 @@ export default function LoginPage() {
             </div>
           </div>
         </main>
+
         {/* Footer */}
         <footer className="container mx-auto p-4 text-center text-sm text-white">
           <p>

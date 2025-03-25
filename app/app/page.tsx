@@ -2,40 +2,40 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
-import { Textarea } from "./components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { QRCodeSVG } from "qrcode.react";
-import { Label } from "./components/ui/label";
-import { Checkbox } from "./components/ui/checkbox";
-import { useAuth } from "./context/auth-context";
-import { useNotifications } from "./context/NotificationContext";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/context/auth-context";
+import { useNotifications } from "@/context/NotificationContext";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "./components/ui/popover";
-import NotificationBell from "./components/notifications/NotificationBell";
+} from "@/components/ui/popover";
+import NotificationBell from "@/components/notifications/NotificationBell";
 const NotificationCenter = dynamic(
   () =>
-    import("./components/notifications/NotificationCenter").then(
+    import("@/components/notifications/NotificationCenter").then(
       (mod) => mod.default
     ),
   { ssr: false }
 );
 // Force reload - using correct paths for root location
-import { AuthModal } from "./components/auth/AuthModal";
-import { ResumeTab } from "./components/tabs/ResumeTab";
-import { CaptainTab } from "./components/tabs/CaptainTab";
-import { CalendarTab } from "./components/tabs/CalendarTab";
-import { AnalyticsTab } from "./components/tabs/AnalyticsTab";
-import { SettingsTab } from "./components/tabs/SettingsTab";
-import { HelpTab } from "./components/tabs/HelpTab";
-import { OpportunitiesTab } from "./components/tabs/OpportunitiesTab";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { ResumeTab } from "@/components/tabs/ResumeTab";
+import { CaptainTab } from "@/components/tabs/CaptainTab";
+import { CalendarTab } from "@/components/tabs/CalendarTab";
+import { AnalyticsTab } from "@/components/tabs/AnalyticsTab";
+import { SettingsTab } from "@/components/tabs/SettingsTab";
+import { HelpTab } from "@/components/tabs/HelpTab";
+import { OpportunitiesTab } from "@/components/tabs/OpportunitiesTab";
 // Import opportunity detail sections if the file exists
 // import { JobDetailsSection, ContactInfoSection, NotesSection } from './components/opportunity/OpportunityDetailSections'
-import { OpportunityDetails } from "./components/opportunities/OpportunityDetails";
-import { OpportunityList } from "./components/opportunities/OpportunityList";
+import { OpportunityDetails } from "@/components/opportunities/OpportunityDetails";
+import { OpportunityList } from "@/components/opportunities/OpportunityList";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import {
   BarChartIcon,
@@ -70,19 +70,19 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import openai from "./lib/openai";
-import { HelpCenter } from "./components/help/HelpCenter";
-import { GuideViewer } from "./components/help/GuideViewer";
-import { allGuides } from "./components/help/guides";
-import { useAppState } from "./context/context";
-import { Opportunity, CalendarEvent } from "./context/types";
+import openai from "@/lib/openai";
+import { HelpCenter } from "@/components/help/HelpCenter";
+import { GuideViewer } from "@/components/help/GuideViewer";
+import { allGuides } from "@/components/help/guides";
+import { useAppState } from "@/context/context";
+import { Opportunity, CalendarEvent } from "@/context/types";
 import { format, parseISO, isEqual, isSameDay } from "date-fns";
-import { Sheet, SheetContent, SheetTrigger } from "./components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "./components/ui/collapsible";
+} from "@/components/ui/collapsible";
 import { motion } from "framer-motion"; // For animations
 import {
   Select,
@@ -92,18 +92,18 @@ import {
   SelectValue,
   SelectGroup,
   SelectLabel,
-} from "./components/ui/select";
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "./components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Calendar } from "./components/ui/calendar";
-import { Badge } from "./components/ui/badge";
-import { ScrollArea } from "./components/ui/scroll-area";
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -112,8 +112,8 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "./components/ui/dialog";
-import { Switch } from "./components/ui/switch";
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -138,9 +138,9 @@ import {
   HelpCircle,
   Settings,
 } from "lucide-react";
-import { loadUserData, saveUserData } from "./context/auth-context";
+import { loadUserData, saveUserData } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
-import { AuthService } from "./lib/auth-service";
+import { AuthService } from "@/lib/auth-service";
 // Right before the component definition, add this interface
 interface StatusChange {
   id: number;
@@ -1632,9 +1632,28 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           jobDescription: selectedOpportunity.jobDescription,
         }),
       })
-        .then((response) => response.json())
-        .then((data) => setSuggestions(data.suggestions))
-        .catch(console.error);
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+          // Try to parse as JSON, but handle failures
+          return response.text().then((text) => {
+            try {
+              return JSON.parse(text);
+            } catch (e) {
+              console.error(
+                "Failed to parse response as JSON:",
+                text.substring(0, 100) + "..."
+              );
+              return { suggestions: [] }; // Return a default value
+            }
+          });
+        })
+        .then((data) => setSuggestions(data.suggestions || []))
+        .catch((error) => {
+          console.error("Error fetching suggestions:", error);
+          setSuggestions([]);
+        });
     }
   }, [selectedOpportunity]);
 
