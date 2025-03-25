@@ -103,11 +103,13 @@ export default function CAPTAINGui() {
   >({});
   const [isJobDescriptionExpanded, setIsJobDescriptionExpanded] =
     useState(false);
+
   // Import/Export state variables
   const [selectedExportIds, setSelectedExportIds] = useState<number[]>([]);
   const [importData, setImportData] = useState<Opportunity[]>([]);
   const [selectedImportIds, setSelectedImportIds] = useState<number[]>([]);
   const [importFile, setImportFile] = useState<File | null>(null);
+
   // New state variables for editing job details, contact info, and notes
   const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
   const [isEditingContactInfo, setIsEditingContactInfo] = useState(false);
@@ -124,14 +126,17 @@ export default function CAPTAINGui() {
     recruiterPhone: "",
   });
   const [editedNotes, setEditedNotes] = useState("");
+
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
   const [viewMode, setViewMode] = useState("card"); // "card" or "list"
+
   // Sorting states
   const [sortBy, setSortBy] = useState("lastModified");
   const [sortDirection, setSortDirection] = useState("desc"); // "asc" or "desc"
+
   // New state for calendar event creation
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -140,18 +145,23 @@ export default function CAPTAINGui() {
     opportunityId: "",
     notes: "",
   });
+
   // Batch selection states
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
   const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
+
   // Mobile touch handling
   const [touchStart, setTouchStart] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+
   // Status change tracking
   const [statusChanges, setStatusChanges] = useState<StatusChange[]>([]);
+
   // AI prompt states
   const [aiPrompts, setAiPrompts] = useState<string[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
+
   // Timeline period state
   const [timelinePeriod, setTimelinePeriod] = useState("30days");
   const [jobRecommendations, setJobRecommendations] = useState<
@@ -166,6 +176,7 @@ export default function CAPTAINGui() {
   const [recommendationsPreview, setRecommendationsPreview] = useState<
     JobRecommendation[]
   >([]);
+
   // Define selectedOpportunity before any useEffect that uses it
   const selectedOpportunity =
     opportunities.length > 0
@@ -307,6 +318,9 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       };
       setStatusChanges((prev) => [...prev, newStatusChange]);
     }
+
+    console.log(`Updating opportunity ${opportunityId} with:`, updates);
+
     dispatch({
       type: "UPDATE_OPPORTUNITY",
       payload: {
@@ -426,6 +440,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       month: "long",
       day: "numeric",
     });
+
     // Use a timestamp for a unique ID
     const uniqueId = Date.now();
     const newOpp = {
@@ -434,10 +449,21 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       appliedDate: formattedDate,
       resume: masterResume, // Use the master resume for the new opportunity
     };
+
+    // Log before dispatching for debugging
+    console.log("Creating new opportunity with ID:", uniqueId);
+    console.log("New opportunity data:", newOpp);
+
     // Use dispatch instead of setState
     dispatch({ type: "ADD_OPPORTUNITY", payload: newOpp });
+
+    // Log after dispatching
+    console.log("Dispatched ADD_OPPORTUNITY for:", uniqueId);
+    console.log("Current opportunities count:", opportunities.length + 1);
+
     // Update last modified timestamp
     updateLastModified(uniqueId);
+
     // After the state update, find the index of the new opportunity and select it
     // We need to do this in the next render cycle to ensure the state has updated
     setTimeout(() => {
@@ -449,6 +475,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
         setSelectedOpportunityIndex(opportunities.length - 1);
       }
     }, 0);
+
     // Reset form
     setNewOpportunity({
       company: "",
@@ -486,6 +513,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
     { role: string; content: string }[]
   >([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+
   // Get chat messages for the selected opportunity
   const opportunityMessages = useMemo(() => {
     if (!selectedOpportunity) return [];

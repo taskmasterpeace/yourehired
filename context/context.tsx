@@ -41,10 +41,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [loading, setLoading] = useState(true);
+  const [lastOpportunityId, setLastOpportunityId] = useState<
+    string | number | null
+  >(null);
   const applicationService = new ApplicationService();
 
   // Convert from Supabase JobApplication to your Opportunity format
   const convertToOpportunity = (app: JobApplication) => {
+    console.log("Converting JobApplication to Opportunity:", app.id);
     return {
       id: app.id,
       company: app.companyName,
@@ -53,12 +57,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       appliedDate: app.dateApplied || app.dateAdded.split("T")[0],
       jobDescription: app.jobDescription || "",
       resume: app.notes || "",
-      // Add any other fields needed for your opportunity model
+      notes: app.notes || "",
+      location: app.location || "",
+      applicationUrl: app.url || "",
+      salary: app.salary || "",
+      recruiterName: app.contactName || "",
+      recruiterEmail: app.contactEmail || "",
+      recruiterPhone: app.contactPhone || "",
+      tags: app.tags || [],
     };
   };
 
   // Convert from your Opportunity format to Supabase JobApplication
   const convertToJobApplication = (opp: any): JobApplication => {
+    console.log("Converting Opportunity to JobApplication:", opp.id);
+
     return {
       id: opp.id?.toString(),
       companyName: opp.company,
@@ -67,9 +80,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       dateAdded: new Date().toISOString(),
       dateApplied: opp.appliedDate,
       jobDescription: opp.jobDescription || "",
-      notes: opp.resume || "",
-      location: "",
-      tags: [],
+      notes: opp.notes || opp.resume || "",
+      location: opp.location || "",
+      salary: opp.salary || "",
+      contactName: opp.recruiterName || "",
+      contactEmail: opp.recruiterEmail || "",
+      contactPhone: opp.recruiterPhone || "",
+      url: opp.applicationUrl || "",
+      tags: opp.tags || [],
       statusHistory: [],
       events: [],
     };
@@ -107,7 +125,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
           payload: {
             opportunities,
             events: allEvents,
-            // Keep other state values
             masterResume: state.masterResume,
             userProfile: state.userProfile,
             chatMessages: state.chatMessages,
@@ -124,68 +141,68 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     loadData();
   }, []);
 
-  // Handle saving opportunities to Supabase
-  const saveOpportunityToSupabase = async (opportunity: any) => {
-    try {
-      if (!opportunity || !opportunity.id) return;
-
-      // Convert to JobApplication format
-      const application = convertToJobApplication(opportunity);
-
-      // Save to Supabase
-      await applicationService.saveApplication(application);
-      console.log(`Saved opportunity ${opportunity.id} to Supabase`);
-    } catch (error) {
-      console.error("Error saving data to Supabase:", error);
-    }
-  };
-
-  // Listen for changes to opportunities and save them
+  // Monitor opportunities for changes
   useEffect(() => {
-    // Skip saving if we're still loading initial data
-    if (loading || state.opportunities.length === 0) return;
+    // Skip if still loading
+    if (loading) return;
 
-    // In a real app, you'd implement a more sophisticated change tracking system
-    // For simplicity, we'll just look at the latest opportunity
+    // Only execute if we have opportunities
+    if (state.opportunities.length === 0) return;
+
+    // Find the latest opportunity (the one at the highest index)
     const latestOpportunity =
       state.opportunities[state.opportunities.length - 1];
-    saveOpportunityToSupabase(latestOpportunity);
 
-    // To properly implement change tracking, you'd need to:
-    // 1. Keep track of which opportunities have changed
-    // 2. Only save those that have changed
-    // 3. Handle deletions separately
-  }, [state.opportunities, loading]);
+    // Check if this is a new opportunity we haven't processed yet
+    if (latestOpportunity.id !== lastOpportunityId) {
+      console.log("New opportunity detected:", latestOpportunity.id);
 
-  // Handle saving events to Supabase
-  useEffect(() => {
-    // Skip if loading or no events
-    if (loading || state.events.length === 0) return;
+      // Save this opportunity to Supabase
+      const saveOpportunity = async () => {
+        try {
+          console.log(
+            "Converting and saving opportunity to Supabase:",
+            latestOpportunity.id
+          );
+          const jobApp = convertToJobApplication(latestOpportunity);
 
-    // This is a simple implementation that would need to be expanded
-    // to properly track which events are new/modified
-    const saveEvents = async () => {
-      try {
-        // For simplicity, just take the last event and assume it's new/changed
-        const latestEvent = state.events[state.events.length - 1];
-        if (latestEvent && latestEvent.opportunityId) {
-          await applicationService.addEvent(latestEvent.opportunityId, {
-            id: latestEvent.id,
-            title: latestEvent.title,
-            date: latestEvent.date,
-            type: latestEvent.type,
-            notes: "",
-            isCompleted: false,
-          });
-          console.log(`Saved event ${latestEvent.id} to Supabase`);
+          // Attempt to save
+          const result = await applicationService.saveApplication(jobApp);
+
+          if (result) {
+            console.log(
+              "Successfully saved opportunity to Supabase:",
+              latestOpportunity.id
+            );
+            // Update the last seen opportunity ID
+            setLastOpportunityId(latestOpportunity.id);
+          } else {
+            console.error(
+              "Failed to save opportunity to Supabase:",
+              latestOpportunity.id
+            );
+          }
+        } catch (error) {
+          console.error("Error saving opportunity to Supabase:", error);
         }
-      } catch (error) {
-        console.error("Error saving event to Supabase:", error);
-      }
+      };
+
+      saveOpportunity();
+    }
+  }, [state.opportunities, loading, lastOpportunityId]);
+
+  // Monitor opportunity updates
+  useEffect(() => {
+    // Check for updates to existing opportunities
+    const checkForUpdates = async () => {
+      // Logic for tracking and saving updates would go here
+      // For now, we're focusing on new opportunities
     };
 
-    saveEvents();
-  }, [state.events, loading]);
+    if (!loading) {
+      checkForUpdates();
+    }
+  }, [state.opportunities, loading]);
 
   return (
     <AppContext.Provider value={{ state, dispatch, loading }}>

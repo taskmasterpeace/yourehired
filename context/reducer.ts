@@ -104,6 +104,7 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
       };
 
     case "ADD_OPPORTUNITY": {
+      console.log("Adding opportunity to state:", action.payload);
       const newOpportunity = action.payload;
       // Generate events based on the new opportunity
       const newEvents = generateEventsFromOpportunity(newOpportunity);
@@ -129,6 +130,11 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
     }
 
     case "UPDATE_OPPORTUNITY": {
+      console.log(
+        "Updating opportunity:",
+        action.payload.id,
+        action.payload.updates
+      );
       const { id, updates } = action.payload;
       const updatedOpportunities = state.opportunities.map((opp) =>
         opp.id === id ? { ...opp, ...updates } : opp
