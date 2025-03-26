@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { ApplicationStatus, JobApplication } from "@/types/index";
 import { v4 as uuidv4 } from "uuid";
 import { initializeDatabase } from "./db-init";
@@ -11,7 +11,7 @@ let instance: ApplicationService | null = null;
 export class ApplicationService {
   private initialized = false;
   private initializationAttempted = false;
-  private supabaseClient: ReturnType<typeof createClient> | null = null;
+  private supabaseClient: SupabaseClient | null = null;
 
   constructor() {
     // Enforce singleton pattern
@@ -33,7 +33,6 @@ export class ApplicationService {
       // Fallback for initialization errors
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
       if (supabaseUrl && supabaseAnonKey) {
         this.supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
           auth: {
@@ -49,12 +48,10 @@ export class ApplicationService {
   private getClient() {
     if (!this.supabaseClient) {
       this.initClient();
-
       if (!this.supabaseClient) {
         throw new Error("Failed to initialize Supabase client");
       }
     }
-
     return this.supabaseClient;
   }
 
@@ -75,11 +72,9 @@ export class ApplicationService {
     }
 
     this.initializationAttempted = true;
-
     try {
       const success = await initializeDatabase();
       this.initialized = success;
-
       if (!success) {
         console.warn(
           "Database initialization was not successful, but continuing anyway"
@@ -96,7 +91,6 @@ export class ApplicationService {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
-
       const supabase = this.getClient();
 
       // First, get all applications
@@ -205,13 +199,11 @@ export class ApplicationService {
     }
   }
 
-  // The rest of the methods remain the same...
   // Get application by ID
   async getApplicationById(id: string): Promise<JobApplication | null> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
-
       const supabase = this.getClient();
 
       // Get application by ID
@@ -309,7 +301,6 @@ export class ApplicationService {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
-
       const supabase = this.getClient();
 
       // Get the current user session
@@ -431,7 +422,6 @@ export class ApplicationService {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
-
       const supabase = this.getClient();
 
       // Delete application - RLS will ensure user can only delete their own data
@@ -463,7 +453,6 @@ export class ApplicationService {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
-
       const supabase = this.getClient();
 
       // Get the current user session
@@ -526,7 +515,6 @@ export class ApplicationService {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
-
       const supabase = this.getClient();
 
       // Get the current user session
@@ -553,7 +541,6 @@ export class ApplicationService {
 
       // Insert event - RLS will ensure user can only add events to their own applications
       const { error } = await supabase.from("events").insert(dbEvent);
-
       if (
         error &&
         !error.message.includes('relation "public.events" does not exist')

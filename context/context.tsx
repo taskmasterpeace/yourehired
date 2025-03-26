@@ -9,6 +9,7 @@ import { appReducer } from "./reducer";
 import { AppState, AppAction } from "./types";
 import { ApplicationService } from "@/lib/application-service";
 import { JobApplication, ApplicationStatus } from "@/types/index";
+import { Tag } from "./types"; // Make sure to import Tag type
 
 // Initial state
 const initialState: AppState = {
@@ -35,6 +36,50 @@ type AppContextType = {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Helper function to determine tag color
+function getTagColor(tagName: string): string {
+  // You can customize this function to match your color scheme
+  const colors = [
+    "#FF5733",
+    "#33FF57",
+    "#3357FF",
+    "#F3FF33",
+    "#FF33F3",
+    "#33FFF3",
+    "#33CCFF",
+    "#FF9933",
+  ];
+
+  // Create a simple hash from the tag name for consistent coloring
+  const hash = tagName
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+}
+
+// Helper function to safely parse an ID to number
+function safeParseInt(value: string | number | null | undefined): number {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === "number") return value;
+
+  try {
+    const parsed = parseInt(value);
+    return isNaN(parsed) ? 0 : parsed;
+  } catch {
+    return 0;
+  }
+}
+
+// Helper function to ensure event type is one of the allowed values
+function validateEventType(
+  type: string
+): "interview" | "deadline" | "followup" | "assessment" {
+  const validTypes = ["interview", "deadline", "followup", "assessment"];
+  return validTypes.includes(type)
+    ? (type as "interview" | "deadline" | "followup" | "assessment")
+    : "interview"; // Default to "interview" if invalid
+}
+
 // Create a provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -50,7 +95,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const convertToOpportunity = (app: JobApplication) => {
     console.log("Converting JobApplication to Opportunity:", app.id);
     return {
-      id: app.id,
+      id: safeParseInt(app.id),
       company: app.companyName,
       position: app.positionTitle,
       status: app.status,
@@ -64,16 +109,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       recruiterName: app.contactName || "",
       recruiterEmail: app.contactEmail || "",
       recruiterPhone: app.contactPhone || "",
-      tags: app.tags || [],
+      // Convert string tags to Tag objects with required properties
+      tags: (app.tags || []).map((tagName, index) => ({
+        id: index,
+        name: tagName,
+        color: getTagColor(tagName),
+      })),
     };
   };
 
   // Convert from your Opportunity format to Supabase JobApplication
   const convertToJobApplication = (opp: any): JobApplication => {
     console.log("Converting Opportunity to JobApplication:", opp.id);
-
     return {
-      id: opp.id?.toString(),
+      id: opp.id?.toString(), // Convert number ID to string
       companyName: opp.company,
       positionTitle: opp.position,
       status: opp.status as ApplicationStatus,
@@ -87,7 +136,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       contactEmail: opp.recruiterEmail || "",
       contactPhone: opp.recruiterPhone || "",
       url: opp.applicationUrl || "",
-      tags: opp.tags || [],
+      // Extract tag names from Tag objects for storage in Supabase
+      tags: opp.tags ? opp.tags.map((tag: Tag) => tag.name) : [],
       statusHistory: [],
       events: [],
     };
@@ -99,23 +149,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         setLoading(true);
         console.log("Loading data from Supabase...");
-
         // Fetch applications from Supabase
         const applications = await applicationService.getApplications();
         console.log(`Loaded ${applications.length} applications from Supabase`);
-
         // Transform the applications to match our opportunity structure
         const opportunities = applications.map(convertToOpportunity);
-
-        // Collect all events from applications
+        // Collect all events from applications and convert types as needed
         const allEvents = applications.flatMap(
           (app) =>
             app.events?.map((event) => ({
-              id: event.id,
+              id: safeParseInt(event.id),
               title: event.title,
               date: event.date,
-              type: event.type || "general",
-              opportunityId: app.id,
+              // Validate and convert event type to one of the allowed values
+              type: validateEventType(event.type || "interview"),
+              opportunityId: safeParseInt(app.id),
             })) || []
         );
 
@@ -137,7 +185,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     };
-
     loadData();
   }, []);
 
@@ -145,18 +192,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     // Skip if still loading
     if (loading) return;
-
     // Only execute if we have opportunities
     if (state.opportunities.length === 0) return;
-
     // Find the latest opportunity (the one at the highest index)
     const latestOpportunity =
       state.opportunities[state.opportunities.length - 1];
-
     // Check if this is a new opportunity we haven't processed yet
     if (latestOpportunity.id !== lastOpportunityId) {
       console.log("New opportunity detected:", latestOpportunity.id);
-
       // Save this opportunity to Supabase
       const saveOpportunity = async () => {
         try {
@@ -165,10 +208,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
             latestOpportunity.id
           );
           const jobApp = convertToJobApplication(latestOpportunity);
-
           // Attempt to save
           const result = await applicationService.saveApplication(jobApp);
-
           if (result) {
             console.log(
               "Successfully saved opportunity to Supabase:",
@@ -186,7 +227,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
           console.error("Error saving opportunity to Supabase:", error);
         }
       };
-
       saveOpportunity();
     }
   }, [state.opportunities, loading, lastOpportunityId]);
@@ -198,7 +238,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       // Logic for tracking and saving updates would go here
       // For now, we're focusing on new opportunities
     };
-
     if (!loading) {
       checkForUpdates();
     }

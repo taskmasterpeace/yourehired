@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/popover";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
-import { AuthModal } from "@/components/auth/AuthModal";
 
 const Header = ({
   isDarkMode,
@@ -84,13 +83,7 @@ const Header = ({
             </Button>
           </div>
         ) : (
-          <AuthModal
-            trigger={
-              <Button variant="outline" size="sm">
-                Sign In
-              </Button>
-            }
-          />
+          <div className="">Not Sign In</div>
         )}
       </div>
     </div>

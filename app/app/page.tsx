@@ -16,8 +16,7 @@ const NotificationCenter = dynamic(
     ),
   { ssr: false }
 );
-// Force reload - using correct paths for root location
-import { AuthModal } from "@/components/auth/AuthModal";
+
 import { ResumeTab } from "@/components/tabs/ResumeTab";
 import { CaptainTab } from "@/components/tabs/CaptainTab";
 import { CalendarTab } from "@/components/tabs/CalendarTab";
@@ -838,12 +837,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           currentRecommendationIndex={currentRecommendationIndex}
           ratedRecommendations={ratedRecommendations}
         />
-        {/* Hidden auth modal */}
-        <div className="hidden">
-          <AuthModal
-            trigger={<button id="auth-modal-trigger">Sign In</button>}
-          />
-        </div>
+
         {/* Footer */}
         <Footer isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       </div>
