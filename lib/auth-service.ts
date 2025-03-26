@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./supabase-client";
+import { createSupabaseClient } from "./supabase";
 
 // Get the current origin for redirects
 const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -9,12 +9,11 @@ export const AuthService = {
    * @returns Object containing data and error (if any)
    */
   async signIn(email: string, password: string) {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
     return { data, error };
   },
 
@@ -23,7 +22,7 @@ export const AuthService = {
    * @returns Object containing data and error (if any)
    */
   async signUp(email: string, password: string) {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -31,7 +30,6 @@ export const AuthService = {
         emailRedirectTo: `${origin}/auth/callback`,
       },
     });
-
     return { data, error };
   },
 
@@ -40,9 +38,8 @@ export const AuthService = {
    * @returns Object containing success status and error (if any)
    */
   async signOut() {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { error } = await supabase.auth.signOut();
-
     return { success: !error, error };
   },
 
@@ -51,11 +48,10 @@ export const AuthService = {
    * @returns Object containing success status and error (if any)
    */
   async resetPassword(email: string) {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${origin}/reset-password`,
     });
-
     return { success: !error, data, error };
   },
 
@@ -64,14 +60,13 @@ export const AuthService = {
    * @returns Object containing data and error (if any)
    */
   async signInWithGoogle() {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${origin}/auth/callback`,
       },
     });
-
     return { data, error };
   },
 
@@ -80,9 +75,8 @@ export const AuthService = {
    * @returns Object containing session data and error (if any)
    */
   async getSession() {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.getSession();
-
     return {
       session: data.session,
       error,
@@ -94,9 +88,8 @@ export const AuthService = {
    * @returns Object containing user data and error (if any)
    */
   async getUser() {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.getUser();
-
     return {
       user: data.user,
       error,
@@ -108,9 +101,8 @@ export const AuthService = {
    * @returns Object containing user data and error (if any)
    */
   async updateProfile(userData: { [key: string]: any }) {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.updateUser(userData);
-
     return {
       user: data.user,
       error,
@@ -122,11 +114,10 @@ export const AuthService = {
    * @returns Object containing user data and error (if any)
    */
   async changePassword(password: string) {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.updateUser({
       password,
     });
-
     return {
       user: data.user,
       error,
@@ -138,13 +129,12 @@ export const AuthService = {
    * @returns Object containing session data and error (if any)
    */
   async verifyOTP(email: string, token: string, type: "email" | "recovery") {
-    const supabase = getSupabaseClient();
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
       type,
     });
-
     return {
       session: data.session,
       user: data.user,
