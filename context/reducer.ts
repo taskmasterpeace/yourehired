@@ -90,6 +90,11 @@ function addOpportunityToEvents(
   return [...events, ...opportunityEvents];
 }
 
+// Helper function to ensure IDs are always numbers
+function ensureNumericId(id: number | string): number {
+  return typeof id === "string" ? parseInt(id, 10) : id;
+}
+
 export const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
     case "LOAD_DATA":
@@ -100,7 +105,9 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
         events: action.payload.events || [],
         masterResume: action.payload.masterResume || state.masterResume,
         userProfile: action.payload.userProfile || state.userProfile,
-        chatMessages: action.payload.chatMessages || state.chatMessages,
+        chatMessages:
+          (action.payload.chatMessages as AppState["chatMessages"]) ||
+          state.chatMessages,
       };
 
     case "ADD_OPPORTUNITY": {
@@ -136,18 +143,22 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
         action.payload.updates
       );
       const { id, updates } = action.payload;
+      const numericId = ensureNumericId(id);
+
       const updatedOpportunities = state.opportunities.map((opp) =>
-        opp.id === id ? { ...opp, ...updates } : opp
+        opp.id === numericId ? { ...opp, ...updates } : opp
       );
       // If status changed, we might need to update or add events
       let updatedEvents = [...state.events];
       if (updates.status) {
         // Remove existing events for this opportunity
         updatedEvents = updatedEvents.filter(
-          (event) => event.opportunityId !== id
+          (event) => event.opportunityId !== numericId
         );
         // Find the updated opportunity
-        const updatedOpp = updatedOpportunities.find((opp) => opp.id === id);
+        const updatedOpp = updatedOpportunities.find(
+          (opp) => opp.id === numericId
+        );
         if (updatedOpp) {
           // Generate new events based on the updated status
           const newEvents = generateEventsFromOpportunity(updatedOpp);
@@ -162,7 +173,7 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
     }
 
     case "DELETE_OPPORTUNITY": {
-      const opportunityId = action.payload;
+      const opportunityId = ensureNumericId(action.payload);
       try {
         // First validate that the opportunity exists
         const opportunityExists = state.opportunities.some(
@@ -185,6 +196,7 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
         // Filter out related chat messages
         const updatedChatMessages = { ...state.chatMessages };
         delete updatedChatMessages[opportunityId];
+
         return {
           ...state,
           opportunities: updatedOpportunities,
@@ -220,15 +232,11 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
 
     case "UPDATE_EVENT": {
       const { id, updates } = action.payload;
+      const numericId = ensureNumericId(id);
+
       const updatedEvents = state.events.map((event) => {
-        // Convert IDs to numbers for comparison if they're strings
-        const eventId =
-          typeof event.id === "string"
-            ? parseInt(event.id as string, 10)
-            : event.id;
-        const updateId =
-          typeof id === "string" ? parseInt(id as string, 10) : id;
-        if (eventId === updateId) {
+        // Compare with the numeric ID
+        if (event.id === numericId) {
           return { ...event, ...updates } as CalendarEvent;
         }
         return event;
@@ -241,27 +249,11 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
 
     case "DELETE_EVENT": {
       console.log("Deleting event with ID:", action.payload);
-      // Convert ID to number if it's a string to ensure correct comparison
-      const idToDelete =
-        typeof action.payload === "string"
-          ? parseInt(action.payload, 10)
-          : action.payload;
+      const idToDelete = ensureNumericId(action.payload);
+
       console.log("Filtered events before:", state.events.length);
       // Create a new events array without the deleted event
-      const newEvents = state.events.filter((event) => {
-        // Normalize the event ID for comparison
-        const eventId =
-          typeof event.id === "string"
-            ? parseInt(event.id as string, 10)
-            : event.id;
-        // Return true to keep all events that don't match the ID to delete
-        const shouldKeep = eventId !== idToDelete;
-        // Log if we found the event to delete
-        if (!shouldKeep) {
-          console.log("Found event to delete:", event);
-        }
-        return shouldKeep;
-      });
+      const newEvents = state.events.filter((event) => event.id !== idToDelete);
       console.log("Filtered events after:", newEvents.length);
       return {
         ...state,
@@ -280,18 +272,21 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
 
     case "ADD_CHAT_MESSAGE": {
       const { opportunityId, message, sender } = action.payload;
-      const existingMessages = state.chatMessages[opportunityId] || [];
+      // Convert opportunityId to a number to ensure type compatibility
+      const numericId = ensureNumericId(opportunityId);
+
+      const existingMessages = state.chatMessages[numericId] || [];
       const newMessage = {
         id: Date.now(),
         message,
-        sender,
+        sender: sender as "user" | "ai", // Ensure we use the correct union type
         timestamp: new Date().toISOString(),
       };
       return {
         ...state,
         chatMessages: {
           ...state.chatMessages,
-          [opportunityId]: [...existingMessages, newMessage],
+          [numericId]: [...existingMessages, newMessage],
         },
       };
     }

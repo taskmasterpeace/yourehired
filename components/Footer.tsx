@@ -3,7 +3,12 @@ import React from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-const Footer = ({ isDarkMode, toggleDarkMode }) => {
+interface FooterProps {
+  isDarkMode: boolean;
+  toggleDarkMode: (checked: boolean) => void; // Updated to match the actual function signature
+}
+
+const Footer = ({ isDarkMode, toggleDarkMode }: FooterProps) => {
   return (
     <footer
       className={`mt-8 py-4 border-t ${

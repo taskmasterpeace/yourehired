@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
+
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get("redirectTo") || "/app";
   const { user, isLoading: authLoading } = useAuth();
@@ -101,16 +101,13 @@ export default function LoginPage() {
   };
 
   // Navigation handlers that use window.location for reliability
-  const goToSignup = (e) => {
+  const goToSignup = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    console.log(`Sign up clicked. Click count: ${clickCount + 1}`);
-    setClickCount((prev) => prev + 1);
     window.location.href = "/signup";
   };
 
-  const goToForgotPassword = (e) => {
+  const goToForgotPassword = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    console.log(`Forgot password clicked.`);
     window.location.href = "/forgot-password";
   };
 

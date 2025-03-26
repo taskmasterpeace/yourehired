@@ -12,9 +12,15 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AuthModal } from "@/components/auth/AuthModal";
 
 export default function LandingPage() {
   return (
@@ -26,22 +32,36 @@ export default function LandingPage() {
             <span className="text-xl font-bold">Hey, You're Hired!</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4">
+            <Link
+              href="#features"
+              className="text-sm font-medium hover:underline underline-offset-4"
+            >
               Features
             </Link>
-            <Link href="#how-it-works" className="text-sm font-medium hover:underline underline-offset-4">
+            <Link
+              href="#how-it-works"
+              className="text-sm font-medium hover:underline underline-offset-4"
+            >
               How It Works
             </Link>
-            <Link href="#pricing" className="text-sm font-medium hover:underline underline-offset-4">
+            <Link
+              href="#pricing"
+              className="text-sm font-medium hover:underline underline-offset-4"
+            >
               Pricing
             </Link>
-            <Link href="#testimonials" className="text-sm font-medium hover:underline underline-offset-4">
+            <Link
+              href="#testimonials"
+              className="text-sm font-medium hover:underline underline-offset-4"
+            >
               Testimonials
             </Link>
           </nav>
           <div className="flex items-center gap-4">
             <Link href="/login">
-              <Button variant="link" className="text-sm font-medium">Log in</Button>
+              <Button variant="link" className="text-sm font-medium">
+                Log in
+              </Button>
             </Link>
             <Link href="/login">
               <Button>Get Started</Button>
@@ -56,14 +76,17 @@ export default function LandingPage() {
             <div className="grid gap-6 lg:grid-cols-[1fr_600px] lg:gap-12 xl:grid-cols-[1fr_700px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="inline-flex items-center rounded-lg bg-muted px-3 py-1 text-sm">
-                  <span className="font-medium">AI-Powered Job Search Assistant</span>
+                  <span className="font-medium">
+                    AI-Powered Job Search Assistant
+                  </span>
                 </div>
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
                     Streamline your job search journey
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Organize applications, optimize your resume, and get personalized coaching - all in one place.
+                    Organize applications, optimize your resume, and get
+                    personalized coaching - all in one place.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -106,19 +129,27 @@ export default function LandingPage() {
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-8">
               <div className="flex flex-col items-center justify-center space-y-2 text-center">
                 <div className="text-3xl font-bold">40%</div>
-                <div className="text-sm text-muted-foreground">More interview invitations</div>
+                <div className="text-sm text-muted-foreground">
+                  More interview invitations
+                </div>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2 text-center">
                 <div className="text-3xl font-bold">10,000+</div>
-                <div className="text-sm text-muted-foreground">Job seekers helped</div>
+                <div className="text-sm text-muted-foreground">
+                  Job seekers helped
+                </div>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2 text-center">
                 <div className="text-3xl font-bold">85%</div>
-                <div className="text-sm text-muted-foreground">Application success rate</div>
+                <div className="text-sm text-muted-foreground">
+                  Application success rate
+                </div>
               </div>
               <div className="flex flex-col items-center justify-center space-y-2 text-center">
                 <div className="text-3xl font-bold">30+</div>
-                <div className="text-sm text-muted-foreground">Days saved on average</div>
+                <div className="text-sm text-muted-foreground">
+                  Days saved on average
+                </div>
               </div>
             </div>
           </div>
@@ -136,8 +167,8 @@ export default function LandingPage() {
                   Everything you need for a successful job search
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Our AI-powered platform helps you stay organized, optimize your applications, and prepare for
-                  interviews.
+                  Our AI-powered platform helps you stay organized, optimize
+                  your applications, and prepare for interviews.
                 </p>
               </div>
             </div>
@@ -151,7 +182,8 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Get personalized resume feedback tailored to each job description.
+                    Get personalized resume feedback tailored to each job
+                    description.
                   </p>
                 </CardContent>
               </Card>
@@ -164,7 +196,8 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Track every application from bookmarked to offer in one organized place.
+                    Track every application from bookmarked to offer in one
+                    organized place.
                   </p>
                 </CardContent>
               </Card>
@@ -177,7 +210,8 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Practice with AI-generated interview questions specific to your roles.
+                    Practice with AI-generated interview questions specific to
+                    your roles.
                   </p>
                 </CardContent>
               </Card>
@@ -203,9 +237,12 @@ export default function LandingPage() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">See the platform in action</h2>
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                  See the platform in action
+                </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Explore our intuitive interface designed to make your job search efficient and effective.
+                  Explore our intuitive interface designed to make your job
+                  search efficient and effective.
                 </p>
               </div>
             </div>
@@ -225,10 +262,13 @@ export default function LandingPage() {
                       className="w-full object-cover"
                     />
                     <div className="p-6">
-                      <h3 className="text-xl font-bold">Application Tracking Board</h3>
+                      <h3 className="text-xl font-bold">
+                        Application Tracking Board
+                      </h3>
                       <p className="mt-2 text-muted-foreground">
-                        Organize your job applications with our intuitive kanban board. Move applications through
-                        different stages and never lose track of your progress.
+                        Organize your job applications with our intuitive kanban
+                        board. Move applications through different stages and
+                        never lose track of your progress.
                       </p>
                     </div>
                   </div>
@@ -246,8 +286,9 @@ export default function LandingPage() {
                     <div className="p-6">
                       <h3 className="text-xl font-bold">AI Resume Assistant</h3>
                       <p className="mt-2 text-muted-foreground">
-                        Get personalized feedback on your resume based on the job description. Our AI highlights areas
-                        for improvement and suggests tailored changes.
+                        Get personalized feedback on your resume based on the
+                        job description. Our AI highlights areas for improvement
+                        and suggests tailored changes.
                       </p>
                     </div>
                   </div>
@@ -265,7 +306,8 @@ export default function LandingPage() {
                     <div className="p-6">
                       <h3 className="text-xl font-bold">Interview Coach</h3>
                       <p className="mt-2 text-muted-foreground">
-                        Practice interviews with our AI coach. Get industry-specific questions and feedback on your
+                        Practice interviews with our AI coach. Get
+                        industry-specific questions and feedback on your
                         responses to improve your interview skills.
                       </p>
                     </div>
@@ -284,8 +326,9 @@ export default function LandingPage() {
                     <div className="p-6">
                       <h3 className="text-xl font-bold">Progress Analytics</h3>
                       <p className="mt-2 text-muted-foreground">
-                        Track your job search metrics and identify patterns to improve your strategy. See response
-                        rates, interview conversions, and more.
+                        Track your job search metrics and identify patterns to
+                        improve your strategy. See response rates, interview
+                        conversions, and more.
                       </p>
                     </div>
                   </div>
@@ -303,7 +346,9 @@ export default function LandingPage() {
                 <div className="inline-flex items-center rounded-lg bg-muted px-3 py-1 text-sm">
                   <span className="font-medium">Simple Process</span>
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">How Hey, You're Hired! works</h2>
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                  How Hey, You're Hired! works
+                </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   Our platform simplifies your job search in just a few steps.
                 </p>
@@ -316,7 +361,8 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold">Import or Create</h3>
                 <p className="text-muted-foreground">
-                  Upload your existing resume or create a new one with our guided templates.
+                  Upload your existing resume or create a new one with our
+                  guided templates.
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-4 text-center">
@@ -325,7 +371,8 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold">Optimize & Apply</h3>
                 <p className="text-muted-foreground">
-                  Use our AI to tailor your resume for each job and track your applications.
+                  Use our AI to tailor your resume for each job and track your
+                  applications.
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-4 text-center">
@@ -334,14 +381,16 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold">Prepare & Succeed</h3>
                 <p className="text-muted-foreground">
-                  Practice interviews with our AI coach and track your progress until you get hired.
+                  Practice interviews with our AI coach and track your progress
+                  until you get hired.
                 </p>
               </div>
             </div>
             <div className="flex justify-center">
               <Link href="/login">
                 <Button size="lg">
-                  Start Your Job Search <ChevronRight className="ml-1 h-4 w-4" />
+                  Start Your Job Search{" "}
+                  <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -356,9 +405,12 @@ export default function LandingPage() {
                 <div className="inline-flex items-center rounded-lg bg-background px-3 py-1 text-sm">
                   <span className="font-medium">Success Stories</span>
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">Hear from our users</h2>
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                  Hear from our users
+                </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  See how Hey, You're Hired! has helped job seekers land their dream roles.
+                  See how Hey, You're Hired! has helped job seekers land their
+                  dream roles.
                 </p>
               </div>
             </div>
@@ -366,9 +418,9 @@ export default function LandingPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <img 
-                      src="/testimonial-avatar-1.png" 
-                      alt="Alex" 
+                    <img
+                      src="/testimonial-avatar-1.png"
+                      alt="Alex"
                       className="h-10 w-10 rounded-full object-cover"
                     />
                     <div>
@@ -379,17 +431,19 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    "After sending out dozens of applications with no response, I started using Hey, You're Hired!
-                    Within two weeks, I had three interview invitations. The AI resume feedback was a game-changer!"
+                    "After sending out dozens of applications with no response,
+                    I started using Hey, You're Hired! Within two weeks, I had
+                    three interview invitations. The AI resume feedback was a
+                    game-changer!"
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <img 
-                      src="/testimonial-avatar-2.png" 
-                      alt="Maya" 
+                    <img
+                      src="/testimonial-avatar-2.png"
+                      alt="Maya"
                       className="h-10 w-10 rounded-full object-cover"
                     />
                     <div>
@@ -400,17 +454,19 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    "Changing industries was intimidating, but the platform helped me translate my skills effectively.
-                    The interview practice gave me confidence, and I landed a role in my target industry!"
+                    "Changing industries was intimidating, but the platform
+                    helped me translate my skills effectively. The interview
+                    practice gave me confidence, and I landed a role in my
+                    target industry!"
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <img 
-                      src="/testimonial-avatar-3.png" 
-                      alt="James" 
+                    <img
+                      src="/testimonial-avatar-3.png"
+                      alt="James"
                       className="h-10 w-10 rounded-full object-cover"
                     />
                     <div>
@@ -421,8 +477,10 @@ export default function LandingPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    "Managing multiple promising leads was overwhelming until I found this platform. The organization
-                    tools and reminders kept me on track, and the analytics helped me focus on what was working."
+                    "Managing multiple promising leads was overwhelming until I
+                    found this platform. The organization tools and reminders
+                    kept me on track, and the analytics helped me focus on what
+                    was working."
                   </p>
                 </CardContent>
               </Card>
@@ -435,7 +493,9 @@ export default function LandingPage() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">Simple, transparent pricing</h2>
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+                  Simple, transparent pricing
+                </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   Choose the plan that's right for your job search journey.
                 </p>
@@ -445,10 +505,14 @@ export default function LandingPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Free</CardTitle>
-                  <CardDescription>Get started with basic features</CardDescription>
+                  <CardDescription>
+                    Get started with basic features
+                  </CardDescription>
                   <div className="mt-4 flex items-baseline">
                     <span className="text-3xl font-bold">$0</span>
-                    <span className="ml-1 text-sm text-muted-foreground">/month</span>
+                    <span className="ml-1 text-sm text-muted-foreground">
+                      /month
+                    </span>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -473,7 +537,9 @@ export default function LandingPage() {
                 </CardContent>
                 <CardFooter>
                   <Link href="/login" className="w-full">
-                    <Button className="w-full" variant="outline">Get Started</Button>
+                    <Button className="w-full" variant="outline">
+                      Get Started
+                    </Button>
                   </Link>
                 </CardFooter>
               </Card>
@@ -483,12 +549,18 @@ export default function LandingPage() {
                     <span className="font-medium">Most Popular</span>
                   </div>
                   <CardTitle className="mt-4">Premium</CardTitle>
-                  <CardDescription>Everything you need for your job search</CardDescription>
+                  <CardDescription>
+                    Everything you need for your job search
+                  </CardDescription>
                   <div className="mt-4 flex items-baseline">
                     <span className="text-3xl font-bold">$9.99</span>
-                    <span className="ml-1 text-sm text-muted-foreground">/month</span>
+                    <span className="ml-1 text-sm text-muted-foreground">
+                      /month
+                    </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Save 20% with annual billing</p>
+                  <p className="text-xs text-muted-foreground">
+                    Save 20% with annual billing
+                  </p>
                 </CardHeader>
                 <CardContent>
                   <ul className="grid gap-2 text-sm">
@@ -527,7 +599,8 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto max-w-5xl text-center">
               <p className="text-sm text-muted-foreground">
-                All plans include a 14-day free trial of Premium features. No credit card required.
+                All plans include a 14-day free trial of Premium features. No
+                credit card required.
               </p>
             </div>
           </div>
@@ -542,7 +615,8 @@ export default function LandingPage() {
                   Ready to transform your job search?
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Join thousands of job seekers who have streamlined their path to employment.
+                  Join thousands of job seekers who have streamlined their path
+                  to employment.
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -554,7 +628,8 @@ export default function LandingPage() {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                No credit card required. 14-day free trial of all premium features.
+                No credit card required. 14-day free trial of all premium
+                features.
               </p>
             </div>
           </div>
@@ -568,11 +643,14 @@ export default function LandingPage() {
               <span className="text-xl font-bold">Hey, You're Hired!</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              The complete platform for your job search journey. Organize applications, optimize your resume, and get
-              personalized coaching.
+              The complete platform for your job search journey. Organize
+              applications, optimize your resume, and get personalized coaching.
             </p>
             <div className="flex gap-4">
-              <Link href="#" className="text-muted-foreground hover:text-foreground">
+              <Link
+                href="#"
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <span className="sr-only">Twitter</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -589,7 +667,10 @@ export default function LandingPage() {
                   <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
                 </svg>
               </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground">
+              <Link
+                href="#"
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <span className="sr-only">LinkedIn</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -615,17 +696,26 @@ export default function LandingPage() {
               <h3 className="text-sm font-medium">Product</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#features" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#features"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="#pricing" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#pricing"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Integrations
                   </Link>
                 </li>
@@ -635,17 +725,26 @@ export default function LandingPage() {
               <h3 className="text-sm font-medium">Company</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Blog
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Careers
                   </Link>
                 </li>
@@ -655,17 +754,26 @@ export default function LandingPage() {
               <h3 className="text-sm font-medium">Legal</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Terms of Service
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    href="#"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Cookie Policy
                   </Link>
                 </li>
@@ -676,13 +784,20 @@ export default function LandingPage() {
         <div className="border-t py-6">
           <div className="container flex flex-col items-center justify-between gap-4 px-4 md:px-6 md:flex-row">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} Hey, You're Hired! All rights reserved.
+              &copy; {new Date().getFullYear()} Hey, You're Hired! All rights
+              reserved.
             </p>
             <div className="flex gap-4">
-              <Link href="#" className="text-xs text-muted-foreground hover:text-foreground">
+              <Link
+                href="#"
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
                 Privacy Policy
               </Link>
-              <Link href="#" className="text-xs text-muted-foreground hover:text-foreground">
+              <Link
+                href="#"
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
                 Terms of Service
               </Link>
             </div>
