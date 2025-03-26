@@ -49,7 +49,6 @@ function getTagColor(tagName: string): string {
     "#33CCFF",
     "#FF9933",
   ];
-
   // Create a simple hash from the tag name for consistent coloring
   const hash = tagName
     .split("")
@@ -61,7 +60,6 @@ function getTagColor(tagName: string): string {
 function safeParseInt(value: string | number | null | undefined): number {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return value;
-
   try {
     const parsed = parseInt(value);
     return isNaN(parsed) ? 0 : parsed;
@@ -86,16 +84,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [loading, setLoading] = useState(true);
-  const [lastOpportunityId, setLastOpportunityId] = useState<
-    string | number | null
-  >(null);
+  const [savingOpportunities, setSavingOpportunities] = useState<
+    Record<string | number, boolean>
+  >({});
   const applicationService = new ApplicationService();
 
   // Convert from Supabase JobApplication to your Opportunity format
   const convertToOpportunity = (app: JobApplication) => {
     console.log("Converting JobApplication to Opportunity:", app.id);
     return {
-      id: safeParseInt(app.id),
+      id: app.id, // Keep as string ID from Supabase
       company: app.companyName,
       position: app.positionTitle,
       status: app.status,
@@ -121,8 +119,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Convert from your Opportunity format to Supabase JobApplication
   const convertToJobApplication = (opp: any): JobApplication => {
     console.log("Converting Opportunity to JobApplication:", opp.id);
+
+    // Check if the ID is a Supabase ID (string with dashes) or a numeric ID
+    const isSupabaseId = typeof opp.id === "string" && opp.id.includes("-");
+
     return {
-      id: opp.id?.toString(), // Convert number ID to string
+      id: isSupabaseId ? opp.id : undefined, // Only include ID if it's a Supabase ID
       companyName: opp.company,
       positionTitle: opp.position,
       status: opp.status as ApplicationStatus,
@@ -152,8 +154,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         // Fetch applications from Supabase
         const applications = await applicationService.getApplications();
         console.log(`Loaded ${applications.length} applications from Supabase`);
+
         // Transform the applications to match our opportunity structure
         const opportunities = applications.map(convertToOpportunity);
+
         // Collect all events from applications and convert types as needed
         const allEvents = applications.flatMap(
           (app) =>
@@ -163,7 +167,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
               date: event.date,
               // Validate and convert event type to one of the allowed values
               type: validateEventType(event.type || "interview"),
-              opportunityId: safeParseInt(app.id),
+              opportunityId: app.id,
             })) || []
         );
 
@@ -185,61 +189,92 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     };
+
     loadData();
   }, []);
 
-  // Monitor opportunities for changes
+  // Monitor opportunities for changes and save to Supabase
   useEffect(() => {
-    // Skip if still loading
-    if (loading) return;
-    // Only execute if we have opportunities
-    if (state.opportunities.length === 0) return;
-    // Find the latest opportunity (the one at the highest index)
-    const latestOpportunity =
-      state.opportunities[state.opportunities.length - 1];
-    // Check if this is a new opportunity we haven't processed yet
-    if (latestOpportunity.id !== lastOpportunityId) {
-      console.log("New opportunity detected:", latestOpportunity.id);
-      // Save this opportunity to Supabase
-      const saveOpportunity = async () => {
-        try {
-          console.log(
-            "Converting and saving opportunity to Supabase:",
-            latestOpportunity.id
-          );
-          const jobApp = convertToJobApplication(latestOpportunity);
-          // Attempt to save
-          const result = await applicationService.saveApplication(jobApp);
-          if (result) {
+    // Skip if still loading initial data
+    if (loading) {
+      console.log("Skipping save operation - still loading initial data");
+      return;
+    }
+
+    // Find opportunities that need to be saved
+    // These will typically be ones with numeric IDs (not Supabase UUIDs)
+    const unsavedOpportunities = state.opportunities.filter((opp) => {
+      // Check if it has a numeric ID (local) and not already being saved
+      const isNumericId =
+        typeof opp.id === "number" ||
+        (typeof opp.id === "string" && !opp.id.includes("-"));
+      const isNotBeingSaved = !savingOpportunities[opp.id];
+
+      return isNumericId && isNotBeingSaved;
+    });
+
+    console.log(`Found ${unsavedOpportunities.length} unsaved opportunities`);
+
+    // If we have unsaved opportunities, save them one by one
+    if (unsavedOpportunities.length > 0) {
+      // Create a batch function to save them
+      const saveOpportunities = async () => {
+        for (const opportunity of unsavedOpportunities) {
+          try {
+            // Mark this opportunity as being saved to prevent duplicate saves
+            setSavingOpportunities((prev) => ({
+              ...prev,
+              [opportunity.id]: true,
+            }));
+
             console.log(
-              "Successfully saved opportunity to Supabase:",
-              latestOpportunity.id
+              "SAVING OPPORTUNITY TO SUPABASE:",
+              opportunity.id,
+              opportunity
             );
-            // Update the last seen opportunity ID
-            setLastOpportunityId(latestOpportunity.id);
-          } else {
-            console.error(
-              "Failed to save opportunity to Supabase:",
-              latestOpportunity.id
-            );
+            const jobApp = convertToJobApplication(opportunity);
+            console.log("Converted to JobApplication:", jobApp);
+
+            // Attempt to save to Supabase
+            const result = await applicationService.saveApplication(jobApp);
+
+            if (result) {
+              console.log("Successfully saved to Supabase! Result:", result);
+              console.log("New Supabase ID:", result.id);
+
+              // Update the opportunity in our state with the Supabase ID
+              if (result.id) {
+                dispatch({
+                  type: "UPDATE_OPPORTUNITY",
+                  payload: {
+                    id: opportunity.id,
+                    updates: { id: result.id },
+                  },
+                });
+
+                console.log("Updated opportunity with Supabase ID");
+              }
+            } else {
+              console.error(
+                "Failed to save opportunity to Supabase:",
+                opportunity.id
+              );
+            }
+          } catch (error) {
+            console.error("Error saving opportunity to Supabase:", error);
+          } finally {
+            // Mark as no longer being saved, regardless of outcome
+            setSavingOpportunities((prev) => {
+              const newState = { ...prev };
+              delete newState[opportunity.id];
+              return newState;
+            });
           }
-        } catch (error) {
-          console.error("Error saving opportunity to Supabase:", error);
         }
       };
-      saveOpportunity();
-    }
-  }, [state.opportunities, loading, lastOpportunityId]);
 
-  // Monitor opportunity updates
-  useEffect(() => {
-    // Check for updates to existing opportunities
-    const checkForUpdates = async () => {
-      // Logic for tracking and saving updates would go here
-      // For now, we're focusing on new opportunities
-    };
-    if (!loading) {
-      checkForUpdates();
+      // Execute the save operation
+      saveOpportunities();
     }
   }, [state.opportunities, loading]);
 
