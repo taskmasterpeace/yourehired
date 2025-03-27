@@ -1,13 +1,11 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, Mail } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { getSupabaseClient } from "@/lib/supabase-client";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { createSupabaseClient } from "@/lib/supabase";
 
 // Validation schema for signup form
 const signupSchema = z
@@ -67,21 +66,17 @@ export default function SignupPage() {
   const handleSignup = async (values: SignupFormValues) => {
     setIsSubmitting(true);
     setError("");
-
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createSupabaseClient();
       const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
       });
-
       if (error) throw error;
-
       toast({
         title: "Account created",
         description: "Please check your email to confirm your account.",
       });
-
       // Redirect to login page after signup
       router.push("/login");
     } catch (err: any) {
@@ -100,16 +95,14 @@ export default function SignupPage() {
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     setError("");
-
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createSupabaseClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-
       if (error) throw error;
       // The redirect will happen automatically, no need to navigate
     } catch (err: any) {
@@ -152,7 +145,6 @@ export default function SignupPage() {
     >
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40"></div>
-
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
@@ -176,7 +168,6 @@ export default function SignupPage() {
             </Button>
           </Link>
         </header>
-
         {/* Main content */}
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
@@ -195,14 +186,12 @@ export default function SignupPage() {
                 Sign up to get started
               </p>
             </div>
-
             {error && (
               <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md flex items-start">
                 <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 text-red-500" />
                 <p>{error}</p>
               </div>
             )}
-
             <div className="space-y-4">
               <Button
                 onClick={handleGoogleSignIn}
@@ -221,7 +210,6 @@ export default function SignupPage() {
                 )}
                 Continue with Google
               </Button>
-
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
@@ -232,7 +220,6 @@ export default function SignupPage() {
                   </span>
                 </div>
               </div>
-
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(handleSignup)}
@@ -266,7 +253,6 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="password"
@@ -294,7 +280,6 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="confirmPassword"
@@ -322,7 +307,6 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
-
                   <Button
                     type="submit"
                     className="w-full"
@@ -339,7 +323,6 @@ export default function SignupPage() {
                   </Button>
                 </form>
               </Form>
-
               <div className="text-center mt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Already have an account?{" "}
@@ -348,7 +331,6 @@ export default function SignupPage() {
                   </Link>
                 </p>
               </div>
-
               <div className="text-center text-xs text-gray-500 dark:text-gray-400">
                 By signing up, you agree to our{" "}
                 <Link href="/terms" className="text-blue-600 hover:underline">
@@ -362,7 +344,6 @@ export default function SignupPage() {
             </div>
           </div>
         </main>
-
         {/* Footer */}
         <footer className="container mx-auto p-4 text-center text-sm text-white">
           <p>

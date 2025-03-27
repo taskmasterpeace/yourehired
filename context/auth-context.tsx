@@ -1,10 +1,8 @@
 "use client";
-
 import type React from "react";
-
 import { createContext, useContext, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { getSupabaseClient } from "@/lib/supabase-client";
+import { createSupabaseClient } from "@/lib/supabase";
 
 // Simple auth context with minimal state
 type AuthContextType = {
@@ -23,8 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    const supabase = getSupabaseClient();
-
+    const supabase = createSupabaseClient();
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user || null);
       setIsLoading(false);

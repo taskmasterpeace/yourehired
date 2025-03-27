@@ -24,6 +24,7 @@ export async function initializeDatabase(forceCheck = false) {
   if (initializationAttempted && !forceCheck) {
     return true;
   }
+
   initializationAttempted = true;
 
   try {
@@ -64,170 +65,171 @@ export async function initializeDatabase(forceCheck = false) {
 // Create tables with direct SQL
 async function createTables(supabase: SupabaseClient) {
   try {
-    // Create applications table
-    const { error: applicationsError } = await supabase.rpc("exec_sql", {
+    // Create all tables using the complete schema
+    const { error } = await supabase.rpc("exec_sql", {
       sql_string: `
-        CREATE TABLE IF NOT EXISTS applications (
+        -- Create applications table
+        CREATE TABLE IF NOT EXISTS public.applications (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
           company_name TEXT NOT NULL,
           position_title TEXT NOT NULL,
-          location TEXT,
-          job_description TEXT,
           status TEXT NOT NULL,
-          date_added TIMESTAMP WITH TIME ZONE DEFAULT now(),
-          date_applied TIMESTAMP WITH TIME ZONE,
+          location TEXT DEFAULT '',
+          date_added TIMESTAMPTZ DEFAULT now(),
+          date_applied TIMESTAMPTZ,
+          job_description TEXT DEFAULT '',
           salary TEXT,
           notes TEXT,
           contact_name TEXT,
           contact_email TEXT,
           contact_phone TEXT,
           url TEXT,
-          tags TEXT[],
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+          tags TEXT[] DEFAULT '{}',
+          created_at TIMESTAMPTZ DEFAULT now(),
+          updated_at TIMESTAMPTZ DEFAULT now(),
+          user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
         );
-      `,
-    });
 
-    if (applicationsError) {
-      console.warn("Error creating applications table:", applicationsError);
-    }
-
-    // Create events table
-    const { error: eventsError } = await supabase.rpc("exec_sql", {
-      sql_string: `
-        CREATE TABLE IF NOT EXISTS events (
+        -- Create status_history table
+        CREATE TABLE IF NOT EXISTS public.status_history (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
-          user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+          application_id UUID REFERENCES public.applications(id) ON DELETE CASCADE,
+          status TEXT NOT NULL,
+          date TIMESTAMPTZ DEFAULT now(),
+          notes TEXT,
+          user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+          created_at TIMESTAMPTZ DEFAULT now()
+        );
+
+        -- Create events table
+        CREATE TABLE IF NOT EXISTS public.events (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          application_id UUID REFERENCES public.applications(id) ON DELETE CASCADE,
           title TEXT NOT NULL,
-          date TIMESTAMP WITH TIME ZONE NOT NULL,
+          date TIMESTAMPTZ NOT NULL,
           type TEXT NOT NULL,
           notes TEXT,
           location TEXT,
-          is_completed BOOLEAN DEFAULT false,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+          is_completed BOOLEAN DEFAULT FALSE,
+          user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+          created_at TIMESTAMPTZ DEFAULT now(),
+          updated_at TIMESTAMPTZ DEFAULT now()
         );
-      `,
-    });
 
-    if (eventsError) {
-      console.warn("Error creating events table:", eventsError);
-    }
+        -- Create profiles table
+        CREATE TABLE IF NOT EXISTS public.profiles (
+          id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+          name TEXT,
+          email TEXT,
+          dark_mode BOOLEAN DEFAULT FALSE,
+          master_resume TEXT,
+          created_at TIMESTAMPTZ DEFAULT now(),
+          updated_at TIMESTAMPTZ DEFAULT now()
+        );
 
-    // Create status_history table
-    const { error: statusHistoryError } = await supabase.rpc("exec_sql", {
-      sql_string: `
-        CREATE TABLE IF NOT EXISTS status_history (
+        -- Create chat_messages table
+        CREATE TABLE IF NOT EXISTS public.chat_messages (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
-          user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-          status TEXT NOT NULL,
-          date TIMESTAMP WITH TIME ZONE DEFAULT now(),
-          notes TEXT,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+          application_id UUID REFERENCES public.applications(id) ON DELETE CASCADE,
+          message TEXT NOT NULL,
+          sender TEXT NOT NULL,
+          timestamp TIMESTAMPTZ DEFAULT now(),
+          user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+          created_at TIMESTAMPTZ DEFAULT now()
         );
       `,
     });
 
-    if (statusHistoryError) {
-      console.warn("Error creating status_history table:", statusHistoryError);
+    if (error) {
+      console.warn("Error creating tables:", error);
+      return false;
     }
 
-    // Enable Row Level Security
+    // Add RLS policies and indexes in a separate call to avoid query size limits
     const { error: rlsError } = await supabase.rpc("exec_sql", {
       sql_string: `
-        ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
-        ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-        ALTER TABLE status_history ENABLE ROW LEVEL SECURITY;
+        -- Add Row Level Security (RLS) policies
+        -- Applications: users can only see their own applications
+        ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS "Users can CRUD their own applications" ON public.applications;
+        CREATE POLICY "Users can CRUD their own applications" ON public.applications
+          USING (auth.uid() = user_id)
+          WITH CHECK (auth.uid() = user_id);
+
+        -- Status History: users can only see their own status history
+        ALTER TABLE public.status_history ENABLE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS "Users can CRUD their own status history" ON public.status_history;
+        CREATE POLICY "Users can CRUD their own status history" ON public.status_history
+          USING (auth.uid() = user_id)
+          WITH CHECK (auth.uid() = user_id);
+
+        -- Events: users can only see their own events
+        ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS "Users can CRUD their own events" ON public.events;
+        CREATE POLICY "Users can CRUD their own events" ON public.events
+          USING (auth.uid() = user_id)
+          WITH CHECK (auth.uid() = user_id);
+
+        -- Profiles: users can only see their own profile
+        ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS "Users can CRUD their own profile" ON public.profiles;
+        CREATE POLICY "Users can CRUD their own profile" ON public.profiles
+          USING (auth.uid() = id)
+          WITH CHECK (auth.uid() = id);
+
+        -- Chat Messages: users can only see their own chat messages
+        ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS "Users can CRUD their own chat messages" ON public.chat_messages;
+        CREATE POLICY "Users can CRUD their own chat messages" ON public.chat_messages
+          USING (auth.uid() = user_id)
+          WITH CHECK (auth.uid() = user_id);
       `,
     });
 
     if (rlsError) {
-      console.warn("Error enabling RLS:", rlsError);
+      console.warn("Error setting up RLS policies:", rlsError);
+      // Continue anyway
     }
 
-    // Create policies for applications
-    const { error: appPoliciesError } = await supabase.rpc("exec_sql", {
+    // Add trigger for automatic profile creation
+    const { error: triggerError } = await supabase.rpc("exec_sql", {
       sql_string: `
-        CREATE POLICY IF NOT EXISTS "Users can view their own applications"
-        ON applications FOR SELECT
-        USING (auth.uid() = user_id);
-        CREATE POLICY IF NOT EXISTS "Users can insert their own applications"
-        ON applications FOR INSERT
-        WITH CHECK (auth.uid() = user_id);
-        CREATE POLICY IF NOT EXISTS "Users can update their own applications"
-        ON applications FOR UPDATE
-        USING (auth.uid() = user_id);
-        CREATE POLICY IF NOT EXISTS "Users can delete their own applications"
-        ON applications FOR DELETE
-        USING (auth.uid() = user_id);
+        -- Create profile trigger to create profile when user signs up
+        CREATE OR REPLACE FUNCTION public.handle_new_user()
+        RETURNS TRIGGER AS $$        BEGIN
+          INSERT INTO public.profiles (id, email)
+          VALUES (NEW.id, NEW.email);
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+        -- Trigger the function every time a user is created
+        DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+        CREATE TRIGGER on_auth_user_created
+          AFTER INSERT ON auth.users
+          FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
       `,
     });
 
-    if (appPoliciesError) {
-      console.warn("Error creating application policies:", appPoliciesError);
-    }
-
-    // Create policies for events
-    const { error: eventPoliciesError } = await supabase.rpc("exec_sql", {
-      sql_string: `
-        CREATE POLICY IF NOT EXISTS "Users can view their own events"
-        ON events FOR SELECT
-        USING (auth.uid() = user_id);
-        CREATE POLICY IF NOT EXISTS "Users can insert their own events"
-        ON events FOR INSERT
-        WITH CHECK (auth.uid() = user_id);
-        CREATE POLICY IF NOT EXISTS "Users can update their own events"
-        ON events FOR UPDATE
-        USING (auth.uid() = user_id);
-        CREATE POLICY IF NOT EXISTS "Users can delete their own events"
-        ON events FOR DELETE
-        USING (auth.uid() = user_id);
-      `,
-    });
-
-    if (eventPoliciesError) {
-      console.warn("Error creating event policies:", eventPoliciesError);
-    }
-
-    // Create policies for status_history
-    const { error: statusHistoryPoliciesError } = await supabase.rpc(
-      "exec_sql",
-      {
-        sql_string: `
-        CREATE POLICY IF NOT EXISTS "Users can view their own status history"
-        ON status_history FOR SELECT
-        USING (auth.uid() = user_id);
-        CREATE POLICY IF NOT EXISTS "Users can insert their own status history"
-        ON status_history FOR INSERT
-        WITH CHECK (auth.uid() = user_id);
-      `,
-      }
-    );
-
-    if (statusHistoryPoliciesError) {
-      console.warn(
-        "Error creating status history policies:",
-        statusHistoryPoliciesError
-      );
+    if (triggerError) {
+      console.warn("Error setting up user trigger:", triggerError);
+      // Continue anyway
     }
 
     // Create indexes for performance
-    const { error: indexesError } = await supabase.rpc("exec_sql", {
+    const { error: indexError } = await supabase.rpc("exec_sql", {
       sql_string: `
-        CREATE INDEX IF NOT EXISTS idx_applications_user_id ON applications(user_id);
-        CREATE INDEX IF NOT EXISTS idx_events_application_id ON events(application_id);
-        CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id);
-        CREATE INDEX IF NOT EXISTS idx_status_history_application_id ON status_history(application_id);
-        CREATE INDEX IF NOT EXISTS idx_status_history_user_id ON status_history(user_id);
+        -- Indices to improve query performance
+        CREATE INDEX IF NOT EXISTS idx_applications_user_id ON public.applications(user_id);
+        CREATE INDEX IF NOT EXISTS idx_status_history_application_id ON public.status_history(application_id);
+        CREATE INDEX IF NOT EXISTS idx_events_application_id ON public.events(application_id);
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_application_id ON public.chat_messages(application_id);
       `,
     });
 
-    if (indexesError) {
-      console.warn("Error creating indexes:", indexesError);
+    if (indexError) {
+      console.warn("Error creating indexes:", indexError);
+      // Continue anyway
     }
 
     console.log("Database schema created successfully");
