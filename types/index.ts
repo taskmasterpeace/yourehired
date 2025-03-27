@@ -1,7 +1,7 @@
 // Status change type
 export interface StatusChange {
   id: number;
-  opportunityId: number;
+  opportunityId: string | number;
   oldStatus: string;
   newStatus: string;
   date: string;

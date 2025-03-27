@@ -1,31 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Textarea } from "../../components/ui/textarea";
 import { Button } from "../../components/ui/button";
-import { Opportunity } from '../../context/types';
-import { Edit } from 'lucide-react';
+import { Opportunity } from "../../context/types";
+import { Edit } from "lucide-react";
 
 interface NotesSectionProps {
   opportunity: Opportunity;
-  updateOpportunity: (id: number, updates: Partial<Opportunity>) => void;
+  // Update the type here from number to string | number
+  updateOpportunity: (
+    id: string | number,
+    updates: Partial<Opportunity>
+  ) => void;
   isDarkMode: boolean;
 }
 
 export const NotesSection = ({
   opportunity,
   updateOpportunity,
-  isDarkMode
+  isDarkMode,
 }: NotesSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedNotes, setEditedNotes] = useState(opportunity.notes || '');
+  const [editedNotes, setEditedNotes] = useState(opportunity.notes || "");
 
   return (
-    <div className={`p-4 mb-4 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+    <div
+      className={`p-4 mb-4 rounded-lg border ${
+        isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+      }`}
+    >
       <div className="flex justify-between items-center mb-4">
-        <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Notes</h3>
+        <h3
+          className={`font-medium ${
+            isDarkMode ? "text-white" : "text-gray-900"
+          }`}
+        >
+          Notes
+        </h3>
         {!isEditing ? (
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               setEditedNotes(opportunity.notes || "");
               setIsEditing(true);
@@ -36,8 +50,8 @@ export const NotesSection = ({
           </Button>
         ) : (
           <div className="flex space-x-2">
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={() => {
                 updateOpportunity(opportunity.id, { notes: editedNotes });
                 setIsEditing(false);
@@ -45,9 +59,9 @@ export const NotesSection = ({
             >
               Save
             </Button>
-            <Button 
-              size="sm" 
-              variant="outline" 
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => setIsEditing(false)}
             >
               Cancel
@@ -55,7 +69,6 @@ export const NotesSection = ({
           </div>
         )}
       </div>
-
       {isEditing ? (
         <Textarea
           value={editedNotes}
@@ -66,11 +79,19 @@ export const NotesSection = ({
       ) : (
         <div>
           {opportunity.notes ? (
-            <p className={`whitespace-pre-wrap ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <p
+              className={`whitespace-pre-wrap ${
+                isDarkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               {opportunity.notes}
             </p>
           ) : (
-            <p className={`italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            <p
+              className={`italic ${
+                isDarkMode ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
               No notes added yet
             </p>
           )}
