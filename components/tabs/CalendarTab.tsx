@@ -1,8 +1,8 @@
 "use client";
 // components/tabs/CalendarTab.tsx
 import type React from "react";
-
-import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeCanvas } from "qrcode.react";
 import { useRouter } from "next/navigation";
 import {
   addMonths,
@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Clock,
   Loader2,
+  Download,
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ import type {
   Opportunity,
   CalendarEvent as AppCalendarEvent,
 } from "@/context/types";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface CalendarEvent {
   id: string;
@@ -449,6 +450,22 @@ export function CalendarTab({
     }
   };
 
+  const downloadQRCode = () => {
+    if (!selectedEvent) return;
+
+    // Get the canvas element directly
+    const canvas = document.getElementById(
+      "event-qr-code"
+    ) as HTMLCanvasElement;
+    if (!canvas) return;
+
+    // Convert canvas to data URL and trigger download
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = `${selectedEvent.companyName}-${selectedEvent.type}-QRCode.png`;
+    link.href = dataUrl;
+    link.click();
+  };
   const renderCalendar = () => {
     const monthStart = startOfMonth(currentDate);
     const startDay = getDay(monthStart);
@@ -1140,6 +1157,70 @@ export function CalendarTab({
                     <p className="whitespace-pre-wrap">{selectedEvent.notes}</p>
                   </motion.div>
                 )}
+
+                {/* Add QR Code Section right here */}
+                <motion.div
+                  className="bg-muted/20 p-3 rounded-lg transition-all"
+                  whileHover={{ scale: 1.01 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3
+                      className={`text-sm font-medium ${
+                        isDarkMode ? "text-gray-300" : "text-muted-foreground"
+                      }`}
+                    >
+                      Event QR Code
+                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={downloadQRCode}
+                      className="flex items-center gap-1"
+                    >
+                      <Download size={14} />
+                      <span className="text-xs">Download</span>
+                    </Button>
+                  </div>
+                  <div className="flex flex-col items-center justify-center py-2">
+                    <div
+                      className={`p-3 bg-white rounded-lg mb-2 ${
+                        isDarkMode
+                          ? "shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+                          : "shadow-md"
+                      }`}
+                    >
+                      <QRCodeCanvas
+                        id="event-qr-code"
+                        value={JSON.stringify({
+                          id: selectedEvent.id,
+                          title: selectedEvent.title,
+                          company: selectedEvent.companyName,
+                          position: selectedEvent.positionTitle,
+                          date: format(
+                            selectedEvent.date,
+                            "yyyy-MM-dd'T'HH:mm:ss"
+                          ),
+                          type: selectedEvent.type,
+                          location: selectedEvent.location || "",
+                          notes: selectedEvent.notes || "",
+                        })}
+                        size={150}
+                        level="H" // High error correction level
+                        includeMargin={true}
+                      />
+                    </div>
+                    <p
+                      className={`text-xs text-center ${
+                        isDarkMode ? "text-gray-400" : "text-muted-foreground"
+                      }`}
+                    >
+                      Scan this code for event details or check-in
+                    </p>
+                  </div>
+                </motion.div>
               </motion.div>
               <DialogFooter className="pt-2 border-t border-gray-200 dark:border-gray-700">
                 <motion.div
