@@ -18,7 +18,6 @@ export class ApplicationService {
     if (instance) {
       return instance;
     }
-
     // Initialize the Supabase client
     this.initClient();
     instance = this;
@@ -61,7 +60,6 @@ export class ApplicationService {
     if (this.initialized) {
       return;
     }
-
     // Skip if we've already attempted initialization and failed
     if (this.initializationAttempted) {
       // Just continue without initialization
@@ -70,7 +68,6 @@ export class ApplicationService {
       );
       return;
     }
-
     this.initializationAttempted = true;
     try {
       const success = await initializeDatabase();
@@ -92,13 +89,11 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
-
       // First, get all applications
       const { data: applications, error: appError } = await supabase
         .from("applications")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (appError) {
         // If we get a "relation does not exist" error, the tables might not be created
         if (
@@ -113,7 +108,6 @@ export class ApplicationService {
         }
         throw appError;
       }
-
       if (!applications) return [];
 
       // Then get events and status history in separate queries
@@ -124,7 +118,6 @@ export class ApplicationService {
           "application_id",
           applications.map((app) => app.id)
         );
-
       if (
         eventsError &&
         !eventsError.message.includes('relation "public.events" does not exist')
@@ -139,7 +132,6 @@ export class ApplicationService {
           "application_id",
           applications.map((app) => app.id)
         );
-
       if (
         historyError &&
         !historyError.message.includes(
@@ -154,7 +146,6 @@ export class ApplicationService {
         // Find events for this application
         const appEvents =
           events?.filter((event) => event.application_id === app.id) || [];
-
         // Find status history for this application
         const appStatusHistory =
           statusHistory?.filter(
@@ -205,14 +196,12 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
-
       // Get application by ID
       const { data: application, error: appError } = await supabase
         .from("applications")
         .select("*")
         .eq("id", id)
         .single();
-
       if (appError) {
         // If we get a "relation does not exist" error, the tables might not be created
         if (
@@ -225,7 +214,6 @@ export class ApplicationService {
         }
         throw appError;
       }
-
       if (!application) return null;
 
       // Get events for this application
@@ -233,7 +221,6 @@ export class ApplicationService {
         .from("events")
         .select("*")
         .eq("application_id", id);
-
       if (
         eventsError &&
         !eventsError.message.includes('relation "public.events" does not exist')
@@ -246,7 +233,6 @@ export class ApplicationService {
         .from("status_history")
         .select("*")
         .eq("application_id", id);
-
       if (
         historyError &&
         !historyError.message.includes(
@@ -296,18 +282,18 @@ export class ApplicationService {
     }
   }
 
-  // Save application
-  async saveApplication(application: JobApplication): Promise<boolean> {
+  // Save application - UPDATED to return the ID
+  async saveApplication(
+    application: JobApplication
+  ): Promise<{ id: string } | boolean> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
-
       // Get the current user session
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       if (!session) {
         throw new Error("User not authenticated");
       }
@@ -338,7 +324,6 @@ export class ApplicationService {
         .select("id")
         .eq("id", dbApplication.id)
         .maybeSingle();
-
       if (
         checkError &&
         !checkError.message.includes(
@@ -354,14 +339,12 @@ export class ApplicationService {
           .from("applications")
           .update(dbApplication)
           .eq("id", dbApplication.id);
-
         if (error) throw error;
       } else {
         // Insert new application
         const { error } = await supabase
           .from("applications")
           .insert(dbApplication);
-
         if (error) throw error;
       }
 
@@ -370,7 +353,6 @@ export class ApplicationService {
         // Get the latest status history entry
         const latestStatus =
           application.statusHistory[application.statusHistory.length - 1];
-
         // Check if this status already exists in the database
         const { data: existingStatus, error: statusCheckError } = await supabase
           .from("status_history")
@@ -379,7 +361,6 @@ export class ApplicationService {
           .eq("status", latestStatus.status)
           .eq("date", latestStatus.date)
           .maybeSingle();
-
         if (
           statusCheckError &&
           !statusCheckError.message.includes(
@@ -398,7 +379,6 @@ export class ApplicationService {
             notes: latestStatus.notes,
             user_id: session.user.id,
           });
-
           if (
             error &&
             !error.message.includes(
@@ -410,7 +390,8 @@ export class ApplicationService {
         }
       }
 
-      return true;
+      // Return the ID along with success
+      return { id: dbApplication.id };
     } catch (error) {
       console.error("Error saving application:", error);
       throw error;
@@ -423,20 +404,17 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
-
       // Delete application - RLS will ensure user can only delete their own data
       const { error } = await supabase
         .from("applications")
         .delete()
         .eq("id", id);
-
       if (
         error &&
         !error.message.includes('relation "public.applications" does not exist')
       ) {
         throw error;
       }
-
       return true;
     } catch (error) {
       console.error(`Error deleting application ${id}:`, error);
@@ -454,12 +432,10 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
-
       // Get the current user session
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       if (!session) {
         throw new Error("User not authenticated");
       }
@@ -469,7 +445,6 @@ export class ApplicationService {
         .from("applications")
         .update({ status })
         .eq("id", id);
-
       if (
         updateError &&
         !updateError.message.includes(
@@ -490,7 +465,6 @@ export class ApplicationService {
           notes,
           user_id: session.user.id,
         });
-
       if (
         historyError &&
         !historyError.message.includes(
@@ -516,12 +490,10 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
-
       // Get the current user session
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       if (!session) {
         throw new Error("User not authenticated");
       }

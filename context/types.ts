@@ -13,7 +13,7 @@ export interface ChatMessage {
 }
 
 export interface Opportunity {
-  id: number;
+  id: number | string;
   company: string;
   position: string;
   status: string;
@@ -38,7 +38,7 @@ export interface CalendarEvent {
   title: string;
   date: string;
   type: "interview" | "deadline" | "followup" | "assessment";
-  opportunityId?: number;
+  opportunityId?: number | string;
 }
 
 export interface UserProfile {

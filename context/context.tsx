@@ -119,10 +119,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Convert from your Opportunity format to Supabase JobApplication
   const convertToJobApplication = (opp: any): JobApplication => {
     console.log("Converting Opportunity to JobApplication:", opp.id);
-
     // Check if the ID is a Supabase ID (string with dashes) or a numeric ID
     const isSupabaseId = typeof opp.id === "string" && opp.id.includes("-");
-
     return {
       id: isSupabaseId ? opp.id : undefined, // Only include ID if it's a Supabase ID
       companyName: opp.company,
@@ -167,7 +165,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
               date: event.date,
               // Validate and convert event type to one of the allowed values
               type: validateEventType(event.type || "interview"),
-              opportunityId: app.id,
+              opportunityId: app.id, // Keep as string to match app.id
             })) || []
         );
 
@@ -189,7 +187,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     };
-
     loadData();
   }, []);
 
@@ -209,7 +206,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         typeof opp.id === "number" ||
         (typeof opp.id === "string" && !opp.id.includes("-"));
       const isNotBeingSaved = !savingOpportunities[opp.id];
-
       return isNumericId && isNotBeingSaved;
     });
 
@@ -226,7 +222,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
               ...prev,
               [opportunity.id]: true,
             }));
-
             console.log(
               "SAVING OPPORTUNITY TO SUPABASE:",
               opportunity.id,
@@ -237,28 +232,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
             // Attempt to save to Supabase
             const result = await applicationService.saveApplication(jobApp);
+            console.log("Save result:", result);
 
-            if (result) {
-              console.log("Successfully saved to Supabase! Result:", result);
+            // Check if result is an object with an id property
+            if (result && typeof result === "object" && "id" in result) {
               console.log("New Supabase ID:", result.id);
 
               // Update the opportunity in our state with the Supabase ID
-              if (result.id) {
-                dispatch({
-                  type: "UPDATE_OPPORTUNITY",
-                  payload: {
-                    id: opportunity.id,
-                    updates: { id: result.id },
-                  },
-                });
-
-                console.log("Updated opportunity with Supabase ID");
-              }
+              dispatch({
+                type: "UPDATE_OPPORTUNITY",
+                payload: {
+                  id: opportunity.id,
+                  updates: { id: result.id },
+                },
+              });
+              console.log("Updated opportunity with Supabase ID");
             } else {
-              console.error(
-                "Failed to save opportunity to Supabase:",
-                opportunity.id
-              );
+              console.log("Save successful but no ID returned");
             }
           } catch (error) {
             console.error("Error saving opportunity to Supabase:", error);
