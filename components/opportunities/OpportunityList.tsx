@@ -21,6 +21,7 @@ import { Search, Filter, Calendar } from "lucide-react";
 import type { Opportunity } from "../../context/types";
 import { StatusBadge } from "./StatusBadge";
 
+// Update the interface properties that handle IDs
 interface OpportunityListProps {
   opportunities: Opportunity[];
   selectedOpportunityIndex: number;
@@ -37,12 +38,14 @@ interface OpportunityListProps {
   setSortDirection: (direction: string) => void;
   viewMode: string;
   setViewMode: (mode: string) => void;
-  lastModifiedTimestamps: Record<number, string>;
+  // Update these types to handle string or number IDs
+  lastModifiedTimestamps: Record<string | number, string>;
   isBatchSelectMode: boolean;
   setIsBatchSelectMode: (mode: boolean) => void;
-  selectedJobIds: number[];
-  toggleJobSelection: (id: number) => void;
-  selectMultipleJobs: (ids: number[]) => void;
+  // Update to allow string or number IDs
+  selectedJobIds: (string | number)[];
+  toggleJobSelection: (id: string | number) => void;
+  selectMultipleJobs: (ids: (string | number)[]) => void;
   handleBatchDelete: () => void;
   isDarkMode: boolean;
   dispatch: any;

@@ -98,7 +98,7 @@ export default function CAPTAINGui() {
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [lastModifiedTimestamps, setLastModifiedTimestamps] = useState<
-    Record<number, string>
+    Record<string | number, string>
   >({});
   const [isJobDescriptionExpanded, setIsJobDescriptionExpanded] =
     useState(false);
@@ -286,7 +286,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
   };
 
   // Helper function for updating last modified timestamp
-  const updateLastModified = (opportunityId: number) => {
+  const updateLastModified = (opportunityId: string | number) => {
     const newTimestamps = { ...lastModifiedTimestamps };
     newTimestamps[opportunityId] = new Date().toISOString();
     setLastModifiedTimestamps(newTimestamps);
@@ -294,21 +294,21 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
 
   // Helper function for updating an opportunity
   const updateOpportunity = (
-    opportunityId: number,
+    id: string | number,
     updates: Partial<Opportunity>
   ) => {
     // Get the current opportunity
-    const currentOpp = opportunities.find((opp) => opp.id === opportunityId);
+    const currentOpp = opportunities.find((opp) => opp.id === id);
     // Only proceed if we found the opportunity
     if (!currentOpp) {
-      console.error(`Opportunity with ID ${opportunityId} not found`);
+      console.error(`Opportunity with ID ${id} not found`);
       return;
     }
     // If we're updating status, record this change
     if (updates.status && updates.status !== currentOpp.status) {
       const newStatusChange = {
         id: Date.now(),
-        opportunityId,
+        opportunityId: id,
         oldStatus: currentOpp.status,
         newStatus: updates.status,
         date: new Date().toISOString(),
@@ -317,17 +317,17 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
       };
       setStatusChanges((prev) => [...prev, newStatusChange]);
     }
-
-    console.log(`Updating opportunity ${opportunityId} with:`, updates);
-
+    console.log(`Updating opportunity ${id} with:`, updates);
     dispatch({
       type: "UPDATE_OPPORTUNITY",
       payload: {
-        id: opportunityId,
+        id,
         updates,
       },
     });
-    updateLastModified(opportunityId);
+    // Convert id to number for lastModifiedTimestamps if it's a string
+    const numericId = typeof id === "string" ? parseInt(id, 10) : id;
+    updateLastModified(numericId);
   };
 
   // Generate analytics data using useMemo to prevent recalculation on every render
@@ -369,34 +369,34 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Sort the filtered opportunities
-  const sortedOpportunities = [...filteredOpportunities].sort((a, b) => {
-    switch (sortBy) {
-      case "lastModified":
-        const aTime = lastModifiedTimestamps[a.id]
-          ? new Date(lastModifiedTimestamps[a.id]).getTime()
-          : 0;
-        const bTime = lastModifiedTimestamps[b.id]
-          ? new Date(lastModifiedTimestamps[b.id]).getTime()
-          : 0;
-        return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
-      case "appliedDate":
-        const aDate = new Date(a.appliedDate).getTime();
-        const bDate = new Date(b.appliedDate).getTime();
-        return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
-      case "company":
-        const compResult = a.company.localeCompare(b.company);
-        return sortDirection === "asc" ? compResult : -compResult;
-      case "position":
-        const posResult = a.position.localeCompare(b.position);
-        return sortDirection === "asc" ? posResult : -posResult;
-      case "status":
-        const statResult = a.status.localeCompare(b.status);
-        return sortDirection === "asc" ? statResult : -statResult;
-      default:
-        return 0;
-    }
-  });
+  // // Sort the filtered opportunities
+  // const sortedOpportunities = [...filteredOpportunities].sort((a, b) => {
+  //   switch (sortBy) {
+  //     case "lastModified":
+  //       const aTime = lastModifiedTimestamps[a.id]
+  //         ? new Date(lastModifiedTimestamps[a.id]).getTime()
+  //         : 0;
+  //       const bTime = lastModifiedTimestamps[b.id]
+  //         ? new Date(lastModifiedTimestamps[b.id]).getTime()
+  //         : 0;
+  //       return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
+  //     case "appliedDate":
+  //       const aDate = new Date(a.appliedDate).getTime();
+  //       const bDate = new Date(b.appliedDate).getTime();
+  //       return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
+  //     case "company":
+  //       const compResult = a.company.localeCompare(b.company);
+  //       return sortDirection === "asc" ? compResult : -compResult;
+  //     case "position":
+  //       const posResult = a.position.localeCompare(b.position);
+  //       return sortDirection === "asc" ? posResult : -posResult;
+  //     case "status":
+  //       const statResult = a.status.localeCompare(b.status);
+  //       return sortDirection === "asc" ? statResult : -statResult;
+  //     default:
+  //       return 0;
+  //   }
+  // });
 
   const [newOpportunity, setNewOpportunity] = useState({
     company: "",
@@ -494,30 +494,30 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
     });
   };
 
-  const handleSaveDateChange = () => {
-    const selectedOpportunity = opportunities[selectedOpportunityIndex];
-    // Convert from YYYY-MM-DD to a more readable format
-    const dateObj = new Date(editedDate);
-    const formattedDate = dateObj.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    // Use the helper function to update the opportunity
-    updateOpportunity(selectedOpportunity.id, { appliedDate: formattedDate });
-    setIsEditingDate(false);
-  };
+  // const handleSaveDateChange = () => {
+  //   const selectedOpportunity = opportunities[selectedOpportunityIndex];
+  //   // Convert from YYYY-MM-DD to a more readable format
+  //   const dateObj = new Date(editedDate);
+  //   const formattedDate = dateObj.toLocaleDateString("en-US", {
+  //     year: "numeric",
+  //     month: "long",
+  //     day: "numeric",
+  //   });
+  //   // Use the helper function to update the opportunity
+  //   updateOpportunity(selectedOpportunity.id, { appliedDate: formattedDate });
+  //   setIsEditingDate(false);
+  // };
 
   const [localChatMessages, setLocalChatMessages] = useState<
     { role: string; content: string }[]
   >([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // Get chat messages for the selected opportunity
-  const opportunityMessages = useMemo(() => {
-    if (!selectedOpportunity) return [];
-    return chatMessages[selectedOpportunity.id] || [];
-  }, [chatMessages, selectedOpportunity]);
+  // // Get chat messages for the selected opportunity
+  // const opportunityMessages = useMemo(() => {
+  //   if (!selectedOpportunity) return [];
+  //   return chatMessages[selectedOpportunity.id] || [];
+  // }, [chatMessages, selectedOpportunity]);
 
   useEffect(() => {
     if (selectedOpportunity) {
@@ -716,6 +716,7 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
                 user={user}
                 masterResume={masterResume}
                 dispatch={dispatch}
+                chatMessages={chatMessages}
               />
             </ProtectedContent>
           </TabsContent>
