@@ -2,40 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+
+    /* Chart colors */
+    --chart-1: 221.2 83.2% 53.3%;
+    --chart-2: 180 70% 50%;
+    --chart-3: 120 60% 50%;
+    --chart-4: 40 100% 50%;
+    --chart-5: 0 84.2% 60.2%;
+
+    /* Sidebar colors */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 221.2 83.2% 53.3%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 215 20% 65%;
+
+    /* Border color for FullCalendar */
+    --border-color: #e2e8f0;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    /* Chart colors - adjusted for dark mode */
+    --chart-1: 217.2 91.2% 59.8%;
+    --chart-2: 180 70% 40%;
+    --chart-3: 120 60% 40%;
+    --chart-4: 40 100% 40%;
+    --chart-5: 0 70% 45%;
+
+    /* Sidebar colors remain the same in dark mode */
+
+    /* Border color for FullCalendar in dark mode */
+    --border-color: #4b5563;
+  }
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+  @apply bg-background text-foreground;
 }
+
 /* FullCalendar styling */
 .fc-theme-standard td,
 .fc-theme-standard th {
   border-color: var(--border-color, #e2e8f0);
 }
-
 .fc-theme-standard .fc-scrollgrid {
   border-color: var(--border-color, #e2e8f0);
 }
-
 .fc-theme-standard .fc-toolbar-title {
   font-size: 1.25rem;
   font-weight: 600;
 }
-
 .fc .fc-button-primary {
   background-color: #3b82f6;
   border-color: #3b82f6;
 }
-
 .fc .fc-button-primary:hover {
   background-color: #2563eb;
   border-color: #2563eb;
 }
-
 .fc .fc-button-primary:disabled {
   background-color: #93c5fd;
   border-color: #93c5fd;
 }
-
 .fc .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-button-primary:not(:disabled):active {
   background-color: #1d4ed8;
@@ -62,13 +153,11 @@ body {
   --fc-button-active-bg-color: #1d4ed8;
   --fc-button-active-border-color: #1d4ed8;
 }
-
 .dark .fc-theme-standard .fc-scrollgrid,
 .fc-dark .fc-theme-standard .fc-scrollgrid,
 [data-theme="dark"] .fc-theme-standard .fc-scrollgrid {
   border-color: #4b5563;
 }
-
 .dark .fc-theme-standard td,
 .dark .fc-theme-standard th,
 .fc-dark .fc-theme-standard td,
@@ -77,13 +166,11 @@ body {
 [data-theme="dark"] .fc-theme-standard th {
   border-color: #4b5563;
 }
-
 .dark .fc-col-header-cell,
 .fc-dark .fc-col-header-cell,
 [data-theme="dark"] .fc-col-header-cell {
   background-color: #374151;
 }
-
 .dark .fc-day-today,
 .fc-dark .fc-day-today,
 [data-theme="dark"] .fc-day-today {
@@ -103,29 +190,24 @@ body {
   --fc-button-active-bg-color: #1d4ed8;
   --fc-button-active-border-color: #1d4ed8;
 }
-
 .fc .fc-daygrid-day-number,
 .fc .fc-col-header-cell-cushion {
   color: #374151;
   text-decoration: none;
 }
-
 .fc .fc-toolbar-title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1f2937;
 }
-
 .fc .fc-button-primary {
   background-color: var(--fc-button-bg-color);
   border-color: var(--fc-button-border-color);
 }
-
 .fc .fc-button-primary:not(:disabled):hover {
   background-color: var(--fc-button-hover-bg-color);
   border-color: var(--fc-button-hover-border-color);
 }
-
 .fc .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-button-primary:not(:disabled):active {
   background-color: var(--fc-button-active-bg-color);
@@ -144,49 +226,41 @@ body {
   --fc-button-text-color: #ffffff;
   background-color: transparent;
 }
-
 .dark .fc table,
 [data-theme="dark"] .fc table {
   border-color: var(--fc-border-color);
 }
-
 .dark .fc-scrollgrid,
 [data-theme="dark"] .fc-scrollgrid {
   border-color: var(--fc-border-color);
 }
-
 .dark .fc-theme-standard td,
 .dark .fc-theme-standard th,
 [data-theme="dark"] .fc-theme-standard td,
 [data-theme="dark"] .fc-theme-standard th {
   border-color: var(--fc-border-color);
 }
-
 .dark .fc .fc-daygrid-day-number,
 .dark .fc .fc-col-header-cell-cushion,
 [data-theme="dark"] .fc .fc-daygrid-day-number,
 [data-theme="dark"] .fc .fc-col-header-cell-cushion {
   color: #e5e7eb;
 }
-
 .dark .fc .fc-toolbar-title,
 [data-theme="dark"] .fc .fc-toolbar-title {
   color: #e5e7eb;
 }
-
 .dark .fc .fc-button,
 [data-theme="dark"] .fc .fc-button {
   background-color: #374151;
   border-color: #4b5563;
   color: #e5e7eb;
 }
-
 .dark .fc .fc-button:hover,
 [data-theme="dark"] .fc .fc-button:hover {
   background-color: #4b5563;
   border-color: #6b7280;
 }
-
 .dark .fc .fc-button.fc-button-active,
 .dark .fc .fc-button:active,
 [data-theme="dark"] .fc .fc-button.fc-button-active,
@@ -194,17 +268,14 @@ body {
   background-color: #6b7280;
   border-color: #9ca3af;
 }
-
 .dark .fc .fc-highlight,
 [data-theme="dark"] .fc .fc-highlight {
   background-color: rgba(55, 65, 81, 0.7);
 }
-
 .dark .fc .fc-daygrid-day.fc-day-today,
 [data-theme="dark"] .fc .fc-daygrid-day.fc-day-today {
   background-color: rgba(59, 130, 246, 0.15);
 }
-
 .dark .fc .fc-timegrid-slot,
 [data-theme="dark"] .fc .fc-timegrid-slot {
   border-color: var(--fc-border-color);
