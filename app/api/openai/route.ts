@@ -62,18 +62,44 @@ Only return the improved text without explanations or additional comments.
 Keep the formatting and structure similar to the original text.
 Focus on clarity, impact, and professional language.`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: text },
-    ],
-    temperature: 0.7,
-    max_tokens: 1500,
-  });
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text },
+      ],
+      temperature: 0.7,
+      max_tokens: 1500,
+    });
 
-  const result = response.choices[0]?.message?.content?.trim();
-  return NextResponse.json({ result });
+    const result = response.choices[0]?.message?.content?.trim();
+
+    // Important validation step
+    if (!result || result.length < 1) {
+      console.error("OpenAI returned empty result for quick action");
+      return NextResponse.json(
+        {
+          error: "No valid improvement generated",
+          originalText: text,
+        },
+        { status: 422 }
+      );
+    }
+
+    // All good, return the result
+    return NextResponse.json({ result });
+  } catch (error) {
+    console.error("Error in handleQuickAction:", error);
+    // Return the original text in case of error
+    return NextResponse.json(
+      {
+        error: "Error processing text improvement",
+        originalText: text,
+      },
+      { status: 500 }
+    );
+  }
 }
 
 // Stream handler for quick actions
@@ -123,25 +149,32 @@ Focus on clarity, impact, and professional language.`;
           );
         }
 
+        // Make sure we ALWAYS send the done signal
         controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
         controller.close();
       } catch (error) {
         console.error("Error in stream:", error);
+
+        // Send error message and done signal to client
         controller.enqueue(
           encoder.encode(
-            `data: ${JSON.stringify({ error: "Stream failed" })}\n\n`
+            `data: ${JSON.stringify({
+              error: "Stream failed",
+              message: error.message,
+            })}\n\n`
           )
         );
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
         controller.close();
       }
     },
   });
 
-  // Return the stream as a response
+  // Return the stream as a response with appropriate headers
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
     },
   });

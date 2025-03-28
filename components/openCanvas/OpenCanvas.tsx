@@ -404,32 +404,65 @@ export function OpenCanvasEditor({
   // Apply a quick action to the selected text with streaming
   const applyQuickAction = async (action: QuickAction) => {
     if (!canvasRef.current) return;
+
+    // Get selected text and selection information before we start processing
+    const selectedText = canvasRef.current.getSelectedText() || selectedSection;
+    const selectionStart = canvasRef.current?.editor?.selectionStart || 0;
+    const selectionEnd = canvasRef.current?.editor?.selectionEnd || 0;
+
+    console.log("Selection info:", {
+      selectionStart,
+      selectionEnd,
+      selectedTextLength: selectedText.length,
+      fullContentLength: canvasRef.current.getContent().length,
+    });
+
+    if (!selectedText) {
+      toast({
+        title: "No text selected",
+        description: "Please select some text or a section first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Start processing UI
     setIsProcessing(true);
     setCurrentAction(action.name);
     setProcessingProgress(10);
     setStreamingResult(""); // Reset streaming result
 
-    try {
-      // Get selected text or current section
-      const selectedText =
-        canvasRef.current.getSelectedText() || selectedSection;
-
-      if (!selectedText) {
-        toast({
-          title: "No text selected",
-          description: "Please select some text or a section first",
-          variant: "destructive",
-        });
+    // Set up a timeout to prevent getting stuck
+    const timeoutId = setTimeout(() => {
+      if (isProcessing) {
+        console.log("Processing timed out, completing anyway");
         setIsProcessing(false);
-        return;
-      }
 
-      // Call the API with the stream_quick_action action
+        if (streamingResult && streamingResult.trim() !== "") {
+          forceApplyChanges(selectionStart, selectionEnd, streamingResult);
+          toast({
+            title: "Text improved",
+            description: `Applied "${action.name}" (timed out but completed)`,
+          });
+        } else {
+          // Fall back to the original text if we don't have a valid result
+          toast({
+            title: "Processing timed out",
+            description:
+              "The operation took too long. Original text preserved.",
+            variant: "destructive",
+          });
+        }
+      }
+    }, 30000); // 30 second timeout
+
+    try {
+      // Call the API with the regular quick_action
       const response = await fetch("/api/openai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "stream_quick_action",
+          action: "quick_action",
           prompt: action.prompt,
           text: selectedText,
           context: "This is for a professional resume.",
@@ -440,111 +473,210 @@ export function OpenCanvasEditor({
         throw new Error(`Server error: ${response.status}`);
       }
 
-      if (!response.body) {
-        throw new Error("No response body received");
+      const data = await response.json();
+      if (!data.result || typeof data.result !== "string") {
+        throw new Error("Invalid response format from server");
       }
 
-      // Set up streaming reader
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      const result = data.result.trim();
+      console.log("Result received:", { length: result.length });
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        // Decode the chunk
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.substring(6);
-
-            if (data === "[DONE]") {
-              // Streaming is complete
-              setProcessingProgress(100);
-
-              // Apply the final result
-              setTimeout(() => {
-                if (canvasRef.current && streamingResult) {
-                  canvasRef.current.replaceSelectedText(streamingResult);
-                  setIsProcessing(false);
-                  toast({
-                    title: "Text improved",
-                    description: `Successfully applied "${action.name}"`,
-                  });
-                }
-              }, 500);
-              return;
-            }
-
-            try {
-              const parsedData = JSON.parse(data);
-              if (parsedData.content) {
-                setStreamingResult(parsedData.content);
-                // Update progress based on content length
-                setProcessingProgress(
-                  Math.min(
-                    90,
-                    10 + (parsedData.content.length / selectedText.length) * 80
-                  )
-                );
-              }
-            } catch (e) {
-              console.error("Error parsing streaming data:", e);
-            }
-          }
-        }
+      if (!result) {
+        throw new Error("Empty result received from server");
       }
-    } catch (error) {
-      console.error("Error with streaming:", error);
-      // Fall back to non-streaming API
-      fallbackToRegularAPI(
-        action,
-        canvasRef.current.getSelectedText() || selectedSection
-      );
-    }
-  };
 
-  // Fallback to non-streaming API
-  const fallbackToRegularAPI = async (
-    action: QuickAction,
-    selectedText: string
-  ) => {
-    try {
-      const response = await fetch("/api/openai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "quick_action", // Use regular (non-streaming) action
-          prompt: action.prompt,
-          text: selectedText,
-          context: "This is for a professional resume.",
-        }),
+      // Update the streaming result state to show in UI
+      setStreamingResult(result);
+      setProcessingProgress(90);
+
+      // Apply the results immediately
+      const beforeContent = canvasRef.current.getContent();
+
+      // Force apply the changes now with double safety
+      await forceApplyChangesWithRetry(selectionStart, selectionEnd, result);
+
+      // Force a component re-render after state changes
+      setProcessingProgress(100);
+
+      // Double check that the editor state has been updated
+      const afterContent = canvasRef.current.getContent();
+      console.log("Content after changes:", {
+        contentLengthBefore: beforeContent.length,
+        contentLengthAfter: afterContent.length,
+        expectedDiff: result.length - (selectionEnd - selectionStart),
       });
 
-      if (!response.ok) throw new Error("Failed to process quick action");
-      const data = await response.json();
+      // Make one more check to verify
+      setTimeout(() => {
+        const finalContent = canvasRef.current.getContent();
 
-      // Replace the selected text with improved version
-      if (data.result) {
-        canvasRef.current.replaceSelectedText(data.result);
+        if (finalContent.includes(result)) {
+          console.log("Content confirmed updated correctly");
+        } else {
+          console.warn(
+            "Content does not contain the expected result! Trying emergency update"
+          );
+          // Emergency failsafe - retry with explicit update
+          directlyUpdateEditorContent(
+            beforeContent.substring(0, selectionStart) +
+              result +
+              beforeContent.substring(selectionEnd)
+          );
+        }
+
+        // End processing state
+        setIsProcessing(false);
+        clearTimeout(timeoutId);
+
+        // Show success message
         toast({
           title: "Text improved",
           description: `Successfully applied "${action.name}"`,
         });
-      }
+      }, 300);
     } catch (error) {
-      console.error("Error applying quick action:", error);
+      console.error("Error with API call:", error);
+      clearTimeout(timeoutId);
+      setIsProcessing(false);
+
       toast({
         title: "AI error",
         description:
-          "There was a problem processing your request. Please try again.",
+          "There was a problem generating improved text. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsProcessing(false);
     }
+  };
+
+  // A method to update the editor content by directly manipulating the DOM and React state
+  const directlyUpdateEditorContent = (newContent: string) => {
+    if (!canvasRef.current || !canvasRef.current.editor) return;
+
+    try {
+      console.log("Directly updating editor content");
+
+      // 1. Update the textarea value directly
+      canvasRef.current.editor.value = newContent;
+
+      // 2. Dispatch an input event to trigger change handlers
+      const event = new Event("input", { bubbles: true });
+      canvasRef.current.editor.dispatchEvent(event);
+
+      // 3. Update React state with the new content
+      setContent(newContent);
+
+      // 4. Force the shim to update
+      canvasRef.current.content = newContent;
+
+      // 5. Force the preview to update
+      canvasRef.current.updatePreview?.();
+
+      console.log("Direct editor update complete");
+    } catch (e) {
+      console.error("Error directly updating editor:", e);
+    }
+  };
+
+  // Force apply changes function with improved reliability and retries
+  const forceApplyChangesWithRetry = async (
+    start: number,
+    end: number,
+    newText: string
+  ) => {
+    if (!canvasRef.current) return;
+
+    return new Promise<void>((resolve) => {
+      const applyWithRetry = (attempt = 0) => {
+        if (attempt > 3) {
+          console.warn("Max retries reached, moving on");
+          resolve();
+          return;
+        }
+
+        try {
+          console.log(`Applying changes (attempt ${attempt + 1}):`, {
+            start,
+            end,
+            textLength: newText.length,
+          });
+
+          // Final validation of the text to apply
+          if (!newText || newText.length === 0) {
+            console.warn("Attempted to apply empty text, aborting");
+            resolve();
+            return;
+          }
+
+          // Get the current full text from the editor directly
+          const fullText = canvasRef.current.getContent();
+
+          // Ensure we have valid indices
+          if (start < 0) start = 0;
+          if (end > fullText.length) end = fullText.length;
+          if (start > end) [start, end] = [end, start];
+
+          // Create the new content
+          const newContent =
+            fullText.substring(0, start) + newText + fullText.substring(end);
+
+          // Direct manipulation of the textarea
+          if (canvasRef.current.editor) {
+            // Update the value and set cursor position
+            canvasRef.current.editor.value = newContent;
+            canvasRef.current.editor.selectionStart = start + newText.length;
+            canvasRef.current.editor.selectionEnd = start + newText.length;
+
+            // Create an input event to trigger change handlers
+            const event = new Event("input", { bubbles: true });
+            canvasRef.current.editor.dispatchEvent(event);
+          }
+
+          // Update our state
+          setContent(newContent);
+
+          // Update the component's content property
+          canvasRef.current.content = newContent;
+
+          // Force the preview to update
+          if (canvasRef.current.updatePreview) {
+            canvasRef.current.updatePreview();
+          }
+
+          // Verify the update after a small delay
+          setTimeout(() => {
+            const currentContent = canvasRef.current?.getContent();
+
+            if (currentContent === newContent) {
+              console.log("Update verified successful");
+              resolve();
+            } else {
+              console.warn("Update verification failed, retrying...");
+              applyWithRetry(attempt + 1);
+            }
+          }, 100);
+        } catch (error) {
+          console.error(
+            `Error applying changes (attempt ${attempt + 1}):`,
+            error
+          );
+
+          // Wait a bit and retry
+          setTimeout(() => {
+            applyWithRetry(attempt + 1);
+          }, 200);
+        }
+      };
+
+      // Start the retry process
+      applyWithRetry();
+    });
+  };
+
+  // Original forceApplyChanges function for backwards compatibility
+  const forceApplyChanges = (start: number, end: number, newText: string) => {
+    forceApplyChangesWithRetry(start, end, newText).catch((e) => {
+      console.error("Error in forceApplyChanges:", e);
+    });
   };
 
   // Switch between edit and preview modes
@@ -827,8 +959,7 @@ export function OpenCanvasEditor({
             <History className="h-4 w-4 mr-2" />
             Versions
           </TabsTrigger>
-        </TabsList>
-
+        </TabsList>{" "}
         <TabsContent value="actions" className="p-2">
           <motion.div
             className="space-y-4"
@@ -980,7 +1111,6 @@ export function OpenCanvasEditor({
             )}
           </motion.div>
         </TabsContent>
-
         <TabsContent value="versions" className="p-2">
           <motion.div
             className="space-y-4"

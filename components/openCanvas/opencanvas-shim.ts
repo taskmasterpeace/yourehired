@@ -1,10 +1,10 @@
 // This is an enhanced shim to provide OpenCanvas functionality
 export class OpenCanvasShim {
   private element: HTMLElement;
-  private content: string;
+  content: string; // Changed to public for direct access in emergency cases
   private changeHandler: (content: string) => void;
   private isReadOnly: boolean;
-  private editor: HTMLTextAreaElement | null = null;
+  editor: HTMLTextAreaElement | null = null; // Changed to public for direct access
   private preview: HTMLDivElement | null = null;
   private isPreviewMode: boolean = false;
   private toolbar: HTMLDivElement | null = null;
@@ -142,7 +142,7 @@ export class OpenCanvasShim {
     });
 
     // Update preview content
-    this.updatePreview();
+    this.updatePreviewInternal();
 
     // Add event listener for textarea changes
     this.editor.addEventListener("input", () => {
@@ -157,7 +157,7 @@ export class OpenCanvasShim {
           }
         }
         this.content = this.editor.value;
-        this.updatePreview();
+        this.updatePreviewInternal();
         this.changeHandler(this.content);
       }
     });
@@ -208,7 +208,7 @@ export class OpenCanvasShim {
       start + newText.length;
 
     // Trigger change event
-    this.updatePreview();
+    this.updatePreviewInternal();
     this.changeHandler(this.content);
   }
 
@@ -224,7 +224,7 @@ export class OpenCanvasShim {
     if (this.editor) {
       this.editor.value = this.content;
     }
-    this.updatePreview();
+    this.updatePreviewInternal();
     this.changeHandler(this.content);
   }
 
@@ -240,7 +240,7 @@ export class OpenCanvasShim {
     if (this.editor) {
       this.editor.value = this.content;
     }
-    this.updatePreview();
+    this.updatePreviewInternal();
     this.changeHandler(this.content);
   }
 
@@ -252,7 +252,12 @@ export class OpenCanvasShim {
     });
   }
 
-  private updatePreview() {
+  // Make this public so it can be explicitly called
+  public updatePreview() {
+    this.updatePreviewInternal();
+  }
+
+  private updatePreviewInternal() {
     if (!this.preview) return;
 
     // Detect if content appears to be a resume
@@ -514,6 +519,7 @@ export class OpenCanvasShim {
       }
       
       .resume-section {
+        margin-bottom: 20      .resume-section {
         margin-bottom: 20px;
         padding-bottom: 10px;
       }
@@ -579,16 +585,71 @@ export class OpenCanvasShim {
 
   // Public methods to match OpenCanvas API
   public setContent(content: string) {
+    console.log("setContent called with length:", content.length);
+
+    // Safety check for empty content
+    if (!content) {
+      console.warn("Empty content provided to setContent, using empty string");
+      content = "";
+    }
+
+    // Store the new content
     this.content = content;
     this.lastSavedContent = content;
+
+    // Update editor value in a more reliable way
     if (this.editor) {
-      this.editor.value = content;
+      try {
+        // Set value and ensure cursor is at the start
+        this.editor.value = content;
+        this.editor.selectionStart = 0;
+        this.editor.selectionEnd = 0;
+
+        // Force a blur/focus cycle to ensure the browser registers the change
+        this.editor.blur();
+        this.editor.focus();
+
+        // Create synthetic input event to trigger all handlers
+        const event = new Event("input", { bubbles: true });
+        this.editor.dispatchEvent(event);
+      } catch (e) {
+        console.error("Error updating editor value:", e);
+      }
     }
-    this.updatePreview();
+
+    // Force update the preview
+    this.updatePreviewInternal();
+
+    // Notify parent component
+    this.changeHandler(content);
+
+    // Force a repaint by briefly changing a style property
+    if (this.editor) {
+      const originalBg = this.editor.style.backgroundColor;
+      this.editor.style.backgroundColor = "rgba(0,0,0,0.001)";
+      setTimeout(() => {
+        if (this.editor) {
+          this.editor.style.backgroundColor = originalBg;
+
+          // Double-check that the value was set correctly
+          if (this.editor.value !== content) {
+            console.warn(
+              "Editor value doesn't match after setting! Retrying..."
+            );
+            this.editor.value = content;
+
+            // Try again with the input event
+            const event = new Event("input", { bubbles: true });
+            this.editor.dispatchEvent(event);
+          }
+        }
+      }, 10);
+    }
   }
 
   public getContent() {
-    return this.content;
+    // Ensure we return the most up-to-date content
+    return this.editor?.value || this.content;
   }
 
   public setPreviewMode(isPreview: boolean) {
@@ -597,7 +658,7 @@ export class OpenCanvasShim {
       if (isPreview) {
         this.applyStyles(this.editor, { display: "none" });
         this.applyStyles(this.preview, { display: "block" });
-        this.updatePreview(); // Refresh preview when switching to preview mode
+        this.updatePreviewInternal(); // Refresh preview when switching to preview mode
       } else {
         this.applyStyles(this.editor, { display: "block" });
         this.applyStyles(this.preview, { display: "none" });
@@ -674,7 +735,7 @@ export class OpenCanvasShim {
 
         // Update resume preview styles for light mode
         if (this.isPreviewMode) {
-          this.updatePreview(); // Refresh preview to get light mode styles
+          this.updatePreviewInternal(); // Refresh preview to get light mode styles
         }
 
         // Style buttons
@@ -701,22 +762,61 @@ export class OpenCanvasShim {
   public replaceSelectedText(newText: string) {
     if (!this.editor) return;
 
+    console.log("replaceSelectedText called with length:", newText.length);
+
+    // Final validation check for newText
+    if (!newText) {
+      console.warn("Empty text provided to replaceSelectedText, ignoring");
+      return;
+    }
+
     // Save current state to undo stack before replacing
     this.undoStack.push(this.content);
     this.redoStack = [];
 
     const start = this.editor.selectionStart;
     const end = this.editor.selectionEnd;
-    this.content =
+
+    // Create the new content
+    const newContent =
       this.content.substring(0, start) + newText + this.content.substring(end);
-    this.editor.value = this.content;
-    this.updatePreview();
-    this.changeHandler(this.content);
+
+    // Update both the content property and the editor value
+    this.content = newContent;
+    this.editor.value = newContent;
+
+    // Create a synthetic input event to trigger all necessary handlers
+    const event = new Event("input", { bubbles: true });
+    this.editor.dispatchEvent(event);
+
+    // Update the preview
+    this.updatePreviewInternal();
+
+    // Notify parent component explicitly
+    this.changeHandler(newContent);
 
     // Set cursor position after the inserted text
     this.editor.selectionStart = start + newText.length;
     this.editor.selectionEnd = start + newText.length;
+
+    // Focus the editor
     this.editor.focus();
+
+    // Double-check content update
+    setTimeout(() => {
+      if (this.editor && this.editor.value !== newContent) {
+        console.warn("Content mismatch after replace, forcing update");
+        this.editor.value = newContent;
+        this.content = newContent;
+
+        // Try input event again
+        const event = new Event("input", { bubbles: true });
+        this.editor.dispatchEvent(event);
+
+        // Make sure parent is notified
+        this.changeHandler(newContent);
+      }
+    }, 50);
   }
 
   public destroy() {
