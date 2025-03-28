@@ -35,7 +35,6 @@ export function ResumeTab({
   const [lastUpdated, setLastUpdated] = useState<string>(
     new Date().toISOString()
   );
-  const [memories, setMemories] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch last updated timestamp from Supabase
@@ -63,7 +62,6 @@ export function ResumeTab({
       // Update local state
       setResumeContent(content);
       updateMasterResume(content);
-
       // Save to Supabase if user is logged in
       if (user?.id) {
         const supabase = createSupabaseClient();
@@ -78,7 +76,6 @@ export function ResumeTab({
         if (error) throw error;
         setLastUpdated(now);
       }
-
       toast({
         title: "Resume saved",
         description: "Your master resume has been updated successfully.",
@@ -99,9 +96,7 @@ export function ResumeTab({
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
@@ -136,11 +131,6 @@ export function ResumeTab({
     URL.revokeObjectURL(url);
   };
 
-  // Handle memory generation
-  const handleMemoryGenerated = (memory: string) => {
-    setMemories((prev) => [...prev, memory]);
-  };
-
   // Fetch user data on mount
   useEffect(() => {
     if (user?.id) {
@@ -157,7 +147,6 @@ export function ResumeTab({
               <CardTitle>Master Resume</CardTitle>
               <CardDescription>
                 Create and edit your master resume with our advanced editor
-                powered by OpenCanvas
               </CardDescription>
               <p className="text-xs text-gray-400 mt-2">
                 Last updated: {new Date(lastUpdated).toLocaleString()}
@@ -191,12 +180,12 @@ export function ResumeTab({
           </div>
         </CardHeader>
         <CardContent>
-          {/* OpenCanvas Editor */}
+          {/* OpenCanvas Editor with our shim */}
           <OpenCanvasEditor
             initialContent={resumeContent}
             onSave={handleSaveResume}
             isDarkMode={isDarkMode}
-            onGenerateMemory={handleMemoryGenerated}
+            readOnly={false}
           />
         </CardContent>
       </Card>
