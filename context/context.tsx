@@ -9,17 +9,17 @@ import { appReducer } from "./reducer";
 import { AppState, AppAction } from "./types";
 import { ApplicationService } from "@/lib/application-service";
 import { JobApplication, ApplicationStatus } from "@/types/index";
-import { Tag } from "./types"; // Make sure to import Tag type
+import { Tag } from "./types";
+import { createSupabaseClient } from "@/lib/supabase";
 
-// Initial state
+// Initial state with an empty resume
 const initialState: AppState = {
   opportunities: [],
-  masterResume:
-    "John Doe\n\nExperience:\n- Software Developer at XYZ Corp\n- Data Analyst at BigData Co.\n- AI Researcher at Tech University\n\nSkills:\n- JavaScript, React, Node.js\n- Python, R, TensorFlow, PyTorch\n- SQL, MongoDB\n- Machine Learning, Deep Learning\n- Data Visualization",
+  masterResume: "", // Start with an empty resume instead of the default one
   events: [],
   userProfile: {
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: "",
+    email: "",
     preferences: {
       darkMode: false,
     },
@@ -143,12 +143,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   };
 
+  // Load user profile data including master resume
+  const loadUserProfile = async () => {
+    try {
+      const supabase = createSupabaseClient();
+
+      // Get current user session
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user?.id) {
+        console.log("No authenticated user found");
+        return null;
+      }
+
+      console.log("Loading profile for user:", userData.user.id);
+
+      // Get user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userData.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error loading profile:", profileError);
+        return null;
+      }
+
+      console.log("Profile loaded:", profileData);
+
+      // Return the profile data
+      return {
+        masterResume: profileData.master_resume || "",
+        userProfile: {
+          name: profileData.name || "",
+          email: profileData.email || "",
+          preferences: {
+            darkMode: profileData.dark_mode || false,
+          },
+        },
+      };
+    } catch (error) {
+      console.error("Error in loadUserProfile:", error);
+      return null;
+    }
+  };
+
   // Load data from Supabase on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         console.log("Loading data from Supabase...");
+
         // Fetch applications from Supabase
         const applications = await applicationService.getApplications();
         console.log(`Loaded ${applications.length} applications from Supabase`);
@@ -163,22 +209,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
               id: safeParseInt(event.id),
               title: event.title,
               date: event.date,
-              // Validate and convert event type to one of the allowed values
               type: validateEventType(event.type || "interview"),
-              opportunityId: app.id, // Keep as string to match app.id
+              opportunityId: app.id,
             })) || []
         );
+
+        // Load user profile and master resume
+        const userProfileData = await loadUserProfile();
+
+        // Create payload with loaded data
+        const payload: any = {
+          opportunities,
+          events: allEvents,
+        };
+
+        // Add user profile data if available
+        if (userProfileData) {
+          payload.masterResume = userProfileData.masterResume;
+          payload.userProfile = userProfileData.userProfile;
+        }
 
         // Dispatch data to update state
         dispatch({
           type: "LOAD_DATA",
-          payload: {
-            opportunities,
-            events: allEvents,
-            masterResume: state.masterResume,
-            userProfile: state.userProfile,
-            chatMessages: state.chatMessages,
-          },
+          payload,
         });
       } catch (error) {
         console.error("Error loading data from Supabase:", error);
@@ -187,6 +241,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     };
+
     loadData();
   }, []);
 
@@ -199,7 +254,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     // Find opportunities that need to be saved
-    // These will typically be ones with numeric IDs (not Supabase UUIDs)
     const unsavedOpportunities = state.opportunities.filter((opp) => {
       // Check if it has a numeric ID (local) and not already being saved
       const isNumericId =
@@ -222,11 +276,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
               ...prev,
               [opportunity.id]: true,
             }));
+
             console.log(
               "SAVING OPPORTUNITY TO SUPABASE:",
               opportunity.id,
               opportunity
             );
+
             const jobApp = convertToJobApplication(opportunity);
             console.log("Converted to JobApplication:", jobApp);
 
@@ -237,7 +293,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
             // Check if result is an object with an id property
             if (result && typeof result === "object" && "id" in result) {
               console.log("New Supabase ID:", result.id);
-
               // Update the opportunity in our state with the Supabase ID
               dispatch({
                 type: "UPDATE_OPPORTUNITY",
