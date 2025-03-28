@@ -148,19 +148,28 @@ Focus on clarity, impact, and professional language.`;
             )
           );
         }
-
         // Make sure we ALWAYS send the done signal
         controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
         controller.close();
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error in stream:", error);
+
+        // Safely extract error message with proper type checking
+        let errorMessage = "Unknown error occurred";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === "string") {
+          errorMessage = error;
+        } else if (error && typeof error === "object" && "message" in error) {
+          errorMessage = String((error as { message: unknown }).message);
+        }
 
         // Send error message and done signal to client
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({
               error: "Stream failed",
-              message: error.message,
+              message: errorMessage,
             })}\n\n`
           )
         );
