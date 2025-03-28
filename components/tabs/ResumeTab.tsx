@@ -11,7 +11,6 @@ import { Upload, Download } from "lucide-react";
 import { toast } from "../ui/use-toast";
 import { createSupabaseClient } from "@/lib/supabase";
 import { OpenCanvasEditor } from "../openCanvas/OpenCanvas";
-import { ResumeService } from "@/context/resume-service";
 
 interface ResumeTabProps {
   masterResume: string;
@@ -30,6 +29,7 @@ export function ResumeTab({
   isDarkMode,
   user,
 }: ResumeTabProps) {
+  // This stores what's currently displayed in the editor
   const [resumeContent, setResumeContent] = useState(masterResume);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -37,31 +37,18 @@ export function ResumeTab({
     new Date().toISOString()
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const resumeService = new ResumeService();
 
   // Fetch last updated timestamp from Supabase
   const fetchLastUpdated = async () => {
-    if (!user?.id) {
-      console.log("No user ID, skipping fetchLastUpdated");
-      return;
-    }
-
     try {
-      console.log("Fetching last updated timestamp for user:", user.id);
       const supabase = createSupabaseClient();
       const { data, error } = await supabase
         .from("profiles")
         .select("updated_at")
         .eq("id", user.id)
         .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return;
-      }
-
+      if (error) throw error;
       if (data && data.updated_at) {
-        console.log("Profile updated_at:", data.updated_at);
         setLastUpdated(data.updated_at);
       }
     } catch (error) {
@@ -69,59 +56,45 @@ export function ResumeTab({
     }
   };
 
-  // Save changes to the resume
-  const handleSaveResume = async (content: string) => {
-    console.log("handleSaveResume called with content length:", content.length);
-    console.log("User:", user?.id || "not logged in");
+  // This function is called by the OpenCanvasEditor when "Save Resume" is clicked
+  const handleSaveResume = async (contentToSave: string) => {
+    console.log(
+      "handleSaveResume called with content length:",
+      contentToSave.length
+    );
 
+    // Content has changed, so save it
     setIsSaving(true);
 
     try {
-      // Update local state
-      setResumeContent(content);
+      // Save to Supabase
+      const supabase = createSupabaseClient();
+      const now = new Date().toISOString();
 
-      // Update global state via dispatch
-      console.log("Dispatching UPDATE_MASTER_RESUME");
-      updateMasterResume(content);
+      console.log("Saving to profiles table...");
+      console.log("User ID:", user?.id);
+      console.log("Content length:", contentToSave.length);
 
-      // Save version if user is logged in
-      if (user?.id) {
-        console.log("Saving resume version to database");
-        const result = await resumeService.saveResumeVersion(
-          content,
-          "Regular Update"
-        );
+      // DIRECT SAVE TO DATABASE
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          master_resume: contentToSave,
+          updated_at: now,
+        })
+        .eq("id", user?.id);
 
-        if (result) {
-          console.log("Resume version saved successfully:", result.id);
-        } else {
-          console.warn("Resume version save returned no result");
-        }
-
-        // Also save to profile
-        const supabase = createSupabaseClient();
-        const now = new Date().toISOString();
-        console.log("Updating master_resume in profiles table");
-
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            master_resume: content,
-            updated_at: now,
-          })
-          .eq("id", user.id);
-
-        if (error) {
-          console.error("Error updating profile:", error);
-          throw error;
-        }
-
-        console.log("Profile updated successfully");
-        setLastUpdated(now);
-      } else {
-        console.log("User not logged in, skipping database updates");
+      if (error) {
+        console.error("Error updating profile:", error);
+        throw error;
       }
 
+      // Update state
+      setResumeContent(contentToSave);
+      updateMasterResume(contentToSave);
+      setLastUpdated(now);
+
+      console.log("Save successful");
       toast({
         title: "Resume saved",
         description: "Your master resume has been updated successfully.",
@@ -142,27 +115,49 @@ export function ResumeTab({
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    console.log("Uploading file:", file.name);
     setIsUploading(true);
-
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const content = event.target?.result as string;
-      console.log("File loaded, content length:", content.length);
+
+      // Set state
       setResumeContent(content);
 
-      // Also update global state
-      updateMasterResume(content);
+      // Also save to database
+      try {
+        const supabase = createSupabaseClient();
+        const now = new Date().toISOString();
+
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            master_resume: content,
+            updated_at: now,
+          })
+          .eq("id", user.id);
+
+        if (error) throw error;
+
+        updateMasterResume(content);
+        setLastUpdated(now);
+
+        toast({
+          title: "Resume uploaded",
+          description: "Your resume has been uploaded and saved.",
+        });
+      } catch (error) {
+        console.error("Error saving uploaded resume:", error);
+        toast({
+          title: "Error",
+          description:
+            "The file was uploaded but couldn't be saved to the database.",
+          variant: "destructive",
+        });
+      }
 
       setIsUploading(false);
-      toast({
-        title: "Resume uploaded",
-        description: "Your resume has been uploaded and is ready to edit.",
-      });
     };
     reader.onerror = () => {
-      console.error("Error reading file");
       setIsUploading(false);
       toast({
         title: "Upload failed",
@@ -175,7 +170,6 @@ export function ResumeTab({
 
   // Download resume as a text file
   const handleDownloadResume = () => {
-    console.log("Downloading resume, content length:", resumeContent.length);
     const blob = new Blob([resumeContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -187,25 +181,63 @@ export function ResumeTab({
     URL.revokeObjectURL(url);
   };
 
-  // Update local content when masterResume prop changes
-  useEffect(() => {
-    console.log("Master resume updated from props:", masterResume.length);
-    setResumeContent(masterResume);
-  }, [masterResume]);
+  // Direct save to database - for the manual save button
+  const saveDirectly = async () => {
+    try {
+      setIsSaving(true);
+      const supabase = createSupabaseClient();
+      const now = new Date().toISOString();
 
-  // Fetch user data on mount and when user changes
+      // Get content from state
+      const content = resumeContent;
+
+      console.log("Direct save button clicked");
+      console.log("Content length:", content.length);
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          master_resume: content,
+          updated_at: now,
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setLastUpdated(now);
+      updateMasterResume(content);
+
+      toast({
+        title: "Resume saved directly",
+        description: "Your resume has been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Error in direct save:", error);
+      toast({
+        title: "Save error",
+        description: "There was a problem saving your resume.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Fetch user data on mount
   useEffect(() => {
-    console.log("User changed:", user?.id || "not logged in");
     if (user?.id) {
       fetchLastUpdated();
     }
   }, [user]);
 
-  // Debug only: Log the current user and content state
+  // Update local state when master resume prop changes
   useEffect(() => {
-    console.log("Resume content state:", resumeContent.length);
-    console.log("User auth state:", user?.id || "not logged in");
-  }, [resumeContent, user]);
+    console.log(
+      "masterResume prop changed, length:",
+      masterResume?.length || 0
+    );
+    setResumeContent(masterResume);
+  }, [masterResume]);
 
   return (
     <div className="space-y-6">
@@ -234,7 +266,6 @@ export function ResumeTab({
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {isUploading ? "Uploading..." : "Upload"}
@@ -242,15 +273,19 @@ export function ResumeTab({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.doc,.docx,.pdf,.rtf"
+                accept=".txt"
                 className="hidden"
                 onChange={handleResumeUpload}
               />
+              {/* Direct save button for backup */}
+              <Button onClick={saveDirectly} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Direct Save"}
+              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {/* OpenCanvas Editor with our shim */}
+          {/* OpenCanvas Editor */}
           <OpenCanvasEditor
             initialContent={resumeContent}
             onSave={handleSaveResume}

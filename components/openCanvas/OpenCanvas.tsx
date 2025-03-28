@@ -610,7 +610,12 @@ export function OpenCanvasEditor({
         </div>
         {/* Save Button */}
         <Button
-          onClick={() => onSave(content)}
+          onClick={() => {
+            console.log("Save Resume button clicked");
+            // This is the KEY FIX - when Save Resume is clicked, we use the current content
+            // from the editor which is guaranteed to be up-to-date
+            onSave(content);
+          }}
           disabled={!isLoaded || isLocked}
         >
           Save Resume
