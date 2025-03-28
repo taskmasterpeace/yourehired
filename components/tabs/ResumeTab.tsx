@@ -7,10 +7,9 @@ import {
   CardDescription,
 } from "../ui/card";
 import { Button } from "../ui/button";
-import { Save, Upload, Download, Edit, Eye } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { toast } from "../ui/use-toast";
 import { createSupabaseClient } from "@/lib/supabase";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { OpenCanvasEditor } from "../openCanvas/OpenCanvas";
 
 interface ResumeTabProps {
@@ -37,7 +36,6 @@ export function ResumeTab({
     new Date().toISOString()
   );
   const [memories, setMemories] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState("standard");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch last updated timestamp from Supabase
@@ -49,7 +47,6 @@ export function ResumeTab({
         .select("updated_at")
         .eq("id", user.id)
         .single();
-
       if (error) throw error;
       if (data && data.updated_at) {
         setLastUpdated(data.updated_at);
@@ -62,7 +59,6 @@ export function ResumeTab({
   // Save changes to the resume
   const handleSaveResume = async (content: string) => {
     setIsSaving(true);
-
     try {
       // Update local state
       setResumeContent(content);
@@ -72,7 +68,6 @@ export function ResumeTab({
       if (user?.id) {
         const supabase = createSupabaseClient();
         const now = new Date().toISOString();
-
         const { error } = await supabase
           .from("profiles")
           .update({
@@ -80,7 +75,6 @@ export function ResumeTab({
             updated_at: now,
           })
           .eq("id", user.id);
-
         if (error) throw error;
         setLastUpdated(now);
       }
@@ -112,14 +106,12 @@ export function ResumeTab({
     reader.onload = (event) => {
       const content = event.target?.result as string;
       setResumeContent(content);
-
       setIsUploading(false);
       toast({
         title: "Resume uploaded",
         description: "Your resume has been uploaded and is ready to edit.",
       });
     };
-
     reader.onerror = () => {
       setIsUploading(false);
       toast({
@@ -128,7 +120,6 @@ export function ResumeTab({
         variant: "destructive",
       });
     };
-
     reader.readAsText(file);
   };
 
@@ -200,171 +191,13 @@ export function ResumeTab({
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="editor">
-            <TabsList className="mb-4">
-              <TabsTrigger value="editor">Resume Editor</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="editor" className="space-y-4">
-              {/* OpenCanvas Editor */}
-              <OpenCanvasEditor
-                initialContent={resumeContent}
-                onSave={handleSaveResume}
-                isDarkMode={isDarkMode}
-                onGenerateMemory={handleMemoryGenerated}
-              />
-            </TabsContent>
-
-            <TabsContent value="templates" className="space-y-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Choose a template style for your resume. This affects how your
-                resume will look when exported or applied to job applications.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card
-                  className={`cursor-pointer ${
-                    selectedTemplate === "standard"
-                      ? "ring-2 ring-blue-500"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedTemplate("standard")}
-                >
-                  <CardContent className="p-4">
-                    <h3 className="font-bold mb-2">Standard</h3>
-                    <p className="text-sm text-gray-500">
-                      A classic resume layout suitable for most industries.
-                    </p>
-                    <div className="mt-4 h-40 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
-                      <p className="text-xs text-gray-500">
-                        Standard Template Preview
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className={`cursor-pointer ${
-                    selectedTemplate === "modern" ? "ring-2 ring-blue-500" : ""
-                  }`}
-                  onClick={() => setSelectedTemplate("modern")}
-                >
-                  <CardContent className="p-4">
-                    <h3 className="font-bold mb-2">Modern</h3>
-                    <p className="text-sm text-gray-500">
-                      A contemporary design with accent colors and modern
-                      typography.
-                    </p>
-                    <div className="mt-4 h-40 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
-                      <p className="text-xs text-gray-500">
-                        Modern Template Preview
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className={`cursor-pointer ${
-                    selectedTemplate === "minimal" ? "ring-2 ring-blue-500" : ""
-                  }`}
-                  onClick={() => setSelectedTemplate("minimal")}
-                >
-                  <CardContent className="p-4">
-                    <h3 className="font-bold mb-2">Minimal</h3>
-                    <p className="text-sm text-gray-500">
-                      A clean, minimalist design focused on content.
-                    </p>
-                    <div className="mt-4 h-40 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center">
-                      <p className="text-xs text-gray-500">
-                        Minimal Template Preview
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="settings" className="space-y-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium mb-2">Editor Settings</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Customize how the resume editor works.
-                  </p>
-
-                  {/* This will be expanded with more settings in the future */}
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <input type="checkbox" id="auto-save" className="mr-2" />
-                      <label htmlFor="auto-save" className="text-sm">
-                        Enable auto-save (every 30 seconds)
-                      </label>
-                    </div>
-
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="spell-check"
-                        className="mr-2"
-                        defaultChecked
-                      />
-                      <label htmlFor="spell-check" className="text-sm">
-                        Enable spell checking
-                      </label>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium mb-2">AI Features</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Your resume editor comes with built-in AI assistance powered
-                    by OpenAI. These features help you improve your resume with
-                    smart suggestions and feedback.
-                  </p>
-
-                  <div className="space-y-2">
-                    <div className="flex items-start">
-                      <div className="mr-2 mt-1">✅</div>
-                      <div>
-                        <p className="text-sm font-medium">Quick Actions</p>
-                        <p className="text-xs text-gray-500">
-                          Apply professional improvements to your resume
-                          sections with one click
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start">
-                      <div className="mr-2 mt-1">✅</div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          Insightful Memories
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Get personalized tips as you edit your resume
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start">
-                      <div className="mr-2 mt-1">✅</div>
-                      <div>
-                        <p className="text-sm font-medium">Version Control</p>
-                        <p className="text-xs text-gray-500">
-                          Save and restore previous versions of your resume
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          {/* OpenCanvas Editor */}
+          <OpenCanvasEditor
+            initialContent={resumeContent}
+            onSave={handleSaveResume}
+            isDarkMode={isDarkMode}
+            onGenerateMemory={handleMemoryGenerated}
+          />
         </CardContent>
       </Card>
     </div>

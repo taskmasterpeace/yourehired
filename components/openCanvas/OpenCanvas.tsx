@@ -14,6 +14,7 @@ import {
   Save,
 } from "lucide-react";
 import { toast } from "../ui/use-toast";
+import { OpenCanvasShim } from "./opencanvas-shim";
 
 // Define types based on Open Canvas API
 interface ResumeVersion {
@@ -94,6 +95,7 @@ export function OpenCanvasEditor({
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedSection, setSelectedSection] = useState("");
   const [isLocked, setIsLocked] = useState(readOnly);
+  const [loadTimeout, setLoadTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Initialize Open Canvas when script is loaded
   const initializeEditor = () => {
@@ -101,7 +103,11 @@ export function OpenCanvasEditor({
 
     // Destroy existing instance if there is one
     if (canvasRef.current) {
-      canvasRef.current.destroy();
+      try {
+        canvasRef.current.destroy();
+      } catch (e) {
+        console.error("Error destroying previous instance:", e);
+      }
     }
 
     try {
@@ -127,35 +133,48 @@ export function OpenCanvasEditor({
             markdownPreview: true,
           },
         });
+
+        // Add initial version
+        const initialVersion: ResumeVersion = {
+          id: `version-${Date.now()}`,
+          content: initialContent,
+          timestamp: new Date().toISOString(),
+          name: "Initial Version",
+        };
+        setVersions([initialVersion]);
+        setIsLoaded(true);
+
+        // Clear any existing timeout
+        if (loadTimeout) clearTimeout(loadTimeout);
       } else {
-        // Fall back to our shim if OpenCanvas isn't available
-        import("./opencanvas-shim").then(({ OpenCanvasShim }) => {
-          if (containerRef.current) {
-            canvasRef.current = new OpenCanvasShim({
-              element: containerRef.current,
-              initialContent: content,
-              onChange: (newContent: string) => {
-                setContent(newContent);
-              },
-              onMemory: onGenerateMemory,
-              readOnly: isLocked,
-            });
-
-            // Apply theme
-            canvasRef.current.setTheme(isDarkMode ? "dark" : "light");
-            console.warn(
-              "Using OpenCanvas shim - limited functionality available"
-            );
-
-            toast({
-              title: "Limited editing mode",
-              description:
-                "Enhanced editing features unavailable. Using basic mode instead.",
-              variant: "destructive", // Changed from "warning" to "destructive"
-            });
-          }
-        });
+        // Fall back to our shim immediately
+        fallbackToShim();
       }
+    } catch (error) {
+      console.error("Error initializing editor:", error);
+      fallbackToShim();
+    }
+  };
+
+  // Fallback to shim implementation
+  const fallbackToShim = () => {
+    console.warn("Falling back to shim implementation");
+    if (!containerRef.current) return;
+
+    try {
+      canvasRef.current = new OpenCanvasShim({
+        element: containerRef.current,
+        initialContent: content,
+        onChange: (newContent: string) => {
+          setContent(newContent);
+        },
+        onMemory: onGenerateMemory,
+        readOnly: isLocked,
+      });
+
+      // Apply theme
+      canvasRef.current.setTheme(isDarkMode ? "dark" : "light");
+      console.warn("Using OpenCanvas shim - limited functionality available");
 
       // Add initial version
       const initialVersion: ResumeVersion = {
@@ -165,12 +184,43 @@ export function OpenCanvasEditor({
         name: "Initial Version",
       };
       setVersions([initialVersion]);
-
       setIsLoaded(true);
+
+      toast({
+        title: "Limited editing mode",
+        description:
+          "Enhanced editing features unavailable. Using basic mode instead.",
+        variant: "destructive",
+      });
+
+      // Clear any existing timeout
+      if (loadTimeout) clearTimeout(loadTimeout);
     } catch (error) {
-      console.error("Error initializing editor:", error);
+      console.error("Error initializing shim:", error);
+      // If even the shim fails, show a more serious error
+      toast({
+        title: "Editor initialization failed",
+        description: "Please refresh the page to try again.",
+        variant: "destructive",
+      });
     }
   };
+
+  // Setup timeout to fallback if loading takes too long
+  useEffect(() => {
+    // Set a timeout to fallback to shim if OpenCanvas doesn't load in 5 seconds
+    const timeout = setTimeout(() => {
+      if (!isLoaded) {
+        fallbackToShim();
+      }
+    }, 5000);
+
+    setLoadTimeout(timeout);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, []);
 
   // Save current content as a new version
   const saveVersion = () => {
@@ -179,7 +229,6 @@ export function OpenCanvasEditor({
       content: content,
       timestamp: new Date().toISOString(),
     };
-
     setVersions((prev) => [...prev, newVersion]);
     onSave(content);
   };
@@ -187,14 +236,11 @@ export function OpenCanvasEditor({
   // Apply a quick action to the selected text
   const applyQuickAction = async (action: QuickAction) => {
     if (!canvasRef.current) return;
-
     setIsProcessing(true);
-
     try {
       // Get selected text or current section
       const selectedText =
         canvasRef.current.getSelectedText() || selectedSection;
-
       if (!selectedText) {
         alert("Please select some text or a section first");
         setIsProcessing(false);
@@ -214,15 +260,12 @@ export function OpenCanvasEditor({
           context: "This is for a professional resume.",
         }),
       });
-
       if (!response.ok) throw new Error("Failed to process quick action");
-
       const data = await response.json();
 
       // Replace the selected text with improved version
       if (data.result) {
         canvasRef.current.replaceSelectedText(data.result);
-
         // Capture this as a new memory
         const memory = `Applied "${action.name}" to improve your resume.`;
         setMemories((prev) => [...prev, memory]);
@@ -244,7 +287,6 @@ export function OpenCanvasEditor({
   // Switch between edit and preview modes
   const toggleMode = () => {
     if (!canvasRef.current) return;
-
     if (mode === "edit") {
       setMode("preview");
       canvasRef.current.setPreviewMode(true);
@@ -257,7 +299,6 @@ export function OpenCanvasEditor({
   // Load a specific version
   const loadVersion = (version: ResumeVersion) => {
     if (!canvasRef.current) return;
-
     // Ask for confirmation if current content has changed
     if (content !== version.content) {
       if (
@@ -268,21 +309,8 @@ export function OpenCanvasEditor({
         return;
       }
     }
-
     setContent(version.content);
     canvasRef.current.setContent(version.content);
-  };
-
-  // Add custom quick action
-  const addCustomQuickAction = (name: string, prompt: string) => {
-    const newAction: QuickAction = {
-      id: `custom-${Date.now()}`,
-      name,
-      prompt,
-      category: "custom",
-    };
-
-    setQuickActions((prev) => [...prev, newAction]);
   };
 
   // Toggle locked state
@@ -297,8 +325,13 @@ export function OpenCanvasEditor({
   useEffect(() => {
     return () => {
       if (canvasRef.current) {
-        canvasRef.current.destroy();
+        try {
+          canvasRef.current.destroy();
+        } catch (e) {
+          console.error("Error destroying instance:", e);
+        }
       }
+      if (loadTimeout) clearTimeout(loadTimeout);
     };
   }, []);
 
@@ -328,7 +361,6 @@ export function OpenCanvasEditor({
         >
           {/* Editor container */}
           <div ref={containerRef} className="w-full h-full min-h-[500px]" />
-
           {/* Loading state or fallback */}
           {!isLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
@@ -340,7 +372,6 @@ export function OpenCanvasEditor({
           )}
         </div>
       </div>
-
       {/* Action Toolbar */}
       <div className="flex flex-wrap gap-2 items-center justify-between">
         <div className="flex flex-wrap gap-2">
@@ -352,7 +383,6 @@ export function OpenCanvasEditor({
           >
             {mode === "edit" ? "Preview" : "Edit"}
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -371,7 +401,6 @@ export function OpenCanvasEditor({
               </>
             )}
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -382,7 +411,6 @@ export function OpenCanvasEditor({
             Save Version
           </Button>
         </div>
-
         {/* Save Button */}
         <Button
           onClick={() => onSave(content)}
@@ -391,7 +419,6 @@ export function OpenCanvasEditor({
           Save Resume
         </Button>
       </div>
-
       {/* Tabs for features */}
       <Tabs defaultValue="actions">
         <TabsList>
@@ -408,7 +435,6 @@ export function OpenCanvasEditor({
             Memories
           </TabsTrigger>
         </TabsList>
-
         <TabsContent value="actions" className="p-2">
           <div className="space-y-4">
             <div>
@@ -430,7 +456,6 @@ export function OpenCanvasEditor({
                   ))}
               </div>
             </div>
-
             <div>
               <h3 className="text-sm font-medium mb-2">General Improvements</h3>
               <div className="flex flex-wrap gap-2">
@@ -450,7 +475,6 @@ export function OpenCanvasEditor({
                   ))}
               </div>
             </div>
-
             {quickActions.some((action) => action.category === "custom") && (
               <div>
                 <h3 className="text-sm font-medium mb-2">Custom Actions</h3>
@@ -474,7 +498,6 @@ export function OpenCanvasEditor({
             )}
           </div>
         </TabsContent>
-
         <TabsContent value="versions" className="p-2">
           <div className="space-y-4">
             {versions.length === 0 ? (
@@ -508,7 +531,6 @@ export function OpenCanvasEditor({
             )}
           </div>
         </TabsContent>
-
         <TabsContent value="memories" className="p-2">
           <div className="space-y-2">
             {memories.length === 0 ? (
@@ -527,7 +549,6 @@ export function OpenCanvasEditor({
           </div>
         </TabsContent>
       </Tabs>
-
       {/* Load Open Canvas script */}
       <Script
         src="https://cdn.jsdelivr.net/gh/langchain-ai/open-canvas@main/dist/index.js"
