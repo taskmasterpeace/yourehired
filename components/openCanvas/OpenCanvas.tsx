@@ -11,6 +11,7 @@ import {
   Save,
   Trash2,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { toast } from "../ui/use-toast";
 import { OpenCanvasShim } from "./opencanvas-shim";
@@ -37,6 +38,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Progress } from "../ui/progress";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Define types based on Open Canvas API
 interface ResumeVersion {
@@ -71,7 +74,6 @@ export function OpenCanvasEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<any>(null);
   const resumeService = new ResumeService();
-
   const [isLoaded, setIsLoaded] = useState(false);
   const [content, setContent] = useState(initialContent);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
@@ -84,7 +86,6 @@ export function OpenCanvasEditor({
   );
   const [versionName, setVersionName] = useState("");
   const [showVersionNameDialog, setShowVersionNameDialog] = useState(false);
-
   const [quickActions, setQuickActions] = useState<QuickAction[]>([
     {
       id: "improve",
@@ -117,7 +118,6 @@ export function OpenCanvasEditor({
       category: "general",
     },
   ]);
-
   const [customQuickActions, setCustomQuickActions] = useState<QuickAction[]>(
     []
   );
@@ -127,15 +127,40 @@ export function OpenCanvasEditor({
     category: "custom",
   });
   const [showQuickActionDialog, setShowQuickActionDialog] = useState(false);
-
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [currentAction, setCurrentAction] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [isLocked, setIsLocked] = useState(readOnly);
+  const [streamingResult, setStreamingResult] = useState("");
+
+  // Progress interval for the loading animation
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isProcessing) {
+      // Simulate progress steps
+      interval = setInterval(() => {
+        setProcessingProgress((prev) => {
+          // Limit to 90% until we actually get the result
+          if (prev < 90) {
+            return prev + (90 - prev) * 0.1;
+          }
+          return prev;
+        });
+      }, 300);
+    } else {
+      setProcessingProgress(0);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isProcessing]);
 
   // Initialize editor directly with our shim
   const initializeEditor = () => {
     if (!containerRef.current) return;
-
     // Destroy existing instance if there is one
     if (canvasRef.current) {
       try {
@@ -144,7 +169,6 @@ export function OpenCanvasEditor({
         console.error("Error destroying previous instance:", e);
       }
     }
-
     try {
       // Initialize with our shim
       canvasRef.current = new OpenCanvasShim({
@@ -156,7 +180,6 @@ export function OpenCanvasEditor({
         readOnly: isLocked,
         theme: isDarkMode ? "dark" : "light",
       });
-
       // Add initial version
       const initialVersion: ResumeVersion = {
         id: `version-${Date.now()}`,
@@ -180,7 +203,6 @@ export function OpenCanvasEditor({
   useEffect(() => {
     const loadVersions = async () => {
       if (!user?.id) return;
-
       setIsLoadingVersions(true);
       try {
         const versions = await resumeService.getResumeVersions();
@@ -191,9 +213,7 @@ export function OpenCanvasEditor({
           timestamp: v.timestamp,
           name: v.name,
         }));
-
         setLoadedVersions(formattedVersions);
-
         // Also load custom quick actions
         const actions = await resumeService.getQuickActions();
         const formattedActions: QuickAction[] = actions
@@ -204,9 +224,7 @@ export function OpenCanvasEditor({
             prompt: a.prompt,
             category: "custom" as "custom",
           }));
-
         setCustomQuickActions(formattedActions);
-
         // Merge with default quick actions
         setQuickActions((prev) => {
           const defaultActions = prev.filter((a) => a.category !== "custom");
@@ -218,7 +236,6 @@ export function OpenCanvasEditor({
         setIsLoadingVersions(false);
       }
     };
-
     loadVersions();
   }, [user?.id]);
 
@@ -232,7 +249,6 @@ export function OpenCanvasEditor({
       });
       return;
     }
-
     setIsSavingVersion(true);
     try {
       // Save to Supabase
@@ -248,14 +264,11 @@ export function OpenCanvasEditor({
           timestamp: result.timestamp,
           name: result.name || `Version ${new Date().toLocaleString()}`,
         };
-
         setLoadedVersions((prev) => [newVersion, ...prev]);
-
         toast({
           title: "Version saved",
           description: "Your resume version has been saved",
         });
-
         // Also save main resume
         onSave(content);
       }
@@ -284,14 +297,12 @@ export function OpenCanvasEditor({
       // Only database versions can be deleted (those with UUIDs)
       return;
     }
-
     setIsDeletingVersion(versionId);
     try {
       const success = await resumeService.deleteResumeVersion(versionId);
       if (success) {
         // Remove from local state
         setLoadedVersions((prev) => prev.filter((v) => v.id !== versionId));
-
         toast({
           title: "Version deleted",
           description: "The resume version has been deleted",
@@ -319,14 +330,12 @@ export function OpenCanvasEditor({
       });
       return;
     }
-
     try {
       const result = await resumeService.saveQuickAction({
         name: newQuickAction.name,
         prompt: newQuickAction.prompt,
         category: "custom",
       });
-
       if (result) {
         // Add to local state
         const formattedAction: QuickAction = {
@@ -335,9 +344,7 @@ export function OpenCanvasEditor({
           prompt: result.prompt,
           category: "custom",
         };
-
         setCustomQuickActions((prev) => [formattedAction, ...prev]);
-
         // Update the combined quick actions
         setQuickActions((prev) => {
           const defaultActions = prev.filter((a) => a.category !== "custom");
@@ -349,7 +356,6 @@ export function OpenCanvasEditor({
             ),
           ];
         });
-
         toast({
           title: "Quick action saved",
           description: "Your custom quick action has been saved",
@@ -373,16 +379,13 @@ export function OpenCanvasEditor({
       // Only database actions can be deleted (those with UUIDs)
       return;
     }
-
     try {
       const success = await resumeService.deleteQuickAction(actionId);
       if (success) {
         // Remove from local state
         setCustomQuickActions((prev) => prev.filter((a) => a.id !== actionId));
-
         // Update the combined quick actions
         setQuickActions((prev) => prev.filter((a) => a.id !== actionId));
-
         toast({
           title: "Quick action deleted",
           description: "The custom quick action has been deleted",
@@ -398,14 +401,19 @@ export function OpenCanvasEditor({
     }
   };
 
-  // Apply a quick action to the selected text
+  // Apply a quick action to the selected text with streaming
   const applyQuickAction = async (action: QuickAction) => {
     if (!canvasRef.current) return;
     setIsProcessing(true);
+    setCurrentAction(action.name);
+    setProcessingProgress(10);
+    setStreamingResult(""); // Reset streaming result
+
     try {
       // Get selected text or current section
       const selectedText =
         canvasRef.current.getSelectedText() || selectedSection;
+
       if (!selectedText) {
         toast({
           title: "No text selected",
@@ -416,14 +424,99 @@ export function OpenCanvasEditor({
         return;
       }
 
-      // Call OpenAI API to apply the action
+      // Call the API with the stream_quick_action action
       const response = await fetch("/api/openai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "quick_action",
+          action: "stream_quick_action",
+          prompt: action.prompt,
+          text: selectedText,
+          context: "This is for a professional resume.",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("No response body received");
+      }
+
+      // Set up streaming reader
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Decode the chunk
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.substring(6);
+
+            if (data === "[DONE]") {
+              // Streaming is complete
+              setProcessingProgress(100);
+
+              // Apply the final result
+              setTimeout(() => {
+                if (canvasRef.current && streamingResult) {
+                  canvasRef.current.replaceSelectedText(streamingResult);
+                  setIsProcessing(false);
+                  toast({
+                    title: "Text improved",
+                    description: `Successfully applied "${action.name}"`,
+                  });
+                }
+              }, 500);
+              return;
+            }
+
+            try {
+              const parsedData = JSON.parse(data);
+              if (parsedData.content) {
+                setStreamingResult(parsedData.content);
+                // Update progress based on content length
+                setProcessingProgress(
+                  Math.min(
+                    90,
+                    10 + (parsedData.content.length / selectedText.length) * 80
+                  )
+                );
+              }
+            } catch (e) {
+              console.error("Error parsing streaming data:", e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error with streaming:", error);
+      // Fall back to non-streaming API
+      fallbackToRegularAPI(
+        action,
+        canvasRef.current.getSelectedText() || selectedSection
+      );
+    }
+  };
+
+  // Fallback to non-streaming API
+  const fallbackToRegularAPI = async (
+    action: QuickAction,
+    selectedText: string
+  ) => {
+    try {
+      const response = await fetch("/api/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "quick_action", // Use regular (non-streaming) action
           prompt: action.prompt,
           text: selectedText,
           context: "This is for a professional resume.",
@@ -431,13 +524,11 @@ export function OpenCanvasEditor({
       });
 
       if (!response.ok) throw new Error("Failed to process quick action");
-
       const data = await response.json();
 
       // Replace the selected text with improved version
       if (data.result) {
         canvasRef.current.replaceSelectedText(data.result);
-
         toast({
           title: "Text improved",
           description: `Successfully applied "${action.name}"`,
@@ -471,7 +562,6 @@ export function OpenCanvasEditor({
   // Load a specific version
   const loadVersion = async (version: ResumeVersion) => {
     if (!canvasRef.current) return;
-
     // Ask for confirmation if current content has changed
     if (content !== version.content) {
       if (
@@ -482,16 +572,13 @@ export function OpenCanvasEditor({
         return;
       }
     }
-
     try {
       // If this is from the database (has an ID with dashes), set it as current
       if (typeof version.id === "string" && version.id.includes("-")) {
         await resumeService.setCurrentVersion(version.id);
       }
-
       setContent(version.content);
       canvasRef.current.setContent(version.content);
-
       toast({
         title: "Version loaded",
         description: `Loaded version from ${new Date(
@@ -519,7 +606,6 @@ export function OpenCanvasEditor({
   // Initialize on mount
   useEffect(() => {
     initializeEditor();
-
     // Clean up on unmount
     return () => {
       if (canvasRef.current) {
@@ -547,10 +633,36 @@ export function OpenCanvasEditor({
     }
   }, [initialContent]);
 
+  // Animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 25 },
+    },
+    exit: { opacity: 0, y: -20 },
+  };
+
+  const buttonVariants = {
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 },
+  };
+
   return (
-    <div className="flex flex-col space-y-4">
+    <motion.div
+      className="flex flex-col space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* OpenCanvas Editor Container */}
-      <div className="relative">
+      <motion.div
+        className="relative"
+        initial="hidden"
+        animate="visible"
+        variants={cardVariants}
+      >
         <div
           className={`p-0 min-h-[500px] border rounded-md overflow-hidden ${
             isDarkMode ? "border-gray-700" : "border-gray-200"
@@ -558,69 +670,152 @@ export function OpenCanvasEditor({
         >
           {/* Editor container */}
           <div ref={containerRef} className="w-full h-full min-h-[500px]" />
+
           {/* Loading state */}
-          {!isLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-              <div className="text-center">
-                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                <p>Loading editor...</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      {/* Action Toolbar */}
-      <div className="flex flex-wrap gap-2 items-center justify-between">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleMode}
-            disabled={!isLoaded}
-          >
-            {mode === "edit" ? "Preview" : "Edit"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleLock}
-            disabled={!isLoaded || readOnly}
-          >
-            {isLocked ? (
-              <>
-                <Lock className="h-4 w-4 mr-2" />
-                Unlock
-              </>
-            ) : (
-              <>
-                <Unlock className="h-4 w-4 mr-2" />
-                Lock
-              </>
+          <AnimatePresence>
+            {!isLoaded && (
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="text-center">
+                  <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p>Loading editor...</p>
+                </div>
+              </motion.div>
             )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={saveVersion}
-            disabled={!isLoaded || isLocked || !user?.id}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Save Version
-          </Button>
+          </AnimatePresence>
+
+          {/* AI Processing Overlay */}
+          <AnimatePresence>
+            {isProcessing && (
+              <motion.div
+                className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                >
+                  <h3 className="text-lg font-semibold mb-2">
+                    Applying: {currentAction}
+                  </h3>
+                  <div className="space-y-3">
+                    <Progress value={processingProgress} className="h-2 mb-4" />
+                    <p className="text-sm text-gray-500 mb-3">
+                      {processingProgress < 30
+                        ? "Analyzing text..."
+                        : processingProgress < 70
+                        ? "Applying improvements..."
+                        : "Finalizing changes..."}
+                    </p>
+
+                    {/* Live Preview of Streaming Result */}
+                    {streamingResult && (
+                      <div className="mt-4 border rounded p-3 max-h-28 overflow-y-auto text-sm bg-gray-50 dark:bg-gray-900">
+                        <h4 className="text-xs font-medium mb-1 text-gray-500">
+                          Preview:
+                        </h4>
+                        <div className="whitespace-pre-wrap">
+                          {streamingResult}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+      </motion.div>
+
+      {/* Action Toolbar */}
+      <motion.div
+        className="flex flex-wrap gap-2 items-center justify-between"
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <div className="flex flex-wrap gap-2">
+          <motion.div
+            whileHover="hover"
+            whileTap="tap"
+            variants={buttonVariants}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleMode}
+              disabled={!isLoaded}
+            >
+              {mode === "edit" ? "Preview" : "Edit"}
+            </Button>
+          </motion.div>
+
+          <motion.div
+            whileHover="hover"
+            whileTap="tap"
+            variants={buttonVariants}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleLock}
+              disabled={!isLoaded || readOnly}
+            >
+              {isLocked ? (
+                <>
+                  <Lock className="h-4 w-4 mr-2" />
+                  Unlock
+                </>
+              ) : (
+                <>
+                  <Unlock className="h-4 w-4 mr-2" />
+                  Lock
+                </>
+              )}
+            </Button>
+          </motion.div>
+
+          <motion.div
+            whileHover="hover"
+            whileTap="tap"
+            variants={buttonVariants}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={saveVersion}
+              disabled={!isLoaded || isLocked || !user?.id}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Version
+            </Button>
+          </motion.div>
+        </div>
+
         {/* Save Button */}
-        <Button
-          onClick={() => {
-            console.log("Save Resume button clicked");
-            // This is the KEY FIX - when Save Resume is clicked, we use the current content
-            // from the editor which is guaranteed to be up-to-date
-            onSave(content);
-          }}
-          disabled={!isLoaded || isLocked}
-        >
-          Save Resume
-        </Button>
-      </div>
+        <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+          <Button
+            onClick={() => {
+              console.log("Save Resume button clicked");
+              // This is the KEY FIX - when Save Resume is clicked, we use the current content
+              // from the editor which is guaranteed to be up-to-date
+              onSave(content);
+            }}
+            disabled={!isLoaded || isLocked}
+          >
+            Save Resume
+          </Button>
+        </motion.div>
+      </motion.div>
+
       {/* Tabs for features */}
       <Tabs defaultValue="actions">
         <TabsList>
@@ -633,75 +828,136 @@ export function OpenCanvasEditor({
             Versions
           </TabsTrigger>
         </TabsList>
+
         <TabsContent value="actions" className="p-2">
-          <div className="space-y-4">
+          <motion.div
+            className="space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-medium">Resume Improvements</h3>
                 {user?.id && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowQuickActionDialog(true)}
+                  <motion.div
+                    whileHover="hover"
+                    whileTap="tap"
+                    variants={buttonVariants}
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Custom
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowQuickActionDialog(true)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Custom
+                    </Button>
+                  </motion.div>
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {quickActions
                   .filter((action) => action.category === "resume")
-                  .map((action) => (
-                    <Button
+                  .map((action, index) => (
+                    <motion.div
                       key={action.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => applyQuickAction(action)}
-                      disabled={isProcessing || isLocked}
+                      whileHover="hover"
+                      whileTap="tap"
+                      variants={buttonVariants}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
                     >
-                      <Lightbulb className="h-4 w-4 mr-1" />
-                      {action.name}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => applyQuickAction(action)}
+                        disabled={isProcessing || isLocked}
+                        className="relative group overflow-hidden"
+                      >
+                        <Lightbulb className="h-4 w-4 mr-1" />
+                        {action.name}
+                        <motion.span
+                          className="absolute bottom-0 left-0 h-0.5 bg-primary"
+                          initial={{ width: 0 }}
+                          whileHover={{ width: "100%" }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </Button>
+                    </motion.div>
                   ))}
               </div>
             </div>
+
             <div>
               <h3 className="text-sm font-medium mb-2">General Improvements</h3>
               <div className="flex flex-wrap gap-2">
                 {quickActions
                   .filter((action) => action.category === "general")
-                  .map((action) => (
-                    <Button
+                  .map((action, index) => (
+                    <motion.div
                       key={action.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => applyQuickAction(action)}
-                      disabled={isProcessing || isLocked}
+                      whileHover="hover"
+                      whileTap="tap"
+                      variants={buttonVariants}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 + index * 0.05 }}
                     >
-                      <Lightbulb className="h-4 w-4 mr-1" />
-                      {action.name}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => applyQuickAction(action)}
+                        disabled={isProcessing || isLocked}
+                        className="relative group overflow-hidden"
+                      >
+                        <Lightbulb className="h-4 w-4 mr-1" />
+                        {action.name}
+                        <motion.span
+                          className="absolute bottom-0 left-0 h-0.5 bg-primary"
+                          initial={{ width: 0 }}
+                          whileHover={{ width: "100%" }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </Button>
+                    </motion.div>
                   ))}
               </div>
             </div>
+
             {quickActions.some((action) => action.category === "custom") && (
               <div>
                 <h3 className="text-sm font-medium mb-2">Custom Actions</h3>
                 <div className="flex flex-wrap gap-2">
                   {quickActions
                     .filter((action) => action.category === "custom")
-                    .map((action) => (
-                      <div key={action.id} className="relative group">
+                    .map((action, index) => (
+                      <motion.div
+                        key={action.id}
+                        className="relative group"
+                        whileHover="hover"
+                        whileTap="tap"
+                        variants={buttonVariants}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + index * 0.05 }}
+                      >
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => applyQuickAction(action)}
                           disabled={isProcessing || isLocked}
-                          className="pr-8"
+                          className="pr-8 relative overflow-hidden"
                         >
                           <Lightbulb className="h-4 w-4 mr-1" />
                           {action.name}
+                          <motion.span
+                            className="absolute bottom-0 left-0 h-0.5 bg-primary"
+                            initial={{ width: 0 }}
+                            whileHover={{ width: "100%" }}
+                            transition={{ duration: 0.3 }}
+                          />
                         </Button>
                         {/* Delete button for custom actions */}
                         {action.id.includes("-") && (
@@ -717,15 +973,21 @@ export function OpenCanvasEditor({
                             <Trash2 className="h-3 w-3 text-red-500" />
                           </Button>
                         )}
-                      </div>
+                      </motion.div>
                     ))}
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
         </TabsContent>
+
         <TabsContent value="versions" className="p-2">
-          <div className="space-y-4">
+          <motion.div
+            className="space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             {isLoadingVersions ? (
               <div className="text-center py-4">
                 <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
@@ -735,52 +997,72 @@ export function OpenCanvasEditor({
               <p className="text-sm text-gray-500">No versions saved yet.</p>
             ) : (
               <div className="space-y-2">
-                {loadedVersions.map((version) => (
-                  <Card
+                {loadedVersions.map((version, index) => (
+                  <motion.div
                     key={version.id}
-                    className="p-2 flex items-center justify-between"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{
+                      scale: 1.01,
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                    }}
                   >
-                    <div>
-                      <div className="font-medium">
-                        {version.name ||
-                          `Version ${new Date(
-                            version.timestamp
-                          ).toLocaleString()}`}
+                    <Card className="p-2 flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">
+                          {version.name ||
+                            `Version ${new Date(
+                              version.timestamp
+                            ).toLocaleString()}`}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(version.timestamp).toLocaleString()}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(version.timestamp).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => loadVersion(version)}
-                        disabled={isLocked}
-                      >
-                        Load
-                      </Button>
-                      {version.id.includes("-") && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteVersion(version.id)}
-                          disabled={isDeletingVersion === version.id}
-                          className="text-red-500 hover:text-red-700"
+                      <div className="flex gap-2">
+                        <motion.div
+                          whileHover="hover"
+                          whileTap="tap"
+                          variants={buttonVariants}
                         >
-                          {isDeletingVersion === version.id ? (
-                            <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => loadVersion(version)}
+                            disabled={isLocked}
+                          >
+                            Load
+                          </Button>
+                        </motion.div>
+                        {version.id.includes("-") && (
+                          <motion.div
+                            whileHover="hover"
+                            whileTap="tap"
+                            variants={buttonVariants}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteVersion(version.id)}
+                              disabled={isDeletingVersion === version.id}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              {isDeletingVersion === version.id ? (
+                                <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </motion.div>
+                        )}
+                      </div>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         </TabsContent>
       </Tabs>
 
@@ -887,6 +1169,6 @@ export function OpenCanvasEditor({
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

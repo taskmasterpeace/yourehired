@@ -137,6 +137,8 @@ export class OpenCanvasShim {
       fontFamily: "system-ui, -apple-system, sans-serif",
       fontSize: "14px",
       lineHeight: "1.6",
+      backgroundColor: "#fff",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
     });
 
     // Update preview content
@@ -154,7 +156,6 @@ export class OpenCanvasShim {
             this.undoStack.shift(); // Limit undo history
           }
         }
-
         this.content = this.editor.value;
         this.updatePreview();
         this.changeHandler(this.content);
@@ -168,11 +169,13 @@ export class OpenCanvasShim {
         e.preventDefault();
         this.undo();
       }
+
       // Ctrl+Shift+Z / Cmd+Shift+Z for redo
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
         e.preventDefault();
         this.redo();
       }
+
       // Tab key handling for indentation
       if (e.key === "Tab") {
         e.preventDefault();
@@ -191,7 +194,6 @@ export class OpenCanvasShim {
 
   private insertIndentation() {
     if (!this.editor) return;
-
     const start = this.editor.selectionStart;
     const end = this.editor.selectionEnd;
 
@@ -199,7 +201,6 @@ export class OpenCanvasShim {
     const newText = "  "; // 2 spaces
     this.content =
       this.content.substring(0, start) + newText + this.content.substring(end);
-
     this.editor.value = this.content;
 
     // Move cursor position
@@ -220,11 +221,9 @@ export class OpenCanvasShim {
     // Get previous state
     const previousContent = this.undoStack.pop()!;
     this.content = previousContent;
-
     if (this.editor) {
       this.editor.value = this.content;
     }
-
     this.updatePreview();
     this.changeHandler(this.content);
   }
@@ -238,11 +237,9 @@ export class OpenCanvasShim {
     // Get next state
     const nextContent = this.redoStack.pop()!;
     this.content = nextContent;
-
     if (this.editor) {
       this.editor.value = this.content;
     }
-
     this.updatePreview();
     this.changeHandler(this.content);
   }
@@ -258,7 +255,15 @@ export class OpenCanvasShim {
   private updatePreview() {
     if (!this.preview) return;
 
-    // Enhanced markdown parsing
+    // Detect if content appears to be a resume
+    const isResumeFormat = this.detectResumeFormat(this.content);
+
+    if (isResumeFormat) {
+      this.renderResumePreview();
+      return;
+    }
+
+    // Enhanced markdown parsing for non-resume content
     let html = this.content
       // Headers
       .replace(/^# (.*$)/gm, "<h1>$1</h1>")
@@ -266,35 +271,26 @@ export class OpenCanvasShim {
       .replace(/^### (.*$)/gm, "<h3>$1</h3>")
       .replace(/^#### (.*$)/gm, "<h4>$1</h4>")
       .replace(/^##### (.*$)/gm, "<h5>$1</h5>")
-
       // Bold
       .replace(/\*\*(.*?)\*\*/gm, "<strong>$1</strong>")
-
       // Italic
       .replace(/\*(.*?)\*/gm, "<em>$1</em>")
       .replace(/_(.*?)_/gm, "<em>$1</em>")
-
       // Code
       .replace(/`(.*?)`/gm, "<code>$1</code>")
-
       // Links
       .replace(
         /\[([^\]]+)\]\(([^)]+)\)/gm,
         '<a href="$2" target="_blank">$1</a>'
       )
-
       // Unordered Lists
       .replace(/^\s*[\-\*] (.*$)/gm, "<li>$1</li>")
-
       // Ordered Lists
       .replace(/^\s*\d+\. (.*$)/gm, "<li>$1</li>")
-
       // Blockquotes
       .replace(/^\> (.*$)/gm, "<blockquote>$1</blockquote>")
-
       // Horizontal Rules
       .replace(/^---$/gm, "<hr>")
-
       // Paragraphs
       .split("\n\n")
       .join("</p><p>");
@@ -311,6 +307,119 @@ export class OpenCanvasShim {
 
     // Add styles to the preview content
     this.stylizePreview();
+  }
+
+  // Detect if the content appears to be a resume
+  private detectResumeFormat(content: string): boolean {
+    // Look for common resume sections
+    const resumePatterns = [
+      /education/i,
+      /experience/i,
+      /skills/i,
+      /work\s+experience/i,
+      /professional\s+experience/i,
+      /employment\s+history/i,
+      /certification/i,
+      /objective/i,
+      /summary/i,
+      /contact\s+information/i,
+    ];
+
+    // Check if at least 3 resume patterns are found
+    let matchCount = 0;
+    for (const pattern of resumePatterns) {
+      if (pattern.test(content)) {
+        matchCount++;
+        if (matchCount >= 3) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Render a more resume-like preview
+  private renderResumePreview() {
+    if (!this.preview) return;
+
+    // Split content into lines
+    const lines = this.content.split("\n");
+    let html = "";
+    let inSection = false;
+    let currentSection = "";
+
+    // Parse resume sections
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      // Skip empty lines
+      if (!line) {
+        if (inSection) {
+          html += "<br>";
+        }
+        continue;
+      }
+
+      // Check if this is a section header
+      const isSectionHeader =
+        /^[A-Z][A-Z\s]+$/.test(line) ||
+        /^[A-Z][a-zA-Z\s]+:$/.test(line) ||
+        /^#+\s+[A-Z]/.test(line);
+
+      if (isSectionHeader) {
+        // Close previous section if any
+        if (inSection) {
+          html += "</div>";
+        }
+
+        // Start new section
+        currentSection = line.replace(/^#+\s+/, "").replace(/:$/, "");
+        html += `<div class="resume-section">
+                  <h2 class="resume-section-header">${currentSection}</h2>`;
+        inSection = true;
+      } else if (line.startsWith("*") || line.startsWith("-")) {
+        // Bullet points
+        html += `<div class="resume-bullet">• ${line
+          .substring(1)
+          .trim()}</div>`;
+      } else if (
+        /^\d{4}\s*-\s*(\d{4}|Present)/.test(line) ||
+        /^\d{1,2}\/\d{4}\s*-\s*(\d{1,2}\/\d{4}|Present)/.test(line)
+      ) {
+        // Date range - likely a job or education entry
+        html += `<div class="resume-date-range">${line}</div>`;
+      } else if (
+        /^[A-Z][a-zA-Z\s]+(Inc\.|LLC|Ltd\.|Corporation|Company)/.test(line) ||
+        /^[A-Z][a-zA-Z\s]+University|College|School/.test(line)
+      ) {
+        // Company or school name
+        html += `<div class="resume-org-name">${line}</div>`;
+      } else if (i === 0 || (i === 1 && !lines[0].trim())) {
+        // First non-empty line is likely the name
+        html += `<div class="resume-name">${line}</div>`;
+      } else if (
+        /@|http|\(\d{3}\)|\d{3}[-.]\d{3}[-.]\d{4}/.test(line) &&
+        i < 5
+      ) {
+        // Contact info near the top
+        html += `<div class="resume-contact">${line}</div>`;
+      } else {
+        // Regular content
+        html += `<div class="resume-content">${line}</div>`;
+      }
+    }
+
+    // Close final section if any
+    if (inSection) {
+      html += "</div>";
+    }
+
+    // Wrap in a resume container
+    this.preview.innerHTML = `<div class="resume-preview-container">${html}</div>`;
+
+    // Apply resume-specific styles
+    this.stylizeResumePreview();
   }
 
   private stylizePreview() {
@@ -369,6 +478,105 @@ export class OpenCanvasShim {
     });
   }
 
+  // Apply resume-specific styles
+  private stylizeResumePreview() {
+    if (!this.preview) return;
+
+    // Add a professional looking style to the resume
+    const css = document.createElement("style");
+    css.textContent = `
+      .resume-preview-container {
+        font-family: 'Arial', sans-serif;
+        line-height: 1.4;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px 15px;
+        background-color: white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        border-radius: 4px;
+      }
+      
+      .resume-name {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #2a3f5f;
+        text-align: center;
+        letter-spacing: 0.5px;
+      }
+      
+      .resume-contact {
+        font-size: 14px;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #555;
+      }
+      
+      .resume-section {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+      }
+      
+      .resume-section-header {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #2a3f5f;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+      }
+      
+      .resume-date-range {
+        font-weight: bold;
+        color: #555;
+        margin-top: 10px;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+      
+      .resume-org-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+        font-size: 16px;
+      }
+      
+      .resume-bullet {
+        padding-left: 15px;
+        position: relative;
+        margin-bottom: 5px;
+        line-height: 1.5;
+      }
+      
+      .resume-content {
+        margin-bottom: 5px;
+        line-height: 1.5;
+      }
+    `;
+
+    // Add the styles to the preview
+    if (this.preview.querySelector("style")) {
+      this.preview.querySelector("style")!.remove();
+    }
+    this.preview.appendChild(css);
+
+    // Add animation
+    const sections = this.preview.querySelectorAll(".resume-section");
+    sections.forEach((section, index) => {
+      (section as HTMLElement).style.opacity = "0";
+      (section as HTMLElement).style.transform = "translateY(10px)";
+      (section as HTMLElement).style.transition =
+        "opacity 0.3s ease, transform 0.3s ease";
+      (section as HTMLElement).style.transitionDelay = `${index * 0.1}s`;
+
+      // Trigger animation
+      setTimeout(() => {
+        (section as HTMLElement).style.opacity = "1";
+        (section as HTMLElement).style.transform = "translateY(0)";
+      }, 10);
+    });
+  }
+
   // Public methods to match OpenCanvas API
   public setContent(content: string) {
     this.content = content;
@@ -389,6 +597,7 @@ export class OpenCanvasShim {
       if (isPreview) {
         this.applyStyles(this.editor, { display: "none" });
         this.applyStyles(this.preview, { display: "block" });
+        this.updatePreview(); // Refresh preview when switching to preview mode
       } else {
         this.applyStyles(this.editor, { display: "block" });
         this.applyStyles(this.preview, { display: "none" });
@@ -412,17 +621,31 @@ export class OpenCanvasShim {
           borderColor: "#334155",
           color: "#f8fafc",
         });
-
         this.applyStyles(this.editor, {
           backgroundColor: "#111827",
           color: "#f9fafb",
           caretColor: "#f9fafb",
         });
-
         this.applyStyles(this.preview, {
           backgroundColor: "#111827",
           color: "#f9fafb",
         });
+
+        // Update resume preview styles for dark mode
+        if (this.isPreviewMode) {
+          const css = this.preview.querySelector("style");
+          if (css) {
+            css.textContent = css.textContent
+              .replace(/background-color: white;/, "background-color: #1e293b;")
+              .replace(/color: #333;/g, "color: #f8fafc;")
+              .replace(/color: #2a3f5f;/g, "color: #93c5fd;")
+              .replace(/color: #555;/g, "color: #cbd5e1;")
+              .replace(
+                /border-bottom: 1px solid #eee;/,
+                "border-bottom: 1px solid #475569;"
+              );
+          }
+        }
 
         // Style buttons
         const buttons = this.toolbar.querySelectorAll(".opencanvas-btn");
@@ -439,17 +662,20 @@ export class OpenCanvasShim {
           borderColor: "#e2e8f0",
           color: "#0f172a",
         });
-
         this.applyStyles(this.editor, {
           backgroundColor: "#ffffff",
           color: "#0f172a",
           caretColor: "#0f172a",
         });
-
         this.applyStyles(this.preview, {
           backgroundColor: "#ffffff",
           color: "#0f172a",
         });
+
+        // Update resume preview styles for light mode
+        if (this.isPreviewMode) {
+          this.updatePreview(); // Refresh preview to get light mode styles
+        }
 
         // Style buttons
         const buttons = this.toolbar.querySelectorAll(".opencanvas-btn");

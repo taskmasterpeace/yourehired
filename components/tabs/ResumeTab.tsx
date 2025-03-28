@@ -11,6 +11,7 @@ import { Upload, Download } from "lucide-react";
 import { toast } from "../ui/use-toast";
 import { createSupabaseClient } from "@/lib/supabase";
 import { OpenCanvasEditor } from "../openCanvas/OpenCanvas";
+import { motion } from "framer-motion";
 
 interface ResumeTabProps {
   masterResume: string;
@@ -40,7 +41,6 @@ export function ResumeTab({
   // Fetch last updated timestamp from Supabase
   const fetchLastUpdated = async () => {
     if (!user?.id) return;
-
     try {
       const supabase = createSupabaseClient();
       const { data, error } = await supabase
@@ -48,9 +48,7 @@ export function ResumeTab({
         .select("updated_at")
         .eq("id", user.id)
         .single();
-
       if (error) throw error;
-
       if (data && data.updated_at) {
         setLastUpdated(data.updated_at);
       }
@@ -62,19 +60,15 @@ export function ResumeTab({
   // Save changes to the resume
   const handleSaveResume = async (content: string) => {
     console.log("handleSaveResume called with content length:", content.length);
-
     setIsSaving(true);
-
     try {
       // Update local state
       setResumeContent(content);
       updateMasterResume(content);
-
       // Save to Supabase if user is logged in
       if (user?.id) {
         const supabase = createSupabaseClient();
         const now = new Date().toISOString();
-
         const { error } = await supabase
           .from("profiles")
           .update({
@@ -82,12 +76,9 @@ export function ResumeTab({
             updated_at: now,
           })
           .eq("id", user.id);
-
         if (error) throw error;
-
         setLastUpdated(now);
       }
-
       toast({
         title: "Resume saved",
         description: "Your master resume has been updated successfully.",
@@ -108,23 +99,18 @@ export function ResumeTab({
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
         const content = event.target?.result as string;
-
         // Update local state
         setResumeContent(content);
         updateMasterResume(content);
-
         // Save to database
         if (user?.id) {
           const supabase = createSupabaseClient();
           const now = new Date().toISOString();
-
           const { error } = await supabase
             .from("profiles")
             .update({
@@ -132,12 +118,9 @@ export function ResumeTab({
               updated_at: now,
             })
             .eq("id", user.id);
-
           if (error) throw error;
-
           setLastUpdated(now);
         }
-
         toast({
           title: "Resume uploaded",
           description: "Your resume has been uploaded and saved successfully.",
@@ -154,7 +137,6 @@ export function ResumeTab({
         setIsUploading(false);
       }
     };
-
     reader.onerror = () => {
       setIsUploading(false);
       toast({
@@ -163,7 +145,6 @@ export function ResumeTab({
         variant: "destructive",
       });
     };
-
     reader.readAsText(file);
   };
 
@@ -195,59 +176,105 @@ export function ResumeTab({
     }
   }, [user]);
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        when: "beforeChildren",
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 25 },
+    },
+  };
+
+  const buttonVariants = {
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 },
+  };
+
   return (
-    <div className="space-y-6">
-      <Card className={`${isDarkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div>
-              <CardTitle>Master Resume</CardTitle>
-              <CardDescription>
-                Create and edit your master resume with our advanced editor
-              </CardDescription>
-              <p className="text-xs text-gray-400 mt-2">
-                Last updated: {new Date(lastUpdated).toLocaleString()}
-              </p>
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={cardVariants}>
+        <Card className={`${isDarkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <CardTitle>Master Resume</CardTitle>
+                <CardDescription>
+                  Create and edit your master resume with our advanced editor
+                </CardDescription>
+                <p className="text-xs text-gray-400 mt-2">
+                  Last updated: {new Date(lastUpdated).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <motion.div
+                  whileHover="hover"
+                  whileTap="tap"
+                  variants={buttonVariants}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadResume}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover="hover"
+                  whileTap="tap"
+                  variants={buttonVariants}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploading ? "Uploading..." : "Upload"}
+                  </Button>
+                </motion.div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt"
+                  className="hidden"
+                  onChange={handleResumeUpload}
+                />
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadResume}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {isUploading ? "Uploading..." : "Upload"}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt"
-                className="hidden"
-                onChange={handleResumeUpload}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* OpenCanvas Editor */}
-          <OpenCanvasEditor
-            initialContent={resumeContent}
-            onSave={handleSaveResume}
-            isDarkMode={isDarkMode}
-            readOnly={false}
-            user={user}
-          />
-        </CardContent>
-      </Card>
-    </div>
+          </CardHeader>
+          <CardContent>
+            {/* OpenCanvas Editor */}
+            <OpenCanvasEditor
+              initialContent={resumeContent}
+              onSave={handleSaveResume}
+              isDarkMode={isDarkMode}
+              readOnly={false}
+              user={user}
+            />
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

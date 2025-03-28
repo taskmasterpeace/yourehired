@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
+// This enables the streaming capabilities for this Next.js route
+export const runtime = "edge";
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -8,7 +11,6 @@ export async function POST(req: NextRequest) {
 
     // Get API key from environment variable
     const apiKey = process.env.OPENAI_API_KEY;
-
     if (!apiKey) {
       return NextResponse.json(
         { error: "OpenAI API key not configured on server" },
@@ -25,6 +27,8 @@ export async function POST(req: NextRequest) {
     switch (action) {
       case "quick_action":
         return handleQuickAction(openai, prompt, text, context);
+      case "stream_quick_action":
+        return streamQuickAction(openai, prompt, text, context);
       case "improve_text":
         return handleImproveText(openai, text, prompt, context);
       case "generate_memory":
@@ -51,10 +55,9 @@ async function handleQuickAction(
   text: string,
   context: string
 ) {
-  const systemPrompt = `You are an expert resume writer helping to improve a resume. 
+  const systemPrompt = `You are an expert resume writer helping to improve a resume.
 ${context || ""}
 Your task is to: ${prompt}
-
 Only return the improved text without explanations or additional comments.
 Keep the formatting and structure similar to the original text.
 Focus on clarity, impact, and professional language.`;
@@ -70,8 +73,78 @@ Focus on clarity, impact, and professional language.`;
   });
 
   const result = response.choices[0]?.message?.content?.trim();
-
   return NextResponse.json({ result });
+}
+
+// Stream handler for quick actions
+async function streamQuickAction(
+  openai: OpenAI,
+  prompt: string,
+  text: string,
+  context: string
+) {
+  const systemPrompt = `You are an expert resume writer helping to improve a resume.
+${context || ""}
+Your task is to: ${prompt}
+Only return the improved text without explanations or additional comments.
+Keep the formatting and structure similar to the original text.
+Focus on clarity, impact, and professional language.`;
+
+  // Create a text encoder
+  const encoder = new TextEncoder();
+
+  // Create a ReadableStream
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        // Set up streaming response
+        const stream = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: text },
+          ],
+          temperature: 0.7,
+          max_tokens: 1500,
+          stream: true,
+        });
+
+        let resultText = "";
+
+        for await (const chunk of stream) {
+          const content = chunk.choices[0]?.delta?.content || "";
+          resultText += content;
+
+          // Send the accumulated text to the client
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ content: resultText })}\n\n`
+            )
+          );
+        }
+
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+        controller.close();
+      } catch (error) {
+        console.error("Error in stream:", error);
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ error: "Stream failed" })}\n\n`
+          )
+        );
+        controller.close();
+      }
+    },
+  });
+
+  // Return the stream as a response
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
 
 // Handler for improving text
@@ -86,7 +159,6 @@ ${context || ""}
 Improve the following resume text according to this instruction: ${
     prompt || "Make it more professional and impactful"
   }
-
 Return only the improved text.`;
 
   const response = await openai.chat.completions.create({
@@ -100,7 +172,6 @@ Return only the improved text.`;
   });
 
   const improvedText = response.choices[0]?.message?.content?.trim();
-
   return NextResponse.json({ improvedText });
 }
 
@@ -126,6 +197,5 @@ For example: "Your technical skills section is strong, but you could add more qu
   });
 
   const memory = response.choices[0]?.message?.content?.trim();
-
   return NextResponse.json({ memory });
 }
