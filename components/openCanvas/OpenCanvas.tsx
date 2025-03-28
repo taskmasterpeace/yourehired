@@ -100,7 +100,8 @@ export function OpenCanvasEditor({
   // Initialize Open Canvas when script is loaded
   const initializeEditor = () => {
     if (!containerRef.current) return;
-
+    // TESTING FALLBACK: Uncomment the next line to simulate OpenCanvas failing to load
+    // return fallbackToShim();
     // Destroy existing instance if there is one
     if (canvasRef.current) {
       try {
