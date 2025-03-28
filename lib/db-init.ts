@@ -1,8 +1,7 @@
-// lib/db-init.ts
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // Create a Supabase client for initialization
-const createSupabaseClient = () => {
+export const createSupabaseClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -16,57 +15,14 @@ const createSupabaseClient = () => {
   });
 };
 
-// Flag to track if we've already attempted initialization
-let initializationAttempted = false;
-
-export async function initializeDatabase(forceCheck = false) {
-  // Skip if we've already attempted initialization and not forcing a check
-  if (initializationAttempted && !forceCheck) {
-    return true;
-  }
-
-  initializationAttempted = true;
-
+// Initialize the database with all tables
+export async function initializeDatabase() {
   try {
-    console.log("Checking database schema...");
+    console.log("Initializing database schema...");
     const supabase = createSupabaseClient();
 
-    // Simple ping to check connectivity
-    const { error: pingError } = await supabase
-      .from("applications")
-      .select("count")
-      .limit(1)
-      .single();
-
-    // If we get a "relation does not exist" error, we need to create the tables
-    if (
-      pingError &&
-      pingError.message.includes(
-        'relation "public.applications" does not exist'
-      )
-    ) {
-      console.log("Tables don't exist, attempting to create schema...");
-      return await createTables(supabase);
-    } else if (pingError) {
-      // For other errors, log but don't fail - the tables might already exist
-      console.warn("Error checking schema, but continuing:", pingError.message);
-      return true;
-    }
-
-    console.log("Database schema already exists");
-    return true;
-  } catch (error: unknown) {
-    console.error("Failed to initialize database:", error);
-    // Don't throw, just return false to indicate failure
-    return false;
-  }
-}
-
-// Create tables with direct SQL
-async function createTables(supabase: SupabaseClient) {
-  try {
-    // Create all tables using the complete schema
-    const { error } = await supabase.rpc("exec_sql", {
+    // Create applications and related tables
+    const { error: createBasicTablesError } = await supabase.rpc("exec_sql", {
       sql_string: `
         -- Create applications table
         CREATE TABLE IF NOT EXISTS public.applications (
@@ -89,7 +45,7 @@ async function createTables(supabase: SupabaseClient) {
           updated_at TIMESTAMPTZ DEFAULT now(),
           user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
         );
-
+        
         -- Create status_history table
         CREATE TABLE IF NOT EXISTS public.status_history (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -100,7 +56,7 @@ async function createTables(supabase: SupabaseClient) {
           user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
           created_at TIMESTAMPTZ DEFAULT now()
         );
-
+        
         -- Create events table
         CREATE TABLE IF NOT EXISTS public.events (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -115,7 +71,7 @@ async function createTables(supabase: SupabaseClient) {
           created_at TIMESTAMPTZ DEFAULT now(),
           updated_at TIMESTAMPTZ DEFAULT now()
         );
-
+        
         -- Create profiles table
         CREATE TABLE IF NOT EXISTS public.profiles (
           id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -126,7 +82,7 @@ async function createTables(supabase: SupabaseClient) {
           created_at TIMESTAMPTZ DEFAULT now(),
           updated_at TIMESTAMPTZ DEFAULT now()
         );
-
+        
         -- Create chat_messages table
         CREATE TABLE IF NOT EXISTS public.chat_messages (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -140,49 +96,119 @@ async function createTables(supabase: SupabaseClient) {
       `,
     });
 
-    if (error) {
-      console.warn("Error creating tables:", error);
+    if (createBasicTablesError) {
+      console.error("Error creating basic tables:", createBasicTablesError);
       return false;
     }
 
-    // Add RLS policies and indexes in a separate call to avoid query size limits
+    // Create resume versioning tables
+    const { error: createResumeVersionsError } = await supabase.rpc(
+      "exec_sql",
+      {
+        sql_string: `
+        -- Resume versions table to store history of resume changes
+        CREATE TABLE IF NOT EXISTS public.resume_versions (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+          content TEXT NOT NULL,
+          name VARCHAR(255),
+          timestamp TIMESTAMPTZ NOT NULL DEFAULT now(),
+          is_current BOOLEAN DEFAULT FALSE
+        );
+        
+        -- Quick action presets table
+        CREATE TABLE IF NOT EXISTS public.quick_action_presets (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+          name VARCHAR(255) NOT NULL,
+          prompt TEXT NOT NULL,
+          category VARCHAR(50) DEFAULT 'custom',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `,
+      }
+    );
+
+    if (createResumeVersionsError) {
+      console.error(
+        "Error creating resume version tables:",
+        createResumeVersionsError
+      );
+      return false;
+    }
+
+    // Create indexes for performance
+    const { error: createIndexesError } = await supabase.rpc("exec_sql", {
+      sql_string: `
+        -- Indexes for applications and related tables
+        CREATE INDEX IF NOT EXISTS idx_applications_user_id ON public.applications(user_id);
+        CREATE INDEX IF NOT EXISTS idx_status_history_application_id ON public.status_history(application_id);
+        CREATE INDEX IF NOT EXISTS idx_events_application_id ON public.events(application_id);
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_application_id ON public.chat_messages(application_id);
+        
+        -- Indexes for resume versioning tables
+        CREATE INDEX IF NOT EXISTS idx_resume_versions_user_id ON public.resume_versions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_resume_versions_is_current ON public.resume_versions(is_current);
+        CREATE INDEX IF NOT EXISTS idx_quick_action_presets_user_id ON public.quick_action_presets(user_id);
+      `,
+    });
+
+    if (createIndexesError) {
+      console.warn("Error creating indexes:", createIndexesError);
+      // Continue anyway
+    }
+
+    // Add RLS policies for all tables
     const { error: rlsError } = await supabase.rpc("exec_sql", {
       sql_string: `
-        -- Add Row Level Security (RLS) policies
         -- Applications: users can only see their own applications
         ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own applications" ON public.applications;
         CREATE POLICY "Users can CRUD their own applications" ON public.applications
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+        
         -- Status History: users can only see their own status history
         ALTER TABLE public.status_history ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own status history" ON public.status_history;
         CREATE POLICY "Users can CRUD their own status history" ON public.status_history
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+        
         -- Events: users can only see their own events
         ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own events" ON public.events;
         CREATE POLICY "Users can CRUD their own events" ON public.events
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+        
         -- Profiles: users can only see their own profile
         ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own profile" ON public.profiles;
         CREATE POLICY "Users can CRUD their own profile" ON public.profiles
-          USING (auth.uid() = id)
-          WITH CHECK (auth.uid() = id);
-
+        USING (auth.uid() = id)
+        WITH CHECK (auth.uid() = id);
+        
         -- Chat Messages: users can only see their own chat messages
         ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own chat messages" ON public.chat_messages;
         CREATE POLICY "Users can CRUD their own chat messages" ON public.chat_messages
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+        
+        -- Resume Versions: users can only see their own resume versions
+        ALTER TABLE public.resume_versions ENABLE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS "Users can CRUD their own resume versions" ON public.resume_versions;
+        CREATE POLICY "Users can CRUD their own resume versions" ON public.resume_versions
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+        
+        -- Quick Action Presets: users can only see their own quick actions
+        ALTER TABLE public.quick_action_presets ENABLE ROW LEVEL SECURITY;
+        DROP POLICY IF EXISTS "Users can CRUD their own quick action presets" ON public.quick_action_presets;
+        CREATE POLICY "Users can CRUD their own quick action presets" ON public.quick_action_presets
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
       `,
     });
 
@@ -191,51 +217,58 @@ async function createTables(supabase: SupabaseClient) {
       // Continue anyway
     }
 
-    // Add trigger for automatic profile creation
+    // Create function and trigger for managing current resume version
     const { error: triggerError } = await supabase.rpc("exec_sql", {
       sql_string: `
         -- Create profile trigger to create profile when user signs up
         CREATE OR REPLACE FUNCTION public.handle_new_user()
-        RETURNS TRIGGER AS $$        BEGIN
+        RETURNS TRIGGER AS $$ BEGIN
           INSERT INTO public.profiles (id, email)
           VALUES (NEW.id, NEW.email);
           RETURN NEW;
         END;
         $$ LANGUAGE plpgsql SECURITY DEFINER;
-
+        
         -- Trigger the function every time a user is created
         DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
         CREATE TRIGGER on_auth_user_created
-          AFTER INSERT ON auth.users
-          FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+        AFTER INSERT ON auth.users
+        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+        
+        -- Create function to manage current resume version
+        CREATE OR REPLACE FUNCTION public.set_current_resume()
+        RETURNS TRIGGER AS $$ BEGIN
+          -- First set all versions for this user to not current
+          UPDATE public.resume_versions 
+          SET is_current = FALSE 
+          WHERE user_id = NEW.user_id;
+          
+          -- Then set the new version to current
+          UPDATE public.resume_versions 
+          SET is_current = TRUE 
+          WHERE id = NEW.id;
+          
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql SECURITY DEFINER;
+        
+        -- Trigger to manage current resume version
+        DROP TRIGGER IF EXISTS set_current_resume_trigger ON public.resume_versions;
+        CREATE TRIGGER set_current_resume_trigger
+        AFTER INSERT ON public.resume_versions
+        FOR EACH ROW EXECUTE FUNCTION public.set_current_resume();
       `,
     });
 
     if (triggerError) {
-      console.warn("Error setting up user trigger:", triggerError);
+      console.warn("Error setting up triggers:", triggerError);
       // Continue anyway
     }
 
-    // Create indexes for performance
-    const { error: indexError } = await supabase.rpc("exec_sql", {
-      sql_string: `
-        -- Indices to improve query performance
-        CREATE INDEX IF NOT EXISTS idx_applications_user_id ON public.applications(user_id);
-        CREATE INDEX IF NOT EXISTS idx_status_history_application_id ON public.status_history(application_id);
-        CREATE INDEX IF NOT EXISTS idx_events_application_id ON public.events(application_id);
-        CREATE INDEX IF NOT EXISTS idx_chat_messages_application_id ON public.chat_messages(application_id);
-      `,
-    });
-
-    if (indexError) {
-      console.warn("Error creating indexes:", indexError);
-      // Continue anyway
-    }
-
-    console.log("Database schema created successfully");
+    console.log("Database initialization completed successfully");
     return true;
-  } catch (error: unknown) {
-    console.error("Failed to create tables:", error);
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
     return false;
   }
 }

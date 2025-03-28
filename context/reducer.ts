@@ -210,6 +210,10 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
     }
 
     case "UPDATE_MASTER_RESUME":
+      console.log(
+        "Updating master resume in reducer, length:",
+        action.payload.length
+      );
       return {
         ...state,
         masterResume: action.payload,
