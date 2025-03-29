@@ -378,7 +378,39 @@ export function CalendarTab({
       });
     }
   };
+  // Corrected version of the generateCalendarLink function:
+  const generateCalendarLink = (event: CalendarEvent) => {
+    // Format dates for Google Calendar
+    // Google Calendar requires dates in YYYYMMDDTHHmmssZ format
+    const formatForGoogleCalendar = (date: Date) => {
+      return format(date, "yyyyMMdd'T'HHmmss");
+    };
 
+    const startTime = formatForGoogleCalendar(event.date);
+    // Assuming 1 hour event
+    const endTime = formatForGoogleCalendar(
+      new Date(event.date.getTime() + 60 * 60 * 1000)
+    );
+
+    // Create details with all the important information
+    const details = `Type: ${event.type}
+Company: ${event.companyName}
+Position: ${event.positionTitle}
+${event.notes ? "\nNotes: " + event.notes : ""}`;
+
+    // Create Google Calendar URL
+    const googleCalendarUrl = new URL("https://www.google.com/calendar/render");
+    googleCalendarUrl.searchParams.append("action", "TEMPLATE");
+    googleCalendarUrl.searchParams.append("text", event.title);
+    googleCalendarUrl.searchParams.append("dates", `${startTime}/${endTime}`);
+    googleCalendarUrl.searchParams.append("details", details);
+
+    if (event.location) {
+      googleCalendarUrl.searchParams.append("location", event.location);
+    }
+
+    return googleCalendarUrl.toString();
+  };
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
 
@@ -1159,6 +1191,7 @@ export function CalendarTab({
                 )}
 
                 {/* Add QR Code Section right here */}
+
                 <motion.div
                   className="bg-muted/20 p-3 rounded-lg transition-all"
                   whileHover={{ scale: 1.01 }}
@@ -1194,19 +1227,7 @@ export function CalendarTab({
                     >
                       <QRCodeCanvas
                         id="event-qr-code"
-                        value={JSON.stringify({
-                          id: selectedEvent.id,
-                          title: selectedEvent.title,
-                          company: selectedEvent.companyName,
-                          position: selectedEvent.positionTitle,
-                          date: format(
-                            selectedEvent.date,
-                            "yyyy-MM-dd'T'HH:mm:ss"
-                          ),
-                          type: selectedEvent.type,
-                          location: selectedEvent.location || "",
-                          notes: selectedEvent.notes || "",
-                        })}
+                        value={generateCalendarLink(selectedEvent)}
                         size={150}
                         level="H" // High error correction level
                         includeMargin={true}
@@ -1217,7 +1238,7 @@ export function CalendarTab({
                         isDarkMode ? "text-gray-400" : "text-muted-foreground"
                       }`}
                     >
-                      Scan this code for event details or check-in
+                      Scan to add this event to your calendar
                     </p>
                   </div>
                 </motion.div>

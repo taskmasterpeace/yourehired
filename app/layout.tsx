@@ -9,6 +9,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { AppProvider } from "@/context/context";
 import { AuthRedirector } from "./providers";
 import { Toaster } from "@/components/ui/toaster";
+import { NotificationProvider } from "@/components/notifications/NotificationContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,12 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          <AppProvider>
-            <AuthRedirector>{children}</AuthRedirector>
-            <Toaster />
-          </AppProvider>
-        </AuthProvider>
+        <NotificationProvider>
+          <AuthProvider>
+            <AppProvider>
+              <AuthRedirector>{children}</AuthRedirector>
+              <Toaster />
+            </AppProvider>
+          </AuthProvider>
+        </NotificationProvider>
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/context/NotificationContext";
+import { useNotifications } from "@/components/notifications/NotificationContext";
 // Extract components
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -661,11 +661,11 @@ Notes: ${selectedOpportunity.notes || "No notes available."}`;
           isDarkMode={isDarkMode}
           user={user}
           authLoading={authLoading}
-          notifications={notificationContext?.notifications || []}
-          onClearAll={notificationContext?.clearAllNotifications}
-          onClearOne={notificationContext?.clearNotification}
-          onMarkAllRead={notificationContext?.markAllAsRead}
-          onMarkOneRead={notificationContext?.markAsRead}
+          // notifications={notificationContext?.notifications || []}
+          // onClearAll={notificationContext?.clearAllNotifications}
+          // onClearOne={notificationContext?.clearNotification}
+          // onMarkAllRead={notificationContext?.markAllAsRead}
+          // onMarkOneRead={notificationContext?.markAsRead}
         />
         <Tabs
           value={activeTab}

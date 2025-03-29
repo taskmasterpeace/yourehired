@@ -1,18 +1,20 @@
-import React from 'react';
-import { useNotifications } from '../../context/NotificationContext';
-import { Bell, BellRing, BellOff } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
+import React from "react";
+import { useNotifications } from "./NotificationContext";
+import { Bell, BellRing, BellOff, Loader2 } from "lucide-react";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { cn } from "../../lib/utils";
 
 const NotificationBell = ({ variant = "default" }) => {
-  const { 
+  const {
     unreadCount = 0,
-    settings = { enabled: true }
-  } = useNotifications() || {}; // Add fallback for context
-  
+    loading = false,
+    settings = { enabled: true },
+  } = useNotifications() || {};
+
   // Determine button styling based on variant
   const getButtonStyles = () => {
-    switch(variant) {
+    switch (variant) {
       case "sidebar":
         return "relative p-2 text-gray-300 hover:text-white focus:outline-none transition-colors duration-200";
       case "prominent":
@@ -27,24 +29,29 @@ const NotificationBell = ({ variant = "default" }) => {
       <Button
         variant={variant === "prominent" ? "default" : "ghost"}
         size="icon"
-        className={variant === "prominent" ? getButtonStyles() : "relative"}
+        className={cn("relative", variant === "prominent" && getButtonStyles())}
         aria-label="Notifications"
-        title={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+        title={`Notifications ${
+          unreadCount > 0 ? `(${unreadCount} unread)` : ""
+        }`}
       >
-        {!settings.enabled ? (
+        {loading ? (
+          <Loader2 className="h-6 w-6 animate-spin" />
+        ) : !settings.enabled ? (
           <BellOff className="h-6 w-6" />
         ) : unreadCount > 0 ? (
           <>
             <BellRing className="h-6 w-6 animate-pulse" />
-            {variant === "prominent" ? (
-              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full animate-bounce">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            ) : (
-              <Badge 
-                className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-red-500 text-white text-xs"
+            {unreadCount > 0 && (
+              <Badge
+                className={cn(
+                  "absolute px-1.5 py-0.5 text-xs min-w-[1.5rem] text-center",
+                  variant === "prominent"
+                    ? "top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white rounded-full animate-bounce"
+                    : "-top-1 -right-1 bg-red-500 text-white rounded-full"
+                )}
               >
-                {unreadCount > 99 ? '99+' : unreadCount}
+                {unreadCount > 99 ? "99+" : unreadCount}
               </Badge>
             )}
           </>
