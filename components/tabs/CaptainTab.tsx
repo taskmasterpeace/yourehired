@@ -1,7 +1,13 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "../ui/card";
 import { Button } from "../ui/button";
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, SkipForward } from "lucide-react";
 
 interface CaptainTabProps {
   opportunities: any[];
@@ -22,7 +28,7 @@ export function CaptainTab({
   ratedRecommendations,
   setRatedRecommendations,
   isDarkMode,
-  user
+  user,
 }: CaptainTabProps) {
   const currentRecommendation = jobRecommendations[currentRecommendationIndex];
 
@@ -31,12 +37,18 @@ export function CaptainTab({
     const ratedRecommendation = {
       ...currentRecommendation,
       rating,
-      ratedAt: new Date().toISOString()
+      ratedAt: new Date().toISOString(),
     };
-    
     // Add to rated recommendations
     setRatedRecommendations([...ratedRecommendations, ratedRecommendation]);
-    
+    moveToNext();
+  };
+
+  const handleSkip = () => {
+    moveToNext();
+  };
+
+  const moveToNext = () => {
     // Move to next recommendation
     if (currentRecommendationIndex < jobRecommendations.length - 1) {
       setCurrentRecommendationIndex(currentRecommendationIndex + 1);
@@ -48,7 +60,7 @@ export function CaptainTab({
 
   return (
     <div className="space-y-6">
-      <Card className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+      <Card className={`${isDarkMode ? "bg-gray-800 border-gray-700" : ""}`}>
         <CardHeader>
           <CardTitle>Job Coach</CardTitle>
           <CardDescription>
@@ -59,22 +71,37 @@ export function CaptainTab({
           {currentRecommendation ? (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold">{currentRecommendation.position}</h3>
-                <p className="text-sm text-gray-500">{currentRecommendation.company} • {currentRecommendation.location}</p>
+                <h3 className="text-lg font-semibold">
+                  {currentRecommendation.position}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {currentRecommendation.company} •{" "}
+                  {currentRecommendation.location}
+                </p>
               </div>
-              
               <p className="text-sm">{currentRecommendation.description}</p>
-              
               <div className="flex justify-between pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleRateRecommendation('not-interested')}
+                <Button
+                  variant="outline"
+                  className="bg-red-500 hover:bg-red-600 text-white border-red-500"
+                  onClick={() => handleRateRecommendation("not-interested")}
                 >
                   <ThumbsDown className="h-4 w-4 mr-2" />
                   Not Interested
                 </Button>
-                <Button 
-                  onClick={() => handleRateRecommendation('interested')}
+
+                <Button
+                  variant="outline"
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700"
+                  onClick={handleSkip}
+                >
+                  <SkipForward className="h-4 w-4 mr-2" />
+                  Skip
+                </Button>
+
+                <Button
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                  onClick={() => handleRateRecommendation("interested")}
                 >
                   <ThumbsUp className="h-4 w-4 mr-2" />
                   Interested
