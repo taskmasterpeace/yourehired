@@ -696,8 +696,11 @@ export class OpenCanvasShim {
         if (this.isPreviewMode) {
           const css = this.preview.querySelector("style");
           if (css) {
-            css.textContent = css.textContent
-              .replace(/background-color: white;/, "background-color: #1e293b;")
+            css.textContent = css
+              .textContent!.replace(
+                /background-color: white;/,
+                "background-color: #1e293b;"
+              )
               .replace(/color: #333;/g, "color: #f8fafc;")
               .replace(/color: #2a3f5f;/g, "color: #93c5fd;")
               .replace(/color: #555;/g, "color: #cbd5e1;")
