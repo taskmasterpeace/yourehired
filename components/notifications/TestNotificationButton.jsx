@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Bell, Loader2 } from "lucide-react";
 import { useNotifications } from "./NotificationContext";
-import { notificationService } from "./NotificationService";
 import { useToast } from "../ui/use-toast";
 
 const TestNotificationButton = () => {
-  const notificationContext = useNotifications();
+  const { addTestNotification } = useNotifications() || {};
   const { toast } = useToast?.() || { toast: () => {} };
   const [loading, setLoading] = useState(false);
 
@@ -14,11 +13,10 @@ const TestNotificationButton = () => {
     setLoading(true);
     try {
       console.log("Sending test notification...");
+      // Use the context method instead of directly calling the service
+      const notificationId = await addTestNotification?.();
 
-      // Send directly to the service, not through context
-      const notification = await notificationService.addTestNotification();
-
-      if (notification) {
+      if (notificationId) {
         toast({
           title: "Notification sent",
           description:

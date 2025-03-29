@@ -21,7 +21,6 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
   const [settings, setSettings] = useState({
     enabled: true,
     browserNotifications: true,
@@ -39,13 +38,10 @@ export const NotificationProvider = ({ children }) => {
     try {
       setLoading(true);
       console.log("Loading notifications from the service");
-
       const notificationsData = await notificationService.getNotifications();
       console.log("Notifications loaded:", notificationsData?.length);
-
       if (Array.isArray(notificationsData)) {
         setNotifications(notificationsData);
-
         // Calculate unread count
         const unreadNotifications = notificationsData.filter((n) => !n.read);
         setUnreadCount(unreadNotifications.length);
@@ -61,7 +57,6 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     console.log("Setting up notification subscription");
     const supabase = createSupabaseClient();
-
     // Load notifications first
     loadNotifications();
 
@@ -70,7 +65,6 @@ export const NotificationProvider = ({ children }) => {
       try {
         const { data: userData } = await supabase.auth.getUser();
         if (!userData?.user) return;
-
         const userId = userData.user.id;
         console.log("Setting up subscription for user:", userId);
 
@@ -86,7 +80,6 @@ export const NotificationProvider = ({ children }) => {
             },
             (payload) => {
               console.log("Real-time notification received:", payload);
-
               setNotifications((prev) => {
                 // Add new notification if it doesn't exist yet
                 if (!prev.some((n) => n.id === payload.new.id)) {
@@ -94,12 +87,10 @@ export const NotificationProvider = ({ children }) => {
                 }
                 return prev;
               });
-
               // Update unread count
               if (!payload.new.read) {
                 setUnreadCount((prev) => prev + 1);
               }
-
               // Show browser notification if enabled
               if (
                 settings.browserNotifications &&
@@ -128,7 +119,6 @@ export const NotificationProvider = ({ children }) => {
     };
 
     const cleanup = setUpSubscription();
-
     return () => {
       if (cleanup) cleanup();
     };
@@ -167,13 +157,11 @@ export const NotificationProvider = ({ children }) => {
               : notification
           )
         );
-
         // Update unread count
         setUnreadCount((prev) => {
           const wasUnread = notifications.find((n) => n.id === id && !n.read);
           return wasUnread ? Math.max(0, prev - 1) : prev;
         });
-
         // Then update the database
         await notificationService.markAsRead(id);
       } catch (error) {
@@ -191,7 +179,6 @@ export const NotificationProvider = ({ children }) => {
         prev.map((notification) => ({ ...notification, read: true }))
       );
       setUnreadCount(0);
-
       // Then update the database
       await notificationService.markAllAsRead();
     } catch (error) {
@@ -205,15 +192,12 @@ export const NotificationProvider = ({ children }) => {
       try {
         // Update UI first for immediate feedback
         const wasUnread = notifications.find((n) => n.id === id && !n.read);
-
         setNotifications((prev) =>
           prev.filter((notification) => notification.id !== id)
         );
-
         if (wasUnread) {
           setUnreadCount((prev) => Math.max(0, prev - 1));
         }
-
         // Then delete from the database
         await notificationService.deleteNotification(id);
       } catch (error) {
@@ -229,7 +213,6 @@ export const NotificationProvider = ({ children }) => {
       // Update UI first for immediate feedback
       setNotifications([]);
       setUnreadCount(0);
-
       // Then delete from the database
       await notificationService.deleteAllNotifications();
     } catch (error) {
@@ -240,7 +223,17 @@ export const NotificationProvider = ({ children }) => {
   // Add a test notification
   const addTestNotification = useCallback(async () => {
     try {
+      // Call the service to add notification in database
       const notification = await notificationService.addTestNotification();
+
+      // Update local state immediately for UI feedback
+      if (notification) {
+        // Add to notifications list
+        setNotifications((prev) => [notification, ...prev]);
+        // Increment unread count
+        setUnreadCount((prev) => prev + 1);
+      }
+
       return notification?.id;
     } catch (error) {
       console.error("Error adding test notification:", error);
@@ -253,7 +246,6 @@ export const NotificationProvider = ({ children }) => {
     (notification) => {
       // Mark as read
       markAsRead(notification.id);
-
       // Navigate to the action URL if it exists
       if (notification.action_url) {
         router.push(notification.action_url);
