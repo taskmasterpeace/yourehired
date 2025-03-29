@@ -1,15 +1,16 @@
 import React from "react";
-import { useNotifications } from "../../context/NotificationContext";
-import { Bell, BellRing, BellOff } from "lucide-react";
+import { useNotifications } from "./NotificationContext";
+import { Bell, BellRing, BellOff, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { cn } from "../../lib/utils";
 
 const NotificationBell = ({ variant = "default" }) => {
-  const { unreadCount = 0, settings = { enabled: true } } =
-    useNotifications() || {};
-
-  console.log("NotificationBell rendering with unread count:", unreadCount);
+  const {
+    unreadCount = 0,
+    loading = false,
+    settings = { enabled: true },
+  } = useNotifications() || {};
 
   // Determine button styling based on variant
   const getButtonStyles = () => {
@@ -34,7 +35,9 @@ const NotificationBell = ({ variant = "default" }) => {
           unreadCount > 0 ? `(${unreadCount} unread)` : ""
         }`}
       >
-        {!settings.enabled ? (
+        {loading ? (
+          <Loader2 className="h-6 w-6 animate-spin" />
+        ) : !settings.enabled ? (
           <BellOff className="h-6 w-6" />
         ) : unreadCount > 0 ? (
           <>

@@ -1,7 +1,8 @@
-import { createSupabaseClient } from "@/lib/supabase";
-import { toast } from "@/components/ui/use-toast";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
+import { createSupabaseClient as getSupabaseClient } from "@/lib/supabase";
 
+// Define notification types
 export type NotificationType =
   | "event_reminder"
   | "new_event"
@@ -12,6 +13,7 @@ export type NotificationType =
   | "system"
   | "test";
 
+// Define the notification interface
 export interface Notification {
   id: string;
   user_id: string;
@@ -25,48 +27,71 @@ export interface Notification {
   timestamp: string;
 }
 
+// Singleton instance
+let instance: NotificationService | null = null;
+
+// This service handles all notification operations via Supabase
 export class NotificationService {
-  /**
-   * Test connection to Supabase notifications table
-   */
-  static async testConnection(): Promise<boolean> {
+  private supabaseClient: SupabaseClient | null = null;
+
+  constructor() {
+    // Enforce singleton pattern
+    if (instance) {
+      return instance;
+    }
+
+    // Initialize the Supabase client
+    this.initClient();
+    instance = this;
+  }
+
+  private initClient() {
     try {
-      const supabase = createSupabaseClient();
-      console.log("Testing connection to notifications table...");
-
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("count(*)", { count: "exact", head: true });
-
-      if (error) {
-        console.error("Error connecting to notifications table:", error);
-        return false;
-      }
-
-      console.log("Successfully connected to notifications table");
-      return true;
+      // Use the singleton pattern from lib/supabase.ts
+      this.supabaseClient = getSupabaseClient();
     } catch (error) {
-      console.error("Failed to connect to Supabase:", error);
-      return false;
+      console.error("Failed to initialize Supabase client:", error);
+      // Fallback for initialization errors
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      if (supabaseUrl && supabaseAnonKey) {
+        this.supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+          },
+        });
+      }
     }
   }
 
-  /**
-   * Get all notifications for the current user
-   */
-  static async getNotifications(): Promise<Notification[]> {
+  // Get the Supabase client
+  private getClient() {
+    if (!this.supabaseClient) {
+      this.initClient();
+      if (!this.supabaseClient) {
+        throw new Error("Failed to initialize Supabase client");
+      }
+    }
+    return this.supabaseClient;
+  }
+
+  // Get all notifications for the current user
+  async getNotifications(): Promise<Notification[]> {
     try {
-      const supabase = createSupabaseClient();
+      console.log("NotificationService: Getting notifications");
+      const supabase = this.getClient();
 
       // Get current authenticated user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) {
-        console.log("No authenticated user found for getNotifications");
+        console.log("No authenticated user found");
         return [];
       }
 
       console.log("Getting notifications for user:", userData.user.id);
 
+      // Get notifications for this user
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
@@ -74,158 +99,107 @@ export class NotificationService {
         .order("timestamp", { ascending: false });
 
       if (error) {
-        console.error("Database error fetching notifications:", error);
-        throw error;
+        console.error("Error fetching notifications:", error);
+        return [];
       }
 
       console.log(`Found ${data?.length || 0} notifications`);
-      return (data as Notification[]) || [];
+      return data || [];
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error("Error in getNotifications:", error);
       return [];
     }
   }
 
-  /**
-   * Add a new notification for the current user
-   */
-  static async addNotification(
+  // Add a new notification
+  async addNotification(
     notification: Omit<Notification, "id" | "user_id" | "timestamp" | "read">
   ): Promise<Notification | null> {
     try {
-      const supabase = createSupabaseClient();
-      console.log("Adding notification:", notification);
+      const supabase = this.getClient();
 
       // Get current authenticated user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) {
         console.error("No authenticated user found");
-        throw new Error("User must be authenticated to add notifications");
+        return null;
       }
 
-      console.log("User ID for notification:", userData.user.id);
+      // Prepare notification data
+      const notificationData = {
+        id: uuidv4(),
+        user_id: userData.user.id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        read: false,
+        action_url: notification.action_url,
+        reference_id: notification.reference_id,
+        reference_type: notification.reference_type,
+        timestamp: new Date().toISOString(),
+      };
 
-      // Convert snake_case to camelCase if needed
-      const actionUrl = notification.action_url || notification.actionUrl;
-      const referenceId = notification.reference_id || notification.referenceId;
-      const referenceType =
-        notification.reference_type || notification.referenceType;
-
-      // Insert the new notification
+      // Insert into database
       const { data, error } = await supabase
         .from("notifications")
-        .insert({
-          id: uuidv4(),
-          user_id: userData.user.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          read: false,
-          action_url: actionUrl,
-          reference_id: referenceId,
-          reference_type: referenceType,
-          timestamp: new Date().toISOString(),
-        })
+        .insert([notificationData])
         .select();
 
       if (error) {
-        console.error("Database error adding notification:", error);
-        throw error;
+        console.error("Error adding notification:", error);
+        return null;
       }
 
-      console.log("Notification added successfully:", data);
-      return data ? (data[0] as Notification) : null;
+      return data?.[0] || null;
     } catch (error) {
-      console.error("Error adding notification:", error);
-      toast({
-        title: "Error adding notification",
-        description: "There was a problem creating the notification.",
-        variant: "destructive",
-      });
+      console.error("Error in addNotification:", error);
       return null;
     }
   }
 
-  /**
-   * Add a test notification
-   */
-  static async addTestNotification(): Promise<Notification | null> {
-    try {
-      console.log("Adding test notification");
-
-      return NotificationService.addNotification({
-        title: "Test Notification",
-        message:
-          "This is a test notification sent at " +
-          new Date().toLocaleTimeString(),
-        type: "test",
-        action_url: "/dashboard",
-      });
-    } catch (error) {
-      console.error("Error adding test notification:", error);
-      toast({
-        title: "Error sending test notification",
-        description: "There was a problem sending the test notification.",
-        variant: "destructive",
-      });
-      return null;
-    }
+  // Add a test notification
+  async addTestNotification(): Promise<Notification | null> {
+    return this.addNotification({
+      title: "Test Notification",
+      message:
+        "This is a test notification sent at " +
+        new Date().toLocaleTimeString(),
+      type: "test",
+      action_url: "/dashboard",
+    });
   }
 
-  /**
-   * Mark a notification as read
-   */
-  static async markAsRead(id: string): Promise<boolean> {
+  // Mark a notification as read
+  async markAsRead(id: string): Promise<boolean> {
     try {
-      const supabase = createSupabaseClient();
-
-      // Get current authenticated user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
-        console.error("No authenticated user found");
-        throw new Error("User must be authenticated to update notifications");
-      }
-
-      console.log(
-        `Marking notification ${id} as read for user ${userData.user.id}`
-      );
+      const supabase = this.getClient();
 
       const { error } = await supabase
         .from("notifications")
         .update({ read: true })
-        .eq("id", id)
-        .eq("user_id", userData.user.id); // Safety check
+        .eq("id", id);
 
       if (error) {
-        console.error("Database error marking notification as read:", error);
-        throw error;
+        console.error("Error marking notification as read:", error);
+        return false;
       }
 
-      console.log("Notification marked as read successfully");
       return true;
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error("Error in markAsRead:", error);
       return false;
     }
   }
 
-  /**
-   * Mark all notifications as read for the current user
-   */
-  static async markAllAsRead(): Promise<boolean> {
+  // Mark all notifications as read
+  async markAllAsRead(): Promise<boolean> {
     try {
-      const supabase = createSupabaseClient();
+      const supabase = this.getClient();
 
-      // Get current authenticated user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) {
-        console.error("No authenticated user found");
-        throw new Error("User must be authenticated to update notifications");
+        return false;
       }
-
-      console.log(
-        `Marking all notifications as read for user ${userData.user.id}`
-      );
 
       const { error } = await supabase
         .from("notifications")
@@ -234,71 +208,48 @@ export class NotificationService {
         .eq("read", false);
 
       if (error) {
-        console.error(
-          "Database error marking all notifications as read:",
-          error
-        );
-        throw error;
+        console.error("Error marking all notifications as read:", error);
+        return false;
       }
 
-      console.log("All notifications marked as read successfully");
       return true;
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      console.error("Error in markAllAsRead:", error);
       return false;
     }
   }
 
-  /**
-   * Delete a notification
-   */
-  static async deleteNotification(id: string): Promise<boolean> {
+  // Delete a notification
+  async deleteNotification(id: string): Promise<boolean> {
     try {
-      const supabase = createSupabaseClient();
-
-      // Get current authenticated user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
-        console.error("No authenticated user found");
-        throw new Error("User must be authenticated to delete notifications");
-      }
-
-      console.log(`Deleting notification ${id} for user ${userData.user.id}`);
+      const supabase = this.getClient();
 
       const { error } = await supabase
         .from("notifications")
         .delete()
-        .eq("id", id)
-        .eq("user_id", userData.user.id); // Safety check
+        .eq("id", id);
 
       if (error) {
-        console.error("Database error deleting notification:", error);
-        throw error;
+        console.error("Error deleting notification:", error);
+        return false;
       }
 
-      console.log("Notification deleted successfully");
       return true;
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error("Error in deleteNotification:", error);
       return false;
     }
   }
 
-  /**
-   * Delete all notifications for the current user
-   */
-  static async deleteAllNotifications(): Promise<boolean> {
+  // Delete all notifications
+  async deleteAllNotifications(): Promise<boolean> {
     try {
-      const supabase = createSupabaseClient();
+      const supabase = this.getClient();
 
-      // Get current authenticated user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) {
-        console.error("No authenticated user found");
-        throw new Error("User must be authenticated to delete notifications");
+        return false;
       }
-
-      console.log(`Deleting all notifications for user ${userData.user.id}`);
 
       const { error } = await supabase
         .from("notifications")
@@ -306,250 +257,17 @@ export class NotificationService {
         .eq("user_id", userData.user.id);
 
       if (error) {
-        console.error("Database error deleting all notifications:", error);
-        throw error;
+        console.error("Error deleting all notifications:", error);
+        return false;
       }
 
-      console.log("All notifications deleted successfully");
       return true;
     } catch (error) {
-      console.error("Error deleting all notifications:", error);
+      console.error("Error in deleteAllNotifications:", error);
       return false;
     }
   }
-
-  /**
-   * Get count of unread notifications
-   */
-  static async getUnreadCount(): Promise<number> {
-    try {
-      const supabase = createSupabaseClient();
-
-      // Get current authenticated user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
-        console.log("No authenticated user found for unread count");
-        return 0;
-      }
-
-      console.log(`Getting unread count for user ${userData.user.id}`);
-
-      const { data, error, count } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userData.user.id)
-        .eq("read", false);
-
-      if (error) {
-        console.error("Database error getting unread count:", error);
-        throw error;
-      }
-
-      console.log(`Found ${count || 0} unread notifications`);
-      return count || 0;
-    } catch (error) {
-      console.error("Error getting unread count:", error);
-      return 0;
-    }
-  }
-
-  /**
-   * Subscribe to new notifications
-   */
-  static subscribeToNotifications(
-    callback: (notification: Notification) => void
-  ) {
-    const supabase = createSupabaseClient();
-
-    // Async function to set up subscription
-    (async () => {
-      // Get current authenticated user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
-        console.log("No authenticated user found for subscription");
-        return null;
-      }
-
-      const userId = userData.user.id;
-      console.log(`Setting up notification subscription for user ${userId}`);
-
-      // Create a unique channel name with the user ID
-      const channelName = `notifications-${userId}`;
-
-      const channel = supabase
-        .channel(channelName)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "notifications",
-            filter: `user_id=eq.${userId}`,
-          },
-          (payload) => {
-            console.log("Real-time notification received:", payload);
-            callback(payload.new as Notification);
-          }
-        )
-        .subscribe((status) => {
-          console.log(`Supabase notification subscription status:`, status);
-        });
-
-      return channel;
-    })();
-
-    // Return function to unsubscribe
-    return {
-      unsubscribe: () => {
-        console.log("Unsubscribing from notifications");
-        // Use the same channel name when unsubscribing
-        supabase.channel("notifications").unsubscribe();
-      },
-    };
-  }
-
-  /**
-   * Add an event reminder notification
-   */
-  static async addEventReminderNotification(event: {
-    id: string;
-    title: string;
-    location?: string;
-  }): Promise<Notification | null> {
-    try {
-      return NotificationService.addNotification({
-        type: "event_reminder",
-        title: `Reminder: ${event.title}`,
-        message: `This event is starting soon${
-          event.location ? ` at ${event.location}` : ""
-        }.`,
-        reference_id: event.id,
-        reference_type: "event",
-        action_url: `/calendar?event=${event.id}`,
-      });
-    } catch (error) {
-      console.error("Error adding event reminder notification:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Add a notification for an application status update
-   */
-  static async addApplicationUpdateNotification(application: {
-    id: string;
-    companyName: string;
-    oldStatus: string;
-    newStatus: string;
-  }): Promise<Notification | null> {
-    try {
-      return NotificationService.addNotification({
-        type: "application_update",
-        title: "Application Status Update",
-        message: `${application.companyName}: Status changed from ${application.oldStatus} to ${application.newStatus}`,
-        reference_id: application.id,
-        reference_type: "application",
-        action_url: `/applications/${application.id}`,
-      });
-    } catch (error) {
-      console.error("Error adding application update notification:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Add an achievement notification
-   */
-  static async addAchievementNotification(achievement: {
-    id: string;
-    name: string;
-    description: string;
-    points: number;
-  }): Promise<Notification | null> {
-    try {
-      return NotificationService.addNotification({
-        type: "achievement",
-        title: "Achievement Unlocked!",
-        message: `${achievement.name}: ${achievement.description} (+${achievement.points} points)`,
-        reference_id: achievement.id,
-        reference_type: "achievement",
-        action_url: "/achievements",
-      });
-    } catch (error) {
-      console.error("Error adding achievement notification:", error);
-      return null;
-    }
-  }
-
-  // Instance method versions - these just call the static methods
-  async testConnection(): Promise<boolean> {
-    return NotificationService.testConnection();
-  }
-
-  async getNotifications(): Promise<Notification[]> {
-    return NotificationService.getNotifications();
-  }
-
-  async addNotification(
-    notification: Omit<Notification, "id" | "user_id" | "timestamp" | "read">
-  ): Promise<Notification | null> {
-    return NotificationService.addNotification(notification);
-  }
-
-  async addTestNotification(): Promise<Notification | null> {
-    return NotificationService.addTestNotification();
-  }
-
-  async markAsRead(id: string): Promise<boolean> {
-    return NotificationService.markAsRead(id);
-  }
-
-  async markAllAsRead(): Promise<boolean> {
-    return NotificationService.markAllAsRead();
-  }
-
-  async deleteNotification(id: string): Promise<boolean> {
-    return NotificationService.deleteNotification(id);
-  }
-
-  async deleteAllNotifications(): Promise<boolean> {
-    return NotificationService.deleteAllNotifications();
-  }
-
-  async getUnreadCount(): Promise<number> {
-    return NotificationService.getUnreadCount();
-  }
-
-  subscribeToNotifications(callback: (notification: Notification) => void) {
-    return NotificationService.subscribeToNotifications(callback);
-  }
-
-  async addEventReminderNotification(event: {
-    id: string;
-    title: string;
-    location?: string;
-  }): Promise<Notification | null> {
-    return NotificationService.addEventReminderNotification(event);
-  }
-
-  async addApplicationUpdateNotification(application: {
-    id: string;
-    companyName: string;
-    oldStatus: string;
-    newStatus: string;
-  }): Promise<Notification | null> {
-    return NotificationService.addApplicationUpdateNotification(application);
-  }
-
-  async addAchievementNotification(achievement: {
-    id: string;
-    name: string;
-    description: string;
-    points: number;
-  }): Promise<Notification | null> {
-    return NotificationService.addAchievementNotification(achievement);
-  }
 }
 
-// Create an instance for those who prefer instance method usage
+// Export a singleton instance
 export const notificationService = new NotificationService();

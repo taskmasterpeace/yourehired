@@ -11,19 +11,14 @@ import {
 } from "@/components/ui/popover";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
-import { useNotifications } from "@/context/NotificationContext";
 import { User } from "@supabase/supabase-js";
 
 interface HeaderProps {
   isDarkMode: boolean;
   user: User | null;
   authLoading: boolean;
-  notifications?: any[];
-  onClearAll?: () => void;
-  onClearOne?: (id: string) => void;
-  onMarkAllRead?: () => void;
-  onMarkOneRead?: (id: string) => void;
 }
+
 const Header: React.FC<HeaderProps> = ({ isDarkMode, user, authLoading }) => {
   const router = useRouter();
 
@@ -71,9 +66,9 @@ const Header: React.FC<HeaderProps> = ({ isDarkMode, user, authLoading }) => {
           ) : user ? (
             <div className="flex items-center gap-2">
               {/* User profile image if available */}
-              {user.imageUrl ? (
+              {user.user_metadata?.avatar_url ? (
                 <img
-                  src={user.imageUrl}
+                  src={user.user_metadata.avatar_url}
                   alt="Profile"
                   className="h-8 w-8 rounded-full border border-gray-200 dark:border-gray-700"
                 />

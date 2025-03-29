@@ -9,7 +9,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { AppProvider } from "@/context/context";
 import { AuthRedirector } from "./providers";
 import { Toaster } from "@/components/ui/toaster";
-import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationProvider } from "@/components/notifications/NotificationContext";
 
 const inter = Inter({ subsets: ["latin"] });
 

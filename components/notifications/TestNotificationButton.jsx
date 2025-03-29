@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Bell, Loader2 } from "lucide-react";
-import { useNotifications } from "../../context/NotificationContext";
+import { useNotifications } from "./NotificationContext";
+import { notificationService } from "./NotificationService";
 import { useToast } from "../ui/use-toast";
-import { v4 as uuidv4 } from "uuid";
-import { NotificationService } from "./NotificationService";
 
 const TestNotificationButton = () => {
   const notificationContext = useNotifications();
@@ -16,26 +15,10 @@ const TestNotificationButton = () => {
     try {
       console.log("Sending test notification...");
 
-      // Use the notification service to add a notification to the database
-      const notification = await NotificationService.addTestNotification();
+      // Send directly to the service, not through context
+      const notification = await notificationService.addTestNotification();
 
-      // Also immediately update the UI for responsiveness
-      if (notification && notificationContext) {
-        // Make a local copy of the notification with proper typing
-        const uiNotification = {
-          id: notification.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          read: false,
-          action_url: notification.action_url,
-          user_id: notification.user_id,
-          timestamp: notification.timestamp,
-        };
-
-        // Update the UI immediately
-        notificationContext.addLocalNotification?.(uiNotification);
-
+      if (notification) {
         toast({
           title: "Notification sent",
           description:
@@ -43,9 +26,9 @@ const TestNotificationButton = () => {
         });
       } else {
         toast({
-          title: "Notification sent to database",
-          description:
-            "But the UI may not update immediately. Refresh to see the notification.",
+          title: "Failed to send notification",
+          description: "The notification could not be sent. Please try again.",
+          variant: "destructive",
         });
       }
     } catch (error) {

@@ -11,8 +11,9 @@ import {
   Info,
   Award,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
-import { useNotifications } from "../../context/NotificationContext";
+import { useNotifications } from "./NotificationContext";
 import { cn } from "../../lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
@@ -25,14 +26,8 @@ const NotificationCenter = () => {
     markAsRead,
     openNotification,
     unreadCount,
+    loading = false,
   } = useNotifications() || {};
-
-  console.log(
-    "NotificationCenter rendering with notifications:",
-    notifications.length,
-    "unread:",
-    unreadCount
-  );
 
   // Group notifications by date
   const groupedNotifications = notifications.reduce((groups, notification) => {
@@ -90,11 +85,30 @@ const NotificationCenter = () => {
       markAsRead?.(notification.id);
 
       // Try to navigate using the action_url if available
-      if (notification.action_url && typeof window !== "undefined") {
-        window.location.href = notification.action_url;
+      const actionUrl = notification.action_url || notification.actionUrl;
+      if (actionUrl && typeof window !== "undefined") {
+        window.location.href = actionUrl;
       }
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="font-medium flex items-center">
+            <Bell className="h-4 w-4 mr-2" />
+            Notifications
+          </h3>
+        </div>
+        <div className="p-10 text-center">
+          <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-gray-400" />
+          <p className="text-gray-500">Loading notifications...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden">
@@ -149,87 +163,92 @@ const NotificationCenter = () => {
                 <div className="sticky top-0 z-10 px-4 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
                   {date}
                 </div>
-                {dateNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={cn(
-                      "p-3 border-b last:border-b-0 border-gray-100 dark:border-gray-700",
-                      !notification.read
-                        ? "bg-blue-50 dark:bg-blue-900/20"
-                        : "",
-                      (notification.action_url || notification.action_url) &&
-                        "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                    )}
-                    onClick={
-                      notification.action_url || notification.action_url
-                        ? () => handleNotificationClick(notification)
-                        : undefined
-                    }
-                  >
-                    <div className="flex items-start">
-                      <div className="mr-3 mt-0.5">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <p
-                            className={cn(
-                              "text-sm font-medium",
-                              !notification.read
-                                ? "text-blue-600 dark:text-blue-400"
-                                : ""
-                            )}
-                          >
-                            {notification.title}
-                          </p>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 whitespace-nowrap">
-                            {formatDistanceToNow(
-                              new Date(notification.timestamp),
-                              { addSuffix: true }
-                            )}
-                          </span>
+                {dateNotifications.map((notification) => {
+                  // Try both camelCase and snake_case property names
+                  const actionUrl =
+                    notification.action_url || notification.actionUrl;
+                  const isRead = notification.read;
+                  const isClickable = !!actionUrl;
+
+                  return (
+                    <div
+                      key={notification.id}
+                      className={cn(
+                        "p-3 border-b last:border-b-0 border-gray-100 dark:border-gray-700",
+                        !isRead ? "bg-blue-50 dark:bg-blue-900/20" : "",
+                        isClickable &&
+                          "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      )}
+                      onClick={
+                        isClickable
+                          ? () => handleNotificationClick(notification)
+                          : undefined
+                      }
+                    >
+                      <div className="flex items-start">
+                        <div className="mr-3 mt-0.5">
+                          {getNotificationIcon(notification.type)}
                         </div>
-                        <p className="text-sm mt-1 text-gray-600 dark:text-gray-300">
-                          {notification.message}
-                        </p>
-                        {(notification.action_url ||
-                          notification.action_url) && (
-                          <div className="mt-1 text-xs text-blue-500 dark:text-blue-400">
-                            Click to view details
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <p
+                              className={cn(
+                                "text-sm font-medium",
+                                !isRead
+                                  ? "text-blue-600 dark:text-blue-400"
+                                  : ""
+                              )}
+                            >
+                              {notification.title}
+                            </p>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 whitespace-nowrap">
+                              {formatDistanceToNow(
+                                new Date(notification.timestamp),
+                                { addSuffix: true }
+                              )}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col space-y-1 ml-2">
-                        {!notification.read && (
+                          <p className="text-sm mt-1 text-gray-600 dark:text-gray-300">
+                            {notification.message}
+                          </p>
+                          {isClickable && (
+                            <div className="mt-1 text-xs text-blue-500 dark:text-blue-400">
+                              Click to view details
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col space-y-1 ml-2">
+                          {!isRead && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead?.(notification.id);
+                              }}
+                              title="Mark as read"
+                              className="h-6 w-6 p-0"
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              markAsRead?.(notification.id);
+                              clearNotification?.(notification.id);
                             }}
-                            title="Mark as read"
+                            title="Remove notification"
                             className="h-6 w-6 p-0"
                           >
-                            <Check className="h-3 w-3" />
+                            <Trash2 className="h-3 w-3" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            clearNotification?.(notification.id);
-                          }}
-                          title="Remove notification"
-                          className="h-6 w-6 p-0"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )
           )}

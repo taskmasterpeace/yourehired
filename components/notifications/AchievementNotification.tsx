@@ -3,7 +3,7 @@ import { Toast, ToastProvider, ToastViewport } from "../ui/toast";
 import { Award, Trophy, Zap, Star, X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Achievement } from "../../lib/achievementUtils";
-import { useNotifications } from "../../context/NotificationContext";
+import { useNotifications } from "./NotificationContext";
 
 interface AchievementNotificationProps {
   achievement: Achievement | null;

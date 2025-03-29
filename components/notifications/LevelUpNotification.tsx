@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Toast, ToastProvider, ToastViewport } from "../ui/toast";
 import { Award, ArrowUp, X } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useNotifications } from "../../context/NotificationContext";
+import { useNotifications } from "./NotificationContext";
 
 interface LevelUpNotificationProps {
   levelUp: {
