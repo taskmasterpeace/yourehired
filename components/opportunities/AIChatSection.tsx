@@ -27,26 +27,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MarkdownRenderer } from "@/components/opportunities/MarkdownRenderer";
+import { Opportunity } from "@/context/types";
 
 interface AIChatSectionProps {
-  opportunity?: {
-    id: string | number;
-    company: string;
-    position: string;
-    status: string;
-    jobDescription: string;
-    notes?: string;
-    resume?: string;
-    location?: string;
-    salary?: string;
-    contactName?: string;
-    contactEmail?: string;
-    contactPhone?: string;
-    url?: string;
-    applicationDeadline?: string;
-    keywords?: string[];
-    tags?: string[];
-  };
+  opportunity?: Opportunity;
   chatMessages?: { message: string; sender: string; timestamp: string }[];
   onAddMessage?: (
     opportunityId: string | number,
@@ -89,10 +73,6 @@ export const AIChatSection = ({
 
     if (opportunity.salary) {
       contextText += `Salary: ${opportunity.salary}\n`;
-    }
-
-    if (opportunity.applicationDeadline) {
-      contextText += `Application Deadline: ${opportunity.applicationDeadline}\n`;
     }
 
     if (opportunity.status) {
