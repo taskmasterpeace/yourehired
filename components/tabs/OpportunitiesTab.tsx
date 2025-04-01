@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { OpportunityList } from "../opportunities/OpportunityList";
 import { OpportunityDetails } from "../opportunities/OpportunityDetails";
 import { Button } from "../ui/button";
@@ -43,7 +43,6 @@ interface OpportunitiesTabProps {
   // Add chatMessages prop
   chatMessages?: Record<string | number, ChatMessage[]>;
 }
-// Import the same dependencies as before
 
 export function OpportunitiesTab({
   opportunities,
@@ -58,7 +57,7 @@ export function OpportunitiesTab({
   setLastModifiedTimestamps = () => {},
   chatMessages = {},
 }: OpportunitiesTabProps) {
-  // Keep most state variables the same
+  // Basic state variables
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
@@ -68,7 +67,10 @@ export function OpportunitiesTab({
   const [isBatchSelectMode, setIsBatchSelectMode] = useState(false);
   const [selectedJobIds, setSelectedJobIds] = useState<(string | number)[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false); // Single flag for all processing
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Track if a delete confirmation is currently showing
+  const deleteConfirmShowing = useRef(false);
 
   const [newOpportunity, setNewOpportunity] = useState({
     company: "",
@@ -83,7 +85,7 @@ export function OpportunitiesTab({
   const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // Create ApplicationService instance only once
+  // Use a ref for ApplicationService to ensure we don't create duplicate instances
   const applicationService = useRef(new ApplicationService()).current;
 
   // Helper function to convert from Opportunity to JobApplication
@@ -112,85 +114,120 @@ export function OpportunitiesTab({
     };
   }, []);
 
-  // Handle update by updating state AND saving to Supabase
+  // Function to update the last modified timestamp
+  const updateModifiedTimestamp = useCallback(
+    (id: string | number) => {
+      const newTimestamp = new Date().toISOString();
+      const newTimestamps = { ...lastModifiedTimestamps };
+      newTimestamps[id] = newTimestamp;
+      setLastModifiedTimestamps(newTimestamps);
+      console.log(`Updated timestamp for opportunity ${id} to ${newTimestamp}`);
+      return newTimestamp;
+    },
+    [lastModifiedTimestamps, setLastModifiedTimestamps]
+  );
+
+  // Improved update opportunity function that ensures all fields are properly saved
   const handleUpdateOpportunity = useCallback(
     async (id: string | number, updates: Partial<Opportunity>) => {
       try {
-        // Update in state
+        console.log("Updating opportunity:", id, updates);
+
+        // Update the local state
         updateOpportunity(id, updates);
 
-        // Update timestamp
-        const newTimestamps = { ...lastModifiedTimestamps };
-        newTimestamps[id] = new Date().toISOString();
-        setLastModifiedTimestamps(newTimestamps);
+        // Always update the timestamp when any change is made
+        updateModifiedTimestamp(id);
 
-        // Find the updated opportunity
+        // Find the opportunity in the opportunities array
         const opportunityIndex = opportunities.findIndex(
           (opp) => opp.id === id
         );
-        if (opportunityIndex === -1) return;
+        if (opportunityIndex === -1) {
+          console.error(`Cannot find opportunity with ID ${id}`);
+          return;
+        }
 
-        // Create merged opportunity object
+        // Create the complete updated opportunity by merging with updates
         const updatedOpportunity = {
           ...opportunities[opportunityIndex],
           ...updates,
         };
 
-        // Convert and save to Supabase
+        // Convert to JobApplication format for Supabase
         const jobApp = convertToJobApplication(updatedOpportunity);
-        await applicationService.saveApplication(jobApp);
+
+        // Save to Supabase
+        console.log("Saving to Supabase:", jobApp);
+        const result = await applicationService.saveApplication(jobApp);
+        console.log("Supabase save result:", result);
+
+        // If we got a new Supabase ID, update our state
+        if (
+          result &&
+          typeof result === "object" &&
+          "id" in result &&
+          result.id !== id
+        ) {
+          console.log(`Updating opportunity ID from ${id} to ${result.id}`);
+          dispatch({
+            type: "UPDATE_OPPORTUNITY",
+            payload: { id, updates: { id: result.id } },
+          });
+        }
       } catch (error) {
-        console.error("Error saving to Supabase:", error);
+        console.error("Error updating opportunity:", error);
       }
     },
     [
-      opportunities,
       updateOpportunity,
-      lastModifiedTimestamps,
-      setLastModifiedTimestamps,
+      opportunities,
+      updateModifiedTimestamp,
       convertToJobApplication,
       applicationService,
+      dispatch,
     ]
   );
 
-  // Handle deleting an opportunity
+  // Function to ensure we only show one delete confirmation
   const deleteOpportunity = useCallback(
     async (id: string | number) => {
-      // Prevent processing if already processing something else
-      if (isProcessing) return;
+      // If already showing a confirmation or processing, don't proceed
+      if (deleteConfirmShowing.current || isProcessing) return;
 
       try {
-        setIsProcessing(true);
-
-        // Only do this inside component code, not from an OpportunityDetails prop callback
+        deleteConfirmShowing.current = true;
         const confirmed = window.confirm(
           "Are you sure you want to delete this opportunity?"
         );
+
         if (!confirmed) {
-          setIsProcessing(false);
+          deleteConfirmShowing.current = false;
           return;
         }
+
+        setIsProcessing(true);
 
         // If it's a Supabase ID, delete from Supabase
         if (typeof id === "string" && id.includes("-")) {
           await applicationService.deleteApplication(id);
+          console.log(`Deleted from Supabase: ${id}`);
         }
 
         // Delete from state
         dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
+        console.log(`Deleted from state: ${id}`);
 
         // Handle selection adjustment
         const deletedIndex = opportunities.findIndex((opp) => opp.id === id);
-        const totalOpportunities = opportunities.length;
 
         if (deletedIndex === selectedOpportunityIndex) {
-          // If we deleted the selected opportunity
-          if (totalOpportunities > 1) {
-            // Select the first opportunity if available
+          // If we deleted the selected one
+          if (opportunities.length > 1) {
             setSelectedOpportunityIndex(0);
           }
         } else if (deletedIndex < selectedOpportunityIndex) {
-          // If we deleted an opportunity before the selected one, adjust index
+          // If we deleted one before the selected one
           setSelectedOpportunityIndex(selectedOpportunityIndex - 1);
         }
       } catch (error) {
@@ -198,33 +235,49 @@ export function OpportunitiesTab({
         alert("Failed to delete opportunity. Please try again.");
       } finally {
         setIsProcessing(false);
+        deleteConfirmShowing.current = false;
       }
     },
     [
       isProcessing,
-      dispatch,
       opportunities,
       selectedOpportunityIndex,
-      setSelectedOpportunityIndex,
       applicationService,
+      dispatch,
+      setSelectedOpportunityIndex,
     ]
+  );
+
+  // Handler for OpportunityDetails to call deleteOpportunity
+  const handleDeleteFromDetails = useCallback(
+    (id: string | number) => {
+      // The confirmation will be handled inside deleteOpportunity
+      deleteOpportunity(id);
+    },
+    [deleteOpportunity]
   );
 
   // Helper function for batch deletion
   const handleBatchDelete = useCallback(async () => {
-    if (selectedJobIds.length === 0 || isProcessing) return;
+    if (
+      selectedJobIds.length === 0 ||
+      isProcessing ||
+      deleteConfirmShowing.current
+    )
+      return;
 
     try {
-      setIsProcessing(true);
-
+      deleteConfirmShowing.current = true;
       const confirmed = window.confirm(
         `Are you sure you want to delete ${selectedJobIds.length} selected job(s)?`
       );
+
       if (!confirmed) {
-        setIsProcessing(false);
+        deleteConfirmShowing.current = false;
         return;
       }
 
+      setIsProcessing(true);
       const idsToDelete = [...selectedJobIds];
 
       // Check if selected opportunity will be deleted
@@ -244,6 +297,7 @@ export function OpportunitiesTab({
         if (typeof id === "string" && id.includes("-")) {
           try {
             await applicationService.deleteApplication(id);
+            console.log(`Deleted from Supabase: ${id}`);
           } catch (e) {
             console.error(`Failed to delete ${id} from Supabase:`, e);
           }
@@ -253,6 +307,7 @@ export function OpportunitiesTab({
       // Delete from state
       idsToDelete.forEach((id) => {
         dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
+        console.log(`Deleted from state: ${id}`);
       });
 
       // Reset selection
@@ -274,16 +329,44 @@ export function OpportunitiesTab({
       alert("Failed to delete some opportunities. Please try again.");
     } finally {
       setIsProcessing(false);
+      deleteConfirmShowing.current = false;
     }
   }, [
     selectedJobIds,
     isProcessing,
     opportunities,
     selectedOpportunityIndex,
+    applicationService,
     dispatch,
     setSelectedOpportunityIndex,
-    applicationService,
   ]);
+
+  // Handle status updates specifically
+  const handleStatusUpdate = useCallback(
+    async (id: string | number, newStatus: string) => {
+      // This ensures status updates are treated specially and always saved
+      console.log(`Status update for ${id}: ${newStatus}`);
+
+      try {
+        // First update in state
+        handleUpdateOpportunity(id, { status: newStatus });
+
+        // Try to update the status directly in Supabase as well for redundancy
+        if (typeof id === "string" && id.includes("-")) {
+          await applicationService.updateApplicationStatus(
+            id,
+            newStatus as any
+          );
+          console.log(
+            `Updated status in Supabase directly: ${id} => ${newStatus}`
+          );
+        }
+      } catch (error) {
+        console.error("Error updating status:", error);
+      }
+    },
+    [handleUpdateOpportunity, applicationService]
+  );
 
   // Toggle job selection function remains the same
   const toggleJobSelection = useCallback((id: string | number) => {
@@ -310,7 +393,7 @@ export function OpportunitiesTab({
     });
   }, []);
 
-  // Simplified add opportunity function to prevent duplicate adds
+  // Add a new opportunity
   const handleAddOpportunity = useCallback(async () => {
     if (isProcessing) return;
 
@@ -342,29 +425,29 @@ export function OpportunitiesTab({
         recruiterPhone: "",
       };
 
-      // Save directly to Supabase first
+      // Save to Supabase first to get a proper ID
       const jobApp = convertToJobApplication(newOpp);
+      console.log("Saving new opportunity to Supabase:", jobApp);
       const result = await applicationService.saveApplication(jobApp);
 
-      // If we got a Supabase ID, use it
+      // Use the Supabase ID if available
       const finalId =
         result && typeof result === "object" && "id" in result
           ? result.id
           : uniqueId;
 
-      // Update the ID in our new opportunity
+      // Update our object with the final ID
       const finalOpp = {
         ...newOpp,
         id: finalId,
       };
 
-      // Add to state with the Supabase ID
+      // Add to state with the correct ID
       dispatch({ type: "ADD_OPPORTUNITY", payload: finalOpp });
+      console.log(`Added new opportunity with ID ${finalId} to state`);
 
-      // Update timestamp
-      const newTimestamps = { ...lastModifiedTimestamps };
-      newTimestamps[finalId] = new Date().toISOString();
-      setLastModifiedTimestamps(newTimestamps);
+      // Set the timestamp
+      updateModifiedTimestamp(finalId);
 
       // Reset form and close dialog
       setNewOpportunity({
@@ -392,24 +475,15 @@ export function OpportunitiesTab({
     isProcessing,
     newOpportunity,
     masterResume,
-    dispatch,
-    lastModifiedTimestamps,
-    setLastModifiedTimestamps,
     convertToJobApplication,
     applicationService,
+    dispatch,
+    updateModifiedTimestamp,
     opportunities.length,
     setSelectedOpportunityIndex,
   ]);
 
-  // Handler for OpportunityDetails deletes - doesn't show confirmation dialog itself
-  const handleOpportunityDetailsDelete = useCallback(
-    (id: string | number) => {
-      deleteOpportunity(id);
-    },
-    [deleteOpportunity]
-  );
-
-  // Other utility functions remain the same
+  // Chat message handler
   const handleSendMessage = useCallback(() => {
     if (!currentMessage.trim() || !opportunities[selectedOpportunityIndex])
       return;
@@ -443,6 +517,7 @@ export function OpportunitiesTab({
     ? chatMessages[selectedOpportunityId] || []
     : [];
 
+  // Help guide opener
   const openGuide = useCallback((guideId: string, sectionId?: string) => {
     console.log(
       `Opening guide: ${guideId}, section: ${sectionId || "default"}`
@@ -621,7 +696,7 @@ export function OpportunitiesTab({
         <OpportunityDetails
           opportunity={opportunities[selectedOpportunityIndex]}
           updateOpportunity={handleUpdateOpportunity}
-          deleteOpportunity={handleOpportunityDetailsDelete}
+          deleteOpportunity={handleDeleteFromDetails}
           isDarkMode={isDarkMode}
           chatMessages={opportunityMessages}
           handleSendMessage={handleSendMessage}
