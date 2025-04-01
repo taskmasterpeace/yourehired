@@ -102,6 +102,13 @@ export const OpportunityDetails = ({
     );
   }
 
+  // Ensure we have a handler for deletion
+  const handleDeleteOpportunity = () => {
+    if (window.confirm("Are you sure you want to delete this opportunity?")) {
+      deleteOpportunity(opportunity.id);
+    }
+  };
+
   return (
     <Card
       className={`col-span-1 md:col-span-2 flex flex-col ${
@@ -197,7 +204,7 @@ export const OpportunityDetails = ({
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => deleteOpportunity(opportunity.id)}
+                      onClick={handleDeleteOpportunity}
                     >
                       Delete Opportunity
                     </Button>

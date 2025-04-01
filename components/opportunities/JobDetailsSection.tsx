@@ -28,6 +28,12 @@ export const JobDetailsSection = ({
     source: opportunity.source || "",
   });
 
+  const handleSave = () => {
+    // Pass the exact opportunity ID (whether string or number)
+    updateOpportunity(opportunity.id, editedDetails);
+    setIsEditing(false);
+  };
+
   return (
     <div
       className={`p-4 mb-4 rounded-lg border ${
@@ -61,13 +67,7 @@ export const JobDetailsSection = ({
           </Button>
         ) : (
           <div className="flex space-x-2">
-            <Button
-              size="sm"
-              onClick={() => {
-                updateOpportunity(opportunity.id, editedDetails);
-                setIsEditing(false);
-              }}
-            >
+            <Button size="sm" onClick={handleSave}>
               Save
             </Button>
             <Button

@@ -27,6 +27,12 @@ export const ContactInfoSection = ({
     recruiterPhone: opportunity.recruiterPhone || "",
   });
 
+  const handleSave = () => {
+    // Pass the opportunity ID directly (whether string or number)
+    updateOpportunity(opportunity.id, editedContact);
+    setIsEditing(false);
+  };
+
   return (
     <div
       className={`p-4 mb-4 rounded-lg border ${
@@ -59,13 +65,7 @@ export const ContactInfoSection = ({
           </Button>
         ) : (
           <div className="flex space-x-2">
-            <Button
-              size="sm"
-              onClick={() => {
-                updateOpportunity(opportunity.id, editedContact);
-                setIsEditing(false);
-              }}
-            >
+            <Button size="sm" onClick={handleSave}>
               Save
             </Button>
             <Button

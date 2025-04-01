@@ -56,16 +56,14 @@ function getTagColor(tagName: string): string {
   return colors[hash % colors.length];
 }
 
-// Helper function to safely parse an ID to number
-function safeParseInt(value: string | number | null | undefined): number {
-  if (value === null || value === undefined) return 0;
-  if (typeof value === "number") return value;
-  try {
-    const parsed = parseInt(value);
-    return isNaN(parsed) ? 0 : parsed;
-  } catch {
-    return 0;
+// Helper function to check if an ID is a numeric ID
+function isNumericId(id: string | number): boolean {
+  if (typeof id === "number") return true;
+  if (typeof id === "string") {
+    // If it's a string that doesn't contain a dash, it's likely a numeric ID
+    return !id.includes("-");
   }
+  return false;
 }
 
 // Helper function to ensure event type is one of the allowed values
@@ -108,11 +106,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       recruiterEmail: app.contactEmail || "",
       recruiterPhone: app.contactPhone || "",
       // Convert string tags to Tag objects with required properties
+      // Convert string tags to Tag objects with required properties
       tags: (app.tags || []).map((tagName, index) => ({
         id: index,
         name: tagName,
         color: getTagColor(tagName),
       })),
+      source: "", // Add default value for source field
     };
   };
 
@@ -147,30 +147,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const loadUserProfile = async () => {
     try {
       const supabase = createSupabaseClient();
-
       // Get current user session
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user?.id) {
         console.log("No authenticated user found");
         return null;
       }
-
       console.log("Loading profile for user:", userData.user.id);
-
       // Get user profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userData.user.id)
         .single();
-
       if (profileError) {
         console.error("Error loading profile:", profileError);
         return null;
       }
-
       console.log("Profile loaded:", profileData);
-
       // Return the profile data
       return {
         masterResume: profileData.master_resume || "",
@@ -194,41 +188,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         setLoading(true);
         console.log("Loading data from Supabase...");
-
         // Fetch applications from Supabase
         const applications = await applicationService.getApplications();
         console.log(`Loaded ${applications.length} applications from Supabase`);
-
         // Transform the applications to match our opportunity structure
         const opportunities = applications.map(convertToOpportunity);
-
         // Collect all events from applications and convert types as needed
         const allEvents = applications.flatMap(
           (app) =>
             app.events?.map((event) => ({
-              id: safeParseInt(event.id),
+              id: typeof event.id === "string" ? event.id : Number(event.id),
               title: event.title,
               date: event.date,
               type: validateEventType(event.type || "interview"),
-              opportunityId: app.id,
+              opportunityId: app.id, // Keep as string or number
             })) || []
         );
-
         // Load user profile and master resume
         const userProfileData = await loadUserProfile();
-
         // Create payload with loaded data
         const payload: any = {
           opportunities,
           events: allEvents,
         };
-
         // Add user profile data if available
         if (userProfileData) {
           payload.masterResume = userProfileData.masterResume;
           payload.userProfile = userProfileData.userProfile;
         }
-
         // Dispatch data to update state
         dispatch({
           type: "LOAD_DATA",
@@ -241,7 +228,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     };
-
     loadData();
   }, []);
 
@@ -252,19 +238,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("Skipping save operation - still loading initial data");
       return;
     }
-
     // Find opportunities that need to be saved
     const unsavedOpportunities = state.opportunities.filter((opp) => {
       // Check if it has a numeric ID (local) and not already being saved
-      const isNumericId =
-        typeof opp.id === "number" ||
-        (typeof opp.id === "string" && !opp.id.includes("-"));
+      const needsSaving = isNumericId(opp.id);
       const isNotBeingSaved = !savingOpportunities[opp.id];
-      return isNumericId && isNotBeingSaved;
+      return needsSaving && isNotBeingSaved;
     });
-
     console.log(`Found ${unsavedOpportunities.length} unsaved opportunities`);
-
     // If we have unsaved opportunities, save them one by one
     if (unsavedOpportunities.length > 0) {
       // Create a batch function to save them
@@ -276,20 +257,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
               ...prev,
               [opportunity.id]: true,
             }));
-
             console.log(
               "SAVING OPPORTUNITY TO SUPABASE:",
               opportunity.id,
               opportunity
             );
-
             const jobApp = convertToJobApplication(opportunity);
             console.log("Converted to JobApplication:", jobApp);
-
             // Attempt to save to Supabase
             const result = await applicationService.saveApplication(jobApp);
             console.log("Save result:", result);
-
             // Check if result is an object with an id property
             if (result && typeof result === "object" && "id" in result) {
               console.log("New Supabase ID:", result.id);
@@ -317,7 +294,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       };
-
       // Execute the save operation
       saveOpportunities();
     }

@@ -190,17 +190,23 @@ export class ApplicationService {
     }
   }
 
-  // Get application by ID
-  async getApplicationById(id: string): Promise<JobApplication | null> {
+  // Get application by ID - support both string and number IDs
+  async getApplicationById(
+    id: string | number
+  ): Promise<JobApplication | null> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringId = String(id);
+
       // Get application by ID
       const { data: application, error: appError } = await supabase
         .from("applications")
         .select("*")
-        .eq("id", id)
+        .eq("id", stringId)
         .single();
       if (appError) {
         // If we get a "relation does not exist" error, the tables might not be created
@@ -220,7 +226,7 @@ export class ApplicationService {
       const { data: events, error: eventsError } = await supabase
         .from("events")
         .select("*")
-        .eq("application_id", id);
+        .eq("application_id", stringId);
       if (
         eventsError &&
         !eventsError.message.includes('relation "public.events" does not exist')
@@ -232,7 +238,7 @@ export class ApplicationService {
       const { data: statusHistory, error: historyError } = await supabase
         .from("status_history")
         .select("*")
-        .eq("application_id", id);
+        .eq("application_id", stringId);
       if (
         historyError &&
         !historyError.message.includes(
@@ -282,7 +288,7 @@ export class ApplicationService {
     }
   }
 
-  // Save application - UPDATED to return the ID
+  // Save application - UPDATED to handle string and number IDs
   async saveApplication(
     application: JobApplication
   ): Promise<{ id: string } | boolean> {
@@ -290,6 +296,7 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
       // Get the current user session
       const {
         data: { session },
@@ -322,7 +329,7 @@ export class ApplicationService {
       const { data: existingApp, error: checkError } = await supabase
         .from("applications")
         .select("id")
-        .eq("id", dbApplication.id)
+        .eq("id", String(dbApplication.id))
         .maybeSingle();
       if (
         checkError &&
@@ -338,7 +345,7 @@ export class ApplicationService {
         const { error } = await supabase
           .from("applications")
           .update(dbApplication)
-          .eq("id", dbApplication.id);
+          .eq("id", String(dbApplication.id));
         if (error) throw error;
       } else {
         // Insert new application
@@ -357,7 +364,7 @@ export class ApplicationService {
         const { data: existingStatus, error: statusCheckError } = await supabase
           .from("status_history")
           .select("id")
-          .eq("application_id", dbApplication.id)
+          .eq("application_id", String(dbApplication.id))
           .eq("status", latestStatus.status)
           .eq("date", latestStatus.date)
           .maybeSingle();
@@ -369,11 +376,10 @@ export class ApplicationService {
         ) {
           throw statusCheckError;
         }
-
         if (!existingStatus) {
           // Insert new status history
           const { error } = await supabase.from("status_history").insert({
-            application_id: dbApplication.id,
+            application_id: String(dbApplication.id),
             status: latestStatus.status,
             date: latestStatus.date,
             notes: latestStatus.notes,
@@ -391,24 +397,28 @@ export class ApplicationService {
       }
 
       // Return the ID along with success
-      return { id: dbApplication.id };
+      return { id: String(dbApplication.id) };
     } catch (error) {
       console.error("Error saving application:", error);
       throw error;
     }
   }
 
-  // Delete application
-  async deleteApplication(id: string): Promise<boolean> {
+  // Delete application - UPDATED to handle string and number IDs
+  async deleteApplication(id: string | number): Promise<boolean> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringId = String(id);
+
       // Delete application - RLS will ensure user can only delete their own data
       const { error } = await supabase
         .from("applications")
         .delete()
-        .eq("id", id);
+        .eq("id", stringId);
       if (
         error &&
         !error.message.includes('relation "public.applications" does not exist')
@@ -422,9 +432,9 @@ export class ApplicationService {
     }
   }
 
-  // Update application status
+  // Update application status - UPDATED to handle string and number IDs
   async updateApplicationStatus(
-    id: string,
+    id: string | number,
     status: ApplicationStatus,
     notes?: string
   ): Promise<boolean> {
@@ -432,6 +442,10 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringId = String(id);
+
       // Get the current user session
       const {
         data: { session },
@@ -444,7 +458,7 @@ export class ApplicationService {
       const { error: updateError } = await supabase
         .from("applications")
         .update({ status })
-        .eq("id", id);
+        .eq("id", stringId);
       if (
         updateError &&
         !updateError.message.includes(
@@ -459,7 +473,7 @@ export class ApplicationService {
       const { error: historyError } = await supabase
         .from("status_history")
         .insert({
-          application_id: id,
+          application_id: stringId,
           status,
           date: now,
           notes,
@@ -473,7 +487,6 @@ export class ApplicationService {
       ) {
         throw historyError;
       }
-
       return true;
     } catch (error) {
       console.error(`Error updating status for application ${id}:`, error);
@@ -481,15 +494,19 @@ export class ApplicationService {
     }
   }
 
-  // Add event to application
+  // Add event to application - UPDATED to handle string and number IDs
   async addEvent(
-    applicationId: string,
+    applicationId: string | number,
     event: JobApplication["events"][0]
   ): Promise<boolean> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringAppId = String(applicationId);
+
       // Get the current user session
       const {
         data: { session },
@@ -501,7 +518,7 @@ export class ApplicationService {
       // Transform the event to match the database schema
       const dbEvent = {
         id: event.id || uuidv4(),
-        application_id: applicationId,
+        application_id: stringAppId,
         title: event.title,
         date: event.date,
         type: event.type,
@@ -519,7 +536,6 @@ export class ApplicationService {
       ) {
         throw error;
       }
-
       return true;
     } catch (error) {
       console.error(
