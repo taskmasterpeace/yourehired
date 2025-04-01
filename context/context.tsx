@@ -97,16 +97,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       status: app.status,
       appliedDate: app.dateApplied || app.dateAdded.split("T")[0],
       jobDescription: app.jobDescription || "",
-      resume: app.notes || "",
-      notes: app.notes || "",
+      resume: app.resume || "", // Only use the resume field
+      notes: app.notes || "", // Only use the notes field
       location: app.location || "",
       applicationUrl: app.url || "",
       salary: app.salary || "",
       recruiterName: app.contactName || "",
       recruiterEmail: app.contactEmail || "",
       recruiterPhone: app.contactPhone || "",
-      // Convert string tags to Tag objects with required properties
-      // Convert string tags to Tag objects with required properties
       tags: (app.tags || []).map((tagName, index) => ({
         id: index,
         name: tagName,
@@ -129,20 +127,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       dateAdded: new Date().toISOString(),
       dateApplied: opp.appliedDate,
       jobDescription: opp.jobDescription || "",
-      notes: opp.notes || opp.resume || "",
+      notes: opp.notes || "", // Only use notes for notes
+      resume: opp.resume || "", // Only use resume for resume
       location: opp.location || "",
       salary: opp.salary || "",
       contactName: opp.recruiterName || "",
       contactEmail: opp.recruiterEmail || "",
       contactPhone: opp.recruiterPhone || "",
       url: opp.applicationUrl || "",
-      // Extract tag names from Tag objects for storage in Supabase
       tags: opp.tags ? opp.tags.map((tag: Tag) => tag.name) : [],
       statusHistory: [],
       events: [],
     };
   };
-
   // Load user profile data including master resume
   const loadUserProfile = async () => {
     try {
