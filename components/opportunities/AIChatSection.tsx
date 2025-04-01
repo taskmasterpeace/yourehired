@@ -1,16 +1,17 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { useChat } from "@ai-sdk/react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Card,
   CardHeader,
   CardContent,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card"; // Adjust import path as needed
-import { Button } from "@/components/ui/button"; // Adjust import path as needed
-import { Textarea } from "@/components/ui/textarea"; // Adjust import path as needed
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  User,
-  Bot,
   MessageSquare,
   Send,
   ChevronRight,
@@ -22,26 +23,32 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"; // Adjust import path as needed
-import { motion, AnimatePresence } from "framer-motion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Adjust import path as needed
-import { ScrollArea } from "@/components/ui/scroll-area"; // Adjust import path as needed
-import { Badge } from "@/components/ui/badge"; // Adjust import path as needed
+} from "@/components/ui/collapsible";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MarkdownRenderer } from "@/components/opportunities/MarkdownRenderer";
 
 interface AIChatSectionProps {
-  chatMessages: { message: string; sender: string; timestamp: string }[];
-  opportunity:
-    | {
-        id: string | number;
-        company: string;
-        position: string;
-        status: string;
-        jobDescription: string;
-        notes?: string;
-        resume?: string;
-      }
-    | undefined;
-  onAddMessage: (
+  opportunity?: {
+    id: string | number;
+    company: string;
+    position: string;
+    status: string;
+    jobDescription: string;
+    notes?: string;
+    resume?: string;
+    location?: string;
+    salary?: string;
+    contactName?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    url?: string;
+    applicationDeadline?: string;
+    keywords?: string[];
+    tags?: string[];
+  };
+  chatMessages?: { message: string; sender: string; timestamp: string }[];
+  onAddMessage?: (
     opportunityId: string | number,
     message: string,
     sender: string
@@ -51,15 +58,12 @@ interface AIChatSectionProps {
 }
 
 export const AIChatSection = ({
-  chatMessages,
   opportunity,
+  chatMessages = [],
   onAddMessage,
   isDarkMode,
   resume = "",
 }: AIChatSectionProps) => {
-  const [currentMessage, setCurrentMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([
@@ -68,84 +72,138 @@ export const AIChatSection = ({
     "Help me prepare for an interview for this position",
     "What questions should I ask the interviewer?",
   ]);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Create a context message that contains all the job and resume information
+  const createContextMessage = () => {
+    if (!opportunity) return null;
+
+    let contextText = `## Job Information\n`;
+    contextText += `Company: ${opportunity.company || "Unknown"}\n`;
+    contextText += `Position: ${opportunity.position || "Unknown"}\n`;
+
+    if (opportunity.location) {
+      contextText += `Location: ${opportunity.location}\n`;
+    }
+
+    if (opportunity.salary) {
+      contextText += `Salary: ${opportunity.salary}\n`;
+    }
+
+    if (opportunity.applicationDeadline) {
+      contextText += `Application Deadline: ${opportunity.applicationDeadline}\n`;
+    }
+
+    if (opportunity.status) {
+      contextText += `Current Status: ${opportunity.status}\n`;
+    }
+
+    contextText += `\n## Job Description\n${
+      opportunity.jobDescription || "No job description provided."
+    }\n`;
+
+    if (opportunity.keywords && opportunity.keywords.length > 0) {
+      contextText += `\n## Keywords\n${opportunity.keywords.join(", ")}\n`;
+    }
+
+    if (opportunity.notes) {
+      contextText += `\n## Notes\n${opportunity.notes}\n`;
+    }
+
+    if (resume) {
+      contextText += `\n## My Resume\n${resume}\n`;
+    }
+
+    return {
+      id: "context",
+      role: "system" as const,
+      content: contextText,
+    };
+  };
+
+  // Get the context message
+  const contextMessage = createContextMessage();
+
+  // Initialize messages with context if available
+  const initialMessages = contextMessage
+    ? [
+        contextMessage,
+        ...chatMessages.map((msg) => ({
+          id: msg.timestamp,
+          content: msg.message,
+          role: msg.sender as "user" | "assistant",
+        })),
+      ]
+    : chatMessages.map((msg) => ({
+        id: msg.timestamp,
+        content: msg.message,
+        role: msg.sender as "user" | "assistant",
+      }));
+
+  // Use the AI SDK's useChat hook for streaming
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    error,
+    append,
+    setInput,
+  } = useChat({
+    api: "/api/openai-chat",
+    initialMessages: initialMessages,
+    body: {
+      // Include the opportunity data in the API request body for context
+      opportunityContext: opportunity
+        ? {
+            id: opportunity.id,
+            company: opportunity.company,
+            position: opportunity.position,
+            jobDescription: opportunity.jobDescription,
+            status: opportunity.status,
+            resume: resume,
+          }
+        : null,
+    },
+    onFinish: (message) => {
+      // Notify parent component if needed
+      if (onAddMessage && opportunity) {
+        onAddMessage(opportunity.id, message.content, "assistant");
+      }
+    },
+  });
+
+  // Filter out system messages for display
+  const displayMessages = messages.filter((msg) => msg.role !== "system");
 
   // Load AI suggestions when the opportunity changes
   useEffect(() => {
     if (!opportunity) return;
-
     setSuggestions([
       "How do my skills match this job description?",
       "What should I highlight in my application?",
       "Help me prepare for an interview for this position",
       "What questions should I ask the interviewer?",
     ]);
-
-    // You can uncomment this code when your API is ready for suggestions
-    /*
-    setSuggestions([]);
-    setIsLoadingPrompts(true);
-    
-    const loadSuggestions = async () => {
-      try {
-        const response = await fetch("/api/openai-chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "suggestions",
-            resume: resume,
-            jobDescription: opportunity.jobDescription || "",
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Set the suggestions
-        setSuggestions(data.suggestions || []);
-      } catch (error) {
-        console.error("Error loading AI suggestions:", error);
-        // Default suggestions if API fails
-        setSuggestions([
-          "How do my skills match this job description?",
-          "What should I highlight in my application?",
-          "Help me prepare for an interview for this position",
-          "What questions should I ask the interviewer?",
-        ]);
-      } finally {
-        setIsLoadingPrompts(false);
-      }
-    };
-    
-    loadSuggestions();
-    */
   }, [opportunity, resume]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatMessages]);
+    scrollToBottom();
+  }, [displayMessages]);
 
   // Check scroll position to show/hide scroll to bottom button
   const handleScroll = () => {
     if (!scrollAreaRef.current) return;
-
     const scrollArea = scrollAreaRef.current;
     // Access native DOM methods
     const element = scrollArea as unknown as HTMLDivElement;
     if (!element) return;
-
     const scrollTop = element.scrollTop || 0;
     const scrollHeight = element.scrollHeight || 0;
     const clientHeight = element.clientHeight || 0;
-
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
     setShowScrollButton(!isNearBottom);
   };
@@ -157,15 +215,18 @@ export const AIChatSection = ({
     }
   };
 
-  // Handle sending a message - simplified to work with parent component
-  const handleSendMessage = async () => {
-    if (!currentMessage.trim() || !opportunity) return;
-
-    // Pass the message to the parent component
-    onAddMessage(opportunity.id, currentMessage, "user");
-
-    // Clear input field
-    setCurrentMessage("");
+  // Handle sending a message with a suggestion
+  const handleSendSuggestion = (text: string) => {
+    if (!text.trim() || !opportunity) return;
+    // Use the append method from useChat
+    append({
+      content: text,
+      role: "user",
+    });
+    // Also notify parent component if needed
+    if (onAddMessage && opportunity) {
+      onAddMessage(opportunity.id, text, "user");
+    }
   };
 
   // Calculate a consistent avatar color based on a string
@@ -176,6 +237,27 @@ export const AIChatSection = ({
     }
     const hue = hash % 360;
     return `hsl(${hue}, 70%, 40%)`;
+  };
+
+  // Format the timestamp
+  const formatTime = (timestamp: number | undefined) => {
+    if (!timestamp) return "";
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // This function checks if the message contains markdown formatting
+  const hasMarkdown = (text: string): boolean => {
+    // Check for common markdown patterns
+    return (
+      text.includes("# ") || // headings
+      text.includes("**") || // bold
+      text.includes("- ") || // lists
+      /\d+\.\s/.test(text) || // numbered lists
+      text.includes("```") // code blocks
+    );
   };
 
   return (
@@ -201,7 +283,11 @@ export const AIChatSection = ({
               AI Career Assistant
             </CardTitle>
             <CardDescription className="text-xs">
-              Ask about the job, get resume advice, or prepare for interviews
+              Ask about{" "}
+              {opportunity
+                ? `${opportunity.position} at ${opportunity.company}`
+                : "the job"}
+              , get resume advice, or prepare for interviews
             </CardDescription>
           </div>
         </div>
@@ -212,20 +298,20 @@ export const AIChatSection = ({
           ref={scrollAreaRef as any}
           onScroll={handleScroll}
         >
-          {chatMessages.length > 0 ? (
+          {displayMessages.length > 0 ? (
             <div className="pb-4">
               <AnimatePresence>
-                {chatMessages.map((msg, index) => (
+                {displayMessages.map((msg) => (
                   <motion.div
-                    key={index}
+                    key={msg.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                     className={`mb-4 flex ${
-                      msg.sender === "user" ? "justify-end" : "justify-start"
+                      msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {msg.sender !== "user" && (
+                    {msg.role !== "user" && (
                       <Avatar className="h-8 w-8 mr-2 bg-blue-600 self-end mb-auto mt-0">
                         <AvatarFallback>AI</AvatarFallback>
                         <AvatarImage
@@ -236,7 +322,7 @@ export const AIChatSection = ({
                     )}
                     <div
                       className={`max-w-[80%] rounded-2xl p-3 ${
-                        msg.sender === "user"
+                        msg.role === "user"
                           ? isDarkMode
                             ? "bg-blue-600 text-white"
                             : "bg-blue-500 text-white"
@@ -245,12 +331,22 @@ export const AIChatSection = ({
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      <div className="whitespace-pre-wrap text-sm">
-                        {msg.message}
+                      <div className="text-sm">
+                        {msg.role === "assistant" &&
+                        hasMarkdown(msg.content) ? (
+                          <MarkdownRenderer
+                            content={msg.content}
+                            isDarkMode={isDarkMode}
+                          />
+                        ) : (
+                          <div className="whitespace-pre-wrap">
+                            {msg.content}
+                          </div>
+                        )}
                       </div>
                       <div
                         className={`text-right mt-1 ${
-                          msg.sender === "user"
+                          msg.role === "user"
                             ? "text-blue-100"
                             : isDarkMode
                             ? "text-gray-400"
@@ -258,14 +354,15 @@ export const AIChatSection = ({
                         }`}
                       >
                         <span className="text-xs opacity-75">
-                          {new Date(msg.timestamp).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatTime(
+                            msg.createdAt
+                              ? new Date(msg.createdAt).getTime()
+                              : undefined
+                          )}
                         </span>
                       </div>
                     </div>
-                    {msg.sender === "user" && (
+                    {msg.role === "user" && (
                       <Avatar
                         className={`h-8 w-8 ml-2 self-end mb-auto mt-0`}
                         style={{ backgroundColor: getAvatarColor("user") }}
@@ -276,7 +373,7 @@ export const AIChatSection = ({
                     )}
                   </motion.div>
                 ))}
-                {isTyping && (
+                {isLoading && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -341,8 +438,9 @@ export const AIChatSection = ({
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                Get help with your job application, resume, or interview
-                preparation
+                {opportunity
+                  ? `Get help with your application for ${opportunity.position} at ${opportunity.company}`
+                  : "Get help with your job application, resume, or interview preparation"}
               </p>
               <div className="w-full max-w-md mt-8">
                 <h4
@@ -382,8 +480,11 @@ export const AIChatSection = ({
                               : ""
                           }`}
                           onClick={() => {
-                            setCurrentMessage(prompt);
-                            setTimeout(() => handleSendMessage(), 100);
+                            const promptText = prompt;
+                            setInput(promptText);
+                            setTimeout(() => {
+                              handleSendSuggestion(promptText);
+                            }, 100);
                           }}
                         >
                           <span>{prompt}</span>
@@ -418,59 +519,64 @@ export const AIChatSection = ({
           </div>
         )}
         {/* Add prompt suggestion section for when there are already messages */}
-        {chatMessages.length > 0 && suggestions && suggestions.length > 0 && (
-          <div
-            className={`px-4 py-2 ${
-              isDarkMode ? "border-t border-gray-700" : "border-t"
-            }`}
-          >
-            <Collapsible>
-              <CollapsibleTrigger
-                className={`flex items-center text-sm ${
-                  isDarkMode
-                    ? "text-blue-400 hover:text-blue-300"
-                    : "text-blue-600 hover:text-blue-800"
-                }`}
-              >
-                <ChevronRight className="h-4 w-4 mr-1" />
-                <span>Suggestions ({suggestions.length})</span>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 pb-1">
-                <ScrollArea className="max-h-40">
-                  <div className="flex flex-wrap gap-2 pb-2">
-                    {suggestions.map((prompt, index) => (
-                      <Button
-                        key={index}
-                        variant={isDarkMode ? "outline" : "secondary"}
-                        size="sm"
-                        className={`text-left h-auto py-2 px-3 ${
-                          isDarkMode
-                            ? "hover:bg-gray-700 border-gray-600 text-gray-200"
-                            : ""
-                        } whitespace-nowrap rounded-full`}
-                        onClick={() => {
-                          setCurrentMessage(prompt);
-                          setTimeout(() => handleSendMessage(), 100);
-                        }}
-                      >
-                        {prompt}
-                      </Button>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
+        {displayMessages.length > 0 &&
+          suggestions &&
+          suggestions.length > 0 && (
+            <div
+              className={`px-4 py-2 ${
+                isDarkMode ? "border-t border-gray-700" : "border-t"
+              }`}
+            >
+              <Collapsible>
+                <CollapsibleTrigger
+                  className={`flex items-center text-sm ${
+                    isDarkMode
+                      ? "text-blue-400 hover:text-blue-300"
+                      : "text-blue-600 hover:text-blue-800"
+                  }`}
+                >
+                  <ChevronRight className="h-4 w-4 mr-1" />
+                  <span>Suggestions ({suggestions.length})</span>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 pb-1">
+                  <ScrollArea className="max-h-40">
+                    <div className="flex flex-wrap gap-2 pb-2">
+                      {suggestions.map((prompt, index) => (
+                        <Button
+                          key={index}
+                          variant={isDarkMode ? "outline" : "secondary"}
+                          size="sm"
+                          className={`text-left h-auto py-2 px-3 ${
+                            isDarkMode
+                              ? "hover:bg-gray-700 border-gray-600 text-gray-200"
+                              : ""
+                          } whitespace-nowrap rounded-full`}
+                          onClick={() => {
+                            const promptText = prompt;
+                            setInput(promptText);
+                            setTimeout(() => {
+                              handleSendSuggestion(promptText);
+                            }, 100);
+                          }}
+                        >
+                          {prompt}
+                        </Button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          )}
         <div
           className={`p-4 ${
             isDarkMode ? "border-t border-gray-700" : "border-t"
           }`}
         >
-          <div className="flex space-x-2">
+          <form onSubmit={handleSubmit} className="flex space-x-2">
             <Textarea
-              value={currentMessage}
-              onChange={(e) => setCurrentMessage(e.target.value)}
+              value={input}
+              onChange={handleInputChange}
               placeholder="Type your question..."
               className={`flex-grow resize-none ${
                 isDarkMode ? "bg-gray-700 border-gray-600 text-gray-200" : ""
@@ -478,24 +584,29 @@ export const AIChatSection = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  handleSendMessage();
+                  handleSubmit(e);
+                  // Also notify parent component if needed
+                  if (onAddMessage && opportunity && input.trim()) {
+                    onAddMessage(opportunity.id, input, "user");
+                  }
                 }
               }}
+              disabled={isLoading}
             />
             <Button
+              type="submit"
               className={`self-end ${
                 isDarkMode ? "bg-blue-600 hover:bg-blue-700" : ""
               }`}
-              onClick={handleSendMessage}
-              disabled={currentMessage.trim() === "" || isSendingMessage}
+              disabled={input.trim() === "" || isLoading}
             >
-              {isSendingMessage ? (
+              {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
             </Button>
-          </div>
+          </form>
           <div className="mt-2 text-xs text-center text-gray-500">
             Press Enter to send, Shift+Enter for new line
           </div>

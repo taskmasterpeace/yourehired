@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.3.6",
+    "@ai-sdk/react": "^1.2.5",
     "@clerk/nextjs": "^6.12.8",
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
@@ -47,6 +49,7 @@
     "@supabase/supabase-js": "^2.49.1",
     "@tailwindcss/typography": "^0.5.16",
     "@toast-ui/react-calendar": "^2.1.3",
+    "ai": "^4.2.10",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
