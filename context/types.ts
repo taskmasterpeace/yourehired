@@ -31,6 +31,7 @@ export interface Opportunity {
   tags?: Tag[];
   keywords?: string[] | any[];
   selectedKeywords?: string[];
+  updatedAt?: string;
 }
 
 export interface CalendarEvent {
