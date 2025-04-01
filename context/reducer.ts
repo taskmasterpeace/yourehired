@@ -150,7 +150,7 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
       if (updates.status) {
         // Remove existing events for this opportunity
         updatedEvents = updatedEvents.filter(
-          (event) => !idsMatch(event.opportunityId, id)
+          (event) => !idsMatch(event.opportunityId ?? "", id)
         );
         // Find the updated opportunity
         const updatedOpp = updatedOpportunities.find((opp) =>
@@ -187,11 +187,15 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
         );
         // Filter out related events
         const updatedEvents = state.events.filter(
-          (event) => !idsMatch(event.opportunityId, opportunityId)
+          (event) => !idsMatch(event.opportunityId ?? "", opportunityId)
         );
         // Filter out related chat messages
         const updatedChatMessages = { ...state.chatMessages };
-        delete updatedChatMessages[opportunityId];
+        const opportunityIdStr = String(opportunityId);
+        delete updatedChatMessages[
+          opportunityIdStr as keyof typeof updatedChatMessages
+        ];
+
         return {
           ...state,
           opportunities: updatedOpportunities,
@@ -263,7 +267,8 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
       };
     case "ADD_CHAT_MESSAGE": {
       const { opportunityId, message, sender } = action.payload;
-      const existingMessages = state.chatMessages[opportunityId] || [];
+      const opportunityIdStr = String(opportunityId);
+      const existingMessages = state.chatMessages[opportunityIdStr] || [];
       const newMessage = {
         id: Date.now(),
         message,
@@ -274,7 +279,7 @@ export const appReducer = (state: AppState, action: AppAction): AppState => {
         ...state,
         chatMessages: {
           ...state.chatMessages,
-          [opportunityId]: [...existingMessages, newMessage],
+          [opportunityIdStr]: [...existingMessages, newMessage],
         },
       };
     }

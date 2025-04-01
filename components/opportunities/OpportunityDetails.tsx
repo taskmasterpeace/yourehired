@@ -1,19 +1,8 @@
 import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "../../components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../../components/ui/tabs";
-import { Button } from "../../components/ui/button";
-import { Opportunity } from "../../context/types";
+import { Card, CardContent, CardHeader } from "@/components/ui/card"; // Adjust import path as needed
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Adjust import path as needed
+import { Button } from "@/components/ui/button"; // Adjust import path as needed
+import { Opportunity } from "@/context/types"; // Adjust import path as needed
 import { FileText } from "lucide-react";
 import { OpportunityHeader } from "./OpportunityHeader";
 import { JobDetailsSection } from "./JobDetailsSection";
@@ -28,12 +17,10 @@ import ApplicationTimeline from "./ApplicationTimeline";
 
 interface OpportunityDetailsProps {
   opportunity: Opportunity | undefined;
-  // Updated to use string | number for id
   updateOpportunity: (
     id: string | number,
     updates: Partial<Opportunity>
   ) => void;
-  // Updated to use string | number for id
   deleteOpportunity: (id: string | number) => void;
   isDarkMode: boolean;
   chatMessages: { message: string; sender: string; timestamp: string }[];
@@ -45,6 +32,8 @@ interface OpportunityDetailsProps {
   setIsMasterResumeFrozen: (frozen: boolean) => void;
   updateMasterResume: (resume: string) => void;
   openGuide?: (guideId: string, sectionId?: string) => void;
+  isLoadingPrompts?: boolean;
+  dispatch?: any;
 }
 
 export const OpportunityDetails = ({
@@ -61,21 +50,9 @@ export const OpportunityDetails = ({
   setIsMasterResumeFrozen,
   updateMasterResume,
   openGuide,
+  isLoadingPrompts = false,
+  dispatch,
 }: OpportunityDetailsProps) => {
-  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
-  const [aiPrompts, setAiPrompts] = useState<string[]>([]);
-
-  // Helper function to get prompts based on status
-  const getPromptsForStatus = (status: string) => {
-    // This is a simplified version - in a real implementation, you'd have a more comprehensive mapping
-    return [
-      "Analyze this job description and identify my top 3 matching qualifications",
-      "Help me prepare for an interview for this position",
-      "What skills should I emphasize in my application for this role?",
-      "Draft a follow-up email for this application",
-    ];
-  };
-
   if (!opportunity) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -101,13 +78,6 @@ export const OpportunityDetails = ({
       </div>
     );
   }
-
-  // Ensure we have a handler for deletion
-  const handleDeleteOpportunity = () => {
-    if (window.confirm("Are you sure you want to delete this opportunity?")) {
-      deleteOpportunity(opportunity.id);
-    }
-  };
 
   return (
     <Card
@@ -204,7 +174,7 @@ export const OpportunityDetails = ({
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={handleDeleteOpportunity}
+                      onClick={() => deleteOpportunity(opportunity.id)}
                     >
                       Delete Opportunity
                     </Button>
@@ -251,12 +221,32 @@ export const OpportunityDetails = ({
           >
             <AIChatSection
               chatMessages={chatMessages}
-              handleSendMessage={handleSendMessage}
-              currentMessage={currentMessage}
-              setCurrentMessage={setCurrentMessage}
-              aiPrompts={aiPrompts}
-              isLoadingPrompts={isLoadingPrompts}
+              opportunity={opportunity}
+              onAddMessage={(opportunityId, message, sender) => {
+                if (sender === "user") {
+                  // For user messages, we'll set current message and trigger the parent's handler
+                  setCurrentMessage(message);
+
+                  // Add the message immediately to the UI for better UX
+                  const timestamp = new Date().toISOString();
+                  if (dispatch) {
+                    dispatch({
+                      type: "ADD_CHAT_MESSAGE",
+                      payload: {
+                        opportunityId,
+                        message,
+                        sender: "user",
+                        timestamp,
+                      },
+                    });
+                  }
+
+                  // Call the parent's handler to process the message
+                  setTimeout(() => handleSendMessage(), 10);
+                }
+              }}
               isDarkMode={isDarkMode}
+              resume={opportunity.resume}
             />
           </TabsContent>
         </Tabs>

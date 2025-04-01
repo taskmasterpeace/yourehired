@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { OpportunityList } from "../opportunities/OpportunityList";
 import { OpportunityDetails } from "../opportunities/OpportunityDetails";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,20 +9,24 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Textarea } from "../ui/textarea";
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle } from "lucide-react";
 import { Opportunity, ChatMessage } from "../../context/types";
 import { ApplicationService } from "@/lib/application-service";
+import { v4 as uuidv4 } from "uuid"; // You may need to install this package
+
+// Import the ApplicationStatus type if available
+// import { ApplicationStatus } from "@/types"; // Adjust path as needed
 
 interface OpportunitiesTabProps {
   opportunities: Opportunity[];
@@ -68,6 +72,7 @@ export function OpportunitiesTab({
   const [selectedJobIds, setSelectedJobIds] = useState<(string | number)[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState("");
 
   // Track if a delete confirmation is currently showing
   const deleteConfirmShowing = useRef(false);
@@ -81,9 +86,7 @@ export function OpportunitiesTab({
     notes: "",
   });
 
-  const [currentMessage, setCurrentMessage] = useState("");
   const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // Use a ref for ApplicationService to ensure we don't create duplicate instances
   const applicationService = useRef(new ApplicationService()).current;
@@ -92,12 +95,19 @@ export function OpportunitiesTab({
   const convertToJobApplication = useCallback((opp: Opportunity) => {
     const tags = opp.tags ? opp.tags.map((tag: any) => tag.name) : [];
 
+    // Generate a valid ID
+    const id =
+      typeof opp.id === "string" && opp.id.includes("-") ? opp.id : uuidv4(); // Generate a new UUID for new entries
+
+    // Convert the status to the expected type (using 'as any' for safety)
+    // If you have the proper type, use: 'as ApplicationStatus'
+    const status = opp.status as any;
+
     return {
-      id:
-        typeof opp.id === "string" && opp.id.includes("-") ? opp.id : undefined,
+      id, // Now using a valid string ID
       companyName: opp.company,
       positionTitle: opp.position,
-      status: opp.status,
+      status, // Using the properly typed status
       dateAdded: new Date().toISOString(),
       dateApplied: opp.appliedDate,
       jobDescription: opp.jobDescription || "",
@@ -368,7 +378,7 @@ export function OpportunitiesTab({
     [handleUpdateOpportunity, applicationService]
   );
 
-  // Toggle job selection function remains the same
+  // Toggle job selection function
   const toggleJobSelection = useCallback((id: string | number) => {
     if (id === -1) {
       setSelectedJobIds([]);
@@ -380,7 +390,7 @@ export function OpportunitiesTab({
     );
   }, []);
 
-  // Select multiple jobs function remains the same
+  // Select multiple jobs function
   const selectMultipleJobs = useCallback((ids: (string | number)[]) => {
     setSelectedJobIds((prev) => {
       const newSelected = [...prev];
@@ -393,7 +403,7 @@ export function OpportunitiesTab({
     });
   }, []);
 
-  // Add a new opportunity
+  // Add a new opportunity - FIXED to prevent duplicate saves
   const handleAddOpportunity = useCallback(async () => {
     if (isProcessing) return;
 
@@ -413,7 +423,7 @@ export function OpportunitiesTab({
       // Create the new opportunity object
       const newOpp = {
         ...newOpportunity,
-        id: uniqueId,
+        id: uniqueId, // Will be replaced with Supabase ID later
         appliedDate: formattedDate,
         resume: masterResume,
         location: "",
@@ -428,7 +438,10 @@ export function OpportunitiesTab({
       // Save to Supabase first to get a proper ID
       const jobApp = convertToJobApplication(newOpp);
       console.log("Saving new opportunity to Supabase:", jobApp);
+
+      // Here's the key fix - save only once
       const result = await applicationService.saveApplication(jobApp);
+      console.log("Save result:", result);
 
       // Use the Supabase ID if available
       const finalId =
@@ -442,7 +455,7 @@ export function OpportunitiesTab({
         id: finalId,
       };
 
-      // Add to state with the correct ID
+      // Add to state with the correct ID - just once
       dispatch({ type: "ADD_OPPORTUNITY", payload: finalOpp });
       console.log(`Added new opportunity with ID ${finalId} to state`);
 
@@ -483,39 +496,112 @@ export function OpportunitiesTab({
     setSelectedOpportunityIndex,
   ]);
 
-  // Chat message handler
-  const handleSendMessage = useCallback(() => {
+  // Handle sending a message
+  const handleSendMessage = useCallback(async () => {
     if (!currentMessage.trim() || !opportunities[selectedOpportunityIndex])
       return;
 
+    const opportunityId = opportunities[selectedOpportunityIndex].id;
+    const timestamp = new Date().toISOString();
+
+    // Add user message to chat
     dispatch({
       type: "ADD_CHAT_MESSAGE",
       payload: {
-        opportunityId: opportunities[selectedOpportunityIndex].id,
+        opportunityId,
         message: currentMessage,
         sender: "user",
+        timestamp,
       },
     });
 
+    // Clear input
     setCurrentMessage("");
 
-    setTimeout(() => {
+    try {
+      // Prepare context for AI
+      const selectedOpp = opportunities[selectedOpportunityIndex];
+      const context = {
+        company: selectedOpp.company,
+        position: selectedOpp.position,
+        status: selectedOpp.status,
+        jobDescription: selectedOpp.jobDescription,
+        notes: selectedOpp.notes || "",
+      };
+
+      // Get existing messages to provide conversation history
+      const existingMessages = chatMessages[opportunityId] || [];
+
+      // Prepare messages array for OpenAI
+      const messagesToSend = [
+        {
+          role: "system",
+          content: `You are an AI career assistant helping with job applications. You have access to the following information about this job opportunity:
+          Company: ${context.company}
+          Position: ${context.position}
+          Status: ${context.status}
+          Job Description: ${context.jobDescription || "Not provided"}
+          
+          Be helpful, concise, and provide actionable advice. If the user asks about the job description, resume optimization, 
+          or interview tips, use the context above to give personalized guidance.`,
+        },
+        // Add conversation history (last 10 messages)
+        ...existingMessages.slice(-10).map((msg) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.message,
+        })),
+        // Add the new message
+        { role: "user", content: currentMessage },
+      ];
+
+      // Call the OpenAI API with the updated endpoint
+      const response = await fetch("/api/openai-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "chat",
+          messages: messagesToSend,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Add AI response to chat
       dispatch({
         type: "ADD_CHAT_MESSAGE",
         payload: {
-          opportunityId: opportunities[selectedOpportunityIndex].id,
-          message: "This is a placeholder response.",
+          opportunityId,
+          message: data.content || "I'm sorry, I couldn't generate a response.",
           sender: "ai",
+          timestamp: new Date().toISOString(),
         },
       });
-    }, 1000);
-  }, [currentMessage, opportunities, selectedOpportunityIndex, dispatch]);
+    } catch (error) {
+      console.error("Error in AI chat:", error);
 
-  // Get messages for selected opportunity
-  const selectedOpportunityId = opportunities[selectedOpportunityIndex]?.id;
-  const opportunityMessages = selectedOpportunityId
-    ? chatMessages[selectedOpportunityId] || []
-    : [];
+      // Add error message
+      dispatch({
+        type: "ADD_CHAT_MESSAGE",
+        payload: {
+          opportunityId,
+          message:
+            "I'm sorry, there was an error processing your request. Please try again.",
+          sender: "ai",
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+  }, [
+    currentMessage,
+    opportunities,
+    selectedOpportunityIndex,
+    dispatch,
+    chatMessages,
+  ]);
 
   // Help guide opener
   const openGuide = useCallback((guideId: string, sectionId?: string) => {
@@ -523,6 +609,12 @@ export function OpportunitiesTab({
       `Opening guide: ${guideId}, section: ${sectionId || "default"}`
     );
   }, []);
+
+  // Get messages for selected opportunity
+  const selectedOpportunityId = opportunities[selectedOpportunityIndex]?.id;
+  const opportunityMessages = selectedOpportunityId
+    ? chatMessages[selectedOpportunityId] || []
+    : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
@@ -702,13 +794,14 @@ export function OpportunitiesTab({
           handleSendMessage={handleSendMessage}
           currentMessage={currentMessage}
           setCurrentMessage={setCurrentMessage}
-          suggestions={suggestions}
+          suggestions={[]} // The AI component will handle suggestions now
           isMasterResumeFrozen={isMasterResumeFrozen}
           setIsMasterResumeFrozen={setIsMasterResumeFrozen}
           updateMasterResume={(resume: string) =>
             dispatch({ type: "UPDATE_MASTER_RESUME", payload: resume })
           }
           openGuide={openGuide}
+          dispatch={dispatch}
         />
       </div>
     </div>
