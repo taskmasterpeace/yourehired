@@ -39,6 +39,8 @@ interface AIChatSectionProps {
   ) => void;
   isDarkMode: boolean;
   resume?: string;
+  userAvatar?: string;
+  assistantAvatar?: string;
 }
 
 export const AIChatSection = ({
@@ -47,6 +49,8 @@ export const AIChatSection = ({
   onAddMessage,
   isDarkMode,
   resume = "",
+  userAvatar = "",
+  assistantAvatar = "",
 }: AIChatSectionProps) => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
@@ -56,45 +60,37 @@ export const AIChatSection = ({
     "Help me prepare for an interview for this position",
     "What questions should I ask the interviewer?",
   ]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Create a context message that contains all the job and resume information
   const createContextMessage = () => {
     if (!opportunity) return null;
-
     let contextText = `## Job Information\n`;
     contextText += `Company: ${opportunity.company || "Unknown"}\n`;
     contextText += `Position: ${opportunity.position || "Unknown"}\n`;
-
     if (opportunity.location) {
       contextText += `Location: ${opportunity.location}\n`;
     }
-
     if (opportunity.salary) {
       contextText += `Salary: ${opportunity.salary}\n`;
     }
-
     if (opportunity.status) {
       contextText += `Current Status: ${opportunity.status}\n`;
     }
-
     contextText += `\n## Job Description\n${
       opportunity.jobDescription || "No job description provided."
     }\n`;
-
     if (opportunity.keywords && opportunity.keywords.length > 0) {
       contextText += `\n## Keywords\n${opportunity.keywords.join(", ")}\n`;
     }
-
     if (opportunity.notes) {
       contextText += `\n## Notes\n${opportunity.notes}\n`;
     }
-
     if (resume) {
       contextText += `\n## My Resume\n${resume}\n`;
     }
-
     return {
       id: "context",
       role: "system" as const,
@@ -256,7 +252,18 @@ export const AIChatSection = ({
             }`}
           >
             <AvatarFallback>AI</AvatarFallback>
-            <AvatarImage src="/assistant-avatar.png" alt="AI Assistant" />
+            {assistantAvatar && (
+              <AvatarImage
+                src={assistantAvatar}
+                alt="AI Assistant"
+                className="object-cover"
+                onError={(e) => {
+                  console.error("Failed to load assistant avatar:", e);
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                }}
+              />
+            )}
           </Avatar>
           <div>
             <CardTitle className="text-base font-medium">
@@ -294,10 +301,17 @@ export const AIChatSection = ({
                     {msg.role !== "user" && (
                       <Avatar className="h-8 w-8 mr-2 bg-blue-600 self-end mb-auto mt-0">
                         <AvatarFallback>AI</AvatarFallback>
-                        <AvatarImage
-                          src="/assistant-avatar.png"
-                          alt="AI Assistant"
-                        />
+                        {assistantAvatar && (
+                          <AvatarImage
+                            src={assistantAvatar}
+                            alt="AI Assistant"
+                            className="object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                        )}
                       </Avatar>
                     )}
                     <div
@@ -348,7 +362,17 @@ export const AIChatSection = ({
                         style={{ backgroundColor: getAvatarColor("user") }}
                       >
                         <AvatarFallback>You</AvatarFallback>
-                        <AvatarImage src="/user-avatar.png" alt="You" />
+                        {userAvatar && (
+                          <AvatarImage
+                            src={userAvatar}
+                            alt="You"
+                            className="object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                        )}
                       </Avatar>
                     )}
                   </motion.div>
@@ -361,10 +385,17 @@ export const AIChatSection = ({
                   >
                     <Avatar className="h-8 w-8 mr-2 bg-blue-600 self-end mb-auto mt-0">
                       <AvatarFallback>AI</AvatarFallback>
-                      <AvatarImage
-                        src="/assistant-avatar.png"
-                        alt="AI Assistant"
-                      />
+                      {assistantAvatar && (
+                        <AvatarImage
+                          src={assistantAvatar}
+                          alt="AI Assistant"
+                          className="object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                        />
+                      )}
                     </Avatar>
                     <div
                       className={`max-w-[80%] rounded-2xl p-3 ${

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card"; // Adjust import path as needed
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Adjust import path as needed
-import { Button } from "@/components/ui/button"; // Adjust import path as needed
-import { Opportunity } from "@/context/types"; // Adjust import path as needed
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Opportunity } from "@/context/types";
 import { FileText } from "lucide-react";
 import { OpportunityHeader } from "./OpportunityHeader";
 import { JobDetailsSection } from "./JobDetailsSection";
@@ -53,6 +53,136 @@ export const OpportunityDetails = ({
   isLoadingPrompts = false,
   dispatch,
 }: OpportunityDetailsProps) => {
+  const [userAvatar, setUserAvatar] = useState<string>("");
+  const [assistantAvatar, setAssistantAvatar] = useState<string>("");
+  const [isGeneratingAvatars, setIsGeneratingAvatars] =
+    useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("details");
+
+  // Determine job role based on keywords in job description or title
+  const determineJobRole = (job?: Opportunity): string => {
+    if (!job) return "default";
+
+    const text = `${job.position} ${job.jobDescription} ${job.keywords?.join(
+      " "
+    )}`.toLowerCase();
+
+    // Check for technical keywords
+    if (
+      /\b(software|developer|engineer|programmer|coding|technical|it|data|analyst|science)\b/.test(
+        text
+      )
+    ) {
+      return "technical";
+    }
+
+    // Check for creative keywords
+    if (
+      /\b(design|creative|artist|writer|content|marketing|media|graphic|ui|ux)\b/.test(
+        text
+      )
+    ) {
+      return "creative";
+    }
+
+    // Check for customer service keywords
+    if (
+      /\b(customer|service|support|representative|sales|account|client|relations|care)\b/.test(
+        text
+      )
+    ) {
+      return "customer_service";
+    }
+
+    return "default";
+  };
+
+  // Load or generate avatars when opportunity changes
+  useEffect(() => {
+    if (!opportunity) return;
+
+    // Check for cached avatars
+    const storedAvatars = localStorage.getItem(`avatars_${opportunity.id}`);
+    if (storedAvatars) {
+      try {
+        const avatars = JSON.parse(storedAvatars);
+        if (avatars.userAvatar && avatars.assistantAvatar) {
+          console.log("Loading cached avatars");
+          setUserAvatar(avatars.userAvatar);
+          setAssistantAvatar(avatars.assistantAvatar);
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing cached avatars:", error);
+      }
+    }
+
+    // No cached avatars, generate new ones
+    generateAvatars();
+  }, [opportunity]);
+
+  // Function to generate avatars
+  const generateAvatars = async () => {
+    if (!opportunity || isGeneratingAvatars) return;
+
+    setIsGeneratingAvatars(true);
+
+    try {
+      const jobRole = determineJobRole(opportunity);
+
+      // Generate user avatar
+      const userResponse = await fetch("/api/replicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: opportunity.position,
+          role: jobRole,
+          isAssistant: false,
+          jobDescription: opportunity.jobDescription,
+        }),
+      });
+
+      const userData = await userResponse.json();
+
+      // Generate assistant avatar
+      const assistantResponse = await fetch("/api/replicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: opportunity.position,
+          role: jobRole,
+          isAssistant: true,
+          jobDescription: opportunity.jobDescription,
+        }),
+      });
+
+      const assistantData = await assistantResponse.json();
+
+      // If both were successful, update the avatars
+      if (userData.success && assistantData.success) {
+        const userAvatarUrl = String(userData.imageUrl);
+        const assistantAvatarUrl = String(assistantData.imageUrl);
+
+        // Store in state
+        setUserAvatar(userAvatarUrl);
+        setAssistantAvatar(assistantAvatarUrl);
+
+        // Cache in localStorage
+        localStorage.setItem(
+          `avatars_${opportunity.id}`,
+          JSON.stringify({
+            userAvatar: userAvatarUrl,
+            assistantAvatar: assistantAvatarUrl,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error generating avatars:", error);
+    } finally {
+      setIsGeneratingAvatars(false);
+    }
+  };
+
   if (!opportunity) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -91,7 +221,11 @@ export const OpportunityDetails = ({
         isDarkMode={isDarkMode}
       />
       <CardContent className="flex-grow overflow-hidden">
-        <Tabs defaultValue="details" className="h-full flex flex-col">
+        <Tabs
+          defaultValue="details"
+          className="h-full flex flex-col"
+          onValueChange={(value) => setActiveTab(value)}
+        >
           <TabsList className="mb-2 overflow-x-auto flex-nowrap gap-1 p-1 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <TabsTrigger
               value="details"
@@ -219,35 +353,54 @@ export const OpportunityDetails = ({
             value="chat"
             className="flex-grow overflow-hidden flex flex-col"
           >
-            <AIChatSection
-              chatMessages={chatMessages}
-              opportunity={opportunity}
-              onAddMessage={(opportunityId, message, sender) => {
-                if (sender === "user") {
-                  // For user messages, we'll set current message and trigger the parent's handler
-                  setCurrentMessage(message);
-
-                  // Add the message immediately to the UI for better UX
-                  const timestamp = new Date().toISOString();
-                  if (dispatch) {
-                    dispatch({
-                      type: "ADD_CHAT_MESSAGE",
-                      payload: {
-                        opportunityId,
-                        message,
-                        sender: "user",
-                        timestamp,
-                      },
-                    });
+            {isGeneratingAvatars ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center p-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <h3
+                    className={`text-lg font-medium ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Personalizing your chat experience...
+                  </h3>
+                  <p
+                    className={`${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    } mt-2`}
+                  >
+                    Generating custom avatars for this conversation
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <AIChatSection
+                chatMessages={chatMessages}
+                opportunity={opportunity}
+                onAddMessage={(opportunityId, message, sender) => {
+                  if (sender === "user") {
+                    setCurrentMessage(message);
+                    const timestamp = new Date().toISOString();
+                    if (dispatch) {
+                      dispatch({
+                        type: "ADD_CHAT_MESSAGE",
+                        payload: {
+                          opportunityId,
+                          message,
+                          sender: "user",
+                          timestamp,
+                        },
+                      });
+                    }
+                    setTimeout(() => handleSendMessage(), 10);
                   }
-
-                  // Call the parent's handler to process the message
-                  setTimeout(() => handleSendMessage(), 10);
-                }
-              }}
-              isDarkMode={isDarkMode}
-              resume={opportunity.resume}
-            />
+                }}
+                isDarkMode={isDarkMode}
+                resume={opportunity.resume}
+                userAvatar={userAvatar}
+                assistantAvatar={assistantAvatar}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
