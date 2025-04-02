@@ -12,10 +12,18 @@ export async function POST(req: Request) {
     return handleSuggestions(messages);
   }
 
+  // Convert any messages with role 'ai' to 'assistant' before passing to the API
+  const formattedMessages = messages.map((msg: any) => {
+    if (msg.role === "ai") {
+      return { ...msg, role: "assistant" };
+    }
+    return msg;
+  });
+
   // Default chat streaming
   const result = streamText({
     model: openai("gpt-4o"),
-    messages,
+    messages: formattedMessages,
     temperature: 0.7,
   });
 

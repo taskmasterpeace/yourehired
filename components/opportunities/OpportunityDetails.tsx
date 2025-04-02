@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Opportunity } from "@/context/types";
-import { FileText } from "lucide-react";
+import { FileText, Image as ImageIcon } from "lucide-react";
 import { OpportunityHeader } from "./OpportunityHeader";
 import { JobDetailsSection } from "./JobDetailsSection";
 import { ContactInfoSection } from "./ContactInfoSection";
@@ -55,7 +55,10 @@ export const OpportunityDetails = ({
 }: OpportunityDetailsProps) => {
   const [userAvatar, setUserAvatar] = useState<string>("");
   const [assistantAvatar, setAssistantAvatar] = useState<string>("");
+  const [workspaceImage, setWorkspaceImage] = useState<string>("");
   const [isGeneratingAvatars, setIsGeneratingAvatars] =
+    useState<boolean>(false);
+  const [isGeneratingWorkspace, setIsGeneratingWorkspace] =
     useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("details");
 
@@ -110,15 +113,35 @@ export const OpportunityDetails = ({
           console.log("Loading cached avatars");
           setUserAvatar(avatars.userAvatar);
           setAssistantAvatar(avatars.assistantAvatar);
-          return;
+        } else {
+          generateAvatars();
         }
       } catch (error) {
         console.error("Error parsing cached avatars:", error);
+        generateAvatars();
       }
+    } else {
+      generateAvatars();
     }
 
-    // No cached avatars, generate new ones
-    generateAvatars();
+    // Check for cached workspace image
+    const storedWorkspace = localStorage.getItem(`workspace_${opportunity.id}`);
+    if (storedWorkspace) {
+      try {
+        const workspace = JSON.parse(storedWorkspace);
+        if (workspace.imageUrl) {
+          console.log("Loading cached workspace image");
+          setWorkspaceImage(workspace.imageUrl);
+        } else {
+          generateWorkspaceImage();
+        }
+      } catch (error) {
+        console.error("Error parsing cached workspace image:", error);
+        generateWorkspaceImage();
+      }
+    } else {
+      generateWorkspaceImage();
+    }
   }, [opportunity]);
 
   // Function to generate avatars
@@ -180,6 +203,45 @@ export const OpportunityDetails = ({
       console.error("Error generating avatars:", error);
     } finally {
       setIsGeneratingAvatars(false);
+    }
+  };
+
+  // Function to generate workspace image
+  const generateWorkspaceImage = async () => {
+    if (!opportunity || isGeneratingWorkspace) return;
+
+    setIsGeneratingWorkspace(true);
+
+    try {
+      const response = await fetch("/api/replicate-background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: opportunity.position,
+          jobDescription: opportunity.jobDescription,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.imageUrl) {
+        const imageUrl = String(data.imageUrl);
+
+        // Store in state
+        setWorkspaceImage(imageUrl);
+
+        // Cache in localStorage
+        localStorage.setItem(
+          `workspace_${opportunity.id}`,
+          JSON.stringify({
+            imageUrl: imageUrl,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error generating workspace image:", error);
+    } finally {
+      setIsGeneratingWorkspace(false);
     }
   };
 
@@ -253,18 +315,108 @@ export const OpportunityDetails = ({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="details" className="flex-grow overflow-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <JobDetailsSection
-                opportunity={opportunity}
-                updateOpportunity={updateOpportunity}
-                isDarkMode={isDarkMode}
-              />
-              <ContactInfoSection
-                opportunity={opportunity}
-                updateOpportunity={updateOpportunity}
-                isDarkMode={isDarkMode}
-              />
-              <div className="col-span-1 md:col-span-2">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Workspace Visualization Card - First Item */}
+              <div
+                className={`p-4 rounded-lg border ${
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <h3
+                  className={`font-medium mb-3 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  Workspace Visualization
+                </h3>
+
+                {isGeneratingWorkspace ? (
+                  <div className="flex items-center justify-center py-16">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                      <p
+                        className={`${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        Generating workspace based on job description...
+                      </p>
+                    </div>
+                  </div>
+                ) : workspaceImage ? (
+                  <div className="relative">
+                    <img
+                      src={workspaceImage}
+                      alt={`Workspace for ${opportunity.position} at ${opportunity.company}`}
+                      className="w-full h-auto rounded-md object-cover"
+                      style={{ maxHeight: "350px" }}
+                      onError={(e) => {
+                        console.error("Failed to load workspace image");
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                      }}
+                    />
+                    <div className="absolute bottom-2 right-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-white/70 hover:bg-white/90 text-black shadow-md"
+                        onClick={() => window.open(workspaceImage, "_blank")}
+                      >
+                        View Full Image
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-16 bg-gray-100 dark:bg-gray-700 rounded">
+                    <div className="text-center">
+                      <ImageIcon className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+                      <p
+                        className={`${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        No workspace visualization available
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={generateWorkspaceImage}
+                      >
+                        Generate Workspace
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <p
+                  className={`mt-3 text-sm ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  This AI-generated visualization shows a potential workspace
+                  environment for this position based on the job description.
+                </p>
+              </div>
+
+              {/* Other Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <JobDetailsSection
+                  opportunity={opportunity}
+                  updateOpportunity={updateOpportunity}
+                  isDarkMode={isDarkMode}
+                />
+                <ContactInfoSection
+                  opportunity={opportunity}
+                  updateOpportunity={updateOpportunity}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              <div className="col-span-1">
                 <TagsSection
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
@@ -272,7 +424,7 @@ export const OpportunityDetails = ({
                   openGuide={openGuide}
                 />
               </div>
-              <div className="col-span-1 md:col-span-2">
+              <div className="col-span-1">
                 <KeywordsSection
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
@@ -280,14 +432,14 @@ export const OpportunityDetails = ({
                   openGuide={openGuide}
                 />
               </div>
-              <div className="col-span-1 md:col-span-2">
+              <div className="col-span-1">
                 <NotesSection
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
                   isDarkMode={isDarkMode}
                 />
               </div>
-              <div className="col-span-1 md:col-span-2">
+              <div className="col-span-1">
                 <div
                   className={`p-4 rounded-lg border ${
                     isDarkMode
@@ -315,7 +467,7 @@ export const OpportunityDetails = ({
                   </div>
                 </div>
               </div>
-              <div className="col-span-1 md:col-span-2 mt-8">
+              <div className="col-span-1 mt-4">
                 <div
                   className={`p-4 rounded-lg border ${
                     isDarkMode
