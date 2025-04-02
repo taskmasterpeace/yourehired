@@ -8,11 +8,9 @@ const replicate = new Replicate({
 
 export async function POST(request: Request) {
   console.log("Replicate Background API called");
-
   try {
     const body = await request.json();
     console.log("Background request body:", body);
-
     const { jobTitle, jobDescription } = body;
 
     // Function to analyze job description and determine aspects
@@ -137,9 +135,9 @@ export async function POST(request: Request) {
       basePrompt +=
         "The workspace should include appropriate furniture, lighting, and layout that support the specific requirements of this job. ";
 
-      // Add technical details for better image generation
+      // Add technical details for better image generation - No text overlays requested
       basePrompt +=
-        "Wide angle shot of the entire workspace, professional photograph, realistic, detailed, HD quality.";
+        "Wide angle shot of the entire workspace, professional photograph, realistic, detailed, HD quality. No text overlays or captions in the image.";
 
       return basePrompt;
     };
@@ -148,35 +146,49 @@ export async function POST(request: Request) {
       jobTitle || "professional",
       jobDescription || ""
     );
+
     console.log("Using background prompt:", prompt);
 
-    // Run the image generation through Replicate
-    const output = await replicate.run(
-      "stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478",
-      {
-        input: {
-          prompt: prompt,
-          negative_prompt:
-            "deformed, distorted, disfigured, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, cartoon, anime, unrealistic, people, persons, humans",
-          width: 1024,
-          height: 576,
-          num_outputs: 1,
-          num_inference_steps: 50,
-          guidance_scale: 7.5,
-          scheduler: "K_EULER_ANCESTRAL",
-        },
-      }
-    );
+    // Run the image generation through Replicate with Flux Schnell model
+    // Corrected parameters based on the error message
+    const output = await replicate.run("black-forest-labs/flux-schnell", {
+      input: {
+        prompt: prompt,
+        negative_prompt:
+          "deformed, distorted, disfigured, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, cartoon, anime, unrealistic, text, watermark, signature, caption, title, label",
+        num_inference_steps: 4, // Maximum allowed is 4 according to the error
+        seed: Math.floor(Math.random() * 1000000),
+        width: 1024,
+        height: 576,
+      },
+    });
 
     console.log("Background raw output:", output);
 
-    // output will be an array of image URLs
-    if (Array.isArray(output) && output.length > 0) {
-      // Make sure we're returning a string
-      const imageUrl = String(output[0]);
+    // Process output
+    if (output && typeof output === "string") {
+      // For direct string output
+      const imageUrl = output;
       console.log("Generated background URL:", imageUrl);
 
-      // Make sure it's a valid URL
+      try {
+        new URL(imageUrl); // Will throw if not a valid URL
+        return NextResponse.json({ success: true, imageUrl: imageUrl });
+      } catch (e) {
+        console.error("Invalid background URL:", imageUrl);
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid URL returned from image generation service",
+          },
+          { status: 500 }
+        );
+      }
+    } else if (Array.isArray(output) && output.length > 0) {
+      // For array output
+      const imageUrl = String(output[0]);
+      console.log("Generated background URL (from array):", imageUrl);
+
       try {
         new URL(imageUrl); // Will throw if not a valid URL
         return NextResponse.json({ success: true, imageUrl: imageUrl });
@@ -191,7 +203,7 @@ export async function POST(request: Request) {
         );
       }
     } else {
-      console.error("No background image was generated");
+      console.error("No background image was generated", output);
       return NextResponse.json(
         { success: false, error: "No background image was generated" },
         { status: 500 }
