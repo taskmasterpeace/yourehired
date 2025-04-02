@@ -1,20 +1,9 @@
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "../../components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../../components/ui/tabs";
-import { Button } from "../../components/ui/button";
-import { Opportunity } from "../../context/types";
-import { FileText } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Opportunity } from "@/context/types";
+import { FileText, Image as ImageIcon } from "lucide-react";
 import { OpportunityHeader } from "./OpportunityHeader";
 import { JobDetailsSection } from "./JobDetailsSection";
 import { ContactInfoSection } from "./ContactInfoSection";
@@ -28,12 +17,10 @@ import ApplicationTimeline from "./ApplicationTimeline";
 
 interface OpportunityDetailsProps {
   opportunity: Opportunity | undefined;
-  // Updated to use string | number for id
   updateOpportunity: (
     id: string | number,
     updates: Partial<Opportunity>
   ) => void;
-  // Updated to use string | number for id
   deleteOpportunity: (id: string | number) => void;
   isDarkMode: boolean;
   chatMessages: { message: string; sender: string; timestamp: string }[];
@@ -45,6 +32,8 @@ interface OpportunityDetailsProps {
   setIsMasterResumeFrozen: (frozen: boolean) => void;
   updateMasterResume: (resume: string) => void;
   openGuide?: (guideId: string, sectionId?: string) => void;
+  isLoadingPrompts?: boolean;
+  dispatch?: any;
 }
 
 export const OpportunityDetails = ({
@@ -61,19 +50,199 @@ export const OpportunityDetails = ({
   setIsMasterResumeFrozen,
   updateMasterResume,
   openGuide,
+  isLoadingPrompts = false,
+  dispatch,
 }: OpportunityDetailsProps) => {
-  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
-  const [aiPrompts, setAiPrompts] = useState<string[]>([]);
+  const [userAvatar, setUserAvatar] = useState<string>("");
+  const [assistantAvatar, setAssistantAvatar] = useState<string>("");
+  const [workspaceImage, setWorkspaceImage] = useState<string>("");
+  const [isGeneratingAvatars, setIsGeneratingAvatars] =
+    useState<boolean>(false);
+  const [isGeneratingWorkspace, setIsGeneratingWorkspace] =
+    useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("details");
 
-  // Helper function to get prompts based on status
-  const getPromptsForStatus = (status: string) => {
-    // This is a simplified version - in a real implementation, you'd have a more comprehensive mapping
-    return [
-      "Analyze this job description and identify my top 3 matching qualifications",
-      "Help me prepare for an interview for this position",
-      "What skills should I emphasize in my application for this role?",
-      "Draft a follow-up email for this application",
-    ];
+  // Determine job role based on keywords in job description or title
+  const determineJobRole = (job?: Opportunity): string => {
+    if (!job) return "default";
+
+    const text = `${job.position} ${job.jobDescription} ${job.keywords?.join(
+      " "
+    )}`.toLowerCase();
+
+    // Check for technical keywords
+    if (
+      /\b(software|developer|engineer|programmer|coding|technical|it|data|analyst|science)\b/.test(
+        text
+      )
+    ) {
+      return "technical";
+    }
+
+    // Check for creative keywords
+    if (
+      /\b(design|creative|artist|writer|content|marketing|media|graphic|ui|ux)\b/.test(
+        text
+      )
+    ) {
+      return "creative";
+    }
+
+    // Check for customer service keywords
+    if (
+      /\b(customer|service|support|representative|sales|account|client|relations|care)\b/.test(
+        text
+      )
+    ) {
+      return "customer_service";
+    }
+
+    return "default";
+  };
+
+  // Load or generate avatars when opportunity changes
+  useEffect(() => {
+    if (!opportunity) return;
+
+    // Check for cached avatars
+    const storedAvatars = localStorage.getItem(`avatars_${opportunity.id}`);
+    if (storedAvatars) {
+      try {
+        const avatars = JSON.parse(storedAvatars);
+        if (avatars.userAvatar && avatars.assistantAvatar) {
+          console.log("Loading cached avatars");
+          setUserAvatar(avatars.userAvatar);
+          setAssistantAvatar(avatars.assistantAvatar);
+        } else {
+          generateAvatars();
+        }
+      } catch (error) {
+        console.error("Error parsing cached avatars:", error);
+        generateAvatars();
+      }
+    } else {
+      generateAvatars();
+    }
+
+    // Check for cached workspace image
+    const storedWorkspace = localStorage.getItem(`workspace_${opportunity.id}`);
+    if (storedWorkspace) {
+      try {
+        const workspace = JSON.parse(storedWorkspace);
+        if (workspace.imageUrl) {
+          console.log("Loading cached workspace image");
+          setWorkspaceImage(workspace.imageUrl);
+        } else {
+          generateWorkspaceImage();
+        }
+      } catch (error) {
+        console.error("Error parsing cached workspace image:", error);
+        generateWorkspaceImage();
+      }
+    } else {
+      generateWorkspaceImage();
+    }
+  }, [opportunity]);
+
+  // Function to generate avatars
+  const generateAvatars = async () => {
+    if (!opportunity || isGeneratingAvatars) return;
+
+    setIsGeneratingAvatars(true);
+
+    try {
+      const jobRole = determineJobRole(opportunity);
+
+      // Generate user avatar
+      const userResponse = await fetch("/api/replicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: opportunity.position,
+          role: jobRole,
+          isAssistant: false,
+          jobDescription: opportunity.jobDescription,
+        }),
+      });
+
+      const userData = await userResponse.json();
+
+      // Generate assistant avatar
+      const assistantResponse = await fetch("/api/replicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: opportunity.position,
+          role: jobRole,
+          isAssistant: true,
+          jobDescription: opportunity.jobDescription,
+        }),
+      });
+
+      const assistantData = await assistantResponse.json();
+
+      // If both were successful, update the avatars
+      if (userData.success && assistantData.success) {
+        const userAvatarUrl = String(userData.imageUrl);
+        const assistantAvatarUrl = String(assistantData.imageUrl);
+
+        // Store in state
+        setUserAvatar(userAvatarUrl);
+        setAssistantAvatar(assistantAvatarUrl);
+
+        // Cache in localStorage
+        localStorage.setItem(
+          `avatars_${opportunity.id}`,
+          JSON.stringify({
+            userAvatar: userAvatarUrl,
+            assistantAvatar: assistantAvatarUrl,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error generating avatars:", error);
+    } finally {
+      setIsGeneratingAvatars(false);
+    }
+  };
+
+  // Function to generate workspace image
+  const generateWorkspaceImage = async () => {
+    if (!opportunity || isGeneratingWorkspace) return;
+
+    setIsGeneratingWorkspace(true);
+
+    try {
+      const response = await fetch("/api/replicate-background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: opportunity.position,
+          jobDescription: opportunity.jobDescription,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.imageUrl) {
+        const imageUrl = String(data.imageUrl);
+
+        // Store in state
+        setWorkspaceImage(imageUrl);
+
+        // Cache in localStorage
+        localStorage.setItem(
+          `workspace_${opportunity.id}`,
+          JSON.stringify({
+            imageUrl: imageUrl,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Error generating workspace image:", error);
+    } finally {
+      setIsGeneratingWorkspace(false);
+    }
   };
 
   if (!opportunity) {
@@ -114,7 +283,11 @@ export const OpportunityDetails = ({
         isDarkMode={isDarkMode}
       />
       <CardContent className="flex-grow overflow-hidden">
-        <Tabs defaultValue="details" className="h-full flex flex-col">
+        <Tabs
+          defaultValue="details"
+          className="h-full flex flex-col"
+          onValueChange={(value) => setActiveTab(value)}
+        >
           <TabsList className="mb-2 overflow-x-auto flex-nowrap gap-1 p-1 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <TabsTrigger
               value="details"
@@ -142,18 +315,108 @@ export const OpportunityDetails = ({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="details" className="flex-grow overflow-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <JobDetailsSection
-                opportunity={opportunity}
-                updateOpportunity={updateOpportunity}
-                isDarkMode={isDarkMode}
-              />
-              <ContactInfoSection
-                opportunity={opportunity}
-                updateOpportunity={updateOpportunity}
-                isDarkMode={isDarkMode}
-              />
-              <div className="col-span-1 md:col-span-2">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Workspace Visualization Card - First Item */}
+              <div
+                className={`p-4 rounded-lg border ${
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <h3
+                  className={`font-medium mb-3 ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  Workspace Visualization
+                </h3>
+
+                {isGeneratingWorkspace ? (
+                  <div className="flex items-center justify-center py-16">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                      <p
+                        className={`${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        Generating workspace based on job description...
+                      </p>
+                    </div>
+                  </div>
+                ) : workspaceImage ? (
+                  <div className="relative">
+                    <img
+                      src={workspaceImage}
+                      alt={`Workspace for ${opportunity.position} at ${opportunity.company}`}
+                      className="w-full h-auto rounded-md object-cover"
+                      style={{ maxHeight: "350px" }}
+                      onError={(e) => {
+                        console.error("Failed to load workspace image");
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                      }}
+                    />
+                    <div className="absolute bottom-2 right-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-white/70 hover:bg-white/90 text-black shadow-md"
+                        onClick={() => window.open(workspaceImage, "_blank")}
+                      >
+                        View Full Image
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-16 bg-gray-100 dark:bg-gray-700 rounded">
+                    <div className="text-center">
+                      <ImageIcon className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+                      <p
+                        className={`${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        No workspace visualization available
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={generateWorkspaceImage}
+                      >
+                        Generate Workspace
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <p
+                  className={`mt-3 text-sm ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  This AI-generated visualization shows a potential workspace
+                  environment for this position based on the job description.
+                </p>
+              </div>
+
+              {/* Other Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <JobDetailsSection
+                  opportunity={opportunity}
+                  updateOpportunity={updateOpportunity}
+                  isDarkMode={isDarkMode}
+                />
+                <ContactInfoSection
+                  opportunity={opportunity}
+                  updateOpportunity={updateOpportunity}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              <div className="col-span-1">
                 <TagsSection
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
@@ -161,7 +424,7 @@ export const OpportunityDetails = ({
                   openGuide={openGuide}
                 />
               </div>
-              <div className="col-span-1 md:col-span-2">
+              <div className="col-span-1">
                 <KeywordsSection
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
@@ -169,14 +432,14 @@ export const OpportunityDetails = ({
                   openGuide={openGuide}
                 />
               </div>
-              <div className="col-span-1 md:col-span-2">
+              <div className="col-span-1">
                 <NotesSection
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
                   isDarkMode={isDarkMode}
                 />
               </div>
-              <div className="col-span-1 md:col-span-2">
+              <div className="col-span-1">
                 <div
                   className={`p-4 rounded-lg border ${
                     isDarkMode
@@ -204,7 +467,7 @@ export const OpportunityDetails = ({
                   </div>
                 </div>
               </div>
-              <div className="col-span-1 md:col-span-2 mt-8">
+              <div className="col-span-1 mt-4">
                 <div
                   className={`p-4 rounded-lg border ${
                     isDarkMode
@@ -242,15 +505,54 @@ export const OpportunityDetails = ({
             value="chat"
             className="flex-grow overflow-hidden flex flex-col"
           >
-            <AIChatSection
-              chatMessages={chatMessages}
-              handleSendMessage={handleSendMessage}
-              currentMessage={currentMessage}
-              setCurrentMessage={setCurrentMessage}
-              aiPrompts={aiPrompts}
-              isLoadingPrompts={isLoadingPrompts}
-              isDarkMode={isDarkMode}
-            />
+            {isGeneratingAvatars ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center p-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <h3
+                    className={`text-lg font-medium ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Personalizing your chat experience...
+                  </h3>
+                  <p
+                    className={`${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    } mt-2`}
+                  >
+                    Generating custom avatars for this conversation
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <AIChatSection
+                chatMessages={chatMessages}
+                opportunity={opportunity}
+                onAddMessage={(opportunityId, message, sender) => {
+                  if (sender === "user") {
+                    setCurrentMessage(message);
+                    const timestamp = new Date().toISOString();
+                    if (dispatch) {
+                      dispatch({
+                        type: "ADD_CHAT_MESSAGE",
+                        payload: {
+                          opportunityId,
+                          message,
+                          sender: "user",
+                          timestamp,
+                        },
+                      });
+                    }
+                    setTimeout(() => handleSendMessage(), 10);
+                  }
+                }}
+                isDarkMode={isDarkMode}
+                resume={opportunity.resume}
+                userAvatar={userAvatar}
+                assistantAvatar={assistantAvatar}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>

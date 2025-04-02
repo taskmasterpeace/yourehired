@@ -31,6 +31,7 @@ export interface ProtectedContentProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
+
 // In @/lib/types.ts
 export enum ApplicationStatus {
   BOOKMARKED = "Bookmarked",
@@ -67,6 +68,7 @@ export interface JobApplication {
   contactPhone?: string;
   url?: string;
   tags: string[];
+  resume?: string; // Add resume field to store the tailored resume
   statusHistory: Array<{
     status: ApplicationStatus;
     date: string;
@@ -81,4 +83,15 @@ export interface JobApplication {
     location?: string;
     isCompleted?: boolean;
   }>;
+}
+
+// Resume version type for managing different resume versions
+export interface ResumeVersion {
+  id?: string;
+  userId: string;
+  content: string;
+  name?: string;
+  timestamp: string;
+  isCurrent?: boolean;
+  applicationId?: string;
 }

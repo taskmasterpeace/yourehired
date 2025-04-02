@@ -7,6 +7,17 @@ import { createSupabaseClient as getSupabaseClient } from "./supabase";
 // Singleton instance
 let instance: ApplicationService | null = null;
 
+// Resume version interface
+export interface ResumeVersion {
+  id?: string;
+  user_id: string;
+  content: string;
+  name?: string;
+  timestamp: string;
+  is_current?: boolean;
+  application_id?: string;
+}
+
 // This service handles all application data operations via Supabase
 export class ApplicationService {
   private initialized = false;
@@ -68,6 +79,7 @@ export class ApplicationService {
       );
       return;
     }
+
     this.initializationAttempted = true;
     try {
       const success = await initializeDatabase();
@@ -89,11 +101,13 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
       // First, get all applications
       const { data: applications, error: appError } = await supabase
         .from("applications")
         .select("*")
         .order("created_at", { ascending: false });
+
       if (appError) {
         // If we get a "relation does not exist" error, the tables might not be created
         if (
@@ -108,6 +122,7 @@ export class ApplicationService {
         }
         throw appError;
       }
+
       if (!applications) return [];
 
       // Then get events and status history in separate queries
@@ -118,6 +133,7 @@ export class ApplicationService {
           "application_id",
           applications.map((app) => app.id)
         );
+
       if (
         eventsError &&
         !eventsError.message.includes('relation "public.events" does not exist')
@@ -132,6 +148,7 @@ export class ApplicationService {
           "application_id",
           applications.map((app) => app.id)
         );
+
       if (
         historyError &&
         !historyError.message.includes(
@@ -146,6 +163,7 @@ export class ApplicationService {
         // Find events for this application
         const appEvents =
           events?.filter((event) => event.application_id === app.id) || [];
+
         // Find status history for this application
         const appStatusHistory =
           statusHistory?.filter(
@@ -168,6 +186,7 @@ export class ApplicationService {
           contactPhone: app.contact_phone || undefined,
           url: app.url || undefined,
           tags: app.tags || [],
+          resume: app.resume || undefined, // Include resume in the returned object
           statusHistory: appStatusHistory.map((history) => ({
             status: history.status as ApplicationStatus,
             date: history.date,
@@ -190,18 +209,25 @@ export class ApplicationService {
     }
   }
 
-  // Get application by ID
-  async getApplicationById(id: string): Promise<JobApplication | null> {
+  // Get application by ID - support both string and number IDs
+  async getApplicationById(
+    id: string | number
+  ): Promise<JobApplication | null> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringId = String(id);
+
       // Get application by ID
       const { data: application, error: appError } = await supabase
         .from("applications")
         .select("*")
-        .eq("id", id)
+        .eq("id", stringId)
         .single();
+
       if (appError) {
         // If we get a "relation does not exist" error, the tables might not be created
         if (
@@ -214,13 +240,15 @@ export class ApplicationService {
         }
         throw appError;
       }
+
       if (!application) return null;
 
       // Get events for this application
       const { data: events, error: eventsError } = await supabase
         .from("events")
         .select("*")
-        .eq("application_id", id);
+        .eq("application_id", stringId);
+
       if (
         eventsError &&
         !eventsError.message.includes('relation "public.events" does not exist')
@@ -232,7 +260,8 @@ export class ApplicationService {
       const { data: statusHistory, error: historyError } = await supabase
         .from("status_history")
         .select("*")
-        .eq("application_id", id);
+        .eq("application_id", stringId);
+
       if (
         historyError &&
         !historyError.message.includes(
@@ -259,6 +288,7 @@ export class ApplicationService {
         contactPhone: application.contact_phone || undefined,
         url: application.url || undefined,
         tags: application.tags || [],
+        resume: application.resume || undefined, // Include resume in the returned object
         statusHistory:
           statusHistory?.map((history) => ({
             status: history.status as ApplicationStatus,
@@ -282,7 +312,7 @@ export class ApplicationService {
     }
   }
 
-  // Save application - UPDATED to return the ID
+  // Save application - UPDATED to handle string and number IDs and include resume
   async saveApplication(
     application: JobApplication
   ): Promise<{ id: string } | boolean> {
@@ -290,10 +320,12 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
       // Get the current user session
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       if (!session) {
         throw new Error("User not authenticated");
       }
@@ -315,6 +347,7 @@ export class ApplicationService {
         contact_phone: application.contactPhone,
         url: application.url,
         tags: application.tags,
+        resume: application.resume, // Include resume in the database record
         user_id: session.user.id,
       };
 
@@ -322,8 +355,9 @@ export class ApplicationService {
       const { data: existingApp, error: checkError } = await supabase
         .from("applications")
         .select("id")
-        .eq("id", dbApplication.id)
+        .eq("id", String(dbApplication.id))
         .maybeSingle();
+
       if (
         checkError &&
         !checkError.message.includes(
@@ -338,13 +372,15 @@ export class ApplicationService {
         const { error } = await supabase
           .from("applications")
           .update(dbApplication)
-          .eq("id", dbApplication.id);
+          .eq("id", String(dbApplication.id));
+
         if (error) throw error;
       } else {
         // Insert new application
         const { error } = await supabase
           .from("applications")
           .insert(dbApplication);
+
         if (error) throw error;
       }
 
@@ -353,14 +389,16 @@ export class ApplicationService {
         // Get the latest status history entry
         const latestStatus =
           application.statusHistory[application.statusHistory.length - 1];
+
         // Check if this status already exists in the database
         const { data: existingStatus, error: statusCheckError } = await supabase
           .from("status_history")
           .select("id")
-          .eq("application_id", dbApplication.id)
+          .eq("application_id", String(dbApplication.id))
           .eq("status", latestStatus.status)
           .eq("date", latestStatus.date)
           .maybeSingle();
+
         if (
           statusCheckError &&
           !statusCheckError.message.includes(
@@ -373,12 +411,13 @@ export class ApplicationService {
         if (!existingStatus) {
           // Insert new status history
           const { error } = await supabase.from("status_history").insert({
-            application_id: dbApplication.id,
+            application_id: String(dbApplication.id),
             status: latestStatus.status,
             date: latestStatus.date,
             notes: latestStatus.notes,
             user_id: session.user.id,
           });
+
           if (
             error &&
             !error.message.includes(
@@ -391,30 +430,36 @@ export class ApplicationService {
       }
 
       // Return the ID along with success
-      return { id: dbApplication.id };
+      return { id: String(dbApplication.id) };
     } catch (error) {
       console.error("Error saving application:", error);
       throw error;
     }
   }
 
-  // Delete application
-  async deleteApplication(id: string): Promise<boolean> {
+  // Delete application - UPDATED to handle string and number IDs
+  async deleteApplication(id: string | number): Promise<boolean> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringId = String(id);
+
       // Delete application - RLS will ensure user can only delete their own data
       const { error } = await supabase
         .from("applications")
         .delete()
-        .eq("id", id);
+        .eq("id", stringId);
+
       if (
         error &&
         !error.message.includes('relation "public.applications" does not exist')
       ) {
         throw error;
       }
+
       return true;
     } catch (error) {
       console.error(`Error deleting application ${id}:`, error);
@@ -422,9 +467,9 @@ export class ApplicationService {
     }
   }
 
-  // Update application status
+  // Update application status - UPDATED to handle string and number IDs
   async updateApplicationStatus(
-    id: string,
+    id: string | number,
     status: ApplicationStatus,
     notes?: string
   ): Promise<boolean> {
@@ -432,10 +477,15 @@ export class ApplicationService {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringId = String(id);
+
       // Get the current user session
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       if (!session) {
         throw new Error("User not authenticated");
       }
@@ -444,7 +494,8 @@ export class ApplicationService {
       const { error: updateError } = await supabase
         .from("applications")
         .update({ status })
-        .eq("id", id);
+        .eq("id", stringId);
+
       if (
         updateError &&
         !updateError.message.includes(
@@ -459,12 +510,13 @@ export class ApplicationService {
       const { error: historyError } = await supabase
         .from("status_history")
         .insert({
-          application_id: id,
+          application_id: stringId,
           status,
           date: now,
           notes,
           user_id: session.user.id,
         });
+
       if (
         historyError &&
         !historyError.message.includes(
@@ -481,19 +533,24 @@ export class ApplicationService {
     }
   }
 
-  // Add event to application
+  // Add event to application - UPDATED to handle string and number IDs
   async addEvent(
-    applicationId: string,
+    applicationId: string | number,
     event: JobApplication["events"][0]
   ): Promise<boolean> {
     try {
       // Try to ensure database is initialized, but continue even if it fails
       await this.ensureInitialized();
       const supabase = this.getClient();
+
+      // Convert ID to string for consistency
+      const stringAppId = String(applicationId);
+
       // Get the current user session
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       if (!session) {
         throw new Error("User not authenticated");
       }
@@ -501,7 +558,7 @@ export class ApplicationService {
       // Transform the event to match the database schema
       const dbEvent = {
         id: event.id || uuidv4(),
-        application_id: applicationId,
+        application_id: stringAppId,
         title: event.title,
         date: event.date,
         type: event.type,
@@ -513,6 +570,7 @@ export class ApplicationService {
 
       // Insert event - RLS will ensure user can only add events to their own applications
       const { error } = await supabase.from("events").insert(dbEvent);
+
       if (
         error &&
         !error.message.includes('relation "public.events" does not exist')
@@ -524,6 +582,199 @@ export class ApplicationService {
     } catch (error) {
       console.error(
         `Error adding event to application ${applicationId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  // NEW METHOD: Save a resume version
+  async saveResumeVersion(
+    version: ResumeVersion
+  ): Promise<ResumeVersion | null> {
+    try {
+      // Try to ensure database is initialized, but continue even if it fails
+      await this.ensureInitialized();
+      const supabase = this.getClient();
+
+      // Insert the resume version
+      const { data, error } = await supabase
+        .from("resume_versions")
+        .insert({
+          id: version.id || uuidv4(),
+          user_id: version.user_id,
+          content: version.content,
+          name: version.name || `Resume ${new Date().toLocaleString()}`,
+          timestamp: version.timestamp || new Date().toISOString(),
+          is_current: version.is_current || false,
+          application_id: version.application_id || null,
+        })
+        .select("*")
+        .single();
+
+      if (error) {
+        if (
+          error.message.includes(
+            'relation "public.resume_versions" does not exist'
+          )
+        ) {
+          console.warn("Resume versions table doesn't exist, returning null");
+          return null;
+        }
+        throw error;
+      }
+
+      return data || null;
+    } catch (error) {
+      console.error("Error saving resume version:", error);
+      throw error;
+    }
+  }
+
+  // Get all resume versions for a user
+  async getResumeVersions(userId: string): Promise<ResumeVersion[]> {
+    try {
+      // Try to ensure database is initialized, but continue even if it fails
+      await this.ensureInitialized();
+      const supabase = this.getClient();
+
+      // Get all resume versions for this user
+      const { data, error } = await supabase
+        .from("resume_versions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("timestamp", { ascending: false });
+
+      if (error) {
+        if (
+          error.message.includes(
+            'relation "public.resume_versions" does not exist'
+          )
+        ) {
+          console.warn(
+            "Resume versions table doesn't exist, returning empty array"
+          );
+          return [];
+        }
+        throw error;
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error(
+        `Error retrieving resume versions for user ${userId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  // Get resume versions for a specific application
+  async getResumeVersionsForApplication(
+    applicationId: string
+  ): Promise<ResumeVersion[]> {
+    try {
+      // Try to ensure database is initialized, but continue even if it fails
+      await this.ensureInitialized();
+      const supabase = this.getClient();
+
+      // Get resume versions for this application
+      const { data, error } = await supabase
+        .from("resume_versions")
+        .select("*")
+        .eq("application_id", applicationId)
+        .order("timestamp", { ascending: false });
+
+      if (error) {
+        if (
+          error.message.includes(
+            'relation "public.resume_versions" does not exist'
+          )
+        ) {
+          console.warn(
+            "Resume versions table doesn't exist, returning empty array"
+          );
+          return [];
+        }
+        throw error;
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error(
+        `Error retrieving resume versions for application ${applicationId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  // Get the current resume version for a user
+  async getCurrentResumeVersion(userId: string): Promise<ResumeVersion | null> {
+    try {
+      // Try to ensure database is initialized, but continue even if it fails
+      await this.ensureInitialized();
+      const supabase = this.getClient();
+
+      // Get the current resume version
+      const { data, error } = await supabase
+        .from("resume_versions")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_current", true)
+        .maybeSingle();
+
+      if (error) {
+        if (
+          error.message.includes(
+            'relation "public.resume_versions" does not exist'
+          )
+        ) {
+          console.warn("Resume versions table doesn't exist, returning null");
+          return null;
+        }
+        throw error;
+      }
+
+      return data || null;
+    } catch (error) {
+      console.error(
+        `Error retrieving current resume version for user ${userId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  // Set a resume version as the current version
+  async setCurrentResumeVersion(versionId: string): Promise<boolean> {
+    try {
+      // Try to ensure database is initialized, but continue even if it fails
+      await this.ensureInitialized();
+      const supabase = this.getClient();
+
+      // Update the resume version to be current
+      const { error } = await supabase
+        .from("resume_versions")
+        .update({ is_current: true })
+        .eq("id", versionId);
+
+      if (error) {
+        if (
+          error.message.includes(
+            'relation "public.resume_versions" does not exist'
+          )
+        ) {
+          console.warn("Resume versions table doesn't exist, returning false");
+          return false;
+        }
+        throw error;
+      }
+
+      return true;
+    } catch (error) {
+      console.error(
+        `Error setting resume version ${versionId} as current:`,
         error
       );
       throw error;

@@ -31,6 +31,7 @@ export interface Opportunity {
   tags?: Tag[];
   keywords?: string[] | any[];
   selectedKeywords?: string[];
+  updatedAt?: string;
 }
 
 export interface CalendarEvent {
@@ -54,7 +55,7 @@ export interface AppState {
   masterResume: string;
   events: CalendarEvent[];
   userProfile: UserProfile;
-  chatMessages: { [opportunityId: number]: ChatMessage[] };
+  chatMessages: { [opportunityId: string]: ChatMessage[] };
 }
 
 export type AppAction =
@@ -96,6 +97,6 @@ export type AppAction =
             darkMode: boolean;
           };
         };
-        chatMessages?: Record<string | number, any[]>;
+        chatMessages?: Record<string, any[]>;
       };
     };

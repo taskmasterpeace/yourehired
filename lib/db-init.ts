@@ -43,9 +43,10 @@ export async function initializeDatabase() {
           tags TEXT[] DEFAULT '{}',
           created_at TIMESTAMPTZ DEFAULT now(),
           updated_at TIMESTAMPTZ DEFAULT now(),
-          user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
+          user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+          resume TEXT -- Add resume field to store the tailored resume
         );
-        
+
         -- Create status_history table
         CREATE TABLE IF NOT EXISTS public.status_history (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,7 +57,7 @@ export async function initializeDatabase() {
           user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
           created_at TIMESTAMPTZ DEFAULT now()
         );
-        
+
         -- Create events table
         CREATE TABLE IF NOT EXISTS public.events (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -71,7 +72,7 @@ export async function initializeDatabase() {
           created_at TIMESTAMPTZ DEFAULT now(),
           updated_at TIMESTAMPTZ DEFAULT now()
         );
-        
+
         -- Create profiles table
         CREATE TABLE IF NOT EXISTS public.profiles (
           id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -82,7 +83,7 @@ export async function initializeDatabase() {
           created_at TIMESTAMPTZ DEFAULT now(),
           updated_at TIMESTAMPTZ DEFAULT now()
         );
-        
+
         -- Create chat_messages table
         CREATE TABLE IF NOT EXISTS public.chat_messages (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -128,9 +129,10 @@ export async function initializeDatabase() {
             content TEXT NOT NULL,
             name VARCHAR(255),
             timestamp TIMESTAMPTZ NOT NULL DEFAULT now(),
-            is_current BOOLEAN DEFAULT FALSE
+            is_current BOOLEAN DEFAULT FALSE,
+            application_id UUID REFERENCES public.applications(id) ON DELETE SET NULL
           );
-          
+
           -- Quick action presets table
           CREATE TABLE IF NOT EXISTS public.quick_action_presets (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -164,6 +166,7 @@ export async function initializeDatabase() {
         -- Indexes for resume versioning tables
         CREATE INDEX IF NOT EXISTS idx_resume_versions_user_id ON public.resume_versions(user_id);
         CREATE INDEX IF NOT EXISTS idx_resume_versions_is_current ON public.resume_versions(is_current);
+        CREATE INDEX IF NOT EXISTS idx_resume_versions_application_id ON public.resume_versions(application_id);
         CREATE INDEX IF NOT EXISTS idx_quick_action_presets_user_id ON public.quick_action_presets(user_id);
         
         -- Indexes for notifications
@@ -184,57 +187,57 @@ export async function initializeDatabase() {
         ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own applications" ON public.applications;
         CREATE POLICY "Users can CRUD their own applications" ON public.applications
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-        
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+
         -- Status History: users can only see their own status history
         ALTER TABLE public.status_history ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own status history" ON public.status_history;
         CREATE POLICY "Users can CRUD their own status history" ON public.status_history
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-        
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+
         -- Events: users can only see their own events
         ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own events" ON public.events;
         CREATE POLICY "Users can CRUD their own events" ON public.events
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-        
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+
         -- Profiles: users can only see their own profile
         ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own profile" ON public.profiles;
         CREATE POLICY "Users can CRUD their own profile" ON public.profiles
-          USING (auth.uid() = id)
-          WITH CHECK (auth.uid() = id);
-        
+        USING (auth.uid() = id)
+        WITH CHECK (auth.uid() = id);
+
         -- Chat Messages: users can only see their own chat messages
         ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own chat messages" ON public.chat_messages;
         CREATE POLICY "Users can CRUD their own chat messages" ON public.chat_messages
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-        
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+
         -- Resume Versions: users can only see their own resume versions
         ALTER TABLE public.resume_versions ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own resume versions" ON public.resume_versions;
         CREATE POLICY "Users can CRUD their own resume versions" ON public.resume_versions
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-        
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+
         -- Quick Action Presets: users can only see their own quick actions
         ALTER TABLE public.quick_action_presets ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own quick action presets" ON public.quick_action_presets;
         CREATE POLICY "Users can CRUD their own quick action presets" ON public.quick_action_presets
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
-          
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
+
         -- Notifications: users can only see their own notifications
         ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
         DROP POLICY IF EXISTS "Users can CRUD their own notifications" ON public.notifications;
         CREATE POLICY "Users can CRUD their own notifications" ON public.notifications
-          USING (auth.uid() = user_id)
-          WITH CHECK (auth.uid() = user_id);
+        USING (auth.uid() = user_id)
+        WITH CHECK (auth.uid() = user_id);
       `,
     });
 
@@ -254,33 +257,37 @@ export async function initializeDatabase() {
           RETURN NEW;
         END;
         $$ LANGUAGE plpgsql SECURITY DEFINER;
-        
+
         -- Trigger the function every time a user is created
         DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
         CREATE TRIGGER on_auth_user_created
-          AFTER INSERT ON auth.users
-          FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-        
+        AFTER INSERT ON auth.users
+        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
         -- Create function to manage current resume version
         CREATE OR REPLACE FUNCTION public.set_current_resume()
         RETURNS TRIGGER AS $$ BEGIN
-          -- First set all versions for this user to not current
-          UPDATE public.resume_versions
-          SET is_current = FALSE
-          WHERE user_id = NEW.user_id;
-          -- Then set the new version to current
-          UPDATE public.resume_versions
-          SET is_current = TRUE
-          WHERE id = NEW.id;
+          -- Only apply the current flag update if this is marked as current
+          IF NEW.is_current THEN
+            -- First set all versions for this user to not current
+            UPDATE public.resume_versions
+            SET is_current = FALSE
+            WHERE user_id = NEW.user_id AND id != NEW.id;
+            
+            -- Ensure the new version is current
+            IF NOT NEW.is_current THEN
+              NEW.is_current := TRUE;
+            END IF;
+          END IF;
           RETURN NEW;
         END;
         $$ LANGUAGE plpgsql SECURITY DEFINER;
-        
+
         -- Trigger to manage current resume version
         DROP TRIGGER IF EXISTS set_current_resume_trigger ON public.resume_versions;
         CREATE TRIGGER set_current_resume_trigger
-          AFTER INSERT ON public.resume_versions
-          FOR EACH ROW EXECUTE FUNCTION public.set_current_resume();
+        AFTER INSERT OR UPDATE OF is_current ON public.resume_versions
+        FOR EACH ROW EXECUTE FUNCTION public.set_current_resume();
       `,
     });
 
