@@ -8,17 +8,14 @@ const replicate = new Replicate({
 
 export async function POST(request: Request) {
   console.log("Replicate API called");
-
   try {
     const body = await request.json();
     console.log("Request body:", body);
-
     const { jobTitle, role, isAssistant, jobDescription } = body;
 
     // Create a dynamic prompt based on the job information
     let prompt =
       "Generate a professional close-up headshot portrait of a person";
-
     if (jobTitle) {
       prompt += ` working as ${
         isAssistant ? "an AI assistant for" : ""
@@ -52,51 +49,55 @@ export async function POST(request: Request) {
 
     console.log("Using prompt:", prompt);
 
-    // Run the image generation through Replicate
-    const output = await replicate.run(
-      "stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478",
-      {
-        input: {
-          prompt: prompt,
-          negative_prompt:
-            "deformed, distorted, disfigured, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, cartoon, anime, unrealistic",
-          width: 512,
-          height: 512,
-          num_outputs: 1,
-          num_inference_steps: 50,
-          guidance_scale: 7.5,
-          scheduler: "K_EULER_ANCESTRAL",
-        },
-      }
-    );
+    // Run the image generation through Replicate using Flux Schnell model
+    const output = await replicate.run("black-forest-labs/flux-schnell", {
+      input: {
+        prompt: prompt,
+        negative_prompt:
+          "deformed, distorted, disfigured, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, cartoon, anime, unrealistic",
+        width: 512,
+        height: 512,
+        num_inference_steps: 4, // Maximum allowed for Flux Schnell
+        seed: Math.floor(Math.random() * 1000000),
+      },
+    });
 
     console.log("Raw Replicate output:", output);
 
-    // output will be an array of image URLs
-    if (Array.isArray(output) && output.length > 0) {
-      // Make sure we're returning a string
-      const imageUrl = String(output[0]);
-      console.log("Generated image URL (as string):", imageUrl);
+    // Process the output - Flux Schnell may return a string instead of an array
+    let imageUrl;
 
-      // Make sure it's a valid URL
-      try {
-        new URL(imageUrl); // Will throw if not a valid URL
-        console.log("URL is valid");
-        return NextResponse.json({ success: true, imageUrl: imageUrl });
-      } catch (e) {
-        console.error("Invalid URL returned from Replicate:", imageUrl);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Invalid URL returned from image generation service",
-          },
-          { status: 500 }
-        );
-      }
+    if (typeof output === "string") {
+      // Direct string output
+      imageUrl = output;
+    } else if (Array.isArray(output) && output.length > 0) {
+      // Array output
+      imageUrl = String(output[0]);
     } else {
-      console.error("No image was generated, output type:", typeof output);
+      console.error("Unexpected output format:", output);
       return NextResponse.json(
-        { success: false, error: "No image was generated" },
+        {
+          success: false,
+          error: "Unexpected output format from image generation service",
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log("Generated image URL:", imageUrl);
+
+    // Make sure it's a valid URL
+    try {
+      new URL(imageUrl); // Will throw if not a valid URL
+      console.log("URL is valid");
+      return NextResponse.json({ success: true, imageUrl: imageUrl });
+    } catch (e) {
+      console.error("Invalid URL returned from Replicate:", imageUrl);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid URL returned from image generation service",
+        },
         { status: 500 }
       );
     }

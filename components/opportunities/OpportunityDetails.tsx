@@ -65,11 +65,9 @@ export const OpportunityDetails = ({
   // Determine job role based on keywords in job description or title
   const determineJobRole = (job?: Opportunity): string => {
     if (!job) return "default";
-
     const text = `${job.position} ${job.jobDescription} ${job.keywords?.join(
       " "
     )}`.toLowerCase();
-
     // Check for technical keywords
     if (
       /\b(software|developer|engineer|programmer|coding|technical|it|data|analyst|science)\b/.test(
@@ -78,7 +76,6 @@ export const OpportunityDetails = ({
     ) {
       return "technical";
     }
-
     // Check for creative keywords
     if (
       /\b(design|creative|artist|writer|content|marketing|media|graphic|ui|ux)\b/.test(
@@ -87,7 +84,6 @@ export const OpportunityDetails = ({
     ) {
       return "creative";
     }
-
     // Check for customer service keywords
     if (
       /\b(customer|service|support|representative|sales|account|client|relations|care)\b/.test(
@@ -96,14 +92,12 @@ export const OpportunityDetails = ({
     ) {
       return "customer_service";
     }
-
     return "default";
   };
 
   // Load or generate avatars when opportunity changes
   useEffect(() => {
     if (!opportunity) return;
-
     // Check for cached avatars
     const storedAvatars = localStorage.getItem(`avatars_${opportunity.id}`);
     if (storedAvatars) {
@@ -123,7 +117,6 @@ export const OpportunityDetails = ({
     } else {
       generateAvatars();
     }
-
     // Check for cached workspace image
     const storedWorkspace = localStorage.getItem(`workspace_${opportunity.id}`);
     if (storedWorkspace) {
@@ -147,12 +140,9 @@ export const OpportunityDetails = ({
   // Function to generate avatars
   const generateAvatars = async () => {
     if (!opportunity || isGeneratingAvatars) return;
-
     setIsGeneratingAvatars(true);
-
     try {
       const jobRole = determineJobRole(opportunity);
-
       // Generate user avatar
       const userResponse = await fetch("/api/replicate", {
         method: "POST",
@@ -164,9 +154,7 @@ export const OpportunityDetails = ({
           jobDescription: opportunity.jobDescription,
         }),
       });
-
       const userData = await userResponse.json();
-
       // Generate assistant avatar
       const assistantResponse = await fetch("/api/replicate", {
         method: "POST",
@@ -178,18 +166,14 @@ export const OpportunityDetails = ({
           jobDescription: opportunity.jobDescription,
         }),
       });
-
       const assistantData = await assistantResponse.json();
-
       // If both were successful, update the avatars
       if (userData.success && assistantData.success) {
         const userAvatarUrl = String(userData.imageUrl);
         const assistantAvatarUrl = String(assistantData.imageUrl);
-
         // Store in state
         setUserAvatar(userAvatarUrl);
         setAssistantAvatar(assistantAvatarUrl);
-
         // Cache in localStorage
         localStorage.setItem(
           `avatars_${opportunity.id}`,
@@ -209,9 +193,7 @@ export const OpportunityDetails = ({
   // Function to generate workspace image
   const generateWorkspaceImage = async () => {
     if (!opportunity || isGeneratingWorkspace) return;
-
     setIsGeneratingWorkspace(true);
-
     try {
       const response = await fetch("/api/replicate-background", {
         method: "POST",
@@ -221,15 +203,11 @@ export const OpportunityDetails = ({
           jobDescription: opportunity.jobDescription,
         }),
       });
-
       const data = await response.json();
-
       if (data.success && data.imageUrl) {
         const imageUrl = String(data.imageUrl);
-
         // Store in state
         setWorkspaceImage(imageUrl);
-
         // Cache in localStorage
         localStorage.setItem(
           `workspace_${opportunity.id}`,
@@ -243,6 +221,15 @@ export const OpportunityDetails = ({
     } finally {
       setIsGeneratingWorkspace(false);
     }
+  };
+
+  // Format date as MM/DD/YYYY
+  const formatDate = (date: string | number | Date) => {
+    const d = new Date(date);
+    return `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${d.getFullYear()}`;
   };
 
   if (!opportunity) {
@@ -316,24 +303,16 @@ export const OpportunityDetails = ({
           </TabsList>
           <TabsContent value="details" className="flex-grow overflow-auto">
             <div className="grid grid-cols-1 gap-4">
-              {/* Workspace Visualization Card - First Item */}
+              {/* Workspace Visualization Card - First Item - MODIFIED */}
               <div
-                className={`p-4 rounded-lg border ${
+                className={`rounded-lg border ${
                   isDarkMode
                     ? "bg-gray-800 border-gray-700"
                     : "bg-white border-gray-200"
                 }`}
               >
-                <h3
-                  className={`font-medium mb-3 ${
-                    isDarkMode ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  Workspace Visualization
-                </h3>
-
                 {isGeneratingWorkspace ? (
-                  <div className="flex items-center justify-center py-16">
+                  <div className="flex items-center justify-center py-24">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto mb-3"></div>
                       <p
@@ -351,26 +330,37 @@ export const OpportunityDetails = ({
                       src={workspaceImage}
                       alt={`Workspace for ${opportunity.position} at ${opportunity.company}`}
                       className="w-full h-auto rounded-md object-cover"
-                      style={{ maxHeight: "350px" }}
+                      style={{ maxHeight: "450px" }}
                       onError={(e) => {
                         console.error("Failed to load workspace image");
                         const target = e.target as HTMLImageElement;
                         target.style.display = "none";
                       }}
                     />
-                    <div className="absolute bottom-2 right-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="bg-white/70 hover:bg-white/90 text-black shadow-md"
-                        onClick={() => window.open(workspaceImage, "_blank")}
-                      >
-                        View Full Image
-                      </Button>
+                    {/* Dark gradient overlay from bottom */}
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"
+                      style={{
+                        borderBottomLeftRadius: "0.375rem",
+                        borderBottomRightRadius: "0.375rem",
+                      }}
+                    ></div>
+                    {/* Employer name with drop shadow */}
+                    <div className="absolute bottom-14 left-6 text-white">
+                      <h3 className="text-xl font-semibold drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)]">
+                        {opportunity.company}
+                      </h3>
+                    </div>
+                    {/* Job title and date side by side */}
+                    <div className="absolute bottom-4 left-6 right-6 flex justify-between items-center text-white">
+                      <p className="text-lg">{opportunity.position}</p>
+                      <p className="text-sm opacity-90">
+                        {formatDate(opportunity.appliedDate)}
+                      </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center py-16 bg-gray-100 dark:bg-gray-700 rounded">
+                  <div className="flex items-center justify-center py-24 bg-gray-100 dark:bg-gray-700 rounded">
                     <div className="text-center">
                       <ImageIcon className="h-10 w-10 mx-auto mb-2 text-gray-400" />
                       <p
@@ -391,17 +381,7 @@ export const OpportunityDetails = ({
                     </div>
                   </div>
                 )}
-
-                <p
-                  className={`mt-3 text-sm ${
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
-                  }`}
-                >
-                  This AI-generated visualization shows a potential workspace
-                  environment for this position based on the job description.
-                </p>
               </div>
-
               {/* Other Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <JobDetailsSection
@@ -415,7 +395,6 @@ export const OpportunityDetails = ({
                   isDarkMode={isDarkMode}
                 />
               </div>
-
               <div className="col-span-1">
                 <TagsSection
                   opportunity={opportunity}
