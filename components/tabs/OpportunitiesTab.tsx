@@ -103,8 +103,6 @@ export function OpportunitiesTab({
     tailorResume: true, // Default to true for better UX
   });
 
-  const [isMasterResumeFrozen, setIsMasterResumeFrozen] = useState(false);
-
   // Check if master resume exists
   const hasMasterResume = masterResume && masterResume.trim() !== "";
 
@@ -1197,12 +1195,6 @@ or interview tips, use the context above to give personalized guidance.`,
           handleSendMessage={handleSendMessage}
           currentMessage={currentMessage}
           setCurrentMessage={setCurrentMessage}
-          suggestions={[]} // The AI component will handle suggestions now
-          isMasterResumeFrozen={isMasterResumeFrozen}
-          setIsMasterResumeFrozen={setIsMasterResumeFrozen}
-          updateMasterResume={(resume: string) =>
-            dispatch({ type: "UPDATE_MASTER_RESUME", payload: resume })
-          }
           openGuide={openGuide}
           dispatch={dispatch}
         />

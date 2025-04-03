@@ -27,10 +27,6 @@ interface OpportunityDetailsProps {
   handleSendMessage: () => void;
   currentMessage: string;
   setCurrentMessage: (message: string) => void;
-  suggestions: string[];
-  isMasterResumeFrozen: boolean;
-  setIsMasterResumeFrozen: (frozen: boolean) => void;
-  updateMasterResume: (resume: string) => void;
   openGuide?: (guideId: string, sectionId?: string) => void;
   isLoadingPrompts?: boolean;
   dispatch?: any;
@@ -45,10 +41,6 @@ export const OpportunityDetails = ({
   handleSendMessage,
   currentMessage,
   setCurrentMessage,
-  suggestions,
-  isMasterResumeFrozen,
-  setIsMasterResumeFrozen,
-  updateMasterResume,
   openGuide,
   isLoadingPrompts = false,
   dispatch,
@@ -473,10 +465,6 @@ export const OpportunityDetails = ({
             <ResumeSection
               opportunity={opportunity}
               updateOpportunity={updateOpportunity}
-              isMasterResumeFrozen={isMasterResumeFrozen}
-              setIsMasterResumeFrozen={setIsMasterResumeFrozen}
-              updateMasterResume={updateMasterResume}
-              suggestions={suggestions}
               isDarkMode={isDarkMode}
             />
           </TabsContent>
