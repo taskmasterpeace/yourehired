@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MarkdownRenderer } from "@/components/opportunities/MarkdownRenderer";
 import { Opportunity } from "@/context/types";
+import { useAppState } from "@/context/context";
 
 interface AIChatSectionProps {
   opportunity?: Opportunity;
@@ -63,6 +64,9 @@ export const AIChatSection = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { state, dispatch, loading: stateLoading } = useAppState();
+
+  const { masterResume } = state;
 
   // Create a context message that contains all the job and resume information
   const createContextMessage = () => {
@@ -140,6 +144,7 @@ export const AIChatSection = ({
             jobDescription: opportunity.jobDescription,
             status: opportunity.status,
             resume: resume,
+            masterResume: masterResume,
           }
         : null,
     },
