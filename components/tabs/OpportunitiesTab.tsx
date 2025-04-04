@@ -83,6 +83,14 @@ export function OpportunitiesTab({
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentMessage, setCurrentMessage] = useState("");
 
+  // State for confirmation dialog
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmDialogProps, setConfirmDialogProps] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
   // Track if a delete confirmation is currently showing
   const deleteConfirmShowing = useRef(false);
 
@@ -96,7 +104,6 @@ export function OpportunitiesTab({
 
   // New state for two-step job creation flow
   const [extractionStep, setExtractionStep] = useState<"url" | "review">("url");
-
   const [newOpportunity, setNewOpportunity] = useState({
     company: "",
     position: "",
@@ -127,6 +134,20 @@ export function OpportunitiesTab({
 
   // Use a ref for ApplicationService to ensure we don't create duplicate instances
   const applicationService = useRef(new ApplicationService()).current;
+
+  // Function to show confirmation dialog
+  const showConfirmation = useCallback(
+    (title: string, message: string, onConfirm: () => void) => {
+      setConfirmDialogProps({
+        title,
+        message,
+        onConfirm,
+      });
+      setShowConfirmDialog(true);
+      deleteConfirmShowing.current = true;
+    },
+    []
+  );
 
   // Reset form function
   const resetForm = () => {
@@ -277,42 +298,46 @@ export function OpportunitiesTab({
     async (id: string | number) => {
       // If already showing a confirmation or processing, don't proceed
       if (deleteConfirmShowing.current || isProcessing) return;
-      try {
-        deleteConfirmShowing.current = true;
-        const confirmed = window.confirm(
-          "Are you sure you want to delete this opportunity?"
-        );
-        if (!confirmed) {
-          deleteConfirmShowing.current = false;
-          return;
-        }
-        setIsProcessing(true);
-        // If it's a Supabase ID, delete from Supabase
-        if (typeof id === "string" && id.includes("-")) {
-          await applicationService.deleteApplication(id);
-          console.log(`Deleted from Supabase: ${id}`);
-        }
-        // Delete from state
-        dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
-        console.log(`Deleted from state: ${id}`);
-        // Handle selection adjustment
-        const deletedIndex = opportunities.findIndex((opp) => opp.id === id);
-        if (deletedIndex === selectedOpportunityIndex) {
-          // If we deleted the selected one
-          if (opportunities.length > 1) {
-            setSelectedOpportunityIndex(0);
+
+      showConfirmation(
+        "Confirm Deletion",
+        "Are you sure you want to delete this opportunity?",
+        async () => {
+          try {
+            setIsProcessing(true);
+
+            // If it's a Supabase ID, delete from Supabase
+            if (typeof id === "string" && id.includes("-")) {
+              await applicationService.deleteApplication(id);
+              console.log(`Deleted from Supabase: ${id}`);
+            }
+
+            // Delete from state
+            dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
+            console.log(`Deleted from state: ${id}`);
+
+            // Handle selection adjustment
+            const deletedIndex = opportunities.findIndex(
+              (opp) => opp.id === id
+            );
+            if (deletedIndex === selectedOpportunityIndex) {
+              // If we deleted the selected one
+              if (opportunities.length > 1) {
+                setSelectedOpportunityIndex(0);
+              }
+            } else if (deletedIndex < selectedOpportunityIndex) {
+              // If we deleted one before the selected one
+              setSelectedOpportunityIndex(selectedOpportunityIndex - 1);
+            }
+          } catch (error) {
+            console.error("Error deleting opportunity:", error);
+            alert("Failed to delete opportunity. Please try again.");
+          } finally {
+            setIsProcessing(false);
+            deleteConfirmShowing.current = false;
           }
-        } else if (deletedIndex < selectedOpportunityIndex) {
-          // If we deleted one before the selected one
-          setSelectedOpportunityIndex(selectedOpportunityIndex - 1);
         }
-      } catch (error) {
-        console.error("Error deleting opportunity:", error);
-        alert("Failed to delete opportunity. Please try again.");
-      } finally {
-        setIsProcessing(false);
-        deleteConfirmShowing.current = false;
-      }
+      );
     },
     [
       isProcessing,
@@ -321,6 +346,7 @@ export function OpportunitiesTab({
       applicationService,
       dispatch,
       setSelectedOpportunityIndex,
+      showConfirmation,
     ]
   );
 
@@ -334,70 +360,75 @@ export function OpportunitiesTab({
   );
 
   // Helper function for batch deletion
-  const handleBatchDelete = useCallback(async () => {
+  const handleBatchDelete = useCallback(() => {
     if (
       selectedJobIds.length === 0 ||
       isProcessing ||
       deleteConfirmShowing.current
     )
       return;
-    try {
-      deleteConfirmShowing.current = true;
-      const confirmed = window.confirm(
-        `Are you sure you want to delete ${selectedJobIds.length} selected job(s)?`
-      );
-      if (!confirmed) {
-        deleteConfirmShowing.current = false;
-        return;
-      }
-      setIsProcessing(true);
-      const idsToDelete = [...selectedJobIds];
-      // Check if selected opportunity will be deleted
-      const selectedId = opportunities[selectedOpportunityIndex]?.id;
-      const willDeleteSelected = idsToDelete.includes(selectedId);
-      // Get count of deleted before the selected one
-      const deletedBeforeCount = willDeleteSelected
-        ? 0
-        : idsToDelete.filter((id) => {
-            const oppIndex = opportunities.findIndex((o) => o.id === id);
-            return oppIndex !== -1 && oppIndex < selectedOpportunityIndex;
-          }).length;
-      // Delete from Supabase first
-      for (const id of idsToDelete) {
-        if (typeof id === "string" && id.includes("-")) {
-          try {
-            await applicationService.deleteApplication(id);
-            console.log(`Deleted from Supabase: ${id}`);
-          } catch (e) {
-            console.error(`Failed to delete ${id} from Supabase:`, e);
+
+    showConfirmation(
+      "Confirm Deletion",
+      `Are you sure you want to delete ${selectedJobIds.length} selected job(s)?`,
+      async () => {
+        try {
+          setIsProcessing(true);
+
+          const idsToDelete = [...selectedJobIds];
+          // Check if selected opportunity will be deleted
+          const selectedId = opportunities[selectedOpportunityIndex]?.id;
+          const willDeleteSelected = idsToDelete.includes(selectedId);
+
+          // Get count of deleted before the selected one
+          const deletedBeforeCount = willDeleteSelected
+            ? 0
+            : idsToDelete.filter((id) => {
+                const oppIndex = opportunities.findIndex((o) => o.id === id);
+                return oppIndex !== -1 && oppIndex < selectedOpportunityIndex;
+              }).length;
+
+          // Delete from Supabase first
+          for (const id of idsToDelete) {
+            if (typeof id === "string" && id.includes("-")) {
+              try {
+                await applicationService.deleteApplication(id);
+                console.log(`Deleted from Supabase: ${id}`);
+              } catch (e) {
+                console.error(`Failed to delete ${id} from Supabase:`, e);
+              }
+            }
           }
+
+          // Delete from state
+          idsToDelete.forEach((id) => {
+            dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
+            console.log(`Deleted from state: ${id}`);
+          });
+
+          // Reset selection
+          setSelectedJobIds([]);
+          setIsBatchSelectMode(false);
+
+          // Adjust selected index
+          if (willDeleteSelected) {
+            if (opportunities.length > idsToDelete.length) {
+              setSelectedOpportunityIndex(0);
+            }
+          } else if (deletedBeforeCount > 0) {
+            setSelectedOpportunityIndex(
+              Math.max(0, selectedOpportunityIndex - deletedBeforeCount)
+            );
+          }
+        } catch (error) {
+          console.error("Error batch deleting:", error);
+          alert("Failed to delete some opportunities. Please try again.");
+        } finally {
+          setIsProcessing(false);
+          deleteConfirmShowing.current = false;
         }
       }
-      // Delete from state
-      idsToDelete.forEach((id) => {
-        dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
-        console.log(`Deleted from state: ${id}`);
-      });
-      // Reset selection
-      setSelectedJobIds([]);
-      setIsBatchSelectMode(false);
-      // Adjust selected index
-      if (willDeleteSelected) {
-        if (opportunities.length > idsToDelete.length) {
-          setSelectedOpportunityIndex(0);
-        }
-      } else if (deletedBeforeCount > 0) {
-        setSelectedOpportunityIndex(
-          Math.max(0, selectedOpportunityIndex - deletedBeforeCount)
-        );
-      }
-    } catch (error) {
-      console.error("Error batch deleting:", error);
-      alert("Failed to delete some opportunities. Please try again.");
-    } finally {
-      setIsProcessing(false);
-      deleteConfirmShowing.current = false;
-    }
+    );
   }, [
     selectedJobIds,
     isProcessing,
@@ -406,6 +437,7 @@ export function OpportunitiesTab({
     applicationService,
     dispatch,
     setSelectedOpportunityIndex,
+    showConfirmation,
   ]);
 
   // Handle status updates specifically
@@ -797,6 +829,57 @@ or interview tips, use the context above to give personalized guidance.`,
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmDialog}
+        onOpenChange={(open) => {
+          setShowConfirmDialog(open);
+          if (!open) deleteConfirmShowing.current = false;
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{confirmDialogProps.title}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Warning</AlertTitle>
+              <AlertDescription>{confirmDialogProps.message}</AlertDescription>
+            </Alert>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowConfirmDialog(false);
+                deleteConfirmShowing.current = false;
+              }}
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                confirmDialogProps.onConfirm();
+                setShowConfirmDialog(false);
+              }}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="md:col-span-1">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Job Opportunities</h2>
@@ -809,6 +892,7 @@ or interview tips, use the context above to give personalized guidance.`,
           >
             <DialogTrigger asChild>
               <Button>
+                {" "}
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Job
               </Button>
@@ -826,7 +910,6 @@ or interview tips, use the context above to give personalized guidance.`,
                     : "Review and edit the extracted job details before adding"}
                 </DialogDescription>
               </DialogHeader>
-
               {extractionStep === "url" ? (
                 // Step 1: Job URL Input
                 <JobUrlInput
@@ -1114,7 +1197,6 @@ or interview tips, use the context above to give personalized guidance.`,
                   </div>
                 </>
               )}
-
               <DialogFooter>
                 {extractionStep === "url" ? (
                   <Button
