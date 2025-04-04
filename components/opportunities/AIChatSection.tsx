@@ -528,51 +528,6 @@ export const AIChatSection = ({
               </CardDescription>
             </div>
           </div>
-
-          {/* Job status indicator */}
-          {opportunity?.status && (
-            <div className="flex items-center space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center space-x-2">
-                      <Badge
-                        className={`${getStatusColor(
-                          opportunity.status,
-                          isDarkMode
-                        )} px-2 py-1`}
-                      >
-                        {formatStatus(opportunity.status)}
-                      </Badge>
-
-                      {daysSince > 0 && (
-                        <Badge
-                          variant="outline"
-                          className={
-                            isDarkMode ? "border-gray-600" : "border-gray-300"
-                          }
-                        >
-                          <Clock className="h-3 w-3 mr-1" />
-                          {daysSince} {daysSince === 1 ? "day" : "days"}
-                        </Badge>
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="text-sm">
-                      <p className="font-medium mb-1">
-                        Application Phase: {getStatusPhase(opportunity.status)}
-                      </p>
-                      <p className="text-xs">
-                        Created {daysSince} {daysSince === 1 ? "day" : "days"}{" "}
-                        ago
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          )}
         </div>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden flex flex-col p-0 relative">
