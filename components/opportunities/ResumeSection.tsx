@@ -5,23 +5,24 @@ import {
   CardContent,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "../../components/ui/card";
 import { Textarea } from "../../components/ui/textarea";
-import { Switch } from "../../components/ui/switch";
-import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
 import {
-  ThumbsUp,
-  Lock,
-  Unlock,
   Sparkles,
   Info,
-  RefreshCw,
   FileText,
   Clock,
+  Copy,
+  Save,
+  CheckCircle,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { Opportunity } from "../../context/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { MarkdownRenderer } from "../opportunities/MarkdownRenderer";
 
 interface ResumeSectionProps {
   opportunity: Opportunity;
@@ -29,74 +30,47 @@ interface ResumeSectionProps {
     id: string | number,
     updates: Partial<Opportunity>
   ) => void;
-  isMasterResumeFrozen: boolean;
-  setIsMasterResumeFrozen: (frozen: boolean) => void;
-  updateMasterResume: (resume: string) => void;
-  suggestions: string[];
   isDarkMode: boolean;
-  masterResume?: string; // Add master resume as an optional prop
+  masterResume?: string;
 }
 
 export const ResumeSection = ({
   opportunity,
   updateOpportunity,
-  isMasterResumeFrozen,
-  setIsMasterResumeFrozen,
-  updateMasterResume,
-  suggestions,
   isDarkMode,
   masterResume = "",
 }: ResumeSectionProps) => {
   const [showTailoredInfo, setShowTailoredInfo] = useState(false);
-  const [isRetailoringResume, setIsRetailoringResume] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isEdited, setIsEdited] = useState(false);
+  const [localResume, setLocalResume] = useState(opportunity.resume || "");
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Update local resume when opportunity changes
+  useEffect(() => {
+    setLocalResume(opportunity.resume || "");
+    setIsEdited(false);
+  }, [opportunity.id, opportunity.resume]);
 
   // Detect if this is likely a tailored resume (different from master resume)
   const isTailoredResume =
     opportunity.resume &&
     masterResume &&
     opportunity.resume !== masterResume &&
-    opportunity.resume.length > 100; // Ensure it's substantial
+    opportunity.resume.length > 100;
 
-  // Handle re-tailoring the resume
-  const handleRetailorResume = async () => {
-    if (!opportunity.jobDescription || !masterResume) return;
+  // Handle saving the resume changes
+  const handleSaveResume = () => {
+    updateOpportunity(opportunity.id, { resume: localResume });
+    setIsEdited(false);
+  };
 
-    setIsRetailoringResume(true);
-
-    try {
-      // Call the API to re-tailor the resume
-      const response = await fetch("/api/openai-resume", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          resume: masterResume,
-          jobDescription: opportunity.jobDescription,
-          position: opportunity.position,
-          company: opportunity.company,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.content && typeof data.content === "string") {
-        // Update the opportunity with the new tailored resume
-        updateOpportunity(opportunity.id, { resume: data.content });
-      } else {
-        throw new Error("Invalid response from AI service");
-      }
-    } catch (error) {
-      console.error("Error re-tailoring resume:", error);
-      alert("Failed to re-tailor resume. Please try again later.");
-    } finally {
-      setIsRetailoringResume(false);
-    }
+  // Copy resume to clipboard
+  const handleCopyResume = () => {
+    navigator.clipboard.writeText(localResume);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const resumeModificationTime =
@@ -104,17 +78,18 @@ export const ResumeSection = ({
   const formattedTime = new Date(resumeModificationTime).toLocaleString();
 
   return (
-    <Card>
+    <Card className={`${isDarkMode ? "border-gray-700" : ""}`}>
       <CardHeader className="py-3">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div className="flex flex-col">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <FileText className="h-4 w-4 mr-1" />
               Resume for This Application
             </CardTitle>
             {isTailoredResume && (
               <CardDescription className="flex items-center text-xs mt-1">
                 <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-                AI-Tailored for this job
+                Customized for this job
                 <Button
                   variant="link"
                   size="sm"
@@ -126,52 +101,31 @@ export const ResumeSection = ({
               </CardDescription>
             )}
           </div>
-          <div className="flex items-center space-x-2">
-            {isTailoredResume && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs h-8"
-                onClick={handleRetailorResume}
-                disabled={isRetailoringResume || !opportunity.jobDescription}
-              >
-                {isRetailoringResume ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                    Re-tailoring...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Re-tailor
-                  </>
-                )}
-              </Button>
-            )}
-            <div className="flex items-center space-x-1">
-              <Switch
-                checked={isMasterResumeFrozen}
-                onCheckedChange={setIsMasterResumeFrozen}
-                id="freeze-resume"
-              />
-              <Label htmlFor="freeze-resume" className="text-xs">
-                {isMasterResumeFrozen ? (
-                  <div className="flex items-center">
-                    <Lock className="h-3 w-3 mr-1" />
-                    <span>Frozen</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <Unlock className="h-3 w-3 mr-1" />
-                    <span>Synced with Master</span>
-                  </div>
-                )}
-              </Label>
-            </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setIsExpanded(!isExpanded)}
+              title={isExpanded ? "Collapse" : "Expand"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="h-3 w-3" />
+              ) : (
+                <Maximize2 className="h-3 w-3" />
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-8"
+              onClick={() => setIsPreviewMode(!isPreviewMode)}
+            >
+              {isPreviewMode ? "Edit" : "Preview"}
+            </Button>
           </div>
         </div>
       </CardHeader>
-
       {/* Tailored resume info box */}
       <AnimatePresence>
         {showTailoredInfo && isTailoredResume && (
@@ -189,12 +143,12 @@ export const ResumeSection = ({
               <Info className="h-5 w-5 mr-2 flex-shrink-0 text-blue-500" />
               <div>
                 <p className="mb-1">
-                  This resume has been optimized by AI for this specific job
-                  opportunity based on the job description.
+                  This resume has been customized for this specific job
+                  opportunity.
                 </p>
                 <p className="text-xs flex items-center mt-2">
                   <Clock className="h-3 w-3 mr-1" />
-                  Last tailored on {formattedTime}
+                  Last modified on {formattedTime}
                 </p>
                 {masterResume && (
                   <div className="mt-2">
@@ -206,11 +160,12 @@ export const ResumeSection = ({
                           ? "border-blue-700 text-blue-300 hover:bg-blue-900/30"
                           : "border-blue-200 text-blue-700 hover:bg-blue-100"
                       }`}
-                      onClick={() =>
+                      onClick={() => {
                         updateOpportunity(opportunity.id, {
                           resume: masterResume,
-                        })
-                      }
+                        });
+                        setLocalResume(masterResume);
+                      }}
                     >
                       <FileText className="h-3 w-3 mr-1" />
                       Revert to Master Resume
@@ -222,52 +177,84 @@ export const ResumeSection = ({
           </motion.div>
         )}
       </AnimatePresence>
-
       <CardContent className="py-2">
-        <Textarea
-          value={opportunity.resume || ""}
-          onChange={(e) => {
-            const newResume = e.target.value;
-            updateOpportunity(opportunity.id, { resume: newResume });
-            // If not frozen, also update the master resume
-            if (!isMasterResumeFrozen) {
-              updateMasterResume(newResume);
-            }
-          }}
-          className="font-mono whitespace-pre-wrap"
-          rows={15}
-          placeholder="No resume content. You can paste a resume here or create a master resume in your profile."
-        />
-
-        <div className="mt-4">
-          <h4 className="text-sm font-medium mb-2">AI Suggestions</h4>
-          <div className="space-y-2">
-            {suggestions.length > 0 ? (
-              suggestions.map((suggestion, index) => (
-                <div
-                  key={index}
-                  className={`flex items-start space-x-2 p-2 rounded ${
-                    isDarkMode
-                      ? "bg-blue-900/20 text-blue-300"
-                      : "bg-blue-50 text-blue-700"
+        {isPreviewMode ? (
+          <div
+            className={`p-4 border rounded-md ${
+              isDarkMode ? "border-gray-700" : "border-gray-200"
+            } min-h-[300px] ${
+              isExpanded ? "h-auto" : "max-h-[400px] overflow-y-auto"
+            }`}
+          >
+            {localResume ? (
+              <MarkdownRenderer content={localResume} isDarkMode={isDarkMode} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-center p-4">
+                <p
+                  className={`text-sm italic ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
-                  <ThumbsUp className="h-4 w-4 text-blue-500 mt-1 flex-shrink-0" />
-                  <p className="text-sm">{suggestion}</p>
-                </div>
-              ))
-            ) : (
-              <p
-                className={`text-sm italic ${
-                  isDarkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                Loading suggestions...
-              </p>
+                  No resume content. Switch to Edit mode to add content.
+                </p>
+              </div>
             )}
           </div>
-        </div>
+        ) : (
+          <Textarea
+            value={localResume}
+            onChange={(e) => {
+              setLocalResume(e.target.value);
+              setIsEdited(true);
+            }}
+            className={`font-mono whitespace-pre-wrap ${
+              isDarkMode ? "bg-gray-800 border-gray-700" : ""
+            }`}
+            rows={isExpanded ? 30 : 15}
+            placeholder="No resume content. You can paste a resume here or create a master resume in your profile."
+          />
+        )}
       </CardContent>
+      <CardFooter
+        className={`flex flex-wrap justify-between gap-2 pt-2 pb-4 ${
+          isDarkMode ? "border-gray-700" : ""
+        }`}
+      >
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyResume}
+            className={`${
+              isDarkMode ? "border-gray-700 hover:bg-gray-700" : ""
+            }`}
+            disabled={!localResume}
+          >
+            {isCopied ? (
+              <>
+                <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4 mr-1" />
+                Copy
+              </>
+            )}
+          </Button>
+        </div>
+        {isEdited && !isPreviewMode && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleSaveResume}
+            className={`${isDarkMode ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+          >
+            <Save className="h-4 w-4 mr-1" />
+            Save Changes
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 };

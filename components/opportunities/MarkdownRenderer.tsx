@@ -21,7 +21,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 }) => {
   // Parse the markdown content into a hierarchical structure
   const parsedContent = parseMarkdown(content);
-
   return (
     <div
       className={`w-full overflow-hidden ${
@@ -135,7 +134,6 @@ const RenderNumberedListItem: React.FC<{
   isDarkMode: boolean;
 }> = ({ item, itemIndex, blockIndex, isDarkMode }) => {
   const animationDelay = itemIndex * 0.05 + blockIndex * 0.1;
-
   return (
     <motion.li
       initial={{ opacity: 0, x: -10 }}
@@ -150,7 +148,6 @@ const RenderNumberedListItem: React.FC<{
       >
         {itemIndex + 1}
       </span>
-
       <div className="flex-grow">
         <div
           className={
@@ -161,7 +158,6 @@ const RenderNumberedListItem: React.FC<{
         >
           <FormattedText text={item.content} isDarkMode={isDarkMode} />
         </div>
-
         {item.children && item.children.length > 0 && (
           <ul className="mt-2 space-y-1 pl-4">
             {item.children.map((child, childIndex) => (
@@ -190,7 +186,6 @@ const RenderBulletedListItem: React.FC<{
   isDarkMode: boolean;
 }> = ({ item, itemIndex, blockIndex, isDarkMode }) => {
   const animationDelay = itemIndex * 0.05 + blockIndex * 0.1;
-
   return (
     <motion.li
       initial={{ opacity: 0, x: -10 }}
@@ -205,12 +200,10 @@ const RenderBulletedListItem: React.FC<{
       >
         <GetBulletIcon item={item} index={itemIndex} />
       </span>
-
       <div className="flex-grow">
         <div className={item.isBold ? "font-medium" : ""}>
           <FormattedText text={item.content} isDarkMode={isDarkMode} />
         </div>
-
         {item.children && item.children.length > 0 && (
           <ul className="mt-2 space-y-1 pl-4">
             {item.children.map((child, childIndex) => (
@@ -242,7 +235,6 @@ const RenderNestedListItem: React.FC<{
 }> = ({ item, itemIndex, parentIndex, blockIndex, nesting, isDarkMode }) => {
   const animationDelay =
     parentIndex * 0.05 + itemIndex * 0.03 + blockIndex * 0.1 + nesting * 0.1;
-
   return (
     <motion.li
       initial={{ opacity: 0, x: -5 }}
@@ -257,12 +249,10 @@ const RenderNestedListItem: React.FC<{
       >
         {nesting === 1 ? "•" : "-"}
       </span>
-
       <div className="flex-grow">
         <div className={item.isBold ? "font-medium" : ""}>
           <FormattedText text={item.content} isDarkMode={isDarkMode} />
         </div>
-
         {item.children && item.children.length > 0 && (
           <ul className="mt-1 space-y-1 pl-4">
             {item.children.map((child, childIndex) => (
@@ -289,14 +279,12 @@ const GetBulletIcon: React.FC<{ item: ListItem; index: number }> = ({
   index,
 }) => {
   const content = item.content.toLowerCase();
-
   if (content.includes("skill")) return <ListChecks size={16} />;
   if (content.includes("experience")) return <BookOpen size={16} />;
   if (content.includes("qualification")) return <Target size={16} />;
   if (content.includes("gap") || content.includes("growth"))
     return <Lightbulb size={16} />;
   if (content.includes("tailor")) return <ArrowRight size={16} />;
-
   return <Check size={16} />;
 };
 
@@ -307,7 +295,6 @@ const FormattedText: React.FC<{ text: string; isDarkMode: boolean }> = ({
 }) => {
   // Split by bold markers
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
-
   return (
     <>
       {parts.map((part, index) => {
@@ -327,7 +314,6 @@ const FormattedText: React.FC<{ text: string; isDarkMode: boolean }> = ({
 function parseMarkdown(markdown: string): ContentBlock[] {
   const lines = markdown.split("\n");
   const blocks: ContentBlock[] = [];
-
   let currentBlock: ContentBlock | null = null;
   let currentListItem: ListItem | null = null;
   let listStack: ListItem[][] = [];
@@ -350,7 +336,6 @@ function parseMarkdown(markdown: string): ContentBlock[] {
     // Handle headings
     if (line.startsWith("#")) {
       if (currentBlock) blocks.push(currentBlock);
-
       const level = line.match(/^#+/)?.[0].length || 1;
       currentBlock = {
         type: "heading",
@@ -369,7 +354,6 @@ function parseMarkdown(markdown: string): ContentBlock[] {
         blocks.push(currentBlock);
         currentBlock = null;
       }
-
       if (!currentBlock) {
         currentBlock = {
           type: "numbered-list",
@@ -380,7 +364,6 @@ function parseMarkdown(markdown: string): ContentBlock[] {
       // Check if this item has a bold title
       const content = numberedMatch[2];
       const boldTitleMatch = content.match(/^\*\*([^*]+)\*\*:?\s*(.*)$/);
-
       if (boldTitleMatch) {
         // Split into title and content
         currentListItem = {
@@ -400,7 +383,6 @@ function parseMarkdown(markdown: string): ContentBlock[] {
       // Reset nesting level for new top-level item
       listStack = [[currentListItem]];
       indentationStack = [indentation];
-
       currentBlock.items?.push(currentListItem);
       continue;
     }
@@ -446,17 +428,30 @@ function parseMarkdown(markdown: string): ContentBlock[] {
       };
 
       // Update indentation and list stacks
-      if (nestingLevel >= listStack.length) {
-        // Add as a child to the previous item
-        const parentList = listStack[listStack.length - 1];
-        const parentItem = parentList[parentList.length - 1];
-
-        if (!parentItem.children) parentItem.children = [];
-        parentItem.children.push(newItem);
-
-        // Add a new level to the stack
-        listStack.push([newItem]);
-        indentationStack.push(indentation);
+      if (nestingLevel >= listStack.length || listStack.length === 0) {
+        // Safety check: ensure we have a valid list stack
+        if (listStack.length === 0) {
+          // Initialize the stack if it's empty
+          listStack = [[newItem]];
+          indentationStack = [indentation];
+          currentBlock.items?.push(newItem);
+        } else {
+          // Add as a child to the previous item
+          const parentList = listStack[listStack.length - 1];
+          if (parentList && parentList.length > 0) {
+            const parentItem = parentList[parentList.length - 1];
+            if (!parentItem.children) parentItem.children = [];
+            parentItem.children.push(newItem);
+            // Add a new level to the stack
+            listStack.push([newItem]);
+            indentationStack.push(indentation);
+          } else {
+            // Fallback if parentList is invalid
+            currentBlock.items?.push(newItem);
+            listStack = [[newItem]];
+            indentationStack = [indentation];
+          }
+        }
       } else {
         // Adjust stacks for the current nesting level
         listStack = listStack.slice(0, nestingLevel + 1);
@@ -471,17 +466,22 @@ function parseMarkdown(markdown: string): ContentBlock[] {
         } else {
           // Add to parent at current nesting level
           const parentList = listStack[nestingLevel - 1];
-          const parentItem = parentList[parentList.length - 1];
-
-          if (!parentItem.children) parentItem.children = [];
-          parentItem.children.push(newItem);
-
-          // Update the current level in the stack
-          listStack[nestingLevel] = [newItem];
-          indentationStack[nestingLevel] = indentation;
+          // Add safety check
+          if (parentList && parentList.length > 0) {
+            const parentItem = parentList[parentList.length - 1];
+            if (!parentItem.children) parentItem.children = [];
+            parentItem.children.push(newItem);
+            // Update the current level in the stack
+            listStack[nestingLevel] = [newItem];
+            indentationStack[nestingLevel] = indentation;
+          } else {
+            // Fallback if parentList is invalid
+            currentBlock.items?.push(newItem);
+            listStack[0] = [newItem];
+            indentationStack[0] = indentation;
+          }
         }
       }
-
       continue;
     }
 
@@ -497,7 +497,6 @@ function parseMarkdown(markdown: string): ContentBlock[] {
 
   // Add the final block if there is one
   if (currentBlock) blocks.push(currentBlock);
-
   return blocks;
 }
 

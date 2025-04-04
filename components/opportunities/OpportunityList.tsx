@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import {
   Card,
   CardContent,
@@ -85,10 +86,8 @@ export const OpportunityList = ({
       opp.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
       opp.jobDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (opp.notes && opp.notes.toLowerCase().includes(searchTerm.toLowerCase()));
-
     // Status filtering
     const matchesStatus = statusFilter === "All" || opp.status === statusFilter;
-
     // Date filtering
     let matchesDate = true;
     if (dateFilter !== "All") {
@@ -112,7 +111,6 @@ export const OpportunityList = ({
           break;
       }
     }
-
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -155,21 +153,6 @@ export const OpportunityList = ({
         setSelectedOpportunityIndex(originalIndex);
       } else {
         setSelectedOpportunityIndex(index);
-      }
-    }
-  };
-
-  const handleDeleteItem = (e: React.MouseEvent, id: string | number) => {
-    e.stopPropagation(); // Prevent card selection
-    if (window.confirm("Are you sure you want to delete this opportunity?")) {
-      try {
-        dispatch({
-          type: "DELETE_OPPORTUNITY",
-          payload: id,
-        });
-      } catch (error) {
-        console.error("Error deleting opportunity:", error);
-        alert("Failed to delete opportunity. Please try again.");
       }
     }
   };
@@ -628,28 +611,6 @@ export const OpportunityList = ({
                                 })
                               : "Never"}
                           </p>
-                          {isBatchSelectMode && (
-                            <button
-                              onClick={(e) => handleDeleteItem(e, opp.id)}
-                              className="p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900 text-red-500 dark:text-red-400 transition-colors"
-                              title="Delete opportunity"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
-                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -718,28 +679,6 @@ export const OpportunityList = ({
                         </span>
                       </div>
                     </div>
-                    {isBatchSelectMode && (
-                      <button
-                        onClick={(e) => handleDeleteItem(e, opp.id)}
-                        className="ml-2 p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900 text-red-500 dark:text-red-400 transition-colors"
-                        title="Delete opportunity"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    )}
                   </div>
                 );
               }
