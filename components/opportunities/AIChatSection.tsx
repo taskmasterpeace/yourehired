@@ -8,6 +8,7 @@ import {
   CardContent,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +20,8 @@ import {
   ArrowUp,
   Loader2,
   ChevronDown,
+  Clock,
+  BarChart,
 } from "lucide-react";
 import {
   Collapsible,
@@ -28,6 +31,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MarkdownRenderer } from "@/components/opportunities/MarkdownRenderer";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Opportunity } from "@/context/types";
 import { useAppState } from "@/context/context";
 import { useAuth } from "@/context/auth-context";
@@ -44,6 +54,89 @@ interface AIChatSectionProps {
   resume?: string;
   assistantAvatar?: string | null;
 }
+
+// Helper function to get status phase
+const getStatusPhase = (status: string): string => {
+  // Make sure we're comparing uppercase status values
+  const statusUpper = status.toUpperCase();
+
+  const phases = {
+    "Initial Contact": [
+      "BOOKMARKED",
+      "INTERESTED",
+      "RECRUITER_CONTACT",
+      "NETWORKING",
+    ],
+    Application: [
+      "PREPARING_APPLICATION",
+      "APPLIED",
+      "APPLICATION_ACKNOWLEDGED",
+    ],
+    "Interview Process": [
+      "SCREENING",
+      "TECHNICAL_ASSESSMENT",
+      "FIRST_INTERVIEW",
+      "SECOND_INTERVIEW",
+      "FINAL_INTERVIEW",
+      "REFERENCE_CHECK",
+    ],
+    Decision: [
+      "NEGOTIATING",
+      "OFFER_RECEIVED",
+      "OFFER_ACCEPTED",
+      "OFFER_DECLINED",
+      "REJECTED",
+      "WITHDRAWN",
+      "POSITION_FILLED",
+      "POSITION_CANCELLED",
+    ],
+    "Follow-up": ["FOLLOWING_UP", "WAITING"],
+  };
+
+  for (const [phase, statuses] of Object.entries(phases)) {
+    if (statuses.includes(statusUpper)) {
+      return phase;
+    }
+  }
+  return "Unknown";
+};
+
+// Helper function to format status for display
+const formatStatus = (status: string): string => {
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
+// Get status color based on phase
+const getStatusColor = (status: string, isDarkMode: boolean): string => {
+  const phase = getStatusPhase(status);
+
+  if (phase === "Initial Contact") {
+    return isDarkMode
+      ? "bg-blue-900 text-blue-100"
+      : "bg-blue-100 text-blue-800";
+  } else if (phase === "Application") {
+    return isDarkMode
+      ? "bg-purple-900 text-purple-100"
+      : "bg-purple-100 text-purple-800";
+  } else if (phase === "Interview Process") {
+    return isDarkMode
+      ? "bg-amber-900 text-amber-100"
+      : "bg-amber-100 text-amber-800";
+  } else if (phase === "Decision") {
+    return isDarkMode
+      ? "bg-green-900 text-green-100"
+      : "bg-green-100 text-green-800";
+  } else if (phase === "Follow-up") {
+    return isDarkMode
+      ? "bg-gray-800 text-gray-100"
+      : "bg-gray-200 text-gray-800";
+  }
+
+  return isDarkMode ? "bg-gray-700 text-gray-100" : "bg-gray-100 text-gray-800";
+};
 
 export const AIChatSection = ({
   opportunity,
@@ -69,39 +162,52 @@ export const AIChatSection = ({
   const { masterResume } = state;
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
 
+  // Calculate days since opportunity was created
+  const daysSince = opportunity?.appliedDate
+    ? Math.floor(
+        (Date.now() - new Date(opportunity.appliedDate).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+    : 0;
+
   // Create a context message that contains all the job and resume information
   const createContextMessage = useCallback(() => {
     if (!opportunity) return null;
     let contextText = `## Job Information\n`;
     contextText += `Company: ${opportunity.company || "Unknown"}\n`;
     contextText += `Position: ${opportunity.position || "Unknown"}\n`;
+    contextText += `Status: ${opportunity.status || "INTERESTED"}\n`;
+    contextText += `Days Since Created: ${daysSince}\n`;
+
     if (opportunity.location) {
       contextText += `Location: ${opportunity.location}\n`;
     }
     if (opportunity.salary) {
       contextText += `Salary: ${opportunity.salary}\n`;
     }
-    if (opportunity.status) {
-      contextText += `Current Status: ${opportunity.status}\n`;
-    }
+
     contextText += `\n## Job Description\n${
       opportunity.jobDescription || "No job description provided."
     }\n`;
+
     if (opportunity.keywords && opportunity.keywords.length > 0) {
       contextText += `\n## Keywords\n${opportunity.keywords.join(", ")}\n`;
     }
+
     if (opportunity.notes) {
       contextText += `\n## Notes\n${opportunity.notes}\n`;
     }
+
     if (resume) {
       contextText += `\n## My Resume\n${resume}\n`;
     }
+
     return {
       id: "context",
       role: "system" as const,
       content: contextText,
     };
-  }, [opportunity, resume]);
+  }, [opportunity, resume, daysSince]);
 
   // Get the context message
   const contextMessage = createContextMessage();
@@ -144,6 +250,7 @@ export const AIChatSection = ({
             position: opportunity.position,
             jobDescription: opportunity.jobDescription,
             status: opportunity.status,
+            createdAt: opportunity.appliedDate,
             resume: resume,
             masterResume: masterResume,
           }
@@ -154,13 +261,10 @@ export const AIChatSection = ({
       if (onAddMessage && opportunity) {
         onAddMessage(opportunity.id, message.content, "assistant");
       }
-
       // Clear the input field
       setInput("");
-
       // Smooth scroll to bottom with a slight delay for better UX
       setTimeout(scrollToBottom, 100);
-
       // Check if we need to show the continue indicator
       setTimeout(checkContinueIndicator, 300);
     },
@@ -172,13 +276,44 @@ export const AIChatSection = ({
   // Load AI suggestions when the opportunity changes
   useEffect(() => {
     if (!opportunity) return;
-    setSuggestions([
-      "How do my skills match this job description?",
-      "What should I highlight in my application?",
-      "Help me prepare for an interview for this position",
-      "What questions should I ask the interviewer?",
-    ]);
-  }, [opportunity, resume]);
+
+    setIsLoadingPrompts(true);
+
+    fetch("/api/openai-chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        body: {
+          action: "suggestions",
+          opportunityContext: {
+            status: opportunity.status,
+            position: opportunity.position,
+            company: opportunity.company,
+          },
+        },
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.suggestions && Array.isArray(data.suggestions)) {
+          setSuggestions(data.suggestions);
+        }
+        setIsLoadingPrompts(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load suggestions:", err);
+        setIsLoadingPrompts(false);
+        // Fallback suggestions
+        setSuggestions([
+          "How do my skills match this job description?",
+          "What should I highlight in my application?",
+          "Help me prepare for an interview for this position",
+          "What questions should I ask the interviewer?",
+        ]);
+      });
+  }, [opportunity]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -188,7 +323,6 @@ export const AIChatSection = ({
     } else if (displayMessages.length > 0) {
       // If not loading and we have messages, scroll to bottom with a delay
       setTimeout(scrollToBottom, 100);
-
       // Check if there's more content to see
       setTimeout(checkContinueIndicator, 300);
     }
@@ -207,10 +341,8 @@ export const AIChatSection = ({
   // Check if there's more content below the viewport with improved logic
   const checkContinueIndicator = useCallback(() => {
     if (!scrollAreaRef.current) return;
-
     const scrollArea = scrollAreaRef.current as unknown as HTMLDivElement;
     if (!scrollArea) return;
-
     const scrollTop = scrollArea.scrollTop || 0;
     const scrollHeight = scrollArea.scrollHeight || 0;
     const clientHeight = scrollArea.clientHeight || 0;
@@ -276,11 +408,13 @@ export const AIChatSection = ({
   const handleSendSuggestion = useCallback(
     (text: string) => {
       if (!text.trim() || !opportunity) return;
+
       // Use the append method from useChat
       append({
         content: text,
         role: "user",
       });
+
       // Also notify parent component if needed
       if (onAddMessage && opportunity) {
         onAddMessage(opportunity.id, text, "user");
@@ -354,44 +488,91 @@ export const AIChatSection = ({
       }`}
     >
       <CardHeader className="py-3 space-y-1">
-        <div className="flex items-center">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Avatar
-              className={`h-10 w-10 mr-2 bg-blue-600 ${
-                isDarkMode ? "text-white" : ""
-              }`}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
-              <AvatarFallback>AI</AvatarFallback>
-              {assistantAvatar && (
-                <AvatarImage
-                  src={assistantAvatar}
-                  alt="AI Assistant"
-                  className="object-cover"
-                  onError={(e) => {
-                    console.error("Failed to load assistant avatar:", e);
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = "none";
-                  }}
-                />
-              )}
-            </Avatar>
-          </motion.div>
-          <div>
-            <CardTitle className="text-base font-medium">
-              AI Career Assistant
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Ask about{" "}
-              {opportunity
-                ? `${opportunity.position} at ${opportunity.company}`
-                : "the job"}
-              , get resume advice, or prepare for interviews
-            </CardDescription>
+              <Avatar
+                className={`h-10 w-10 mr-2 bg-blue-600 ${
+                  isDarkMode ? "text-white" : ""
+                }`}
+              >
+                <AvatarFallback>AI</AvatarFallback>
+                {assistantAvatar && (
+                  <AvatarImage
+                    src={assistantAvatar}
+                    alt="AI Assistant"
+                    className="object-cover"
+                    onError={(e) => {
+                      console.error("Failed to load assistant avatar:", e);
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                    }}
+                  />
+                )}
+              </Avatar>
+            </motion.div>
+            <div>
+              <CardTitle className="text-base font-medium">
+                AI Career Assistant
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Ask about{" "}
+                {opportunity
+                  ? `${opportunity.position} at ${opportunity.company}`
+                  : "the job"}
+                , get resume advice, or prepare for interviews
+              </CardDescription>
+            </div>
           </div>
+
+          {/* Job status indicator */}
+          {opportunity?.status && (
+            <div className="flex items-center space-x-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center space-x-2">
+                      <Badge
+                        className={`${getStatusColor(
+                          opportunity.status,
+                          isDarkMode
+                        )} px-2 py-1`}
+                      >
+                        {formatStatus(opportunity.status)}
+                      </Badge>
+
+                      {daysSince > 0 && (
+                        <Badge
+                          variant="outline"
+                          className={
+                            isDarkMode ? "border-gray-600" : "border-gray-300"
+                          }
+                        >
+                          <Clock className="h-3 w-3 mr-1" />
+                          {daysSince} {daysSince === 1 ? "day" : "days"}
+                        </Badge>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-sm">
+                      <p className="font-medium mb-1">
+                        Application Phase: {getStatusPhase(opportunity.status)}
+                      </p>
+                      <p className="text-xs">
+                        Created {daysSince} {daysSince === 1 ? "day" : "days"}{" "}
+                        ago
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden flex flex-col p-0 relative">
@@ -659,10 +840,21 @@ export const AIChatSection = ({
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                {opportunity
-                  ? `Get help with your application for ${opportunity.position} at ${opportunity.company}`
-                  : "Get help with your job application, resume, or interview preparation"}
+                {opportunity ? (
+                  opportunity.status ? (
+                    <span>
+                      Get personalized help with your{" "}
+                      {formatStatus(opportunity.status)} phase for{" "}
+                      {opportunity.position} at {opportunity.company}
+                    </span>
+                  ) : (
+                    `Get help with your application for ${opportunity.position} at ${opportunity.company}`
+                  )
+                ) : (
+                  "Get help with your job application, resume, or interview preparation"
+                )}
               </motion.p>
+
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -740,7 +932,6 @@ export const AIChatSection = ({
             </motion.div>
           )}
         </ScrollArea>
-
         {/* Continue reading indicator at the bottom center of chat area */}
         <AnimatePresence>
           {showContinueIndicator && displayMessages.length > 0 && (
@@ -767,7 +958,6 @@ export const AIChatSection = ({
             </motion.div>
           )}
         </AnimatePresence>
-
         {/* Show scroll to bottom button when needed */}
         <AnimatePresence>
           {showScrollButton && (
@@ -794,7 +984,6 @@ export const AIChatSection = ({
             </motion.div>
           )}
         </AnimatePresence>
-
         {/* Add prompt suggestion section for when there are already messages */}
         {displayMessages.length > 0 &&
           suggestions &&
