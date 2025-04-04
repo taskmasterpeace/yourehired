@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     console.log("Using background prompt:", prompt);
 
-    const width = 835.34;
+    const width = 835;
     const height = 400;
 
     // Run the image generation through Replicate with Flux Schnell model
@@ -37,44 +37,41 @@ export async function POST(request: Request) {
     console.log("Background raw output:", output);
 
     // Process output
-    if (output && typeof output === "string") {
+    let imageUrl;
+    if (typeof output === "string") {
       // For direct string output
-      const imageUrl = output;
-      console.log("Generated background URL:", imageUrl);
-      try {
-        new URL(imageUrl); // Will throw if not a valid URL
-        return NextResponse.json({ success: true, imageUrl: imageUrl });
-      } catch (e) {
-        console.error("Invalid background URL:", imageUrl);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Invalid URL returned from image generation service",
-          },
-          { status: 500 }
-        );
-      }
+      imageUrl = output;
     } else if (Array.isArray(output) && output.length > 0) {
       // For array output
-      const imageUrl = String(output[0]);
-      console.log("Generated background URL (from array):", imageUrl);
-      try {
-        new URL(imageUrl); // Will throw if not a valid URL
-        return NextResponse.json({ success: true, imageUrl: imageUrl });
-      } catch (e) {
-        console.error("Invalid background URL:", imageUrl);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Invalid URL returned from image generation service",
-          },
-          { status: 500 }
-        );
-      }
+      imageUrl = String(output[0]);
     } else {
       console.error("No background image was generated", output);
       return NextResponse.json(
         { success: false, error: "No background image was generated" },
+        { status: 500 }
+      );
+    }
+
+    console.log("Generated background URL:", imageUrl);
+
+    // Verify the URL and image accessibility
+    try {
+      const urlObj = new URL(imageUrl);
+
+      // Verify URL is accessible via a HEAD request
+      const response = await fetch(imageUrl, { method: "HEAD" });
+      if (!response.ok) {
+        throw new Error(`URL returned status ${response.status}`);
+      }
+
+      return NextResponse.json({ success: true, imageUrl: imageUrl });
+    } catch (e) {
+      console.error("Invalid or inaccessible background URL:", imageUrl, e);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid URL returned from image generation service",
+        },
         { status: 500 }
       );
     }

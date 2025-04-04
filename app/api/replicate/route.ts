@@ -11,41 +11,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log("Request body:", body);
-    const { jobTitle, role, isAssistant, jobDescription } = body;
+    const { jobTitle, jobDescription } = body;
 
-    // Create a dynamic prompt based on the job information
-    let prompt =
-      "Generate a professional close-up headshot portrait of a person";
-    if (jobTitle) {
-      prompt += ` working as ${
-        isAssistant ? "an AI assistant for" : ""
-      } ${jobTitle}`;
-    }
+    // Create a prompt that includes job title and key elements from the description
+    // Limit description length for the prompt
+    const shortDescription = jobDescription
+      ? jobDescription.substring(0, 100) + "..."
+      : "";
 
-    // Add role-specific details
-    if (role === "technical") {
-      prompt += `, dressed in smart casual attire, with ${
-        isAssistant ? "neat" : "short"
-      } hair ${
-        isAssistant ? "" : "and glasses"
-      }, sitting against a softly blurred office background. The image conveys intelligence and focus, with a serious yet approachable expression, and a slight smile that shows confidence. Professional quality, realistic photo, high-resolution, detailed facial features.`;
-    } else if (role === "creative") {
-      prompt += `, with ${
-        isAssistant ? "stylish" : "long, wavy"
-      } hair, dressed in a casual, artistic style, such as a ${
-        isAssistant ? "colorful blouse" : "graphic tee and a cardigan"
-      }, with a soft, blurred background of an office with abstract art on the walls. The individual has a friendly and inviting smile, with warm lighting emphasizing their expression. Professional quality, realistic photo, high-resolution, detailed facial features.`;
-    } else if (role === "customer_service") {
-      prompt += `, with a neat, polished appearance, wearing a ${
-        isAssistant ? "professional outfit" : "button-up shirt"
-      } and a professional but approachable look. The background is blurred with a light, neutral tone, showing a minimalistic office setup. The person has a calm and empathetic expression, with soft lighting that creates a welcoming and professional atmosphere. Professional quality, realistic photo, high-resolution, detailed facial features.`;
-    } else {
-      // Default professional look
-      prompt += `, dressed appropriately for the job, presenting a confident, approachable demeanor. The background should be blurry, with the focus solely on the individual's face. Professional quality, realistic photo, high-resolution, detailed facial features.`;
-    }
-
-    // Focus on just face for the avatar to work better
-    prompt += " Close-up portrait, focus on face only.";
+    const prompt = `Generate a close-up headshot portrait of an assistant for a ${jobTitle} position. The assistant should look professional, approachable, and trustworthy - designed to help candidates with this job: ${shortDescription}. Give them a friendly, helpful expression with a slight smile. The background should be softly blurred. Professional quality, realistic photo with detailed facial features.`;
 
     console.log("Using prompt:", prompt);
 
@@ -66,7 +40,6 @@ export async function POST(request: Request) {
 
     // Process the output - Flux Schnell may return a string instead of an array
     let imageUrl;
-
     if (typeof output === "string") {
       // Direct string output
       imageUrl = output;
@@ -86,10 +59,9 @@ export async function POST(request: Request) {
 
     console.log("Generated image URL:", imageUrl);
 
-    // Make sure it's a valid URL
+    // Simple URL validation
     try {
-      new URL(imageUrl); // Will throw if not a valid URL
-      console.log("URL is valid");
+      new URL(imageUrl);
       return NextResponse.json({ success: true, imageUrl: imageUrl });
     } catch (e) {
       console.error("Invalid URL returned from Replicate:", imageUrl);

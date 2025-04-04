@@ -42,7 +42,7 @@ interface AIChatSectionProps {
   ) => void;
   isDarkMode: boolean;
   resume?: string;
-  assistantAvatar?: string;
+  assistantAvatar?: string | null;
 }
 
 export const AIChatSection = ({

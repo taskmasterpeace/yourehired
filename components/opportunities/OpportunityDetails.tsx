@@ -8,7 +8,6 @@ import { OpportunityHeader } from "./OpportunityHeader";
 import { JobDetailsSection } from "./JobDetailsSection";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NotesSection } from "./NotesSection";
-import { TagsSection } from "./TagsSection";
 import { KeywordsSection } from "./KeywordsSection";
 import { ResumeSection } from "./ResumeSection";
 import { AIChatSection } from "./AIChatSection";
@@ -45,7 +44,6 @@ export const OpportunityDetails = ({
   isLoadingPrompts = false,
   dispatch,
 }: OpportunityDetailsProps) => {
-  const [userAvatar, setUserAvatar] = useState<string>("");
   const [assistantAvatar, setAssistantAvatar] = useState<string>("");
   const [workspaceImage, setWorkspaceImage] = useState<string>("");
   const [isGeneratingAvatars, setIsGeneratingAvatars] =
@@ -54,61 +52,29 @@ export const OpportunityDetails = ({
     useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("details");
 
-  // Determine job role based on keywords in job description or title
-  const determineJobRole = (job?: Opportunity): string => {
-    if (!job) return "default";
-    const text = `${job.position} ${job.jobDescription} ${job.keywords?.join(
-      " "
-    )}`.toLowerCase();
-    // Check for technical keywords
-    if (
-      /\b(software|developer|engineer|programmer|coding|technical|it|data|analyst|science)\b/.test(
-        text
-      )
-    ) {
-      return "technical";
-    }
-    // Check for creative keywords
-    if (
-      /\b(design|creative|artist|writer|content|marketing|media|graphic|ui|ux)\b/.test(
-        text
-      )
-    ) {
-      return "creative";
-    }
-    // Check for customer service keywords
-    if (
-      /\b(customer|service|support|representative|sales|account|client|relations|care)\b/.test(
-        text
-      )
-    ) {
-      return "customer_service";
-    }
-    return "default";
-  };
-
-  // Load or generate avatars when opportunity changes
+  // Load or generate avatar and workspace image when opportunity changes
   useEffect(() => {
     if (!opportunity) return;
-    // Check for cached avatars
+
+    // Check for cached assistant avatar
     const storedAvatars = localStorage.getItem(`avatars_${opportunity.id}`);
     if (storedAvatars) {
       try {
         const avatars = JSON.parse(storedAvatars);
-        if (avatars.userAvatar && avatars.assistantAvatar) {
-          console.log("Loading cached avatars");
-          setUserAvatar(avatars.userAvatar);
+        if (avatars.assistantAvatar) {
+          console.log("Loading cached avatar");
           setAssistantAvatar(avatars.assistantAvatar);
         } else {
-          generateAvatars();
+          generateAssistantAvatar();
         }
       } catch (error) {
-        console.error("Error parsing cached avatars:", error);
-        generateAvatars();
+        console.error("Error parsing cached avatar:", error);
+        generateAssistantAvatar();
       }
     } else {
-      generateAvatars();
+      generateAssistantAvatar();
     }
+
     // Check for cached workspace image
     const storedWorkspace = localStorage.getItem(`workspace_${opportunity.id}`);
     if (storedWorkspace) {
@@ -129,54 +95,47 @@ export const OpportunityDetails = ({
     }
   }, [opportunity]);
 
-  // Function to generate avatars
-  const generateAvatars = async () => {
+  // Function to generate assistant avatar - simplified
+  const generateAssistantAvatar = async () => {
     if (!opportunity || isGeneratingAvatars) return;
+
     setIsGeneratingAvatars(true);
+
     try {
-      const jobRole = determineJobRole(opportunity);
-      // Generate user avatar
-      const userResponse = await fetch("/api/replicate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobTitle: opportunity.position,
-          role: jobRole,
-          isAssistant: false,
-          jobDescription: opportunity.jobDescription,
-        }),
-      });
-      const userData = await userResponse.json();
-      // Generate assistant avatar
+      // Generate assistant avatar with simplified approach
       const assistantResponse = await fetch("/api/replicate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobTitle: opportunity.position,
-          role: jobRole,
-          isAssistant: true,
           jobDescription: opportunity.jobDescription,
         }),
       });
+
       const assistantData = await assistantResponse.json();
-      // If both were successful, update the avatars
-      if (userData.success && assistantData.success) {
-        const userAvatarUrl = String(userData.imageUrl);
+
+      // If successful, update the avatar
+      if (assistantData.success && assistantData.imageUrl) {
         const assistantAvatarUrl = String(assistantData.imageUrl);
+
         // Store in state
-        setUserAvatar(userAvatarUrl);
         setAssistantAvatar(assistantAvatarUrl);
+
         // Cache in localStorage
         localStorage.setItem(
           `avatars_${opportunity.id}`,
           JSON.stringify({
-            userAvatar: userAvatarUrl,
             assistantAvatar: assistantAvatarUrl,
           })
         );
+      } else {
+        console.error(
+          "Failed to generate assistant avatar:",
+          assistantData.error
+        );
       }
     } catch (error) {
-      console.error("Error generating avatars:", error);
+      console.error("Error generating assistant avatar:", error);
     } finally {
       setIsGeneratingAvatars(false);
     }
@@ -185,7 +144,9 @@ export const OpportunityDetails = ({
   // Function to generate workspace image
   const generateWorkspaceImage = async () => {
     if (!opportunity || isGeneratingWorkspace) return;
+
     setIsGeneratingWorkspace(true);
+
     try {
       const response = await fetch("/api/replicate-background", {
         method: "POST",
@@ -195,11 +156,15 @@ export const OpportunityDetails = ({
           jobDescription: opportunity.jobDescription,
         }),
       });
+
       const data = await response.json();
+
       if (data.success && data.imageUrl) {
         const imageUrl = String(data.imageUrl);
+
         // Store in state
         setWorkspaceImage(imageUrl);
+
         // Cache in localStorage
         localStorage.setItem(
           `workspace_${opportunity.id}`,
@@ -207,6 +172,8 @@ export const OpportunityDetails = ({
             imageUrl: imageUrl,
           })
         );
+      } else {
+        console.error("Failed to generate workspace image:", data.error);
       }
     } catch (error) {
       console.error("Error generating workspace image:", error);
@@ -295,7 +262,7 @@ export const OpportunityDetails = ({
           </TabsList>
           <TabsContent value="details" className="flex-grow overflow-auto">
             <div className="grid grid-cols-1 gap-4">
-              {/* Workspace Visualization Card - First Item - MODIFIED */}
+              {/* Workspace Visualization Card - First Item */}
               <div
                 className={`rounded-lg border ${
                   isDarkMode
@@ -323,10 +290,9 @@ export const OpportunityDetails = ({
                       alt={`Workspace for ${opportunity.position} at ${opportunity.company}`}
                       className="w-full h-auto rounded-md object-cover"
                       style={{ maxHeight: "450px" }}
-                      onError={(e) => {
+                      onError={() => {
                         console.error("Failed to load workspace image");
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = "none";
+                        setWorkspaceImage("");
                       }}
                     />
                     {/* Dark gradient overlay from bottom */}
@@ -360,16 +326,8 @@ export const OpportunityDetails = ({
                           isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
-                        No workspace visualization available
+                        Preparing workspace visualization...
                       </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3"
-                        onClick={generateWorkspaceImage}
-                      >
-                        Generate Workspace
-                      </Button>
                     </div>
                   </div>
                 )}
@@ -387,14 +345,6 @@ export const OpportunityDetails = ({
                   isDarkMode={isDarkMode}
                 />
               </div>
-              {/* <div className="col-span-1">
-                <TagsSection
-                  opportunity={opportunity}
-                  updateOpportunity={updateOpportunity}
-                  isDarkMode={isDarkMode}
-                  openGuide={openGuide}
-                />
-              </div> */}
               <div className="col-span-1">
                 <KeywordsSection
                   opportunity={opportunity}
@@ -488,7 +438,7 @@ export const OpportunityDetails = ({
                       isDarkMode ? "text-gray-400" : "text-gray-500"
                     } mt-2`}
                   >
-                    Generating custom avatars for this conversation
+                    Generating assistant avatar for this conversation
                   </p>
                 </div>
               </div>
@@ -516,7 +466,6 @@ export const OpportunityDetails = ({
                 }}
                 isDarkMode={isDarkMode}
                 resume={opportunity.resume}
-                userAvatar={userAvatar}
                 assistantAvatar={assistantAvatar}
               />
             )}
