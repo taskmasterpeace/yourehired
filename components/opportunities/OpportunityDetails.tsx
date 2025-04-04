@@ -387,14 +387,14 @@ export const OpportunityDetails = ({
                   isDarkMode={isDarkMode}
                 />
               </div>
-              <div className="col-span-1">
+              {/* <div className="col-span-1">
                 <TagsSection
                   opportunity={opportunity}
                   updateOpportunity={updateOpportunity}
                   isDarkMode={isDarkMode}
                   openGuide={openGuide}
                 />
-              </div>
+              </div> */}
               <div className="col-span-1">
                 <KeywordsSection
                   opportunity={opportunity}

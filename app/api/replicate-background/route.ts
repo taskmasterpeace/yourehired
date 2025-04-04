@@ -13,153 +13,24 @@ export async function POST(request: Request) {
     console.log("Background request body:", body);
     const { jobTitle, jobDescription } = body;
 
-    // Function to analyze job description and determine aspects
-    const analyzeJobDescription = (description: string) => {
-      description = description.toLowerCase();
-
-      // Check for specific environment indicators
-      const isTechnical =
-        /\b(software|developer|engineer|programmer|coding|technical|it|data|analyst|science|computer|technology|programming|development)\b/.test(
-          description
-        );
-      const isCreative =
-        /\b(design|creative|artist|writer|content|marketing|media|graphic|ui|ux|art|creative|visual|brand|illustration)\b/.test(
-          description
-        );
-      const isCustomerFacing =
-        /\b(customer|service|support|representative|sales|account|client|relations|care|communication|interpersonal|service|facing|public)\b/.test(
-          description
-        );
-      const isManagement =
-        /\b(manager|supervisor|lead|director|executive|leadership|management|team|oversee|supervise)\b/.test(
-          description
-        );
-      const isRemote =
-        /\b(remote|work from home|wfh|telecommute|virtual|distributed|flexible|anywhere)\b/.test(
-          description
-        );
-
-      // Determine equipment needs
-      const needsComputers =
-        isTechnical ||
-        /\b(computer|laptop|desktop|monitor|screen|keyboard|mouse|hardware|software)\b/.test(
-          description
-        );
-      const needsCreativeTools =
-        isCreative ||
-        /\b(adobe|design tools|sketch|figma|illustrator|photoshop|drawing|tablet)\b/.test(
-          description
-        );
-      const needsCommunicationTools =
-        isCustomerFacing ||
-        /\b(phone|headset|chat|communication|video|conference|meeting)\b/.test(
-          description
-        );
-
-      // Determine space characteristics
-      const isCollaborative =
-        /\b(team|collaborate|group|together|meeting|brainstorm)\b/.test(
-          description
-        );
-      const needsQuiet =
-        /\b(focus|concentration|quiet|individual|attention to detail)\b/.test(
-          description
-        );
-
-      return {
-        isTechnical,
-        isCreative,
-        isCustomerFacing,
-        isManagement,
-        isRemote,
-        needsComputers,
-        needsCreativeTools,
-        needsCommunicationTools,
-        isCollaborative,
-        needsQuiet,
-      };
-    };
-
-    // Create a dynamic prompt based on job analysis
-    const createDynamicPrompt = (title: string, description: string) => {
-      const analysis = analyzeJobDescription(description);
-
-      let basePrompt = `Design a professional office or work environment for a ${title} role. `;
-
-      // Add environment type
-      if (analysis.isRemote) {
-        basePrompt +=
-          "This is a home office setup that's professional and functional for remote work. ";
-      } else {
-        basePrompt += "This is a professional workplace environment. ";
-      }
-
-      // Add equipment details
-      if (analysis.needsComputers) {
-        if (analysis.isTechnical) {
-          basePrompt +=
-            "Include multiple high-powered computers with large monitors for technical tasks. ";
-        } else {
-          basePrompt +=
-            "Include a computer setup appropriate for office work. ";
-        }
-      }
-
-      if (analysis.needsCreativeTools) {
-        basePrompt +=
-          "Include creative tools like drawing tablets, art supplies, and visual reference materials. ";
-      }
-
-      if (analysis.needsCommunicationTools) {
-        basePrompt +=
-          "Include communication equipment like headsets, phones, or video conferencing setup. ";
-      }
-
-      // Add space characteristics
-      if (analysis.isCollaborative) {
-        basePrompt +=
-          "The space should facilitate collaboration, with areas for team discussions and shared work. ";
-      }
-
-      if (analysis.needsQuiet) {
-        basePrompt +=
-          "The environment should be quiet and conducive to focused work. ";
-      }
-
-      if (analysis.isManagement) {
-        basePrompt +=
-          "The workspace should reflect a leadership role with appropriate space for meetings and discussions. ";
-      }
-
-      // Add general workspace aesthetics
-      basePrompt +=
-        "The workspace should include appropriate furniture, lighting, and layout that support the specific requirements of this job. ";
-
-      // Add technical details for better image generation - No text overlays requested
-      basePrompt +=
-        "Wide angle shot of the entire workspace, professional photograph, realistic, detailed, HD quality. No text overlays or captions in the image.";
-
-      return basePrompt;
-    };
-
-    const prompt = createDynamicPrompt(
-      jobTitle || "professional",
-      jobDescription || ""
-    );
+    // Create prompt using the exact format requested
+    const prompt = `Design a professional work environment for a ${jobTitle} role. Based on the job description: ${jobDescription}. The workspace should be professional, functional, and appropriate for the job requirements. Wide angle shot, realistic, detailed, HD quality. No text overlays or captions.`;
 
     console.log("Using background prompt:", prompt);
 
+    const width = 835.34;
+    const height = 400;
+
     // Run the image generation through Replicate with Flux Schnell model
-    // Corrected parameters based on the error message
     const output = await replicate.run("black-forest-labs/flux-schnell", {
       input: {
         prompt: prompt,
         negative_prompt:
           "deformed, distorted, disfigured, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, cartoon, anime, unrealistic, text, watermark, signature, caption, title, label",
-        num_inference_steps: 4, // Maximum allowed is 4 according to the error
+        num_inference_steps: 4,
         seed: Math.floor(Math.random() * 1000000),
-        width: 1024,
-        height: 576,
+        width: width,
+        height: height,
       },
     });
 
@@ -170,7 +41,6 @@ export async function POST(request: Request) {
       // For direct string output
       const imageUrl = output;
       console.log("Generated background URL:", imageUrl);
-
       try {
         new URL(imageUrl); // Will throw if not a valid URL
         return NextResponse.json({ success: true, imageUrl: imageUrl });
@@ -188,7 +58,6 @@ export async function POST(request: Request) {
       // For array output
       const imageUrl = String(output[0]);
       console.log("Generated background URL (from array):", imageUrl);
-
       try {
         new URL(imageUrl); // Will throw if not a valid URL
         return NextResponse.json({ success: true, imageUrl: imageUrl });
