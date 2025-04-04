@@ -36,6 +36,7 @@ import { v4 as uuidv4 } from "uuid";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { JobUrlInput } from "@/components/opportunities/JobUrlInput";
 
 interface OpportunitiesTabProps {
   opportunities: Opportunity[];
@@ -93,6 +94,9 @@ export function OpportunitiesTab({
   // State for master resume warning
   const [showMasterResumeWarning, setShowMasterResumeWarning] = useState(false);
 
+  // New state for two-step job creation flow
+  const [extractionStep, setExtractionStep] = useState<"url" | "review">("url");
+
   const [newOpportunity, setNewOpportunity] = useState({
     company: "",
     position: "",
@@ -101,6 +105,9 @@ export function OpportunitiesTab({
     appliedDate: new Date().toISOString().split("T")[0],
     notes: "",
     tailorResume: true, // Default to true for better UX
+    location: "",
+    salary: "",
+    applicationUrl: "",
   });
 
   // Check if master resume exists
@@ -108,7 +115,7 @@ export function OpportunitiesTab({
 
   // Show master resume warning when dialog opens
   useEffect(() => {
-    if (showAddDialog && !hasMasterResume) {
+    if (showAddDialog && !hasMasterResume && extractionStep === "review") {
       setShowMasterResumeWarning(true);
       // Auto-disable resume tailoring if no master resume exists
       setNewOpportunity((prev) => ({
@@ -116,22 +123,65 @@ export function OpportunitiesTab({
         tailorResume: false,
       }));
     }
-  }, [showAddDialog, hasMasterResume]);
+  }, [showAddDialog, hasMasterResume, extractionStep]);
 
   // Use a ref for ApplicationService to ensure we don't create duplicate instances
   const applicationService = useRef(new ApplicationService()).current;
 
+  // Reset form function
+  const resetForm = () => {
+    setNewOpportunity({
+      company: "",
+      position: "",
+      jobDescription: "",
+      status: "Interested",
+      appliedDate: new Date().toISOString().split("T")[0],
+      notes: "",
+      tailorResume: true,
+      location: "",
+      salary: "",
+      applicationUrl: "",
+    });
+    setExtractionStep("url");
+    setIsTailoringResume(false);
+    setTailoringProgress(0);
+    setTailoringError("");
+    setShowMasterResumeWarning(false);
+  };
+
+  // Handler for job data extraction from Firecrawl
+  const handleJobDataExtracted = (jobData: {
+    company: string;
+    position: string;
+    location: string;
+    salary: string;
+    jobDescription: string;
+    applicationUrl?: string;
+  }) => {
+    setNewOpportunity({
+      ...newOpportunity,
+      company: jobData.company || "",
+      position: jobData.position || "",
+      location: jobData.location || "",
+      salary: jobData.salary || "",
+      jobDescription: jobData.jobDescription || "",
+      applicationUrl: jobData.applicationUrl || newOpportunity.applicationUrl,
+    });
+  };
+
+  // Function to move to the review step after extraction
+  const handleExtractionComplete = () => {
+    setExtractionStep("review");
+  };
+
   // Helper function to convert from Opportunity to JobApplication
   const convertToJobApplication = useCallback((opp: Opportunity) => {
     const tags = opp.tags ? opp.tags.map((tag: any) => tag.name || tag) : [];
-
     // Generate a valid ID
     const id =
       typeof opp.id === "string" && opp.id.includes("-") ? opp.id : uuidv4();
-
     // Convert the status to the expected type
     const status = opp.status as any;
-
     return {
       id,
       companyName: opp.company,
@@ -172,37 +222,29 @@ export function OpportunitiesTab({
     async (id: string | number, updates: Partial<Opportunity>) => {
       try {
         console.log("Updating opportunity:", id, updates);
-
         // Update the local state
         updateOpportunity(id, updates);
-
         // Always update the timestamp when any change is made
         updateModifiedTimestamp(id);
-
         // Find the opportunity in the opportunities array
         const opportunityIndex = opportunities.findIndex(
           (opp) => opp.id === id
         );
-
         if (opportunityIndex === -1) {
           console.error(`Cannot find opportunity with ID ${id}`);
           return;
         }
-
         // Create the complete updated opportunity by merging with updates
         const updatedOpportunity = {
           ...opportunities[opportunityIndex],
           ...updates,
         };
-
         // Convert to JobApplication format for Supabase
         const jobApp = convertToJobApplication(updatedOpportunity);
-
         // Save to Supabase
         console.log("Saving to Supabase:", jobApp);
         const result = await applicationService.saveApplication(jobApp);
         console.log("Supabase save result:", result);
-
         // If we got a new Supabase ID, update our state
         if (
           result &&
@@ -235,33 +277,26 @@ export function OpportunitiesTab({
     async (id: string | number) => {
       // If already showing a confirmation or processing, don't proceed
       if (deleteConfirmShowing.current || isProcessing) return;
-
       try {
         deleteConfirmShowing.current = true;
         const confirmed = window.confirm(
           "Are you sure you want to delete this opportunity?"
         );
-
         if (!confirmed) {
           deleteConfirmShowing.current = false;
           return;
         }
-
         setIsProcessing(true);
-
         // If it's a Supabase ID, delete from Supabase
         if (typeof id === "string" && id.includes("-")) {
           await applicationService.deleteApplication(id);
           console.log(`Deleted from Supabase: ${id}`);
         }
-
         // Delete from state
         dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
         console.log(`Deleted from state: ${id}`);
-
         // Handle selection adjustment
         const deletedIndex = opportunities.findIndex((opp) => opp.id === id);
-
         if (deletedIndex === selectedOpportunityIndex) {
           // If we deleted the selected one
           if (opportunities.length > 1) {
@@ -306,25 +341,20 @@ export function OpportunitiesTab({
       deleteConfirmShowing.current
     )
       return;
-
     try {
       deleteConfirmShowing.current = true;
       const confirmed = window.confirm(
         `Are you sure you want to delete ${selectedJobIds.length} selected job(s)?`
       );
-
       if (!confirmed) {
         deleteConfirmShowing.current = false;
         return;
       }
-
       setIsProcessing(true);
       const idsToDelete = [...selectedJobIds];
-
       // Check if selected opportunity will be deleted
       const selectedId = opportunities[selectedOpportunityIndex]?.id;
       const willDeleteSelected = idsToDelete.includes(selectedId);
-
       // Get count of deleted before the selected one
       const deletedBeforeCount = willDeleteSelected
         ? 0
@@ -332,7 +362,6 @@ export function OpportunitiesTab({
             const oppIndex = opportunities.findIndex((o) => o.id === id);
             return oppIndex !== -1 && oppIndex < selectedOpportunityIndex;
           }).length;
-
       // Delete from Supabase first
       for (const id of idsToDelete) {
         if (typeof id === "string" && id.includes("-")) {
@@ -344,17 +373,14 @@ export function OpportunitiesTab({
           }
         }
       }
-
       // Delete from state
       idsToDelete.forEach((id) => {
         dispatch({ type: "DELETE_OPPORTUNITY", payload: id });
         console.log(`Deleted from state: ${id}`);
       });
-
       // Reset selection
       setSelectedJobIds([]);
       setIsBatchSelectMode(false);
-
       // Adjust selected index
       if (willDeleteSelected) {
         if (opportunities.length > idsToDelete.length) {
@@ -387,11 +413,9 @@ export function OpportunitiesTab({
     async (id: string | number, newStatus: string) => {
       // This ensures status updates are treated specially and always saved
       console.log(`Status update for ${id}: ${newStatus}`);
-
       try {
         // First update in state
         handleUpdateOpportunity(id, { status: newStatus });
-
         // Try to update the status directly in Supabase as well for redundancy
         if (typeof id === "string" && id.includes("-")) {
           await applicationService.updateApplicationStatus(
@@ -463,7 +487,6 @@ export function OpportunitiesTab({
       setTailoringError("");
       console.log("Starting resume tailoring...");
       setTailoringProgress(30);
-
       // Call OpenAI API for resume tailoring
       const response = await fetch("/api/openai-resume", {
         method: "POST",
@@ -478,20 +501,15 @@ export function OpportunitiesTab({
           company: company || "Not specified",
         }),
       });
-
       setTailoringProgress(70);
-
       // Get the response data
       const data = await response.json();
-
       // Check if the API returned an error
       if (!response.ok) {
         console.error("API error response:", data);
         throw new Error(data.error || `API error: ${response.status}`);
       }
-
       setTailoringProgress(90);
-
       // Check for content in the response
       if (!data || !data.content) {
         // Check if there's a fallback content for graceful degradation
@@ -500,11 +518,9 @@ export function OpportunitiesTab({
           setTailoringProgress(100);
           return masterResume; // Use master resume as fallback
         }
-
         console.error("Received empty content from API:", data);
         throw new Error("AI service returned empty content");
       }
-
       console.log("Resume tailoring successful!");
       setTailoringProgress(100);
       return data.content;
@@ -513,7 +529,6 @@ export function OpportunitiesTab({
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
       setTailoringError(errorMessage);
-
       // Always return the master resume as fallback so job creation can continue
       return masterResume;
     }
@@ -522,7 +537,6 @@ export function OpportunitiesTab({
   // Modified handleAddOpportunity to include resume tailoring
   const handleAddOpportunity = useCallback(async () => {
     if (isProcessing) return;
-
     // Check for master resume if tailoring is requested
     if (
       newOpportunity.tailorResume &&
@@ -531,10 +545,8 @@ export function OpportunitiesTab({
       setTailoringError("Cannot tailor resume: No master resume found");
       return;
     }
-
     try {
       setIsProcessing(true);
-
       // Generate a unique ID and format the date
       const uniqueId = Date.now();
       const formattedDate = new Date(
@@ -544,10 +556,8 @@ export function OpportunitiesTab({
         month: "long",
         day: "numeric",
       });
-
       // Initialize with empty resume or master resume
       let resumeContent = hasMasterResume ? masterResume : "";
-
       // If tailoring is requested, generate the tailored resume
       if (
         newOpportunity.tailorResume &&
@@ -575,49 +585,41 @@ export function OpportunitiesTab({
           // Continue with master resume
         }
       }
-
       // Create the new opportunity object
       const newOpp = {
         ...newOpportunity,
         id: uniqueId, // Will be replaced with Supabase ID later
         appliedDate: formattedDate,
         resume: resumeContent, // Use the tailored resume if available
-        location: "",
-        salary: "",
-        applicationUrl: "",
+        location: newOpportunity.location || "",
+        salary: newOpportunity.salary || "",
+        applicationUrl: newOpportunity.applicationUrl || "",
         source: "",
         recruiterName: "",
         recruiterEmail: "",
         recruiterPhone: "",
       };
-
       // Save to Supabase first to get a proper ID
       const jobApp = convertToJobApplication(newOpp);
       console.log("Saving new opportunity to Supabase:", jobApp);
-
       // Here's the key fix - save only once
       const result = await applicationService.saveApplication(jobApp);
       console.log("Save result:", result);
-
       // Use the Supabase ID if available
       const finalId =
         result && typeof result === "object" && "id" in result
           ? result.id
           : uniqueId;
-
       // Update our object with the final ID
       const finalOpp = {
         ...newOpp,
         id: finalId,
       };
-
       // Add to state with the correct ID - just once
       dispatch({ type: "ADD_OPPORTUNITY", payload: finalOpp });
       console.log(`Added new opportunity with ID ${finalId} to state`);
-
       // Set the timestamp
       updateModifiedTimestamp(finalId);
-
       // If we tailored the resume, also save it as a resume version
       if (newOpportunity.tailorResume && resumeContent !== masterResume) {
         try {
@@ -630,9 +632,7 @@ export function OpportunitiesTab({
             is_current: false, // Don't make it the current version
             application_id: String(finalId), // Always convert to string
           });
-
           console.log("Saved tailored resume version");
-
           // Add a success message to the chat
           const timestamp = new Date().toISOString();
           dispatch({
@@ -649,20 +649,9 @@ export function OpportunitiesTab({
           console.error("Error saving resume version:", error);
         }
       }
-
       // Reset form and close dialog
-      setNewOpportunity({
-        company: "",
-        position: "",
-        jobDescription: "",
-        status: "Interested",
-        appliedDate: new Date().toISOString().split("T")[0],
-        notes: "",
-        tailorResume: true,
-      });
-
+      resetForm();
       setShowAddDialog(false);
-
       // Select the new opportunity
       setTimeout(() => {
         const newIndex = opportunities.length; // It will be at the end
@@ -672,7 +661,7 @@ export function OpportunitiesTab({
       console.error("Error adding opportunity:", error);
       alert("Failed to add opportunity. Please try again.");
       setTailoringError(
-        (error as Error).message || "Failed to add opportunity"
+        error instanceof Error ? error.message : "Failed to add opportunity"
       );
     } finally {
       setIsProcessing(false);
@@ -811,353 +800,418 @@ or interview tips, use the context above to give personalized guidance.`,
       <div className="md:col-span-1">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Job Opportunities</h2>
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <Dialog
+            open={showAddDialog}
+            onOpenChange={(open) => {
+              if (!open) resetForm();
+              setShowAddDialog(open);
+            }}
+          >
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Job
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Add New Job Opportunity</DialogTitle>
-                {!hasMasterResume && (
-                  <DialogDescription className="text-amber-500">
-                    Note: A master resume is required for AI resume tailoring
-                  </DialogDescription>
-                )}
+                <DialogTitle>
+                  {extractionStep === "url"
+                    ? "Add Job from URL"
+                    : "Review Job Details"}
+                </DialogTitle>
+                <DialogDescription>
+                  {extractionStep === "url"
+                    ? "Paste a job URL to automatically extract the details"
+                    : "Review and edit the extracted job details before adding"}
+                </DialogDescription>
               </DialogHeader>
 
-              {/* Master resume warning alert */}
-              {showMasterResumeWarning && !hasMasterResume && (
-                <Alert className="mb-4 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700">
-                  <AlertCircle className="h-4 w-4 text-amber-500" />
-                  <AlertTitle className="text-amber-700 dark:text-amber-300">
-                    Master Resume Required
-                  </AlertTitle>
-                  <AlertDescription className="text-amber-600 dark:text-amber-400">
-                    <p className="mb-2">
-                      You need to create a master resume before AI can tailor it
-                      for specific jobs.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                      <Button
-                        variant="outline"
-                        className="border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300"
-                        onClick={() => setShowMasterResumeWarning(false)}
-                      >
-                        Continue Without Resume
-                      </Button>
-                      <Button
-                        variant="default"
-                        className="bg-amber-500 hover:bg-amber-600 dark:bg-amber-700 dark:hover:bg-amber-600"
-                        onClick={goToMasterResumePage}
-                      >
-                        Create Master Resume
-                      </Button>
+              {extractionStep === "url" ? (
+                // Step 1: Job URL Input
+                <JobUrlInput
+                  onDataExtracted={handleJobDataExtracted}
+                  onExtractionComplete={handleExtractionComplete}
+                />
+              ) : (
+                // Step 2: Review Extracted Data
+                <>
+                  {showMasterResumeWarning && !hasMasterResume && (
+                    <Alert className="mb-4 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700">
+                      <AlertCircle className="h-4 w-4 text-amber-500" />
+                      <AlertTitle className="text-amber-700 dark:text-amber-300">
+                        Master Resume Required
+                      </AlertTitle>
+                      <AlertDescription className="text-amber-600 dark:text-amber-400">
+                        <p className="mb-2">
+                          You need to create a master resume before AI can
+                          tailor it for specific jobs.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            className="border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300"
+                            onClick={() => setShowMasterResumeWarning(false)}
+                          >
+                            Continue Without Resume
+                          </Button>
+                          <Button
+                            variant="default"
+                            className="bg-amber-500 hover:bg-amber-600 dark:bg-amber-700 dark:hover:bg-amber-600"
+                            onClick={goToMasterResumePage}
+                          >
+                            Create Master Resume
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company</Label>
+                      <Input
+                        id="company"
+                        value={newOpportunity.company}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            company: e.target.value,
+                          })
+                        }
+                      />
                     </div>
-                  </AlertDescription>
-                </Alert>
+                    <div className="space-y-2">
+                      <Label htmlFor="position">Position</Label>
+                      <Input
+                        id="position"
+                        value={newOpportunity.position}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            position: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        value={newOpportunity.location}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            location: e.target.value,
+                          })
+                        }
+                        placeholder="Remote, Hybrid, or Office location"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="salary">Salary Range</Label>
+                      <Input
+                        id="salary"
+                        value={newOpportunity.salary}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            salary: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. $80,000-$100,000/year"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="applicationUrl">Job URL</Label>
+                      <Input
+                        id="applicationUrl"
+                        value={newOpportunity.applicationUrl}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            applicationUrl: e.target.value,
+                          })
+                        }
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        value={newOpportunity.status}
+                        onValueChange={(value) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            status: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Interested">Interested</SelectItem>
+                          <SelectItem value="Preparing Application">
+                            Preparing Application
+                          </SelectItem>
+                          <SelectItem value="Applied">Applied</SelectItem>
+                          <SelectItem value="Application Acknowledged">
+                            Application Acknowledged
+                          </SelectItem>
+                          <SelectItem value="First Interview">
+                            First Interview
+                          </SelectItem>
+                          <SelectItem value="Second Interview">
+                            Second Interview
+                          </SelectItem>
+                          <SelectItem value="Final Interview">
+                            Final Interview
+                          </SelectItem>
+                          <SelectItem value="Offer Received">
+                            Offer Received
+                          </SelectItem>
+                          <SelectItem value="Offer Accepted">
+                            Offer Accepted
+                          </SelectItem>
+                          <SelectItem value="Rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="appliedDate">Date</Label>
+                      <Input
+                        id="appliedDate"
+                        type="date"
+                        value={newOpportunity.appliedDate}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            appliedDate: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="jobDescription">Job Description</Label>
+                      <Textarea
+                        id="jobDescription"
+                        rows={6}
+                        value={newOpportunity.jobDescription}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            jobDescription: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Notes</Label>
+                      <Textarea
+                        id="notes"
+                        rows={2}
+                        value={newOpportunity.notes}
+                        onChange={(e) =>
+                          setNewOpportunity({
+                            ...newOpportunity,
+                            notes: e.target.value,
+                          })
+                        }
+                        placeholder="Add any personal notes about this opportunity"
+                      />
+                    </div>
+                    {/* Resume tailoring section */}
+                    <div className="space-y-2 pt-3 mt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="tailorResume" className="font-medium">
+                            Tailor Resume with AI
+                          </Label>
+                          <p
+                            className={`text-xs mt-1 ${
+                              isDarkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            {hasMasterResume
+                              ? "Create a customized version of your resume for this job"
+                              : "Requires a master resume to be created first"}
+                          </p>
+                        </div>
+                        <Switch
+                          id="tailorResume"
+                          checked={newOpportunity.tailorResume}
+                          onCheckedChange={(checked) =>
+                            setNewOpportunity({
+                              ...newOpportunity,
+                              tailorResume: checked,
+                            })
+                          }
+                          disabled={!hasMasterResume}
+                        />
+                      </div>
+                      <AnimatePresence>
+                        {newOpportunity.tailorResume && hasMasterResume && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className={`rounded-md p-3 text-sm ${
+                              isDarkMode
+                                ? "bg-blue-900/20 text-blue-300"
+                                : "bg-blue-50 text-blue-700"
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              <Sparkles className="h-4 w-4 mr-2 mt-0.5 text-blue-500" />
+                              <div>
+                                <p>
+                                  AI will analyze the job description and create
+                                  a tailored version of your resume that
+                                  highlights relevant skills and experience.
+                                </p>
+                                <p className="mt-1 text-xs">
+                                  The original master resume is preserved, and
+                                  you can edit the tailored version later.
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      {/* Info for users without a master resume */}
+                      <AnimatePresence>
+                        {!hasMasterResume && !showMasterResumeWarning && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className={`rounded-md p-3 text-sm mt-2 ${
+                              isDarkMode
+                                ? "bg-blue-900/10 text-blue-300"
+                                : "bg-blue-50 text-blue-700"
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              <Info className="h-4 w-4 mr-2 mt-0.5 text-blue-500" />
+                              <div>
+                                <p>
+                                  You'll need to create a master resume before
+                                  AI can tailor it for specific jobs.
+                                </p>
+                                <Button
+                                  variant="link"
+                                  className="p-0 h-auto text-blue-500 dark:text-blue-400"
+                                  onClick={goToMasterResumePage}
+                                >
+                                  Go to Profile to Create Master Resume
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </>
               )}
 
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    value={newOpportunity.company}
-                    onChange={(e) =>
-                      setNewOpportunity({
-                        ...newOpportunity,
-                        company: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="position">Position</Label>
-                  <Input
-                    id="position"
-                    value={newOpportunity.position}
-                    onChange={(e) =>
-                      setNewOpportunity({
-                        ...newOpportunity,
-                        position: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={newOpportunity.status}
-                    onValueChange={(value) =>
-                      setNewOpportunity({ ...newOpportunity, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Interested">Interested</SelectItem>
-                      <SelectItem value="Preparing Application">
-                        Preparing Application
-                      </SelectItem>
-                      <SelectItem value="Preparing Application">
-                        Preparing Application
-                      </SelectItem>
-                      <SelectItem value="Applied">Applied</SelectItem>
-                      <SelectItem value="Application Acknowledged">
-                        Application Acknowledged
-                      </SelectItem>
-                      <SelectItem value="First Interview">
-                        First Interview
-                      </SelectItem>
-                      <SelectItem value="Second Interview">
-                        Second Interview
-                      </SelectItem>
-                      <SelectItem value="Final Interview">
-                        Final Interview
-                      </SelectItem>
-                      <SelectItem value="Offer Received">
-                        Offer Received
-                      </SelectItem>
-                      <SelectItem value="Offer Accepted">
-                        Offer Accepted
-                      </SelectItem>
-                      <SelectItem value="Rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="appliedDate">Date</Label>
-                  <Input
-                    id="appliedDate"
-                    type="date"
-                    value={newOpportunity.appliedDate}
-                    onChange={(e) =>
-                      setNewOpportunity({
-                        ...newOpportunity,
-                        appliedDate: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="jobDescription">Job Description</Label>
-                  <Textarea
-                    id="jobDescription"
-                    rows={4}
-                    value={newOpportunity.jobDescription}
-                    onChange={(e) =>
-                      setNewOpportunity({
-                        ...newOpportunity,
-                        jobDescription: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    rows={2}
-                    value={newOpportunity.notes}
-                    onChange={(e) =>
-                      setNewOpportunity({
-                        ...newOpportunity,
-                        notes: e.target.value,
-                      })
-                    }
-                    placeholder="Add any personal notes about this opportunity"
-                  />
-                </div>
-                {/* Resume tailoring section */}
-                <div className="space-y-2 pt-3 mt-2 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="tailorResume" className="font-medium">
-                        Tailor Resume with AI
-                      </Label>
-                      <p
-                        className={`text-xs mt-1 ${
-                          isDarkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        {hasMasterResume
-                          ? "Create a customized version of your resume for this job"
-                          : "Requires a master resume to be created first"}
-                      </p>
-                    </div>
-                    <Switch
-                      id="tailorResume"
-                      checked={newOpportunity.tailorResume}
-                      onCheckedChange={(checked) =>
-                        setNewOpportunity({
-                          ...newOpportunity,
-                          tailorResume: checked,
-                        })
-                      }
-                      disabled={!hasMasterResume}
-                    />
-                  </div>
-                  <AnimatePresence>
-                    {newOpportunity.tailorResume && hasMasterResume && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className={`rounded-md p-3 text-sm ${
-                          isDarkMode
-                            ? "bg-blue-900/20 text-blue-300"
-                            : "bg-blue-50 text-blue-700"
-                        }`}
-                      >
-                        <div className="flex items-start">
-                          <Sparkles className="h-4 w-4 mr-2 mt-0.5 text-blue-500" />
-                          <div>
-                            <p>
-                              AI will analyze the job description and create a
-                              tailored version of your resume that highlights
-                              relevant skills and experience.
-                            </p>
-                            <p className="mt-1 text-xs">
-                              The original master resume is preserved, and you
-                              can edit the tailored version later.
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Info for users without a master resume */}
-                  <AnimatePresence>
-                    {!hasMasterResume && !showMasterResumeWarning && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className={`rounded-md p-3 text-sm mt-2 ${
-                          isDarkMode
-                            ? "bg-blue-900/10 text-blue-300"
-                            : "bg-blue-50 text-blue-700"
-                        }`}
-                      >
-                        <div className="flex items-start">
-                          <Info className="h-4 w-4 mr-2 mt-0.5 text-blue-500" />
-                          <div>
-                            <p>
-                              You'll need to create a master resume before AI
-                              can tailor it for specific jobs.
-                            </p>
-                            <Button
-                              variant="link"
-                              className="p-0 h-auto text-blue-500 dark:text-blue-400"
-                              onClick={goToMasterResumePage}
-                            >
-                              Go to Profile to Create Master Resume
-                            </Button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-              <DialogFooter className="flex-col space-y-2">
-                {/* Tailoring progress indicator */}
-                <AnimatePresence>
-                  {isTailoringResume && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="w-full"
-                    >
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                        <span className="text-sm">
-                          {tailoringProgress < 100
-                            ? `Tailoring resume: ${tailoringProgress}%`
-                            : "Resume tailored successfully!"}
-                        </span>
-                      </div>
-                      <Progress value={tailoringProgress} className="h-2" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                {/* Error message if resume tailoring fails */}
-                <AnimatePresence>
-                  {tailoringError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="mt-2 text-red-500 text-sm"
-                    >
-                      Error: {displayTailoringError}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <div className="flex justify-end space-x-2 w-full">
+              <DialogFooter>
+                {extractionStep === "url" ? (
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      setShowAddDialog(false);
-                      setIsTailoringResume(false);
-                      setTailoringProgress(0);
-                      setTailoringError("");
-                      setShowMasterResumeWarning(false);
-                    }}
-                    disabled={isProcessing}
+                    onClick={() => setShowAddDialog(false)}
                   >
                     Cancel
                   </Button>
-                  <Button
-                    onClick={handleAddOpportunity}
-                    disabled={
-                      isProcessing ||
-                      !newOpportunity.company ||
-                      !newOpportunity.position ||
-                      (newOpportunity.tailorResume && !hasMasterResume)
-                    }
-                  >
-                    {isProcessing ? (
-                      <>
-                        {isTailoringResume ? (
+                ) : (
+                  <>
+                    {/* Tailoring progress indicator */}
+                    <AnimatePresence>
+                      {isTailoringResume && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="w-full"
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                            <span className="text-sm">
+                              {tailoringProgress < 100
+                                ? `Tailoring resume: ${tailoringProgress}%`
+                                : "Resume tailored successfully!"}
+                            </span>
+                          </div>
+                          <Progress value={tailoringProgress} className="h-2" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    {/* Error message if resume tailoring fails */}
+                    <AnimatePresence>
+                      {tailoringError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="mt-2 text-red-500 text-sm"
+                        >
+                          Error: {displayTailoringError}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <div className="flex justify-end space-x-2 w-full">
+                      <Button
+                        variant="outline"
+                        onClick={() => setExtractionStep("url")}
+                        disabled={isProcessing}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        onClick={handleAddOpportunity}
+                        disabled={
+                          isProcessing ||
+                          !newOpportunity.company ||
+                          !newOpportunity.position ||
+                          (newOpportunity.tailorResume && !hasMasterResume)
+                        }
+                      >
+                        {isProcessing ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            {tailoringProgress < 100
-                              ? `Creating...`
-                              : "Adding Job..."}
+                            {isTailoringResume ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                {tailoringProgress < 100
+                                  ? `Creating...`
+                                  : "Adding Job..."}
+                              </>
+                            ) : (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Adding Job...
+                              </>
+                            )}
                           </>
                         ) : (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Adding Job...
+                            {newOpportunity.tailorResume && hasMasterResume ? (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Add with Tailored Resume
+                              </>
+                            ) : (
+                              "Add Job"
+                            )}
                           </>
                         )}
-                      </>
-                    ) : (
-                      <>
-                        {newOpportunity.tailorResume && hasMasterResume ? (
-                          <>
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Add with Tailored Resume
-                          </>
-                        ) : (
-                          "Add Job"
-                        )}
-                      </>
-                    )}
-                  </Button>
-                </div>
+                      </Button>
+                    </div>
+                  </>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
-
         <OpportunityList
           opportunities={opportunities}
           selectedOpportunityIndex={selectedOpportunityIndex}
