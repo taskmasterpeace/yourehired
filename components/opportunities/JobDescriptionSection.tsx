@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/textarea";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Copy, CheckCircle, Edit } from "lucide-react";
 import { Opportunity } from "../../context/types";
 
 interface JobDescriptionSectionProps {
@@ -23,18 +23,32 @@ export const JobDescriptionSection = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedJobDescription, setEditedJobDescription] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(opportunity.jobDescription || "");
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   return (
-    <Card>
+    <Card className={isDarkMode ? "border-gray-700 bg-gray-800" : ""}>
       <CardHeader className="py-3">
         <div className="flex justify-between items-center">
-          <h3 className="text-sm font-medium">Job Description</h3>
+          <h3
+            className={`text-sm font-medium ${isDarkMode ? "text-white" : ""}`}
+          >
+            Job Description
+          </h3>
           <div className="flex space-x-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
+              className={`h-6 w-6 p-0 ${
+                isDarkMode ? "hover:bg-gray-700 text-gray-300" : ""
+              }`}
               onClick={() => setIsExpanded(!isExpanded)}
+              title={isExpanded ? "Collapse" : "Expand"}
             >
               {isExpanded ? (
                 <Minimize2 className="h-3 w-3" />
@@ -45,51 +59,32 @@ export const JobDescriptionSection = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                navigator.clipboard.writeText(opportunity.jobDescription);
-                // You could add a toast notification here
-              }}
-              title="Copy to clipboard"
+              className={`h-6 w-6 p-0 ${
+                isDarkMode ? "hover:bg-gray-700 text-gray-300" : ""
+              }`}
+              onClick={handleCopy}
+              title={isCopied ? "Copied!" : "Copy to clipboard"}
+              disabled={!opportunity.jobDescription}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                />
-              </svg>
+              {isCopied ? (
+                <CheckCircle className="h-3 w-3 text-green-500" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
+              className={`h-6 w-6 p-0 ${
+                isDarkMode ? "hover:bg-gray-700 text-gray-300" : ""
+              }`}
               onClick={() => {
-                setEditedJobDescription(opportunity.jobDescription);
+                setEditedJobDescription(opportunity.jobDescription || "");
                 setIsEditing(true);
               }}
+              title="Edit job description"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
+              <Edit className="h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -100,7 +95,9 @@ export const JobDescriptionSection = ({
             <Textarea
               value={editedJobDescription}
               onChange={(e) => setEditedJobDescription(e.target.value)}
-              className="font-mono whitespace-pre-wrap"
+              className={`font-mono whitespace-pre-wrap ${
+                isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300" : ""
+              }`}
               rows={isExpanded ? 30 : 15}
             />
             <div className="flex justify-end space-x-2">
@@ -112,6 +109,7 @@ export const JobDescriptionSection = ({
                   });
                   setIsEditing(false);
                 }}
+                className={isDarkMode ? "bg-blue-600 hover:bg-blue-700" : ""}
               >
                 Save
               </Button>
@@ -119,6 +117,11 @@ export const JobDescriptionSection = ({
                 size="sm"
                 variant="outline"
                 onClick={() => setIsEditing(false)}
+                className={
+                  isDarkMode
+                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                    : ""
+                }
               >
                 Cancel
               </Button>
@@ -128,9 +131,17 @@ export const JobDescriptionSection = ({
           <div
             className={`font-mono whitespace-pre-wrap ${
               isExpanded ? "h-auto" : "max-h-[400px] overflow-y-auto"
-            }`}
+            } ${isDarkMode ? "text-gray-300" : ""}`}
           >
-            {opportunity.jobDescription || "No job description available"}
+            {opportunity.jobDescription || (
+              <span
+                className={`italic ${
+                  isDarkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                No job description available
+              </span>
+            )}
           </div>
         )}
       </CardContent>

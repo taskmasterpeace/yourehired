@@ -17,6 +17,8 @@ import {
   Copy,
   Save,
   CheckCircle,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { Opportunity } from "../../context/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,6 +45,7 @@ export const ResumeSection = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isEdited, setIsEdited] = useState(false);
   const [localResume, setLocalResume] = useState(opportunity.resume || "");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Update local resume when opportunity changes
   useEffect(() => {
@@ -98,7 +101,20 @@ export const ResumeSection = ({
               </CardDescription>
             )}
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setIsExpanded(!isExpanded)}
+              title={isExpanded ? "Collapse" : "Expand"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="h-3 w-3" />
+              ) : (
+                <Maximize2 className="h-3 w-3" />
+              )}
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -110,7 +126,6 @@ export const ResumeSection = ({
           </div>
         </div>
       </CardHeader>
-
       {/* Tailored resume info box */}
       <AnimatePresence>
         {showTailoredInfo && isTailoredResume && (
@@ -162,13 +177,14 @@ export const ResumeSection = ({
           </motion.div>
         )}
       </AnimatePresence>
-
       <CardContent className="py-2">
         {isPreviewMode ? (
           <div
             className={`p-4 border rounded-md ${
               isDarkMode ? "border-gray-700" : "border-gray-200"
-            } min-h-[300px]`}
+            } min-h-[300px] ${
+              isExpanded ? "h-auto" : "max-h-[400px] overflow-y-auto"
+            }`}
           >
             {localResume ? (
               <MarkdownRenderer content={localResume} isDarkMode={isDarkMode} />
@@ -194,12 +210,11 @@ export const ResumeSection = ({
             className={`font-mono whitespace-pre-wrap ${
               isDarkMode ? "bg-gray-800 border-gray-700" : ""
             }`}
-            rows={15}
+            rows={isExpanded ? 30 : 15}
             placeholder="No resume content. You can paste a resume here or create a master resume in your profile."
           />
         )}
       </CardContent>
-
       <CardFooter
         className={`flex flex-wrap justify-between gap-2 pt-2 pb-4 ${
           isDarkMode ? "border-gray-700" : ""
@@ -228,7 +243,6 @@ export const ResumeSection = ({
             )}
           </Button>
         </div>
-
         {isEdited && !isPreviewMode && (
           <Button
             variant="default"
