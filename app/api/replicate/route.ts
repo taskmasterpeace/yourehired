@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       ? jobDescription.substring(0, 100) + "..."
       : "";
 
-    const prompt = `Generate a close-up headshot portrait of an assistant for a ${jobTitle} position. The assistant should look professional, approachable, and trustworthy - designed to help candidates with this job: ${shortDescription}. Give them a friendly, helpful expression with a slight smile. The background should be softly blurred. Professional quality, realistic photo with detailed facial features.`;
+    const prompt = `Generate a close-up social media profile photo of a person who is an experienced ${jobTitle}. Approachable, and trustworthy.  With a friendly expression. The background should reflect a daily environment.`;
 
     console.log("Using prompt:", prompt);
 
