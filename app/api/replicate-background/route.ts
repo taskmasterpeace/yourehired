@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const output = await replicate.run("black-forest-labs/flux-schnell", {
       input: {
         prompt: prompt,
-        aspect_ratio: "16:9", // Attempt to specify a custom aspect ratio
+        aspect_ratio: "21:9", // Attempt to specify a custom aspect ratio
         num_inference_steps: 4,
         seed: Math.floor(Math.random() * 1000000),
         megapixels: "1", // Default value
