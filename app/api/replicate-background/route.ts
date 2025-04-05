@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const { jobTitle, jobDescription } = body;
 
     // Create prompt using the exact format requested
-    const prompt = `Cinematic shot of an empty office environment for a ${jobTitle} role. The workspace should be functional. Wide  angle shot, realistic, detailed.`;
+    const prompt = `Cinematic daytime shot of an empty work environment for a ${jobTitle} role. The workspace functional, and appropriate for the role. Wide  angle shot, realistic, detailed, HD quality.Shot by Spike Lee`;
 
     console.log("Using background prompt:", prompt);
 
