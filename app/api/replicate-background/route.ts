@@ -14,23 +14,23 @@ export async function POST(request: Request) {
     const { jobTitle, jobDescription } = body;
 
     // Create prompt using the exact format requested
-    const prompt = `Cinematic shot of an empty work environment for a ${jobTitle} role. The workspace should be professional, functional, and appropriate for the job requirements. Wide  angle shot, realistic, detailed, HD quality.`;
+    const prompt = `Cinematic shot of an empty office environment for a ${jobTitle} role. The workspace should be functional. Wide  angle shot, realistic, detailed.`;
 
     console.log("Using background prompt:", prompt);
-
-    const width = 840;
-    const height = 280;
 
     // Run the image generation through Replicate with Flux Schnell model
     const output = await replicate.run("black-forest-labs/flux-schnell", {
       input: {
         prompt: prompt,
-        negative_prompt:
-          "deformed, distorted, disfigured, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, cartoon, anime, unrealistic, text, watermark, signature, caption, title, label",
+        aspect_ratio: "3:1", // Attempt to specify a custom aspect ratio
         num_inference_steps: 4,
         seed: Math.floor(Math.random() * 1000000),
-        width: width,
-        height: height,
+        megapixels: "1", // Default value
+        num_outputs: 1, // Default value
+        output_format: "webp", // Default value
+        output_quality: 80, // Default value
+        go_fast: true, // Default value
+        disable_safety_checker: false, // Default value
       },
     });
 
