@@ -14,12 +14,12 @@ export async function POST(request: Request) {
     const { jobTitle, jobDescription } = body;
 
     // Create prompt using the exact format requested
-    const prompt = `Design a professional work environment for a ${jobTitle} role. Based on the job description: ${jobDescription}. The workspace should be professional, functional, and appropriate for the job requirements. Wide angle shot, realistic, detailed, HD quality. No text overlays or captions.`;
+    const prompt = `Cinematic shot of an empty work environment for a ${jobTitle} role. The workspace should be professional, functional, and appropriate for the job requirements. Wide  angle shot, realistic, detailed, HD quality.`;
 
     console.log("Using background prompt:", prompt);
 
-    const width = 835;
-    const height = 400;
+    const width = 840;
+    const height = 280;
 
     // Run the image generation through Replicate with Flux Schnell model
     const output = await replicate.run("black-forest-labs/flux-schnell", {
